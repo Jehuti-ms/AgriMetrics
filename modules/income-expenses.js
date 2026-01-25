@@ -194,53 +194,52 @@ const IncomeExpensesModule = {
                     border: 1px solid var(--glass-border);
                 }
 
-               /* Ensure camera preview is visible */
-.camera-preview {
-    width: 100%;
-    height: 400px;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    position: relative;
-    display: block !important;
-}
+               /* ========= Ensure camera preview is visible ========== */
+            .camera-preview {
+                width: 100%;
+                height: 400px;
+                background: #000;
+                border-radius: 12px;
+                overflow: hidden;
+                margin-bottom: 20px;
+                position: relative;
+                display: block !important;
+            }
+            
+            .camera-preview video {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover;
+                display: block !important;
+                background: #000 !important;
+            }
+            
+            /* Make sure camera section shows when display:block */
+            #camera-section {
+                display: none;
+            }
+            
+            #camera-section[style*="display: block"],
+            #camera-section[style*="display:block"] {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            
+            /* Button styling for better visibility */
+            #camera-option {
+                border: 2px solid transparent;
+                transition: all 0.2s;
+            }
+            
+            #camera-option:hover {
+                border-color: var(--primary-color);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
 
-.camera-preview video {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover;
-    display: block !important;
-    background: #000 !important;
-}
+            /* ==================== BASE MODAL STYLES ==================== */
 
-/* Make sure camera section shows when display:block */
-#camera-section {
-    display: none;
-}
-
-#camera-section[style*="display: block"],
-#camera-section[style*="display:block"] {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-/* Button styling for better visibility */
-#camera-option {
-    border: 2px solid transparent;
-    transition: all 0.2s;
-}
-
-#camera-option:hover {
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* ==================== MODAL CONTAINER FIX ==================== */
-
-/* Modal container - center on large screens, top-align on small */
 .popout-modal {
     position: fixed;
     top: 0;
@@ -250,20 +249,19 @@ const IncomeExpensesModule = {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     display: flex;
-    align-items: center; /* Center vertically on large screens */
+    align-items: center;
     justify-content: center;
     z-index: 10000;
     padding: 20px;
     box-sizing: border-box;
-    overflow-y: auto; /* Allow scrolling if modal is tall */
+    overflow-y: auto;
 }
 
-/* Modal content */
 .popout-modal-content {
     background: var(--background-color);
     border-radius: 20px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    max-width: 600px !important;
+    max-width: 600px;
     width: 90%;
     max-height: 90vh;
     overflow: hidden;
@@ -272,7 +270,6 @@ const IncomeExpensesModule = {
     margin: auto;
 }
 
-/* Modal Header */
 .popout-modal-header {
     display: flex;
     justify-content: space-between;
@@ -318,7 +315,6 @@ const IncomeExpensesModule = {
     color: var(--text-primary);
 }
 
-/* Modal Body */
 .popout-modal-body {
     padding: 24px;
     overflow-y: auto;
@@ -326,7 +322,6 @@ const IncomeExpensesModule = {
     min-height: 0;
 }
 
-/* Modal Footer */
 .popout-modal-footer {
     display: flex;
     justify-content: space-between;
@@ -341,19 +336,18 @@ const IncomeExpensesModule = {
     flex-shrink: 0;
 }
 
-/* ==================== SMALL SCREEN FIXES ==================== */
+/* ==================== RESPONSIVE BREAKPOINTS ==================== */
 
-/* Medium screens (900px and below) */
+/* Medium screens (901px to 768px) */
 @media (max-width: 900px) {
     .popout-modal {
-        align-items: flex-start; /* Align to top instead of center */
-        padding-top: 40px; /* Add some top padding */
-        padding-bottom: 40px; /* Add bottom padding for scroll */
+        align-items: flex-start;
+        padding: 40px 20px;
     }
     
     .popout-modal-content {
-        margin-top: 0; /* Remove auto margin */
-        max-height: 85vh; /* Slightly less than viewport */
+        max-height: 85vh;
+        margin-top: 0;
     }
     
     .popout-modal-header {
@@ -372,8 +366,7 @@ const IncomeExpensesModule = {
 /* Tablet screens (768px and below) */
 @media (max-width: 768px) {
     .popout-modal {
-        padding: 30px 15px; /* Reduced side padding */
-        align-items: flex-start;
+        padding: 30px 15px;
     }
     
     .popout-modal-content {
@@ -394,7 +387,6 @@ const IncomeExpensesModule = {
 @media (max-width: 640px) {
     .popout-modal {
         padding: 20px 10px;
-        align-items: flex-start;
     }
     
     .popout-modal-content {
@@ -418,11 +410,11 @@ const IncomeExpensesModule = {
     }
 }
 
-/* Very small phones (400px and below) - full screen modal */
+/* Very small phones (400px and below) */
 @media (max-width: 400px) {
     .popout-modal {
         padding: 0;
-        align-items: stretch; /* Stretch to fill screen */
+        align-items: stretch;
     }
     
     .popout-modal-content {
@@ -440,7 +432,7 @@ const IncomeExpensesModule = {
     
     .popout-modal-body {
         padding: 16px;
-        max-height: calc(100vh - 120px); /* Account for header/footer */
+        max-height: calc(100vh - 120px);
     }
     
     .popout-modal-footer {
@@ -449,7 +441,7 @@ const IncomeExpensesModule = {
     }
 }
 
-/* ==================== FOOTER BUTTON FIXES ==================== */
+/* ==================== FOOTER BUTTON STYLES ==================== */
 
 .popout-modal-footer .btn {
     min-height: 44px;
@@ -466,7 +458,6 @@ const IncomeExpensesModule = {
     min-width: 0;
 }
 
-/* Cancel Button */
 #cancel-import-receipts {
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
@@ -477,11 +468,10 @@ const IncomeExpensesModule = {
     background: var(--glass-bg-hover);
 }
 
-/* Process Button */
 #process-receipts-btn {
     position: relative;
-    padding-right: 40px !important;
-    overflow: visible !important;
+    padding-right: 40px;
+    overflow: visible;
     background: linear-gradient(135deg, var(--primary-color), #4f46e5);
     border: none;
     color: white;
@@ -497,8 +487,8 @@ const IncomeExpensesModule = {
     position: absolute;
     top: -8px;
     right: -8px;
-    background: #ef4444 !important;
-    color: white !important;
+    background: #ef4444;
+    color: white;
     border-radius: 12px;
     padding: 3px 8px;
     font-size: 12px;
@@ -532,418 +522,138 @@ const IncomeExpensesModule = {
     #process-receipts-btn {
         order: -1;
     }
-
-/* ==================== FIX FOR MEDIUM SCREENS (HEADER TOO FAR DOWN) ==================== */
-@media (min-width: 641px) and (max-width: 900px) {
-    #import-receipts-modal.popout-modal {
-        align-items: flex-start !important;
-        padding-top: 5px !important; /* Reduced padding */
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin-top: 0 !important;
-        max-height: calc(100vh - 10px) !important; /* Reduced from 20px */
-    }
-    
-    #import-receipts-modal .popout-modal-header {
-        padding-top: 12px !important; /* Reduced padding */
-        padding-bottom: 12px !important;
-    }
 }
 
-/* ==================== FIX FOR VERY SMALL SCREENS (TEXT CUTOFF) ==================== */
-@media (max-width: 640px) {
-    /* Keep existing positioning fixes */
-    #import-receipts-modal.popout-modal {
-        padding: 0 !important;
-        align-items: flex-start !important;
+/* ==================== IMPORT OPTION BUTTON FIXES ==================== */
+/* Fixes for button text truncation and display */
+
+.import-option {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.import-option-icon {
+    flex-shrink: 0;
+    margin-right: 12px;
+    width: 24px;
+    height: 24px;
+}
+
+/* CRITICAL FIX: Prevents text truncation in flexbox */
+.import-option-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    font-size: 16px;
+}
+
+/* Adjust for very small screens */
+@media (max-width: 400px) {
+    .import-option-text {
+        font-size: 14px;
     }
     
-    #import-receipts-modal .popout-modal-content {
-        margin: 8px !important; /* Reduced from 10px */
-        margin-top: 0 !important;
-        width: calc(100% - 16px) !important;
-        height: calc(100vh - 16px) !important;
-        max-height: none !important;
-    }
-    
-    #import-receipts-modal .popout-modal-header {
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 10 !important;
-        background: white !important;
-        border-bottom: 1px solid #e5e7eb !important;
-        padding-top: 14px !important;
-        padding-bottom: 14px !important;
-    }
-    
-    /* FIX BUTTON TEXT CUTOFF ON SMALL SCREENS */
     .import-option {
-        min-height: 44px !important;
-        padding: 10px 12px !important; /* Reduced padding */
+        padding: 10px 12px;
+        min-height: 44px;
     }
     
     .import-option-icon {
-        margin-right: 10px !important; /* Reduced spacing */
-        width: 22px !important;
-        height: 22px !important;
-    }
-    
-    .import-option-text {
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        font-size: 14px !important; /* Slightly smaller font */
-        min-width: 0 !important;
-        flex: 1 !important;
-    }
-    
-    /* For extremely small screens, adjust further */
-    @media (max-width: 400px) {
-        .import-option {
-            padding: 8px 10px !important;
-        }
-        
-        .import-option-text {
-            font-size: 13.5px !important;
-        }
-        
-        .import-option-icon {
-            margin-right: 8px !important;
-            width: 20px !important;
-            height: 20px !important;
-        }
+        margin-right: 10px;
+        width: 22px;
+        height: 22px;
     }
 }
 
-/* ==================== UNIVERSAL BUTTON FIX ==================== */
-/* Apply to all screen sizes */
-.import-option {
-    display: flex !important;
-    align-items: center !important;
-    min-height: 48px !important;
-    padding: 12px 16px !important;
-    width: 100% !important;
-}
-
-.import-option-icon {
-    flex-shrink: 0 !important;
-    margin-right: 12px !important;
-    width: 24px !important;
-    height: 24px !important;
-}
-
-/* CRITICAL FIX: This enables proper text truncation */
-.import-option-text {
-    flex: 1 !important;
-    min-width: 0 !important; /* This is essential for text truncation */
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    text-align: left !important;
-}
-
-/* ==================== MODAL BODY SCROLLING FIX ==================== */
-/* Ensure modal body can scroll properly */
-.popout-modal-body {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding-bottom: 20px !important; /* Space for last button */
-    min-height: 0 !important; /* Important for flex children */
-}
-
-/* Container for the buttons */
-.import-options-container {
-    padding-bottom: 8px !important;
-}
-
-.import-option-text {
-    border: 1px solid red !important;
-    min-width: 0 !important; /* This should fix the truncation */
-}
-
-/* ==================== FIX FOR MEDIUM SCREENS (641px-900px) ==================== */
-@media (min-width: 641px) and (max-width: 900px) {
-    #import-receipts-modal.popout-modal {
-        align-items: flex-start !important;
-        padding-top: 0 !important; /* Remove padding at modal level */
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin-top: 0 !important;
-        margin-bottom: auto !important;
-        max-height: 100vh !important; /* Use full viewport height */
-        transform: translateY(0) !important; /* Remove any vertical centering */
-        top: 0 !important;
-        position: relative !important;
-    }
-    
-    /* Restore header gradient */
-    #import-receipts-modal .popout-modal-header {
-        padding-top: 16px !important;
-        padding-bottom: 16px !important;
-        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
-        color: white !important;
-        margin-top: 0 !important;
-    }
-    
-    /* Ensure modal takes full height */
-    #import-receipts-modal .popout-modal-body {
-        max-height: calc(100vh - 70px) !important; /* Adjust based on header height */
-        overflow-y: auto !important;
-    }
-}
-
-/* ==================== FIX FOR SMALL SCREENS (≤640px) ==================== */
-@media (max-width: 640px) {
-    #import-receipts-modal.popout-modal {
-        padding: 0 !important;
-        align-items: flex-start !important;
-        background-color: rgba(0, 0, 0, 0.5) !important; /* Restore backdrop */
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin: 0 !important;
-        width: 100% !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
-        border-radius: 0 !important; /* Full screen on mobile */
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        transform: none !important;
-    }
-    
-    /* RESTORE HEADER GRADIENT ON MOBILE */
-    #import-receipts-modal .popout-modal-header {
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 10 !important;
-        background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%) !important;
-        color: white !important;
-        padding-top: 20px !important; /* Extra padding for status bar */
-        padding-bottom: 16px !important;
-        margin: 0 !important;
-        border-bottom: none !important; /* Remove border since we have gradient */
-    }
-    
-    /* Header text styling */
-    #import-receipts-modal .popout-modal-header h2 {
-        color: white !important;
-        font-weight: 600 !important;
-        margin: 0 !important;
-    }
-    
-    /* Close button styling for gradient header */
-    #import-receipts-modal .popout-modal-header .close-button {
-        color: white !important;
-        background: rgba(255, 255, 255, 0.2) !important;
-        border: none !important;
-    }
-    
-    /* Modal body adjustments */
-    #import-receipts-modal .popout-modal-body {
-        padding-top: 8px !important;
-        padding-bottom: 30px !important;
-        height: calc(100vh - 80px) !important; /* Account for header */
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-    }
-}
-
-/* ==================== BUTTON TEXT FIX (ALL SCREENS) ==================== */
-.import-option {
-    display: flex !important;
-    align-items: center !important;
-    min-height: 48px !important;
-    padding: 12px 16px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-.import-option-icon {
-    flex-shrink: 0 !important;
-    margin-right: 12px !important;
-    width: 24px !important;
-    height: 24px !important;
-}
-
-/* CRITICAL: Proper text truncation */
-.import-option-text {
-    flex: 1 1 0% !important; /* Use 0% as basis */
-    min-width: 0 !important; /* Essential for text truncation */
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    text-align: left !important;
-    font-size: 16px !important;
-}
-
-/* Alternative for very small text - use word break */
+/* Alternative text handling for extremely small screens */
 @media (max-width: 360px) {
     .import-option-text {
-        font-size: 14px !important;
-        white-space: normal !important;
-        word-break: break-word !important;
-        line-height: 1.3 !important;
-    }
-    
-    .import-option {
-        padding: 10px 12px !important;
-        min-height: 44px !important;
-    }
-    
-    .import-option-icon {
-        margin-right: 10px !important;
-        width: 22px !important;
-        height: 22px !important;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.3;
     }
 }
 
-/* ==================== ENSURE MODAL CONTENT STRUCTURE ==================== */
-.popout-modal-content {
-    display: flex !important;
-    flex-direction: column !important;
-    max-height: 100vh !important;
+/* ==================== SCROLLING FIXES ==================== */
+/* Ensures last button is visible when scrolling */
+
+.popout-modal-body {
+    padding-bottom: 30px;
+}
+
+.import-options-container {
+    padding-bottom: 8px;
+}
+
+/* ==================== IMPORT RECEIPTS MODAL SPECIFIC FIXES ==================== */
+/* Only apply these fixes to the specific modal if needed */
+
+#import-receipts-modal .popout-modal-header {
+    /* Add any specific header styles here if different from base */
+}
+
+/* Ensure proper scrolling in import receipts modal */
+#import-receipts-modal .popout-modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ==================== MEDIUM SCREEN HEADER POSITION FIX ==================== */
+/* Additional fix for medium screens if header is still too low */
+
+@media (min-width: 641px) and (max-width: 900px) {
+    #import-receipts-modal.popout-modal {
+        align-items: flex-start;
+        padding-top: 5px;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin-top: 0;
+        max-height: calc(100vh - 10px);
+    }
+}
+
+/* ==================== SMALL SCREEN OPTIMIZATIONS ==================== */
+/* Additional optimizations for very small screens */
+
+@media (max-width: 640px) {
+    #import-receipts-modal.popout-modal {
+        padding: 0;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+    
+    #import-receipts-modal .popout-modal-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding-top: 20px;
+    }
+}
+
+/* ==================== DEBUG HELPERS (REMOVE IN PRODUCTION) ==================== */
+/*
+.import-option-text {
+    border: 1px solid red;
 }
 
 .popout-modal-header {
-    flex-shrink: 0 !important; /* Don't let header shrink */
+    background-color: rgba(255, 0, 0, 0.1);
 }
-
-.popout-modal-body {
-    flex: 1 !important;
-    min-height: 0 !important; /* Allow body to shrink */
-    overflow-y: auto !important;
-}
-
-/* ==================== FIX HEADER POSITION WITHOUT CHANGING STYLES ==================== */
-
-/* MEDIUM SCREENS (641px-900px) - Fix positioning only */
-@media (min-width: 641px) and (max-width: 900px) {
-    #import-receipts-modal.popout-modal {
-        align-items: flex-start !important;
-        padding-top: 0 !important;
-        justify-content: flex-start !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin-top: 0 !important;
-        transform: translateY(0) !important;
-        position: relative !important;
-        top: 0 !important;
-        align-self: flex-start !important;
-    }
-    
-    /* Remove any top margin/padding that pushes header down */
-    #import-receipts-modal .popout-modal-header {
-        margin-top: 0 !important;
-        padding-top: 16px !important; /* Keep original padding, just ensure no extra space above */
-    }
-}
-
-/* SMALL SCREENS (≤640px) - Fix positioning only */
-@media (max-width: 640px) {
-    #import-receipts-modal.popout-modal {
-        align-items: flex-start !important;
-        padding-top: 0 !important;
-        justify-content: flex-start !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        margin-top: 0 !important;
-        max-height: 100vh !important;
-        align-self: flex-start !important;
-    }
-    
-    /* For full-screen mobile experience */
-    #import-receipts-modal.popout-modal {
-        padding: 0 !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        width: 100% !important;
-        height: 100vh !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
-    }
-    
-    /* Ensure header sticks to top */
-    #import-receipts-modal .popout-modal-header {
-        margin-top: 0 !important;
-        padding-top: 20px !important; /* Adjust for mobile status bar */
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 100 !important;
-    }
-}
-
-/* ==================== BUTTON TEXT FIX ==================== */
-/* Keep text truncation fix but don't affect gradient */
-
-.import-option-text {
-    flex: 1 !important;
-    min-width: 0 !important; /* This fixes text truncation */
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-/* Alternative for very small screens */
-@media (max-width: 400px) {
-    .import-option-text {
-        font-size: 14px !important;
-    }
-    
-    /* Option: allow text to wrap if truncation still happens */
-    .import-option-text.truncated-fix {
-        white-space: normal !important;
-        word-break: break-word !important;
-        line-height: 1.3 !important;
-    }
-}
-
-/* ==================== SCROLLING FIX ==================== */
-/* Ensure last button is visible */
-.popout-modal-body {
-    padding-bottom: 30px !important; /* Space for last button */
-    overflow-y: auto !important;
-}
-
-/* ==================== MINIMAL FIX VERSION ==================== */
-/* If above doesn't work, try this ultra-minimal version */
-
-@media (max-width: 900px) {
-    /* ONE LINE FIX: Just move modal to top */
-    #import-receipts-modal.popout-modal {
-        align-items: flex-start !important;
-        padding-top: 0 !important;
-    }
-    
-    /* Remove any vertical centering */
-    #import-receipts-modal .popout-modal-content {
-        margin-top: 0 !important;
-        top: 0 !important;
-        transform: none !important;
-    }
-    
-    /* Remove any space above header */
-    #import-receipts-modal .popout-modal-header {
-        margin-top: 0 !important;
-    }
-}
-
-/* For mobile full-screen */
-@media (max-width: 640px) {
-    #import-receipts-modal.popout-modal {
-        padding: 0 !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        height: 100vh !important;
-        max-height: 100vh !important;
-        border-radius: 0 !important;
-    }
+*/
 }
             </style>
 
