@@ -237,6 +237,247 @@ const IncomeExpensesModule = {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
+/* Add to your existing CSS in renderModule() */
+
+/* Fix camera controls button overflow */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 16px;
+    flex-wrap: wrap;
+}
+
+.camera-controls .btn {
+    min-width: 120px;
+    max-width: 180px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px 12px;
+}
+
+/* Specifically for the switch camera button */
+#switch-camera {
+    flex: 1;
+    min-width: 140px;
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+    .camera-controls {
+        gap: 8px;
+    }
+    
+    .camera-controls .btn {
+        min-width: 110px;
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    
+    .camera-controls .btn .btn-icon {
+        font-size: 16px;
+    }
+}
+
+/* Ensure button text doesn't wrap */
+.camera-controls .btn-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 80px;
+}
+
+/* ==================== FIXED CAMERA BUTTON OVERFLOW ==================== */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 16px;
+    flex-wrap: wrap;
+}
+
+.camera-controls .btn {
+    min-width: 120px;
+    max-width: 160px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 8px 12px;
+    flex: 1;
+}
+
+.camera-controls .btn-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-align: center;
+    min-width: 0; /* Allow text to shrink */
+}
+
+.camera-controls .btn-icon {
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+/* Specific button adjustments */
+#switch-camera .btn-text {
+    max-width: 80px;
+}
+
+#capture-photo .btn-text {
+    max-width: 70px;
+}
+
+#cancel-camera .btn-text {
+    max-width: 60px;
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+    .camera-controls {
+        gap: 8px;
+        padding: 12px;
+    }
+    
+    .camera-controls .btn {
+        min-width: 100px;
+        max-width: 140px;
+        height: 40px;
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    
+    .camera-controls .btn-icon {
+        font-size: 16px;
+    }
+    
+    .camera-controls .btn-text {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .camera-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .camera-controls .btn {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+/* ==================== FIXED MODAL FOOTER ==================== */
+.popout-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-top: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.popout-modal-footer .btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#cancel-import-receipts {
+    min-width: 100px;
+    max-width: 120px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    flex: 1;
+}
+
+#cancel-import-receipts:hover {
+    border-color: var(--text-secondary);
+    background: var(--glass-bg-hover);
+}
+
+#process-receipts-btn {
+    min-width: 140px;
+    max-width: 180px;
+    background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+    border: none;
+    position: relative;
+    flex: 1;
+    padding-right: 20px; /* Extra space for badge */
+}
+
+#process-receipts-btn:hover {
+    background: linear-gradient(135deg, #4f46e5, var(--primary-color));
+    transform: translateY(-2px);
+}
+
+#process-receipts-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: white;
+    color: var(--primary-color);
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Responsive modal footer */
+@media (max-width: 640px) {
+    .popout-modal-footer {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .popout-modal-footer .btn {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    
+    #process-receipts-btn {
+        order: -1; /* Process button first on mobile */
+    }
+    
+    #process-receipts-count {
+        top: -6px;
+        right: -6px;
+        font-size: 10px;
+        padding: 1px 5px;
+    }
+}
             </style>
 
             <div class="module-container">
@@ -356,7 +597,7 @@ const IncomeExpensesModule = {
             <div id="import-receipts-modal" class="popout-modal hidden">
                 <div class="popout-modal-content" style="max-width: 800px;">
                     <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '(Firebase)' : '(Local)'}</h3>
+                        <h3 class="popout-modal-title">📥 Import Receipts ${this.isFirebaseAvailable ? '()' : '(Local)'}</h3>
                         <button class="popout-modal-close" id="close-import-receipts">&times;</button>
                     </div>
                     <div class="popout-modal-body">
@@ -364,16 +605,22 @@ const IncomeExpensesModule = {
                             <!-- Content loaded dynamically -->
                         </div>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                    <div class="popout-modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; gap: 16px;">
+                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; max-width: 120px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Cancel</span>
+                        </button>
+                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none; flex: 1; max-width: 180px; display: flex; align-items: center; justify-content: center; gap: 8px; position: relative;">
                             <span class="btn-icon">⚡</span>
                             <span class="btn-text">Process Receipts</span>
+                            <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: white; color: var(--primary-color); border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: 600; border: 2px solid var(--primary-color);">
+                                0
+                            </span>
                         </button>
                     </div>
                 </div>
             </div>
-
+            
             <!-- Transaction Modal -->
             <div id="transaction-modal" class="popout-modal hidden">
                 <div class="popout-modal-content" style="max-width: 600px;">
@@ -656,7 +903,50 @@ const IncomeExpensesModule = {
         this.updateReceiptQueueUI();
     },
 
-   // ==================== CAMERA METHODS ====================
+      // ==================== ADD THIS METHOD ====================
+updateProcessReceiptsButton() {
+    console.log('🔄 Updating process receipts button...');
+    
+    const processBtn = document.getElementById('process-receipts-btn');
+    const processCount = document.getElementById('process-receipts-count');
+    
+    if (!processBtn || !processCount) {
+        console.warn('❌ Process button elements not found');
+        return;
+    }
+    
+    // Count pending receipts
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const pendingCount = pendingReceipts.length;
+    
+    console.log(`📊 Found ${pendingCount} pending receipts`);
+    
+    if (pendingCount > 0) {
+        // Show the button
+        processBtn.style.display = 'flex';
+        processCount.textContent = pendingCount;
+        
+        // Add tooltip
+        processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
+        
+        // Adjust badge size for larger numbers
+        if (pendingCount > 9) {
+            processCount.style.padding = '2px 5px';
+            processCount.style.fontSize = '10px';
+        } else if (pendingCount > 99) {
+            processCount.textContent = '99+';
+            processCount.style.padding = '2px 4px';
+            processCount.style.fontSize = '9px';
+        }
+        
+        console.log(`✅ Process button updated: ${pendingCount} pending receipts`);
+    } else {
+        // Hide the button
+        processBtn.style.display = 'none';
+        console.log('✅ No pending receipts, process button hidden');
+    }
+},
+    
 // ==================== CAMERA METHODS - IMPROVED VERSION ====================
 initializeCamera() {
     console.log('📷 Initializing camera...');
@@ -803,7 +1093,6 @@ initializeCamera() {
     }
 },
 
-// ==================== CAMERA MANAGEMENT METHODS ====================
 // ==================== CAMERA MANAGEMENT METHODS - FIXED ====================
 capturePhoto() {
     const video = document.getElementById('camera-preview');
@@ -1040,7 +1329,7 @@ showUploadInterfaceFromCamera() {
         });
     }
 },
-    
+
 // ==================== MODAL CONTROL METHODS ====================
 showImportReceiptsModal() {
     console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
@@ -1066,6 +1355,9 @@ showImportReceiptsModal() {
     
     // Setup handlers
     this.setupImportReceiptsHandlers();
+    
+    // ADD THIS LINE: Update the process receipts button
+    this.updateProcessReceiptsButton();
     
     // Setup DIRECT upload handlers after a short delay
     setTimeout(() => {
@@ -1129,11 +1421,17 @@ showImportReceiptsModal() {
                 }
             });
         }
+        
+        // ADD THIS: Update the process button again after handlers are set up
+        setTimeout(() => {
+            this.updateProcessReceiptsButton();
+        }, 200);
+        
     }, 100);
     
     console.log('✅ Modal should now be visible');
 },
-
+    
 renderImportReceiptsModal() {
     return `
         <div class="import-receipts-container">
@@ -1310,6 +1608,32 @@ setupImportReceiptsHandlers() {
         this.showNotification('Receipts list refreshed', 'success');
     });
     
+    // ADD THIS: Process receipts button handler
+    this.setupButton('process-receipts-btn', () => {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        
+        if (pendingReceipts.length === 0) {
+            this.showNotification('No pending receipts to process', 'info');
+            return;
+        }
+        
+        if (pendingReceipts.length === 1) {
+            this.processSingleReceipt(pendingReceipts[0].id);
+        } else {
+            // Show confirmation for multiple receipts
+            if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+                this.showNotification(`Processing ${pendingReceipts.length} receipts...`, 'info');
+                
+                // Process them one by one
+                pendingReceipts.forEach((receipt, index) => {
+                    setTimeout(() => {
+                        this.processSingleReceipt(receipt.id);
+                    }, index * 500); // Stagger processing
+                });
+            }
+        }
+    });
+    
     // Setup upload handlers
     this.setupUploadHandlers();
 },
@@ -1451,7 +1775,15 @@ hideTransactionModal() {
 hideImportReceiptsModal() {
     const modal = document.getElementById('import-receipts-modal');
     if (modal) modal.classList.add('hidden');
+    
+    // Stop camera
     this.stopCamera();
+    
+    // UPDATE: Reset process button
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn) {
+        processBtn.style.display = 'none';
+    }
 },
 
 hideAllModals() {
@@ -1486,6 +1818,7 @@ showAddExpense() {
 
 saveTransaction() {
     console.log('Saving transaction...');
+    console.log('Current receipt preview:', this.receiptPreview);
     
     // Get form values
     const id = document.getElementById('transaction-id')?.value || Date.now();
@@ -1521,6 +1854,8 @@ saveTransaction() {
             uploadedAt: this.receiptPreview.uploadedAt,
             status: 'attached'
         };
+        
+        console.log('Attaching receipt to transaction:', receiptData);
     }
     
     const transactionData = {
@@ -1535,6 +1870,8 @@ saveTransaction() {
         notes,
         receipt: receiptData
     };
+    
+    console.log('Transaction data to save:', transactionData);
     
     // Check if editing existing transaction
     const existingIndex = this.transactions.findIndex(t => t.id == id);
@@ -1552,6 +1889,11 @@ saveTransaction() {
         });
         
         this.showNotification('Transaction updated successfully!', 'success');
+        
+        // If this was from a pending receipt, mark it as processed
+        if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
+            this.markReceiptAsProcessed(this.receiptPreview.id);
+        }
     } else {
         // Add new
         transactionData.id = transactionData.id || Date.now();
@@ -1566,11 +1908,11 @@ saveTransaction() {
         });
         
         this.showNotification('Transaction saved successfully!', 'success');
-    }
-    
-    // If this was from a pending receipt, mark it as processed
-    if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
-        this.markReceiptAsProcessed(this.receiptPreview.id);
+        
+        // If this was from a pending receipt, mark it as processed
+        if (this.receiptPreview?.id && this.receiptPreview.id.startsWith('receipt_')) {
+            this.markReceiptAsProcessed(this.receiptPreview.id);
+        }
     }
     
     // Save to localStorage
@@ -1584,10 +1926,13 @@ saveTransaction() {
     this.updateTransactionsList();
     this.updateCategoryBreakdown();
     
+    // ADD THIS: Update the process button (in case modal is open)
+    this.updateProcessReceiptsButton();
+    
     // Close modal
     this.hideTransactionModal();
 },
-
+    
 editTransaction(transactionId) {
     console.log('Editing transaction:', transactionId);
     const transaction = this.transactions.find(t => t.id == transactionId);
@@ -1832,7 +2177,6 @@ clearReceiptPreview() {
     if (fileInput) fileInput.value = '';
 },
 
-// ==================== BULK FILE UPLOAD METHODS ====================
 // ==================== BULK FILE UPLOAD METHODS - FIXED VERSION ====================
 handleFileUpload(files) {
     console.log('=== HANDLE FILE UPLOAD CALLED ===');
@@ -1904,6 +2248,9 @@ handleFileUpload(files) {
             if (!cancelled && processedFiles > 0) {
                 this.showNotification(`${processedFiles} receipt(s) uploaded successfully!`, 'success');
                 this.updateReceiptQueueUI();
+                
+                // ADD THIS LINE: Update the process receipts button
+                this.updateProcessReceiptsButton();
             }
             
             // Reset upload task
@@ -2195,6 +2542,9 @@ processSingleReceipt(receiptId) {
     setTimeout(() => {
         this.prefillFromReceipt(receipt);
     }, 100);
+
+    // ADD THIS: Update the process button
+    this.updateProcessReceiptsButton();
 },
 
 prefillFromReceipt(receipt) {
@@ -2376,6 +2726,9 @@ deleteReceipt(receiptId, deleteFromStorage = true) {
         // Update UI
         this.updateReceiptQueueUI();
         
+        // ADD THIS: Update the process button
+        this.updateProcessReceiptsButton();
+        
         if (deleteSuccessful) {
             this.showNotification('Receipt deleted successfully', 'success');
         }
@@ -2385,7 +2738,7 @@ deleteReceipt(receiptId, deleteFromStorage = true) {
         this.showNotification('Failed to delete receipt', 'error');
     }
 },
-
+    
 markReceiptAsProcessed(receiptId) {
     console.log(`Marking receipt ${receiptId} as processed...`);
     
@@ -2419,10 +2772,13 @@ markReceiptAsProcessed(receiptId) {
         // Update UI
         this.updateReceiptQueueUI();
         
+        // ADD THIS: Update the process button
+        this.updateProcessReceiptsButton();
+        
         this.showNotification('Receipt marked as processed', 'success');
     }
 },
-
+    
 // ==================== DATA CALCULATION METHODS ====================
 calculateStats() {
     const income = this.transactions.filter(t => t.type === 'income')
