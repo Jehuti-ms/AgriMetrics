@@ -668,6 +668,7 @@ const IncomeExpensesModule = {
    // ==================== CAMERA METHODS ====================
 initializeCamera() {
     console.log('📷 Initializing camera...');
+    console.log('🎯 initializeCamera() WAS CALLED - CHECK CONSOLE FOR THIS MESSAGE');
     
     try {
         const video = document.getElementById('camera-preview');
