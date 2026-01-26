@@ -55,6 +55,9 @@ initialize() {
     
     // Load receipts with Firebase fallback
     this.loadReceiptsFromFirebase();
+
+    // Setup global click handler for receipts
+    this.setupReceiptActionListeners();
     
     // Process any pending syncs if Firebase is available
     if (this.isFirebaseAvailable) {
@@ -65,7 +68,7 @@ initialize() {
             this.syncLocalTransactionsToFirebase();
         }, 3000); // Wait 3 seconds to ensure UI is ready
     }
-    
+
     this.renderModule();
     this.initialized = true;
     
@@ -3427,13 +3430,12 @@ renderRecentReceiptsList() {
         .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
     
     return `
-        <div class="receipts-grid">
+        <div class="receipts-grid" id="recent-receipts-grid">
             ${recentReceipts.map(receipt => {
-                const isNew = Date.now() - new Date(receipt.uploadedAt).getTime() < 30000; // < 30 seconds old
+                const isNew = Date.now() - new Date(receipt.uploadedAt).getTime() < 30000;
                 
                 return `
-                    <div class="receipt-card ${isNew ? 'new-receipt' : ''}" data-id="${receipt.id}" 
-                         style="${isNew ? 'border: 2px solid #10b981; animation: pulse 2s infinite;' : ''}">
+                    <div class="receipt-card ${isNew ? 'new-receipt' : ''}" data-receipt-id="${receipt.id}">
                         <div class="receipt-preview">
                             ${receipt.type?.startsWith('image/') ? 
                                 `<img src="${receipt.downloadURL}" alt="${receipt.name}" 
@@ -3447,17 +3449,22 @@ renderRecentReceiptsList() {
                             <div class="receipt-meta">
                                 <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
                                 <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
-                                ${isNew ? `<span class="new-badge" style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">NEW</span>` : ''}
+                                ${isNew ? `<span class="new-badge">NEW</span>` : ''}
                             </div>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}" 
+                            <button class="btn btn-sm btn-outline process-btn" 
+                                    data-action="process" 
+                                    data-receipt-id="${receipt.id}"
                                     style="white-space: nowrap; padding: 6px 12px;">
                                 🔍 Process
                             </button>
-                            <button class="btn btn-sm btn-danger delete-receipt-btn" data-id="${receipt.id}" 
-                                    style="padding: 6px 12px;" title="Delete receipt">
-                                🗑️
+                            <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                    data-action="delete" 
+                                    data-receipt-id="${receipt.id}"
+                                    style="padding: 6px 12px;" 
+                                    title="Delete receipt">
+                                🗑️ Delete
                             </button>
                         </div>
                     </div>
@@ -3479,9 +3486,9 @@ renderPendingReceiptsList(receipts) {
     }
 
     return `
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
             ${receipts.map(receipt => `
-                <div class="pending-receipt-item" data-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
                     <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
                         <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
                         <div class="receipt-details">
@@ -3504,11 +3511,18 @@ renderPendingReceiptsList(receipts) {
                                    onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
                             <span class="btn-icon">👁️</span>
                         </a>
-                        <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
+                        <button class="btn btn-sm btn-primary process-receipt-btn" 
+                                data-action="process" 
+                                data-receipt-id="${receipt.id}" 
+                                style="padding: 6px 12px;">
                             <span class="btn-icon">🔍</span>
                             <span class="btn-text">Process</span>
                         </button>
-                        <button class="btn btn-sm btn-danger delete-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;" title="Delete receipt">
+                        <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                data-action="delete" 
+                                data-receipt-id="${receipt.id}" 
+                                style="padding: 6px 12px;" 
+                                title="Delete receipt">
                             <span class="btn-icon">🗑️</span>
                         </button>
                     </div>
@@ -3556,31 +3570,53 @@ updateReceiptQueueUI() {
 },
 
 setupReceiptActionListeners() {
-    // Process buttons
-    document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const receiptId = e.currentTarget.dataset.id;
-            this.processSingleReceipt(receiptId);
-        });
-    });
-
-    // Delete buttons
-    document.querySelectorAll('.delete-receipt-btn, .remove-receipt-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const receiptId = e.currentTarget.dataset.id;
-            this.confirmAndDeleteReceipt(receiptId);
-        });
-    });
+    console.log('🔧 Setting up receipt action listeners...');
     
-    // Remove buttons
-    document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const receiptId = e.currentTarget.dataset.id;
-            this.deleteReceipt(receiptId, true);
-        });
-    });
+    // Remove any existing listeners first
+    document.removeEventListener('click', this.handleReceiptClick);
+    
+    // Create a bound handler function
+    this.handleReceiptClick = this.handleReceiptClick.bind(this);
+    
+    // Add event delegation
+    document.addEventListener('click', this.handleReceiptClick);
 },
 
+handleReceiptClick(e) {
+    // Process button click
+    if (e.target.closest('.process-receipt-btn, .process-btn')) {
+        const btn = e.target.closest('.process-receipt-btn, .process-btn');
+        const receiptId = btn.dataset.id;
+        console.log('🔍 Process button clicked:', receiptId);
+        e.stopPropagation();
+        e.preventDefault();
+        this.processSingleReceipt(receiptId);
+        return;
+    }
+    
+    // Delete button click
+    if (e.target.closest('.delete-receipt-btn')) {
+        const btn = e.target.closest('.delete-receipt-btn');
+        const receiptId = btn.dataset.id;
+        console.log('🗑️ Delete button clicked:', receiptId);
+        e.stopPropagation();
+        e.preventDefault();
+        this.confirmAndDeleteReceipt(receiptId);
+        return;
+    }
+    
+    // Remove button click (for transaction modal)
+    if (e.target.closest('.remove-receipt-btn')) {
+        const btn = e.target.closest('.remove-receipt-btn');
+        const receiptId = btn.dataset.id;
+        console.log('🗑️ Remove button clicked:', receiptId);
+        e.stopPropagation();
+        e.preventDefault();
+        this.deleteReceipt(receiptId, true);
+        return;
+    }
+},
+    
     confirmAndDeleteReceipt(receiptId) {
     const receipt = this.receiptQueue.find(r => r.id === receiptId);
     if (!receipt) {
