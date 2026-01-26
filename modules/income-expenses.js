@@ -1542,108 +1542,190 @@ capturePhoto() {
     }
     
     if (!this.cameraStream || video.paused || video.readyState < 2) {
-        console.error('Camera not ready:', {
-            hasStream: !!this.cameraStream,
-            isPaused: video.paused,
-            readyState: video.readyState
-        });
+        console.error('Camera not ready');
         this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
         return;
     }
     
-    // Set canvas dimensions to match video
+    // Set canvas dimensions
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     
-    // Draw video frame to canvas
     const context = canvas.getContext('2d');
     
     try {
-        // Clear canvas first
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw current video frame
+        // Capture frame
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Add visual feedback
         if (status) status.textContent = 'Processing photo...';
         
-        // Add capture flash effect
+        // Flash effect
         video.style.filter = 'brightness(150%) contrast(120%)';
         setTimeout(() => {
             video.style.filter = '';
         }, 200);
         
-        // Convert to blob with high quality for receipts
-        canvas.toBlob(async (blob) => {
+        // Convert to blob
+        canvas.toBlob((blob) => {
             if (blob) {
-                // Create file object
                 const timestamp = Date.now();
                 const file = new File([blob], `receipt_${timestamp}.jpg`, {
                     type: 'image/jpeg',
                     lastModified: timestamp
                 });
                 
-                // Show processing status
                 if (status) status.textContent = 'Saving photo...';
                 
-                // Show a loading indicator
+                // Show loading
                 this.showCaptureLoading(true);
                 
-                try {
-                    // Upload receipt
-                    const receipt = await this.uploadReceiptToFirebase(file);
-                    console.log('✅ Photo uploaded successfully:', receipt);
-                    
-                    // Add to receipt queue
-                    this.receiptQueue.unshift(receipt); // Add to beginning
-                    
-                    // Save to localStorage
-                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                    localReceipts.unshift(receipt);
-                    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-                    
-                    if (status) status.textContent = 'Photo saved!';
-                    
-                    // Show success message with preview
-                    this.showCaptureSuccess(receipt);
-                    
-                    // Update the receipts list in the modal
-                    this.updateModalReceiptsList();
-                    
-                    // Update the main UI receipt count
-                    this.updateReceiptQueueUI();
-                    
-                    // Show notification
-                    this.showNotification('Receipt photo captured successfully!', 'success');
-                    
-                    // Switch back to upload interface after a short delay
-                    setTimeout(() => {
-                        this.showUploadInterface();
-                    }, 2000);
-                    
-                } catch (error) {
-                    console.error('❌ Error uploading photo:', error);
-                    if (status) status.textContent = 'Upload failed';
-                    this.showCaptureLoading(false);
-                    this.showNotification(`Failed to upload photo: ${error.message}`, 'error');
-                }
-            } else {
-                console.error('❌ Failed to create blob from canvas');
-                if (status) status.textContent = 'Capture failed';
-                this.showCaptureLoading(false);
-                this.showNotification('Failed to capture photo', 'error');
+                // Use LOCAL STORAGE ONLY (bypass Firebase CORS)
+                this.savePhotoToLocalStorage(file, timestamp)
+                    .then(receipt => {
+                        console.log('✅ Photo saved locally:', receipt);
+                        
+                        if (status) status.textContent = 'Photo saved!';
+                        
+                        // Show success with preview
+                        this.showCaptureSuccess(receipt);
+                        
+                        // Update UI
+                        this.updateModalReceiptsList();
+                        this.updateReceiptQueueUI();
+                        
+                        this.showNotification('✅ Receipt photo saved locally!', 'success');
+                        
+                        // Try to upload to Firebase in background (silently)
+                        this.tryBackgroundFirebaseUpload(file, receipt);
+                        
+                        // Return to upload view
+                        setTimeout(() => {
+                            this.showCaptureLoading(false);
+                            this.showUploadInterface();
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('❌ Error saving photo:', error);
+                        if (status) status.textContent = 'Save failed';
+                        this.showCaptureLoading(false);
+                        this.showNotification('Failed to save photo', 'error');
+                    });
             }
-        }, 'image/jpeg', 0.9); // 90% quality for good balance
+        }, 'image/jpeg', 0.9);
         
     } catch (error) {
-        console.error('❌ Error capturing photo:', error);
+        console.error('❌ Capture error:', error);
         if (status) status.textContent = 'Error';
-        this.showCaptureLoading(false);
         this.showNotification('Failed to capture photo', 'error');
     }
 },
 
+savePhotoToLocalStorage(file, timestamp) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const receiptId = `camera_${timestamp}`;
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                downloadURL: e.target.result, // Data URL
+                size: file.size,
+                type: file.type,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                storageType: 'local',
+                source: 'camera',
+                metadata: {
+                    capturedAt: new Date().toISOString(),
+                    quality: 'high'
+                }
+            };
+            
+            // Store in memory
+            this.receiptQueue.unshift(receipt);
+            
+            // Store in localStorage
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            localReceipts.unshift(receipt);
+            localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+            
+            resolve(receipt);
+        };
+        
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+    });
+},
+
+tryBackgroundFirebaseUpload(file, localReceipt) {
+    // Try Firebase upload in background (don't show errors to user)
+    if (this.isFirebaseAvailable && window.storage) {
+        console.log('🔄 Attempting background Firebase upload...');
+        
+        const timestamp = Date.now();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        const storageRef = window.storage.ref();
+        const fileRef = storageRef.child(fileName);
+        
+        const uploadTask = fileRef.put(file);
+        
+        uploadTask.on('state_changed',
+            null, // No progress updates
+            (error) => {
+                // Silent fail - user doesn't see this
+                console.log('⚠️ Background Firebase upload failed (CORS):', error.message);
+            },
+            () => {
+                // Success!
+                uploadTask.snapshot.ref.getDownloadURL()
+                    .then(downloadURL => {
+                        console.log('✅ Background Firebase upload succeeded!');
+                        
+                        // Update the receipt with Firebase URL
+                        const updatedReceipt = {
+                            ...localReceipt,
+                            downloadURL: downloadURL,
+                            storageType: 'firebase',
+                            firebaseFileName: fileName,
+                            syncedAt: new Date().toISOString()
+                        };
+                        
+                        // Replace local with Firebase version
+                        this.updateReceiptInStorage(localReceipt.id, updatedReceipt);
+                    })
+                    .catch(() => {
+                        // Silent fail
+                        console.log('⚠️ Could not get Firebase URL');
+                    });
+            }
+        );
+    }
+},
+
+updateReceiptInStorage(oldId, newReceipt) {
+    // Update in memory
+    const index = this.receiptQueue.findIndex(r => r.id === oldId);
+    if (index > -1) {
+        this.receiptQueue[index] = newReceipt;
+    }
+    
+    // Update localStorage
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    const updatedReceipts = localReceipts.map(r => 
+        r.id === oldId ? newReceipt : r
+    );
+    localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+    
+    console.log('✅ Updated receipt with Firebase storage');
+    
+    // Update UI silently
+    this.updateModalReceiptsList();
+    this.updateReceiptQueueUI();
+},
+    
 // ==================== NEW HELPER METHODS ====================
 
 showCaptureLoading(show) {
