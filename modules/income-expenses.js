@@ -886,6 +886,22 @@ async loadData() {
 .import-options-container {
     padding-bottom: 8px;
 }
+   /* ====== Animation for photo capture ===== */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.new-receipt {
+    animation: pulse 2s infinite;
+}
+
+/* Success modal animation */
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
             </style>
 
             <div class="module-container">
@@ -1513,6 +1529,7 @@ initializeCamera() {
 },
 
 // ==================== CAMERA MANAGEMENT METHODS - FIXED ====================
+// ==================== FIXED CAMERA CAPTURE WITH FEEDBACK ====================
 capturePhoto() {
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
@@ -1558,7 +1575,7 @@ capturePhoto() {
         }, 200);
         
         // Convert to blob with high quality for receipts
-        canvas.toBlob((blob) => {
+        canvas.toBlob(async (blob) => {
             if (blob) {
                 // Create file object
                 const timestamp = Date.now();
@@ -1570,27 +1587,51 @@ capturePhoto() {
                 // Show processing status
                 if (status) status.textContent = 'Saving photo...';
                 
-                // Upload receipt
-                this.uploadReceiptToFirebase(file)
-                    .then((result) => {
-                        console.log('✅ Photo uploaded successfully:', result);
-                        
-                        if (status) status.textContent = 'Photo saved!';
-                        this.showNotification('Receipt photo captured successfully!', 'success');
-                        
-                        // Switch back to upload interface after a short delay
-                        setTimeout(() => {
-                            this.showUploadInterface();
-                        }, 1000);
-                    })
-                    .catch(error => {
-                        console.error('❌ Error uploading photo:', error);
-                        if (status) status.textContent = 'Upload failed';
-                        this.showNotification(`Failed to upload photo: ${error.message}`, 'error');
-                    });
+                // Show a loading indicator
+                this.showCaptureLoading(true);
+                
+                try {
+                    // Upload receipt
+                    const receipt = await this.uploadReceiptToFirebase(file);
+                    console.log('✅ Photo uploaded successfully:', receipt);
+                    
+                    // Add to receipt queue
+                    this.receiptQueue.unshift(receipt); // Add to beginning
+                    
+                    // Save to localStorage
+                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                    localReceipts.unshift(receipt);
+                    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+                    
+                    if (status) status.textContent = 'Photo saved!';
+                    
+                    // Show success message with preview
+                    this.showCaptureSuccess(receipt);
+                    
+                    // Update the receipts list in the modal
+                    this.updateModalReceiptsList();
+                    
+                    // Update the main UI receipt count
+                    this.updateReceiptQueueUI();
+                    
+                    // Show notification
+                    this.showNotification('Receipt photo captured successfully!', 'success');
+                    
+                    // Switch back to upload interface after a short delay
+                    setTimeout(() => {
+                        this.showUploadInterface();
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('❌ Error uploading photo:', error);
+                    if (status) status.textContent = 'Upload failed';
+                    this.showCaptureLoading(false);
+                    this.showNotification(`Failed to upload photo: ${error.message}`, 'error');
+                }
             } else {
                 console.error('❌ Failed to create blob from canvas');
                 if (status) status.textContent = 'Capture failed';
+                this.showCaptureLoading(false);
                 this.showNotification('Failed to capture photo', 'error');
             }
         }, 'image/jpeg', 0.9); // 90% quality for good balance
@@ -1598,8 +1639,162 @@ capturePhoto() {
     } catch (error) {
         console.error('❌ Error capturing photo:', error);
         if (status) status.textContent = 'Error';
+        this.showCaptureLoading(false);
         this.showNotification('Failed to capture photo', 'error');
     }
+},
+
+// ==================== NEW HELPER METHODS ====================
+
+showCaptureLoading(show) {
+    // Create or remove loading overlay
+    let overlay = document.getElementById('capture-loading-overlay');
+    
+    if (show) {
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'capture-loading-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 10001;
+                color: white;
+            `;
+            overlay.innerHTML = `
+                <div class="spinner" style="width: 60px; height: 60px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <div style="margin-top: 20px; font-size: 18px; font-weight: bold;">Saving receipt...</div>
+                <div style="margin-top: 10px; font-size: 14px; opacity: 0.8;">Please wait</div>
+            `;
+            document.body.appendChild(overlay);
+        }
+    } else {
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+},
+
+showCaptureSuccess(receipt) {
+    // Show success preview modal
+    const successModal = document.createElement('div');
+    successModal.id = 'capture-success-modal';
+    successModal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        z-index: 10002;
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    // Get image preview if it's an image
+    let imagePreview = '';
+    if (receipt.type?.startsWith('image/')) {
+        imagePreview = `
+            <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb;">
+                <img src="${receipt.downloadURL}" 
+                     alt="Receipt preview" 
+                     style="width: 100%; max-height: 200px; object-fit: contain; background: #f8fafc;">
+            </div>
+        `;
+    }
+    
+    successModal.innerHTML = `
+        <style>
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -40%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        </style>
+        
+        <div style="animation: fadeIn 0.3s ease-out;">
+            <div style="font-size: 48px; color: #10b981; margin-bottom: 16px;">✅</div>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937;">Successfully Captured!</h3>
+            <p style="color: #6b7280; margin-bottom: 20px;">Your receipt has been saved and is ready to process.</p>
+            
+            ${imagePreview}
+            
+            <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: left;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: bold; color: #374151;">File:</span>
+                    <span style="color: #1f2937;">${receipt.name}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: bold; color: #374151;">Size:</span>
+                    <span style="color: #1f2937;">${this.formatFileSize(receipt.size || 0)}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: bold; color: #374151;">Status:</span>
+                    <span style="color: #f59e0b; font-weight: bold;">Pending</span>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="process-now-btn" style="background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1;">
+                    🔍 Process Now
+                </button>
+                <button id="close-success-modal" style="background: #f3f4f6; color: #374151; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1;">
+                    Done
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(successModal);
+    
+    // Add event listeners
+    document.getElementById('process-now-btn')?.addEventListener('click', () => {
+        successModal.remove();
+        this.processSingleReceipt(receipt.id);
+    });
+    
+    document.getElementById('close-success-modal')?.addEventListener('click', () => {
+        successModal.remove();
+    });
+    
+    // Auto-remove after 5 seconds if not clicked
+    setTimeout(() => {
+        if (document.body.contains(successModal)) {
+            successModal.remove();
+        }
+    }, 5000);
+},
+
+updateModalReceiptsList() {
+    // Update the recent receipts list in the modal
+    const recentList = document.getElementById('recent-receipts-list');
+    if (recentList) {
+        recentList.innerHTML = this.renderRecentReceiptsList();
+        // Re-attach event listeners
+        this.setupReceiptActionListeners();
+    }
+    
+    // Also update the pending receipts section in the main view
+    const pendingList = document.getElementById('pending-receipts-list');
+    if (pendingList) {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        if (pendingReceipts.length > 0) {
+            pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+            this.setupReceiptActionListeners();
+        }
+    }
+    
+    // Update the process receipts button in the modal
+    this.updateProcessReceiptsButton();
 },
     
 stopCamera() {
@@ -3109,32 +3304,45 @@ renderRecentReceiptsList() {
         `;
     }
     
+    // Get recent receipts (most recent first)
+    const recentReceipts = this.receiptQueue
+        .slice(0, 5)
+        .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+    
     return `
         <div class="receipts-grid">
-            ${this.receiptQueue.slice(0, 5).map(receipt => `
-                <div class="receipt-card" data-id="${receipt.id}">
-                    <div class="receipt-preview">
-                        ${receipt.type?.startsWith('image/') ? 
-                            `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy" style="max-width: 60px; max-height: 60px; border-radius: 4px;">` : 
-                            `<div class="file-icon" style="font-size: 24px;">📄</div>`
-                        }
-                    </div>
-                    <div class="receipt-info">
-                        <div class="receipt-name">${receipt.name}</div>
-                        <div class="receipt-meta">
-                            <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
-                            <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+            ${recentReceipts.map(receipt => {
+                const isNew = Date.now() - new Date(receipt.uploadedAt).getTime() < 30000; // < 30 seconds old
+                
+                return `
+                    <div class="receipt-card ${isNew ? 'new-receipt' : ''}" data-id="${receipt.id}" 
+                         style="${isNew ? 'border: 2px solid #10b981; animation: pulse 2s infinite;' : ''}">
+                        <div class="receipt-preview">
+                            ${receipt.type?.startsWith('image/') ? 
+                                `<img src="${receipt.downloadURL}" alt="${receipt.name}" 
+                                      loading="lazy" 
+                                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">` : 
+                                `<div class="file-icon" style="font-size: 24px;">📄</div>`
+                            }
                         </div>
+                        <div class="receipt-info">
+                            <div class="receipt-name">${receipt.name}</div>
+                            <div class="receipt-meta">
+                                <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
+                                <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                                ${isNew ? `<span class="new-badge" style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">NEW</span>` : ''}
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
+                            🔍 Process
+                        </button>
                     </div>
-                    <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
-                        🔍 Extract Information from Receipt
-                    </button>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 },
-
+    
 renderPendingReceiptsList(receipts) {
     if (receipts.length === 0) {
         return `
