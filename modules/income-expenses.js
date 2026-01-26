@@ -71,6 +71,9 @@ initialize() {
 
     this.renderModule();
     this.initialized = true;
+
+     // Check Firebase permissions
+    setTimeout(() => this.fixFirebasePermissions(), 2000);
     
     console.log('✅ Income & Expenses initialized');
     return true;
@@ -81,7 +84,6 @@ onThemeChange(theme) {
 },
 
 // ==================== NEW METHODS TO ADD ====================
-
 setupNetworkDetection() {
     // Store current network status
     this.isOnline = navigator.onLine;
@@ -164,8 +166,50 @@ async syncLocalTransactionsToFirebase() {
     }
 },
 
+// ==================== FIXED: LOAD DATA METHOD ====================
 async loadData() {
     console.log('Loading transactions...');
+    
+    // Clear any previous demo data
+    if (this.getDemoData) {
+        delete this.getDemoData;
+    }
+    
+    // Define demo data as a local function
+    const getDemoData = () => {
+        return [
+            {
+                id: 1,
+                date: new Date().toISOString().split('T')[0],
+                type: 'income',
+                category: 'sales',
+                amount: 1500,
+                description: 'Corn harvest sale',
+                paymentMethod: 'cash',
+                reference: 'INV001',
+                notes: 'First harvest of the season',
+                receipt: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                source: 'demo'
+            },
+            {
+                id: 2,
+                date: new Date().toISOString().split('T')[0],
+                type: 'expense',
+                category: 'feed',
+                amount: 300,
+                description: 'Chicken feed purchase',
+                paymentMethod: 'card',
+                reference: 'RC-001',
+                notes: 'Monthly feed supply',
+                receipt: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                source: 'demo'
+            }
+        ];
+    };
     
     try {
         let loadedFromFirebase = false;
@@ -173,9 +217,16 @@ async loadData() {
         // Try to load from Firebase first if available
         if (this.isFirebaseAvailable && window.db) {
             try {
+                // Check if user is authenticated
+                const user = window.firebase?.auth?.().currentUser;
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+                
                 const snapshot = await window.db.collection('transactions')
+                    .where('userId', '==', user.uid)
                     .orderBy('createdAt', 'desc')
-                    .limit(100) // Limit to reasonable number
+                    .limit(100)
                     .get();
                 
                 if (!snapshot.empty) {
@@ -211,7 +262,16 @@ async loadData() {
                 }
             } catch (firebaseError) {
                 console.warn('⚠️ Firebase load error:', firebaseError.message);
+                console.log('Error details:', firebaseError);
                 loadedFromFirebase = false;
+                
+                // Check if it's a permission error
+                if (firebaseError.message.includes('permission') || firebaseError.code === 'permission-denied') {
+                    this.showNotification(
+                        'Firebase permissions issue. Using local storage. Please update Firebase rules.',
+                        'warning'
+                    );
+                }
             }
         }
         
@@ -219,7 +279,7 @@ async loadData() {
         if (!loadedFromFirebase) {
             console.log('🔄 Falling back to localStorage');
             const saved = localStorage.getItem('farm-transactions');
-            this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+            this.transactions = saved ? JSON.parse(saved) : getDemoData();
             
             // Add source marker for local transactions
             this.transactions.forEach(t => {
@@ -235,11 +295,171 @@ async loadData() {
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
         // Ultimate fallback to demo data
-        this.transactions = this.getDemoData();
+        this.transactions = getDemoData();
         console.log('📝 Loaded demo transactions:', this.transactions.length);
     }
 },
 
+    // ==================== FIREBASE PERMISSIONS FIX ====================
+fixFirebasePermissions() {
+    if (!this.isFirebaseAvailable) return;
+    
+    console.log('🔧 Attempting to fix Firebase permissions...');
+    
+    // Create a sample transaction to test permissions
+    const testTransaction = {
+        id: `test_${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        type: 'income',
+        category: 'sales',
+        amount: 1.00,
+        description: 'Test transaction',
+        paymentMethod: 'cash',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        source: 'test',
+        test: true // Mark as test so we can clean it up
+    };
+    
+    // Try to save to Firebase
+    if (window.db) {
+        window.db.collection('transactions')
+            .doc(testTransaction.id.toString())
+            .set(testTransaction)
+            .then(() => {
+                console.log('✅ Firebase permissions working!');
+                // Clean up test transaction
+                window.db.collection('transactions')
+                    .doc(testTransaction.id.toString())
+                    .delete()
+                    .catch(() => {
+                        // Ignore cleanup errors
+                    });
+            })
+            .catch(error => {
+                console.error('❌ Firebase permissions error:', error.message);
+                
+                if (error.message.includes('permission')) {
+                    this.showNotification(
+                        '⚠️ Firebase permissions issue detected. ' +
+                        'Please update your Firebase rules. Using local storage for now.',
+                        'error',
+                        8000
+                    );
+                    
+                    // Show help for fixing permissions
+                    this.showFirebaseRulesHelp();
+                }
+            });
+    }
+},
+
+showFirebaseRulesHelp() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 20px;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; padding: 30px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin-top: 0; color: #dc2626;">⚠️ Firebase Permissions Required</h2>
+            
+            <p style="margin-bottom: 20px;">
+                Your Firebase rules are preventing access. Please update them:
+            </p>
+            
+            <div style="background: #f8fafc; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h4>📋 Firestore Rules:</h4>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /transactions/{transactionId} {
+      allow read, write: if request.auth != null;
+    }
+    match /receipts/{receiptId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre>
+            </div>
+            
+            <div style="background: #f8fafc; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h4>📁 Storage Rules:</h4>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</pre>
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="close-help-btn" style="padding: 10px 20px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer;">
+                    Close
+                </button>
+                <button id="copy-rules-btn" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    Copy Rules
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('close-help-btn').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    document.getElementById('copy-rules-btn').addEventListener('click', () => {
+        const rules = `Firestore Rules:
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /transactions/{transactionId} {
+      allow read, write: if request.auth != null;
+    }
+    match /receipts/{receiptId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+Storage Rules:
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}`;
+        
+        navigator.clipboard.writeText(rules)
+            .then(() => {
+                alert('✅ Rules copied to clipboard!');
+            })
+            .catch(() => {
+                alert('Failed to copy rules. Please copy them manually.');
+            });
+    });
+},
+    
 // ==================== ENHANCED RECEIPT LOADING ====================
 
 async loadReceiptsFromFirebase() {
@@ -397,37 +617,7 @@ async processFirebaseSyncQueue() {
     }
 },
     
-    // ==================== DATA MANAGEMENT ====================
-async loadData() {
-    console.log('Loading transactions...');
-    
-    // Try to load from Firebase first if available
-    if (this.isFirebaseAvailable && window.db) {
-        try {
-            const snapshot = await window.db.collection('transactions')
-                .orderBy('createdAt', 'desc')
-                .get();
-            
-            if (!snapshot.empty) {
-                this.transactions = snapshot.docs.map(doc => doc.data());
-                console.log('Loaded transactions from Firebase:', this.transactions.length);
-                
-                // Save to localStorage for offline use
-                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                return;
-            }
-        } catch (error) {
-            console.warn('Error loading from Firebase, using localStorage:', error);
-        }
-    }
-    
-    // Fallback to localStorage
-    const saved = localStorage.getItem('farm-transactions');
-    this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
-    console.log('Loaded transactions from localStorage:', this.transactions.length);
-},
-
-    // ==================== MAIN RENDER ====================
+  // ==================== MAIN RENDER ====================
     renderModule() {
         if (!this.element) return;
 
@@ -1279,6 +1469,7 @@ async loadData() {
         });
     },
 
+    
     // ==================== FIXED: LOAD RECEIPTS FROM FIREBASE ====================
     loadReceiptsFromFirebase() {
         console.log('Loading receipts from Firebase...');
@@ -1912,6 +2103,11 @@ updateModalReceiptsList() {
             this.setupReceiptActionListeners();
         }
     }
+
+    // ADD THIS: Re-attach direct listeners
+    setTimeout(() => {
+        this.setupDirectReceiptActionListeners();
+    }, 100);
     
     // Update the process receipts button in the modal
     this.updateProcessReceiptsButton();
@@ -2770,6 +2966,9 @@ async saveTransaction() {
         return;
     }
     
+    // Get current user ID
+    const userId = this.getCurrentUser();
+    
     // Create receipt object with proper structure
     let receiptData = null;
     if (this.receiptPreview) {
@@ -2797,6 +2996,7 @@ async saveTransaction() {
         reference,
         notes,
         receipt: receiptData,
+        userId: userId, // ADD THIS LINE
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
@@ -3460,8 +3660,8 @@ renderRecentReceiptsList() {
                                 🔍 Process
                             </button>
                             <button class="btn btn-sm btn-danger delete-receipt-btn" 
-                                    data-action="delete" 
                                     data-receipt-id="${receipt.id}"
+                                    data-action="delete"
                                     style="padding: 6px 12px;" 
                                     title="Delete receipt">
                                 🗑️ Delete
@@ -3519,8 +3719,8 @@ renderPendingReceiptsList(receipts) {
                             <span class="btn-text">Process</span>
                         </button>
                         <button class="btn btn-sm btn-danger delete-receipt-btn" 
-                                data-action="delete" 
                                 data-receipt-id="${receipt.id}" 
+                                data-action="delete"
                                 style="padding: 6px 12px;" 
                                 title="Delete receipt">
                             <span class="btn-icon">🗑️</span>
@@ -3567,6 +3767,11 @@ updateReceiptQueueUI() {
             `;
         }
     }
+    
+     // ADD THIS: Re-attach direct listeners
+    setTimeout(() => {
+        this.setupDirectReceiptActionListeners();
+    }, 100);
 },
 
 setupReceiptActionListeners() {
@@ -3578,54 +3783,96 @@ setupReceiptActionListeners() {
     // Create a bound handler function
     this.handleReceiptClick = this.handleReceiptClick.bind(this);
     
-    // Add event delegation
-    document.addEventListener('click', this.handleReceiptClick);
+    // Add event delegation - use capture phase to ensure it runs
+    document.addEventListener('click', this.handleReceiptClick, true);
+    
+    // Also add direct event listeners for better reliability
+    setTimeout(() => {
+        this.setupDirectReceiptActionListeners();
+    }, 500);
+},
+
+setupDirectReceiptActionListeners() {
+    console.log('🎯 Setting up direct receipt action listeners...');
+    
+    // Add direct listeners to all existing delete buttons
+    document.querySelectorAll('.delete-receipt-btn').forEach(button => {
+        const receiptId = button.dataset.receiptId || button.getAttribute('data-receipt-id');
+        if (receiptId) {
+            // Remove existing listeners by cloning
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            
+            newButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🗑️ Direct delete button clicked:', receiptId);
+                this.confirmAndDeleteReceipt(receiptId);
+            });
+        }
+    });
+    
+    // Also setup process buttons
+    document.querySelectorAll('.process-receipt-btn, .process-btn').forEach(button => {
+        const receiptId = button.dataset.receiptId || button.getAttribute('data-receipt-id');
+        if (receiptId) {
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            
+            newButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔍 Direct process button clicked:', receiptId);
+                this.processSingleReceipt(receiptId);
+            });
+        }
+    });
 },
 
 handleReceiptClick(e) {
-    // Process button click
-    if (e.target.closest('.process-receipt-btn, .process-btn')) {
-        const btn = e.target.closest('.process-receipt-btn, .process-btn');
-        const receiptId = btn.dataset.id;
-        console.log('🔍 Process button clicked:', receiptId);
-        e.stopPropagation();
-        e.preventDefault();
-        this.processSingleReceipt(receiptId);
+    // Try to find the closest button with receipt actions
+    let target = e.target;
+    
+    // Navigate up to find the button
+    while (target && target !== document) {
+        if (target.matches('.delete-receipt-btn, .process-receipt-btn, .process-btn, .remove-receipt-btn')) {
+            break;
+        }
+        target = target.parentElement;
+    }
+    
+    if (!target || target === document) return;
+    
+    // Get the receipt ID
+    let receiptId = target.dataset.id || target.getAttribute('data-receipt-id');
+    
+    // If still no ID, try to get from parent or sibling
+    if (!receiptId) {
+        const receiptCard = target.closest('[data-receipt-id]');
+        if (receiptCard) {
+            receiptId = receiptCard.dataset.receiptId;
+        }
+    }
+    
+    if (!receiptId) {
+        console.warn('No receipt ID found for button:', target);
         return;
     }
     
-    // Delete button click
-    if (e.target.closest('.delete-receipt-btn')) {
-        const btn = e.target.closest('.delete-receipt-btn');
-        const receiptId = btn.dataset.id;
-        console.log('🗑️ Delete button clicked:', receiptId);
-        e.stopPropagation();
-        e.preventDefault();
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Determine action based on button class
+    if (target.matches('.delete-receipt-btn')) {
+        console.log('🗑️ Delete button clicked via delegation:', receiptId);
         this.confirmAndDeleteReceipt(receiptId);
-        return;
+    } 
+    else if (target.matches('.process-receipt-btn, .process-btn')) {
+        console.log('🔍 Process button clicked via delegation:', receiptId);
+        this.processSingleReceipt(receiptId);
     }
-    
-    // Remove button click (for transaction modal)
-    if (e.target.closest('.remove-receipt-btn')) {
-        const btn = e.target.closest('.remove-receipt-btn');
-        const receiptId = btn.dataset.id;
-        console.log('🗑️ Remove button clicked:', receiptId);
-        e.stopPropagation();
-        e.preventDefault();
-        this.deleteReceipt(receiptId, true);
-        return;
-    }
-},
-    
-    confirmAndDeleteReceipt(receiptId) {
-    const receipt = this.receiptQueue.find(r => r.id === receiptId);
-    if (!receipt) {
-        this.showNotification('Receipt not found', 'error');
-        return;
-    }
-    
-    // Show confirmation dialog
-    if (confirm(`Are you sure you want to delete "${receipt.name}"?\n\nThis action cannot be undone.`)) {
+    else if (target.matches('.remove-receipt-btn')) {
+        console.log('🗑️ Remove button clicked via delegation:', receiptId);
         this.deleteReceiptFromAllSources(receiptId);
     }
 },
@@ -3700,7 +3947,120 @@ deleteReceiptFromAllSources(receiptId) {
         this.showNotification('Failed to delete receipt', 'error');
     }
 },
+
+confirmAndDeleteReceipt(receiptId) {
+    console.log(`🗑️ Confirming deletion for receipt: ${receiptId}`);
     
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    // Create a nicer confirmation dialog
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 20px;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 20px; padding: 30px; max-width: 400px; width: 100%;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 48px; color: #ef4444; margin-bottom: 16px;">🗑️</div>
+                <h3 style="margin: 0 0 8px 0; color: #1f2937;">Delete Receipt?</h3>
+                <p style="color: #6b7280; margin-bottom: 4px;">
+                    <strong>${receipt.name}</strong>
+                </p>
+                <p style="color: #6b7280; font-size: 14px;">
+                    ${this.formatFileSize(receipt.size || 0)} • ${this.formatFirebaseTimestamp(receipt.uploadedAt)}
+                </p>
+                <p style="color: #dc2626; font-size: 14px; margin-top: 16px;">
+                    ⚠️ This action cannot be undone
+                </p>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button id="cancel-delete-btn" 
+                        style="flex: 1; padding: 12px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
+                    Cancel
+                </button>
+                <button id="confirm-delete-btn" 
+                        style="flex: 1; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
+                    Delete Permanently
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="delete-from-storage" checked>
+                    <span style="font-size: 14px; color: #374151;">
+                        Also delete from storage (recommended)
+                    </span>
+                </label>
+                <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                    Uncheck this if you want to keep the file in storage but remove it from the queue.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('cancel-delete-btn').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+        const deleteFromStorage = document.getElementById('delete-from-storage').checked;
+        modal.remove();
+        
+        if (deleteFromStorage) {
+            this.deleteReceiptFromAllSources(receiptId);
+        } else {
+            // Just remove from queue
+            this.removeReceiptFromQueue(receiptId);
+        }
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+},
+
+removeReceiptFromQueue(receiptId) {
+    console.log(`🗑️ Removing receipt from queue only: ${receiptId}`);
+    
+    // Remove from memory
+    this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+    
+    // Remove from localStorage
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
+    localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+    
+    // Update UI
+    this.updateReceiptQueueUI();
+    this.updateModalReceiptsList();
+    this.updateProcessReceiptsButton();
+    
+    this.showNotification('Receipt removed from queue', 'success');
+},
+
 processSingleReceipt(receiptId) {
     const receipt = this.receiptQueue.find(r => r.id === receiptId);
     if (!receipt) {
@@ -4140,7 +4500,7 @@ updateElement(id, value) {
 },
 
     // ==================== FIXED: UPLOAD TO FIREBASE ====================
-   uploadToFirebase(file, onProgress = null) {
+  uploadToFirebase(file, onProgress = null) {
     return new Promise((resolve, reject) => {
         console.log('📤 Starting Firebase upload for:', file.name);
         
@@ -4156,10 +4516,14 @@ updateElement(id, value) {
         }
         
         try {
+            // Get current user
+            const user = window.firebase?.auth?.().currentUser;
+            const userId = user ? user.uid : 'anonymous';
+            
             // Generate unique filename
             const timestamp = Date.now();
             const fileExt = file.name.split('.').pop();
-            const fileName = `receipts/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            const fileName = `receipts/${userId}/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
             
             // Create storage reference
             const storageRef = window.storage.ref();
@@ -4200,6 +4564,7 @@ updateElement(id, value) {
                                 size: file.size,
                                 type: file.type,
                                 status: 'pending',
+                                userId: userId, // ADD THIS
                                 uploadedAt: new Date().toISOString(),
                                 storageType: 'firebase',
                                 fileName: fileName
