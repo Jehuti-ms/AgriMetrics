@@ -902,6 +902,24 @@ async loadData() {
     from { opacity: 0; transform: translate(-50%, -40%); }
     to { opacity: 1; transform: translate(-50%, -50%); }
 }
+
+.btn-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-danger:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
             </style>
 
             <div class="module-container">
@@ -1825,13 +1843,23 @@ showCaptureSuccess(receipt) {
                 </div>
             </div>
             
-            <div style="display: flex; gap: 12px; justify-content: center;">
+            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
                 <button id="process-now-btn" style="background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1;">
                     🔍 Process Now
                 </button>
                 <button id="close-success-modal" style="background: #f3f4f6; color: #374151; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1;">
                     Done
                 </button>
+            </div>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                <button id="delete-captured-btn" 
+                        style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; width: 100%;">
+                    🗑️ Delete this receipt
+                </button>
+                <p style="font-size: 12px; color: #6b7280; margin-top: 8px; margin-bottom: 0;">
+                    You can also delete it later from the receipts list
+                </p>
             </div>
         </div>
     `;
@@ -1848,14 +1876,21 @@ showCaptureSuccess(receipt) {
         successModal.remove();
     });
     
-    // Auto-remove after 5 seconds if not clicked
+    document.getElementById('delete-captured-btn')?.addEventListener('click', () => {
+        if (confirm(`Delete "${receipt.name}"? This action cannot be undone.`)) {
+            successModal.remove();
+            this.deleteReceiptFromAllSources(receipt.id);
+        }
+    });
+    
+    // Auto-remove after 8 seconds if not clicked
     setTimeout(() => {
         if (document.body.contains(successModal)) {
             successModal.remove();
         }
-    }, 5000);
+    }, 8000);
 },
-
+    
 updateModalReceiptsList() {
     // Update the recent receipts list in the modal
     const recentList = document.getElementById('recent-receipts-list');
@@ -3415,9 +3450,16 @@ renderRecentReceiptsList() {
                                 ${isNew ? `<span class="new-badge" style="background: #10b981; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">NEW</span>` : ''}
                             </div>
                         </div>
-                        <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}">
-                            🔍 Process
-                        </button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-outline process-btn" data-id="${receipt.id}" 
+                                    style="white-space: nowrap; padding: 6px 12px;">
+                                🔍 Process
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-receipt-btn" data-id="${receipt.id}" 
+                                    style="padding: 6px 12px;" title="Delete receipt">
+                                🗑️
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('')}
@@ -3454,19 +3496,19 @@ renderPendingReceiptsList(receipts) {
                         </div>
                     </div>
                     <div class="receipt-actions" style="display: flex; gap: 8px;">
-                      <a href="${this.isValidReceiptURL(receipt.downloadURL) ? receipt.downloadURL : '#'}" 
-                               target="_blank" 
-                               class="btn btn-sm btn-outline" 
-                               title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
-                               style="padding: 6px 12px;"
-                               onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
-                        <span class="btn-icon">👁️</span>
+                        <a href="${this.isValidReceiptURL(receipt.downloadURL) ? receipt.downloadURL : '#'}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline" 
+                                   title="${this.isValidReceiptURL(receipt.downloadURL) ? 'View' : 'Receipt unavailable'}" 
+                                   style="padding: 6px 12px;"
+                                   onclick="${!this.isValidReceiptURL(receipt.downloadURL) ? 'event.preventDefault(); alert(\'Receipt file is no longer available. Please re-upload.\');' : ''}"> 
+                            <span class="btn-icon">👁️</span>
                         </a>
                         <button class="btn btn-sm btn-primary process-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
                             <span class="btn-icon">🔍</span>
                             <span class="btn-text">Process</span>
                         </button>
-                        <button class="btn btn-sm btn-outline remove-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;">
+                        <button class="btn btn-sm btn-danger delete-receipt-btn" data-id="${receipt.id}" style="padding: 6px 12px;" title="Delete receipt">
                             <span class="btn-icon">🗑️</span>
                         </button>
                     </div>
@@ -3475,7 +3517,7 @@ renderPendingReceiptsList(receipts) {
         </div>
     `;
 },
-
+    
 updateReceiptQueueUI() {
     // Update badge
     const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
@@ -3521,6 +3563,14 @@ setupReceiptActionListeners() {
             this.processSingleReceipt(receiptId);
         });
     });
+
+    // Delete buttons
+    document.querySelectorAll('.delete-receipt-btn, .remove-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const receiptId = e.currentTarget.dataset.id;
+            this.confirmAndDeleteReceipt(receiptId);
+        });
+    });
     
     // Remove buttons
     document.querySelectorAll('.remove-receipt-btn').forEach(btn => {
@@ -3531,6 +3581,90 @@ setupReceiptActionListeners() {
     });
 },
 
+    confirmAndDeleteReceipt(receiptId) {
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    // Show confirmation dialog
+    if (confirm(`Are you sure you want to delete "${receipt.name}"?\n\nThis action cannot be undone.`)) {
+        this.deleteReceiptFromAllSources(receiptId);
+    }
+},
+
+deleteReceiptFromAllSources(receiptId) {
+    console.log(`🗑️ Deleting receipt: ${receiptId}`);
+    
+    // Find receipt
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    try {
+        // 1. Try to delete from Firebase Storage if it's a Firebase receipt
+        if (receipt.storageType === 'firebase' && receipt.firebaseFileName && window.storage) {
+            try {
+                const storageRef = window.storage.ref();
+                storageRef.child(receipt.firebaseFileName).delete()
+                    .then(() => {
+                        console.log('✅ Deleted from Firebase Storage:', receipt.firebaseFileName);
+                    })
+                    .catch(error => {
+                        console.warn('⚠️ Could not delete from Firebase Storage:', error.message);
+                    });
+            } catch (error) {
+                console.warn('⚠️ Error deleting from Firebase Storage:', error);
+            }
+        }
+        
+        // 2. Try to delete from Firestore if it exists there
+        if (this.isFirebaseAvailable && window.db) {
+            window.db.collection('receipts').doc(receiptId).delete()
+                .then(() => {
+                    console.log('✅ Deleted from Firestore:', receiptId);
+                })
+                .catch(error => {
+                    console.warn('⚠️ Could not delete from Firestore:', error.message);
+                });
+        }
+        
+        // 3. Remove from memory
+        this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+        
+        // 4. Remove from localStorage
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
+        localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+        
+        // 5. Broadcast deletion
+        Broadcaster.recordDeleted('income-expenses', {
+            id: receiptId,
+            data: receipt,
+            timestamp: new Date().toISOString(),
+            module: 'income-expenses',
+            action: 'receipt_deleted'
+        });
+        
+        // 6. Update UI
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+        this.updateProcessReceiptsButton();
+        
+        // 7. Show success
+        this.showNotification(`"${receipt.name}" deleted successfully`, 'success');
+        
+        console.log('✅ Receipt deleted from all sources');
+        
+    } catch (error) {
+        console.error('❌ Error deleting receipt:', error);
+        this.showNotification('Failed to delete receipt', 'error');
+    }
+},
+    
 processSingleReceipt(receiptId) {
     const receipt = this.receiptQueue.find(r => r.id === receiptId);
     if (!receipt) {
