@@ -2462,6 +2462,73 @@ deleteReceiptFromAllSources: async function(receiptId) {
         padding: 10px !important;
     }
 
+/* ==================== FIX: BUTTON VISIBILITY ON LARGE SCREENS ==================== */
+
+/* Ensure process and delete buttons are always visible */
+.process-receipt-btn,
+.delete-receipt-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* Fix for receipt cards on large screens */
+@media (min-width: 769px) {
+    .pending-receipt-item {
+        position: relative;
+        padding-right: 200px !important; /* Make room for buttons */
+    }
+    
+    .receipt-actions {
+        position: absolute !important;
+        right: 16px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        display: flex !important;
+        gap: 8px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 100 !important;
+    }
+    
+    /* Ensure buttons have proper sizing */
+    .receipt-actions .btn {
+        min-width: 80px !important;
+        height: 36px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* For smaller screens - buttons are already visible */
+@media (max-width: 768px) {
+    .pending-receipt-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .receipt-actions {
+        display: flex !important;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+    }
+}
+
+/* Ensure buttons are not hidden by parent containers */
+.receipt-card .receipt-actions,
+.pending-receipt-item .receipt-actions {
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    height: auto !important;
+    width: auto !important;
+}
     }
             </style>
 
