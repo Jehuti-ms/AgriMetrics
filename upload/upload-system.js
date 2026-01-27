@@ -709,3 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('📁 Upload System Loaded!');
     console.log('Try: debugUploadSystem to inspect');
 });
+
+// Add after your UploadSystem class definition
+console.log('📁 Upload System script loaded successfully!');
+console.log('UploadSystem class available:', typeof UploadSystem);
