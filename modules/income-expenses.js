@@ -4101,7 +4101,7 @@ getStandaloneUploadHTML() {
     `;
 },
     
-   setupImportReceiptsHandlers() {
+  setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
     // Use this helper to ensure clean event binding
@@ -4122,60 +4122,80 @@ getStandaloneUploadHTML() {
         }
     };
     
-    // Setup all buttons
-// In setupImportReceiptsHandlers(), update the camera option handler:
-setupButton('camera-option', () => {
-    console.log('🎯 Camera button clicked');
-    
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    console.log('Switching to camera...');
-    
-    // Hide upload and quick actions
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-        console.log('✅ Hid upload section');
-    }
-    
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'none';
-        console.log('✅ Hid quick actions section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
-    
-    // Show camera
-    if (cameraSection) {
-        cameraSection.style.display = 'block';
-        console.log('✅ Showed camera section');
-        
-        setTimeout(() => {
-            console.log('🔄 Initializing camera...');
-            this.initializeCamera();
-        }, 100);
-    }
-});
-    
-    // Cancel camera button
-setupButton('cancel-camera', () => {
-    console.log('❌ Cancel camera clicked');
-    this.showMainView();  // Return to main view
-});
-    
-    setupButton('browse-receipts-btn', () => {
-        console.log('📂 Browse files clicked');
-        const fileInput = document.getElementById('receipt-upload-input');
-        if (fileInput) fileInput.click();
+    // Fix 1: Add the upload-option handler
+    setupButton('upload-option', () => {
+        console.log('📁 Upload Files button clicked');
+        this.handleUploadOption();  // NEW - Call the specific handler
     });
     
-    // File input handler
+    // Fix 2: This is the camera option handler
+    setupButton('camera-option', () => {
+        console.log('🎯 Camera button clicked');
+        
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        const quickActionsSection = document.querySelector('.quick-actions-section');
+        
+        console.log('Switching to camera...');
+        
+        // Hide upload and quick actions
+        if (uploadSection) {
+            uploadSection.style.display = 'none';
+            console.log('✅ Hid upload section');
+        }
+        
+        if (quickActionsSection) {
+            quickActionsSection.style.display = 'none';
+            console.log('✅ Hid quick actions section');
+        }
+        
+        // Keep recent section visible
+        if (recentSection) {
+            recentSection.style.display = 'block';
+            console.log('✅ Kept recent section visible');
+        }
+        
+        // Show camera
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            console.log('✅ Showed camera section');
+            
+            setTimeout(() => {
+                console.log('🔄 Initializing camera...');
+                this.initializeCamera();
+            }, 100);
+        }
+    });
+    
+    // Fix 3: Cancel camera button
+    setupButton('cancel-camera', () => {
+        console.log('❌ Cancel camera clicked');
+        this.showUploadInterface();  // This should work
+    });
+      
+   // Fix 5: Also check for 'browse-receipts-btn' - it might have a different ID
+    // Try alternative IDs if it's not found
+    const browseBtn = document.getElementById('browse-receipts-btn') || 
+                     document.getElementById('upload-receipt-btn') ||
+                     document.querySelector('[data-action="browse-receipts"]');
+    
+    if (browseBtn) {
+        console.log(`✅ Found browse button: ${browseBtn.id || browseBtn.className}`);
+        browseBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📂 Browse files clicked');
+            const fileInput = document.getElementById('receipt-upload-input');
+            if (fileInput) {
+                fileInput.click();
+            }
+        };
+    } else {
+        console.error('❌ Browse button not found with any selector');
+    }
+    
+    // Fix 6: File input handler
     const fileInput = document.getElementById('receipt-upload-input');
     if (fileInput) {
         fileInput.onchange = (e) => {
@@ -4184,15 +4204,13 @@ setupButton('cancel-camera', () => {
                 this.handleFileUpload(e.target.files);
             }
         };
+    } else {
+        console.error('❌ File input not found');
     }
     
     // Other buttons...
     setupButton('capture-photo', () => this.capturePhoto());
     setupButton('switch-camera', () => this.switchCamera());
-    setupButton('cancel-camera', () => {
-        console.log('❌ Cancel camera clicked');
-        this.showUploadInterface();
-    });
     
     setupButton('refresh-receipts', () => {
         console.log('🔄 Refresh receipts clicked');
@@ -4223,6 +4241,8 @@ setupButton('cancel-camera', () => {
             }
         }
     });
+    
+    console.log('✅ Import receipt handlers setup complete');
 },
     
     setupUploadHandlers() {
