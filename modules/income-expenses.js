@@ -843,7 +843,7 @@ async saveReceiptToFirebase(receipt) {
     }
 },
 
-showCaptureSuccess(receipt) {
+showCaptureSuccess: function(receipt) {
     // Create success modal
     const modal = document.createElement('div');
     modal.id = 'capture-success-modal';
@@ -860,6 +860,8 @@ showCaptureSuccess(receipt) {
         text-align: center;
         max-width: 400px;
         width: 90%;
+        max-height: 85vh; /* ADD THIS: Limit height */
+        overflow-y: auto; /* ADD THIS: Make scrollable */
         animation: slideIn 0.3s ease-out;
     `;
     
@@ -875,6 +877,18 @@ showCaptureSuccess(receipt) {
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+        /* Custom scrollbar for the modal */
+        #capture-success-modal::-webkit-scrollbar {
+            width: 6px;
+        }
+        #capture-success-modal::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+        #capture-success-modal::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
     `;
     document.head.appendChild(style);
     
@@ -882,7 +896,7 @@ showCaptureSuccess(receipt) {
     let imagePreview = '';
     if (receipt.type?.startsWith('image/')) {
         imagePreview = `
-            <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; animation: pulse 2s ease-in-out;">
+            <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; animation: pulse 2s ease-in-out; max-height: 200px; overflow: hidden;"> <!-- ADD max-height -->
                 <img src="${receipt.dataURL}" 
                      alt="Receipt preview" 
                      style="width: 100%; max-height: 200px; object-fit: contain; background: #f8fafc;">
@@ -891,7 +905,7 @@ showCaptureSuccess(receipt) {
     }
     
     modal.innerHTML = `
-        <div style="position: relative;">
+        <div style="position: relative; min-height: 0;"> <!-- ADD min-height: 0 -->
             <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
             <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">Photo Saved!</h3>
             <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipt has been saved to local storage.</p>
@@ -913,7 +927,7 @@ showCaptureSuccess(receipt) {
                 </div>
             </div>
             
-            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
+            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap;"> <!-- ADD flex-wrap -->
                 <button id="process-now-btn" 
                         style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
                                color: white; 
@@ -924,7 +938,8 @@ showCaptureSuccess(receipt) {
                                cursor: pointer; 
                                flex: 1;
                                font-size: 16px;
-                               transition: all 0.2s;">
+                               transition: all 0.2s;
+                               min-width: 140px;"> <!-- ADD min-width -->
                     🔍 Process Now
                 </button>
                 <button id="close-success-modal" 
@@ -937,7 +952,8 @@ showCaptureSuccess(receipt) {
                                cursor: pointer; 
                                flex: 1;
                                font-size: 16px;
-                               transition: all 0.2s;">
+                               transition: all 0.2s;
+                               min-width: 140px;"> <!-- ADD min-width -->
                     Done
                 </button>
             </div>
