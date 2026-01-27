@@ -25,17 +25,20 @@ const IncomeExpensesModule = {
     
     // ==================== INITIALIZATION ====================
     initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+    console.log('💰 Initializing Income & Expenses...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
 
-        // Check if Firebase services are available
-        this.isFirebaseAvailable = !!(window.db && window.firebase && window.storage);
-        console.log('Firebase available:', this.isFirebaseAvailable);
+    // Check if Firebase services are available
+    this.isFirebaseAvailable = !!(window.firebase && window.db);
+    console.log('Firebase available:', this.isFirebaseAvailable, {
+        firebase: !!window.firebase,
+        db: !!window.db
+    });
 
         if (window.StyleManager) {
             StyleManager.registerModule(this.name, this.element, this);
@@ -201,13 +204,14 @@ const IncomeExpensesModule = {
     },
 
     // ==================== RECEIPT MANAGEMENT ====================
-    async loadReceiptsFromFirebase() {
-        console.log('Loading receipts from Firebase...');
-        
-        try {
-            if (this.isFirebaseAvailable && window.db && window.firebase?.auth?.().currentUser) {
-                const user = window.firebase.auth().currentUser;
-                
+    // ==================== FIXED: LOAD RECEIPTS FROM FIREBASE (BASE64 VERSION) ====================
+async loadReceiptsFromFirebase() {
+    console.log('Loading receipts from Firebase...');
+    
+    try {
+        if (this.isFirebaseAvailable && window.db) {
+            const user = window.firebase?.auth?.().currentUser;
+            if (user) {
                 const snapshot = await window.db.collection('receipts')
                     .where('userId', '==', user.uid)
                     .where('status', '==', 'pending')
@@ -216,24 +220,96 @@ const IncomeExpensesModule = {
                     .get();
                 
                 if (!snapshot.empty) {
-                    this.receiptQueue = snapshot.docs.map(doc => doc.data());
-                    console.log('✅ Loaded receipts from Firebase:', this.receiptQueue.length);
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        
+                        // Convert base64 back to data URL if needed
+                        let downloadURL = data.dataURL;
+                        if (!downloadURL && data.base64Data) {
+                            downloadURL = `data:${data.type};base64,${data.base64Data}`;
+                        }
+                        
+                        const receipt = {
+                            id: data.id,
+                            name: data.name,
+                            downloadURL: downloadURL,
+                            dataURL: downloadURL,
+                            base64Data: data.base64Data,
+                            size: data.size,
+                            type: data.type,
+                            status: data.status,
+                            uploadedAt: data.uploadedAt,
+                            storageType: data.storageType || 'firestore-base64',
+                            userId: data.userId,
+                            source: 'firebase'
+                        };
+                        
+                        // Add to queue if not already there
+                        const existingIndex = this.receiptQueue.findIndex(r => r.id === receipt.id);
+                        if (existingIndex === -1) {
+                            this.receiptQueue.push(receipt);
+                        }
+                    });
                     
-                    // Save to localStorage for offline use
+                    console.log('✅ Loaded receipts from Firestore:', snapshot.size);
+                    
+                    // Update localStorage
                     localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
                     
                     this.updateReceiptQueueUI();
                     return;
                 }
             }
-        } catch (error) {
-            console.warn('⚠️ Firebase receipts load error:', error.message);
         }
-        
-        // Fallback to localStorage
-        this.loadFromLocalStorage();
-    },
+    } catch (error) {
+        console.warn('⚠️ Firebase receipts load error:', error.message);
+    }
+    
+    // Fallback to localStorage
+    this.loadFromLocalStorage();
+},
+    // ==================== GET RECEIPT URL HELPER ====================
+getReceiptURL(receipt) {
+    if (!receipt) return '';
+    
+    // If we already have a dataURL, use it
+    if (receipt.dataURL) return receipt.dataURL;
+    
+    // If we have base64Data, convert it
+    if (receipt.base64Data && receipt.type) {
+        return `data:${receipt.type};base64,${receipt.base64Data}`;
+    }
+    
+    // Fallback to downloadURL
+    return receipt.downloadURL || '';
+},
 
+// Update the receipt preview method to use this:
+showReceiptPreviewInTransactionModal(receipt) {
+    const previewContainer = document.getElementById('receipt-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const receiptImage = document.getElementById('receipt-image-preview');
+    const filename = document.getElementById('receipt-filename');
+    const filesize = document.getElementById('receipt-size');
+    
+    if (!previewContainer || !filename || !filesize) return;
+    
+    previewContainer.classList.remove('hidden');
+    filename.textContent = receipt.name;
+    filesize.textContent = this.formatFileSize(receipt.size || 0);
+    
+    // Get the image URL
+    const imageURL = this.getReceiptURL(receipt);
+    
+    // Show image preview if it's an image
+    if (receipt.type?.startsWith('image/') && receiptImage && imagePreview && imageURL) {
+        receiptImage.src = imageURL;
+        imagePreview.classList.remove('hidden');
+    } else if (imagePreview) {
+        imagePreview.classList.add('hidden');
+    }
+},
+    
     loadFromLocalStorage() {
         const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
         this.receiptQueue = localReceipts.filter(r => r.status === 'pending');
@@ -340,67 +416,180 @@ const IncomeExpensesModule = {
         }
     },
 
-    capturePhoto() {
-        const video = document.getElementById('camera-preview');
-        const canvas = document.getElementById('camera-canvas');
+// ==================== FIXED CAMERA CAPTURE WITH BASE64 ====================
+capturePhoto() {
+    console.log('📸 Capturing photo...');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    
+    if (!video || !canvas) {
+        console.error('Video or canvas element not found');
+        this.showNotification('Camera elements missing', 'error');
+        return;
+    }
+    
+    if (!this.cameraStream || video.paused || video.readyState < 2) {
+        console.error('Camera not ready');
+        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+        return;
+    }
+    
+    // Set canvas dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const context = canvas.getContext('2d');
+    
+    try {
+        // Capture frame
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        if (!video || !canvas) {
-            console.error('Video or canvas element not found');
-            this.showNotification('Camera elements missing', 'error');
-            return;
+        if (status) status.textContent = 'Processing photo...';
+        
+        // Flash effect
+        video.style.filter = 'brightness(150%) contrast(120%)';
+        setTimeout(() => {
+            video.style.filter = '';
+        }, 200);
+        
+        // Convert to Data URL (Base64)
+        const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+        
+        if (status) status.textContent = 'Saving photo...';
+        
+        // Show loading
+        this.showCaptureLoading(true);
+        
+        // Generate receipt data
+        const timestamp = Date.now();
+        const receipt = this.createReceiptFromBase64(dataURL, timestamp);
+        
+        // Save locally first
+        this.saveReceiptLocally(receipt);
+        
+        // Try to save to Firebase in background
+        this.saveReceiptToFirebase(receipt)
+            .then(() => {
+                if (status) status.textContent = 'Photo saved!';
+                this.showCaptureSuccess(receipt);
+                this.showNotification('✅ Receipt saved!', 'success');
+                
+                // Update UI
+                this.updateModalReceiptsList();
+                this.updateReceiptQueueUI();
+                
+                // Return to upload view
+                setTimeout(() => {
+                    this.showCaptureLoading(false);
+                    this.showUploadInterface();
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('❌ Firebase save error:', error);
+                if (status) status.textContent = 'Saved locally';
+                this.showCaptureSuccess(receipt);
+                this.showNotification('✅ Receipt saved locally!', 'success');
+                
+                // Update UI even if Firebase fails
+                this.updateModalReceiptsList();
+                this.updateReceiptQueueUI();
+                
+                setTimeout(() => {
+                    this.showCaptureLoading(false);
+                    this.showUploadInterface();
+                }, 2000);
+            });
+        
+    } catch (error) {
+        console.error('❌ Capture error:', error);
+        if (status) status.textContent = 'Error';
+        this.showCaptureLoading(false);
+        this.showNotification('Failed to capture photo', 'error');
+    }
+},
+
+// ==================== CREATE RECEIPT FROM BASE64 ====================
+createReceiptFromBase64(dataURL, timestamp) {
+    // Extract base64 data from data URL
+    const base64Data = dataURL.split(',')[1];
+    
+    // Calculate approximate size (1 character ≈ 1 byte for base64)
+    const approxSize = Math.floor(base64Data.length * 0.75);
+    
+    const receiptId = `camera_${timestamp}`;
+    
+    return {
+        id: receiptId,
+        name: `receipt_${timestamp}.jpg`,
+        base64Data: base64Data, // Store as base64 for Firestore
+        dataURL: dataURL, // Keep full dataURL for local use
+        size: approxSize,
+        type: 'image/jpeg',
+        status: 'pending',
+        uploadedAt: new Date().toISOString(),
+        storageType: 'firestore-base64',
+        metadata: {
+            capturedAt: new Date().toISOString(),
+            quality: 'medium',
+            resolution: 'original'
         }
+    };
+},
+
+// ==================== SAVE RECEIPT LOCALLY ====================
+saveReceiptLocally(receipt) {
+    // Store in memory
+    this.receiptQueue.unshift(receipt);
+    
+    // Store in localStorage for persistence
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    localReceipts.unshift(receipt);
+    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+    
+    console.log('✅ Saved to localStorage:', receipt.id);
+},
+
+// ==================== SAVE RECEIPT TO FIREBASE (BASE64) ====================
+async saveReceiptToFirebase(receipt) {
+    if (!this.isFirebaseAvailable || !window.db) {
+        throw new Error('Firebase not available');
+    }
+    
+    const user = window.firebase?.auth?.().currentUser;
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+    
+    console.log('📤 Saving receipt to Firestore (base64):', receipt.id);
+    
+    try {
+        // Prepare receipt data for Firestore
+        const firebaseReceipt = {
+            id: receipt.id,
+            name: receipt.name,
+            base64Data: receipt.base64Data,
+            size: receipt.size,
+            type: receipt.type,
+            status: receipt.status,
+            userId: user.uid,
+            uploadedAt: receipt.uploadedAt,
+            storageType: 'firestore-base64',
+            metadata: receipt.metadata
+        };
         
-        if (!this.cameraStream || video.paused) {
-            this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
-            return;
-        }
+        // Save to Firestore
+        await window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt);
         
-        // Set canvas dimensions
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        console.log('✅ Saved to Firestore:', receipt.id);
+        return true;
         
-        const context = canvas.getContext('2d');
-        
-        try {
-            // Capture frame
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Convert to blob
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    const timestamp = Date.now();
-                    const file = new File([blob], `receipt_${timestamp}.jpg`, {
-                        type: 'image/jpeg',
-                        lastModified: timestamp
-                    });
-                    
-                    // Upload to Firebase
-                    this.uploadReceiptToFirebase(file)
-                        .then(receipt => {
-                            console.log('✅ Photo uploaded to Firebase:', receipt);
-                            this.showNotification('✅ Receipt photo saved!', 'success');
-                            
-                            // Update UI
-                            this.updateModalReceiptsList();
-                            this.updateReceiptQueueUI();
-                            
-                            // Return to upload view
-                            setTimeout(() => {
-                                this.showUploadInterface();
-                            }, 2000);
-                        })
-                        .catch(error => {
-                            console.error('❌ Upload error:', error);
-                            this.showNotification('Failed to upload photo: ' + error.message, 'error');
-                        });
-                }
-            }, 'image/jpeg', 0.9);
-            
-        } catch (error) {
-            console.error('❌ Capture error:', error);
-            this.showNotification('Failed to capture photo', 'error');
-        }
-    },
+    } catch (error) {
+        console.error('❌ Firestore save error:', error);
+        throw error;
+    }
+},
 
     stopCamera() {
         console.log('🛑 Stopping camera...');
@@ -485,88 +674,75 @@ const IncomeExpensesModule = {
         processNextFile(0);
     },
 
-    async uploadReceiptToFirebase(file) {
-        console.log('📤 Uploading to Firebase:', file.name);
+   // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
+async uploadReceiptToFirebase(file, onProgress = null) {
+    console.log('📤 Uploading receipt:', file.name);
+    
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
         
-        // Check authentication
-        if (!window.firebase?.auth?.().currentUser) {
-            throw new Error('User not authenticated');
-        }
-        
-        const user = window.firebase.auth().currentUser;
-        
-        // Generate unique filename
-        const timestamp = Date.now();
-        const fileExt = file.name.split('.').pop();
-        const fileName = `receipts/${user.uid}/${timestamp}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        
-        // Upload to Firebase Storage
-        const storageRef = window.storage.ref();
-        const fileRef = storageRef.child(fileName);
-        
-        const uploadTask = fileRef.put(file);
-        
-        return new Promise((resolve, reject) => {
-            uploadTask.on('state_changed',
-                null,
-                (error) => {
-                    console.error('❌ Storage upload error:', error);
-                    reject(error);
-                },
-                () => {
-                    // Upload complete
-                    uploadTask.snapshot.ref.getDownloadURL()
-                        .then(downloadURL => {
-                            console.log('✅ Storage upload complete, URL:', downloadURL);
-                            
-                            // Create receipt object
-                            const receiptId = `receipt_${timestamp}`;
-                            const receiptData = {
-                                id: receiptId,
-                                name: file.name,
-                                downloadURL: downloadURL,
-                                size: file.size,
-                                type: file.type,
-                                status: 'pending',
-                                userId: user.uid,
-                                uploadedAt: new Date().toISOString(),
-                                storageType: 'firebase',
-                                fileName: fileName
-                            };
-                            
-                            // Save to Firestore
-                            return window.db.collection('receipts').doc(receiptId).set(receiptData);
-                        })
-                        .then(() => {
-                            console.log('✅ Receipt saved to Firestore');
-                            
-                            // Add to local queue
-                            const receipt = {
-                                id: `receipt_${timestamp}`,
-                                name: file.name,
-                                downloadURL: uploadTask.snapshot.ref.fullPath,
-                                size: file.size,
-                                type: file.type,
-                                status: 'pending',
-                                userId: user.uid,
-                                uploadedAt: new Date().toISOString(),
-                                storageType: 'firebase'
-                            };
-                            
-                            this.receiptQueue.unshift(receipt);
-                            this.saveReceiptsToLocalStorage();
-                            
-                            resolve(receipt);
-                        })
-                        .catch(error => {
-                            console.error('❌ Error completing upload:', error);
-                            reject(error);
-                        });
+        reader.onload = async (e) => {
+            try {
+                const dataURL = e.target.result;
+                const base64Data = dataURL.split(',')[1];
+                const approxSize = Math.floor(base64Data.length * 0.75);
+                const timestamp = Date.now();
+                const receiptId = `upload_${timestamp}`;
+                
+                // Create receipt object
+                const receipt = {
+                    id: receiptId,
+                    name: file.name,
+                    base64Data: base64Data,
+                    dataURL: dataURL,
+                    size: approxSize,
+                    type: file.type,
+                    status: 'pending',
+                    uploadedAt: new Date().toISOString(),
+                    storageType: 'firestore-base64',
+                    metadata: {
+                        uploadedAt: new Date().toISOString(),
+                        originalSize: file.size,
+                        fileType: file.type
+                    }
+                };
+                
+                // Save locally first
+                this.saveReceiptLocally(receipt);
+                
+                // Try to save to Firebase
+                if (this.isFirebaseAvailable && window.db) {
+                    const user = window.firebase?.auth?.().currentUser;
+                    if (user) {
+                        const firebaseReceipt = {
+                            ...receipt,
+                            userId: user.uid
+                        };
+                        
+                        try {
+                            await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
+                            console.log('✅ Saved to Firestore:', receiptId);
+                        } catch (firestoreError) {
+                            console.warn('⚠️ Firestore save failed, keeping local:', firestoreError.message);
+                        }
+                    }
                 }
-            );
-        });
-    },
-
+                
+                resolve(receipt);
+                
+            } catch (error) {
+                reject(error);
+            }
+        };
+        
+        reader.onerror = () => {
+            reject(new Error('Failed to read file'));
+        };
+        
+        reader.readAsDataURL(file);
+    });
+},
+    
     // ==================== DELETE FUNCTIONALITY ====================
     setupReceiptActionListeners() {
         console.log('🔧 Setting up receipt action listeners...');
