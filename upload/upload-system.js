@@ -80,8 +80,33 @@ class UploadSystem {
         };
     }
     
-    setupEventListeners() {
-    // Add null checks:
+   setupEventListeners() {
+    // Check if browse button exists
+    if (!this.browseBtn) {
+        console.error('❌ UploadSystem: Browse button not found');
+        this.browseBtn = document.getElementById('browse-receipts-btn') || 
+                        document.getElementById('upload-receipt-btn');
+    }
+    
+    if (this.browseBtn) {
+        this.browseBtn.addEventListener('click', () => this.openFileDialog());
+    } else {
+        console.warn('⚠️ UploadSystem: No browse button found, skipping');
+    }
+    
+    // Check if file input exists
+    if (!this.fileInput) {
+        console.error('❌ UploadSystem: File input not found');
+        this.fileInput = document.getElementById('receipt-upload-input');
+    }
+    
+    if (this.fileInput) {
+        this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+    } else {
+        console.warn('⚠️ UploadSystem: No file input found, will create dynamically');
+    }
+
+       // Add null checks:
         if (this.browseBtn) {
             this.browseBtn.addEventListener('click', () => this.openFileDialog());
         }
