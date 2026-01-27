@@ -3009,20 +3009,27 @@ deleteReceiptFromAllSources: async function(receiptId) {
     },
 
     // ==================== EVENT LISTENERS ====================
-    setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
-        // Setup button helper
-        const setupButton = (id, handler) => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handler.call(this, e);
-                });
-            }
-        };
+   setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // ⚠️ ADD THIS - Prevent duplicate listeners
+    if (this._listenersSetup) {
+        console.log('Event listeners already setup, skipping...');
+        return;
+    }
+    this._listenersSetup = true;
+    
+    // Setup button helper
+    const setupButton = (id, handler) => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handler.call(this, e);
+            });
+        }
+    };
         
         // Main buttons
         setupButton('add-transaction', () => this.showTransactionModal());
