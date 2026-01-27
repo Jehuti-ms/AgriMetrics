@@ -3577,27 +3577,32 @@ deleteReceiptFromAllSources: async function(receiptId) {
 
     // ==================== IMPORT RECEIPTS MODAL (Missing) ====================
 
-    showImportReceiptsModal() {
-        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+showImportReceiptsModal() {
+    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+    
+    this.hideAllModals();
+    
+    let modal = document.getElementById('import-receipts-modal');
+    if (!modal) {
+        console.error('Modal not found in DOM!');
+        return;
+    }
+    
+    modal.classList.remove('hidden');
+    
+    const content = document.getElementById('import-receipts-content');
+    if (content) {
+        // 1. RENDER the HTML (this creates the buttons)
+        content.innerHTML = this.renderImportReceiptsModal();
         
-        this.hideAllModals();
-        
-        let modal = document.getElementById('import-receipts-modal');
-        if (!modal) {
-            console.error('Modal not found in DOM!');
-            return;
-        }
-        
-        modal.classList.remove('hidden');
-        
-        const content = document.getElementById('import-receipts-content');
-        if (content) {
-            content.innerHTML = this.renderImportReceiptsModal();
-        }
-        
-        this.setupImportReceiptsHandlers();
-        this.updateProcessReceiptsButton();
-    },
+        // 2. WAIT for DOM to update, THEN setup handlers
+        setTimeout(() => {
+            console.log('🔄 DOM updated, setting up handlers...');
+            this.setupImportReceiptsHandlers();
+            this.updateProcessReceiptsButton();
+        }, 50); // Small delay for DOM to be ready
+    }
+},
 
     renderImportReceiptsModal() {
         return `
@@ -3683,91 +3688,109 @@ deleteReceiptFromAllSources: async function(receiptId) {
         `;
     },
 
-    setupImportReceiptsHandlers() {
-        console.log('Setting up import receipt handlers');
-        
-        const cameraOptionBtn = document.getElementById('camera-option');
-        if (cameraOptionBtn) {
-            cameraOptionBtn.addEventListener('click', () => {
-                console.log('🎯 Camera button clicked');
-                
-                const cameraSection = document.getElementById('camera-section');
-                const uploadSection = document.getElementById('upload-section');
-                const recentSection = document.getElementById('recent-section');
-                
-                if (uploadSection) uploadSection.style.display = 'none';
-                if (recentSection) recentSection.style.display = 'none';
-                
-                if (cameraSection) {
-                    cameraSection.style.display = 'block';
-                    
-                    setTimeout(() => {
-                        console.log('🔄 Initializing camera...');
-                        this.initializeCamera();
-                    }, 100);
-                }
-            });
+   setupImportReceiptsHandlers() {
+    console.log('Setting up import receipt handlers');
+    
+    // Use this helper to ensure clean event binding
+    const setupButton = (id, handler) => {
+        const button = document.getElementById(id);
+        if (button) {
+            console.log(`✅ Setting up ${id}`);
+            
+            // Clean approach: use onclick for simple cases
+            button.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`Clicked: ${id}`);
+                handler.call(this, e);
+            };
+        } else {
+            console.error(`❌ Button ${id} not found`);
         }
+    };
+    
+    // Setup all buttons
+    setupButton('camera-option', () => {
+        console.log('🎯 Camera button clicked');
         
-        const uploadOptionBtn = document.getElementById('upload-option');
-        if (uploadOptionBtn) {
-            uploadOptionBtn.addEventListener('click', () => {
-                console.log('📁 Upload button clicked');
-                this.showUploadInterface();
-            });
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        
+        if (uploadSection) uploadSection.style.display = 'none';
+        if (recentSection) recentSection.style.display = 'none';
+        
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            
+            setTimeout(() => {
+                console.log('🔄 Initializing camera...');
+                this.initializeCamera();
+            }, 100);
         }
-        
-        const setupButton = (id, handler) => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handler.call(this, e);
-                });
+    });
+    
+    setupButton('upload-option', () => {
+        console.log('📁 Upload button clicked');
+        this.showUploadInterface();
+    });
+    
+    setupButton('browse-receipts-btn', () => {
+        console.log('📂 Browse files clicked');
+        const fileInput = document.getElementById('receipt-upload-input');
+        if (fileInput) fileInput.click();
+    });
+    
+    // File input handler
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            console.log('📁 Files selected:', e.target.files?.length || 0);
+            if (e.target.files && e.target.files.length > 0) {
+                this.handleFileUpload(e.target.files);
             }
         };
+    }
+    
+    // Other buttons...
+    setupButton('capture-photo', () => this.capturePhoto());
+    setupButton('switch-camera', () => this.switchCamera());
+    setupButton('cancel-camera', () => {
+        console.log('❌ Cancel camera clicked');
+        this.showUploadInterface();
+    });
+    
+    setupButton('refresh-receipts', () => {
+        console.log('🔄 Refresh receipts clicked');
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList) {
+            recentList.innerHTML = this.renderRecentReceiptsList();
+        }
+        this.showNotification('Receipts list refreshed', 'success');
+    });
+    
+    setupButton('process-receipts-btn', () => {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
-        setupButton('capture-photo', () => this.capturePhoto());
-        setupButton('switch-camera', () => this.switchCamera());
-        setupButton('cancel-camera', () => {
-            console.log('❌ Cancel camera clicked');
-            this.showUploadInterface();
-        });
+        if (pendingReceipts.length === 0) {
+            this.showNotification('No pending receipts to process', 'info');
+            return;
+        }
         
-        setupButton('refresh-receipts', () => {
-            console.log('🔄 Refresh receipts clicked');
-            const recentList = document.getElementById('recent-receipts-list');
-            if (recentList) {
-                recentList.innerHTML = this.renderRecentReceiptsList();
+        if (pendingReceipts.length === 1) {
+            this.processSingleReceipt(pendingReceipts[0].id);
+        } else {
+            if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+                pendingReceipts.forEach((receipt, index) => {
+                    setTimeout(() => {
+                        this.processSingleReceipt(receipt.id);
+                    }, index * 500);
+                });
             }
-            this.showNotification('Receipts list refreshed', 'success');
-        });
-        
-        setupButton('process-receipts-btn', () => {
-            const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-            
-            if (pendingReceipts.length === 0) {
-                this.showNotification('No pending receipts to process', 'info');
-                return;
-            }
-            
-            if (pendingReceipts.length === 1) {
-                this.processSingleReceipt(pendingReceipts[0].id);
-            } else {
-                if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
-                    pendingReceipts.forEach((receipt, index) => {
-                        setTimeout(() => {
-                            this.processSingleReceipt(receipt.id);
-                        }, index * 500);
-                    });
-                }
-            }
-        });
-        
-        this.setupUploadHandlers();
-    },
-
+        }
+    });
+},
+    
     setupUploadHandlers() {
         console.log('🔧 Setting up upload handlers...');
         
