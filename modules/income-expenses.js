@@ -2566,6 +2566,49 @@ deleteReceiptFromAllSources: async function(receiptId) {
 .glass-card {
     min-height: 150px !important;
 }
+
+/* Add this to your existing CSS */
+.upload-system-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    max-width: 100%;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.upload-dropzone {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f9fafb;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.upload-dropzone:hover {
+    border-color: #4f46e5;
+    background: #f0f1ff;
+}
+
+.dropzone-icon {
+    font-size: 48px;
+    color: #9ca3af;
+    margin-bottom: 16px;
+}
+
+.dropzone-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.dropzone-subtitle {
+    color: #6b7280;
+    margin-bottom: 20px;
+}
     }
             </style>
 
@@ -3631,24 +3674,211 @@ showImportReceiptsModal() {
     if (content) {
         content.innerHTML = this.renderImportReceiptsModal();
         
-        // Load standalone upload system
-        this.loadStandaloneUploadSystem();
-        
         setTimeout(() => {
             console.log('🔄 Setting up handlers...');
             this.setupImportReceiptsHandlers();
             this.updateProcessReceiptsButton();
+            
+            // Initialize the standalone upload system
+            this.initStandaloneUploadSystem();
         }, 50);
     }
 },
 
-loadStandaloneUploadSystem() {
-    const wrapper = document.getElementById('standalone-upload-wrapper');
-    if (!wrapper) return;
+initStandaloneUploadSystem() {
+    console.log('🚀 Initializing standalone upload system...');
     
-    // Method 1: If you have the HTML as a variable
-    const uploadSystemHTML = `
-        <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
+    // Hide the mode toggle (we only want receipts)
+    const modeToggle = document.querySelector('.upload-mode-toggle');
+    if (modeToggle) {
+        modeToggle.style.display = 'none';
+    }
+    
+    // Hide transactions section
+    const transactionsSection = document.querySelector('[data-mode="transactions"]');
+    if (transactionsSection) {
+        transactionsSection.style.display = 'none';
+    }
+    
+    // Show only receipts section
+    const receiptsSection = document.querySelector('[data-mode="receipts"]');
+    if (receiptsSection) {
+        receiptsSection.classList.add('active');
+        receiptsSection.style.display = 'block';
+    }
+    
+    // Customize the process button
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn) {
+        processBtn.innerHTML = '<i class="fas fa-magic"></i> Add to Farm Transactions';
+        processBtn.addEventListener('click', () => {
+            // Handle uploaded receipts
+            this.handleUploadedReceiptsFromStandalone();
+        });
+    }
+    
+    // Initialize the upload system if available
+    if (window.initUploadSystem) {
+        window.initUploadSystem();
+    }
+},
+
+    handleUploadedReceiptsFromStandalone() {
+    console.log('📁 Handling receipts from standalone upload system...');
+    
+    // Check if uploadSystem has files
+    if (window.uploadSystem && window.uploadSystem.receiptFiles && window.uploadSystem.receiptFiles.length > 0) {
+        const receiptFiles = window.uploadSystem.receiptFiles;
+        
+        console.log(`Processing ${receiptFiles.length} uploaded receipt(s)`);
+        
+        // Convert to your receipt format
+        receiptFiles.forEach((fileData, index) => {
+            const receipt = {
+                id: `standalone_${Date.now()}_${index}`,
+                name: fileData.name,
+                size: fileData.size,
+                type: fileData.type,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                source: 'standalone-upload'
+            };
+            
+            // Add to your queue
+            this.addReceiptToQueue(receipt);
+        });
+        
+        this.showNotification(`${receiptFiles.length} receipt(s) added to farm transactions`, 'success');
+        
+        // Clear the upload system
+        window.uploadSystem.receiptFiles = [];
+        
+        // Update UI
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+        
+        // Close modal
+        this.hideImportReceiptsModal();
+    } else {
+        this.showNotification('No receipts to process', 'info');
+    }
+},
+
+addReceiptToQueue(receipt) {
+    this.receiptQueue.unshift(receipt);
+    
+    // Save to localStorage
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    localReceipts.unshift(receipt);
+    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+    
+    console.log('✅ Added receipt to queue:', receipt.name);
+},
+
+customizeUploadSystemForReceipts() {
+    // Hide mode toggle (we only want receipts)
+    const modeToggle = document.querySelector('.upload-mode-toggle');
+    if (modeToggle) {
+        modeToggle.style.display = 'none';
+    }
+    
+    // Hide transactions section
+    const transactionsSection = document.querySelector('[data-mode="transactions"]');
+    if (transactionsSection) {
+        transactionsSection.style.display = 'none';
+    }
+    
+    // Show only receipts section
+    const receiptsSection = document.querySelector('[data-mode="receipts"]');
+    if (receiptsSection) {
+        receiptsSection.classList.add('active');
+        receiptsSection.style.display = 'block';
+    }
+    
+    // Customize the process button
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn) {
+        processBtn.textContent = 'Add to Farm Transactions';
+        processBtn.addEventListener('click', () => {
+            this.handleUploadedReceipts();
+        });
+    }
+},
+    
+  renderImportReceiptsModal() {
+    return `
+        <div class="import-receipts-container">
+            <div class="quick-actions-section">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- REPLACE YOUR SIMPLE UPLOAD WITH STANDALONE SYSTEM -->
+            <div id="upload-section" style="display: block;">
+                <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
+                ${this.getStandaloneUploadHTML()}
+            </div>
+            
+            <!-- CAMERA SECTION -->
+            <div class="camera-section" id="camera-section" style="display: none;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📷 Camera</h3>
+                        <div class="camera-status" id="camera-status">Ready</div>
+                    </div>
+                    <div class="camera-preview">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn btn-outline" id="switch-camera">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Switch Camera</span>
+                        </button>
+                        <button class="btn btn-primary" id="capture-photo">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Capture</span>
+                        </button>
+                        <button class="btn btn-outline" id="cancel-camera">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Back to Upload</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RECENT SECTION -->
+            <div class="recent-section" id="recent-section" style="display: block;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📋 Recent Receipts</h3>
+                        <button class="btn btn-outline" id="refresh-receipts">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh</span>
+                        </button>
+                    </div>
+                    <div id="recent-receipts-list" class="receipts-list">
+                        ${this.renderRecentReceiptsList()}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+},
+
+getStandaloneUploadHTML() {
+    return `
         <div class="upload-system-container" id="upload-system">
             <!-- Toggle Switch -->
             <div class="upload-mode-toggle">
@@ -3694,18 +3924,53 @@ loadStandaloneUploadSystem() {
                         </div>
                     </div>
                     <input type="file" id="receipt-file-input" 
-                           accept=".jpg,.jpeg,.png,.pdf,.heic,.heif" 
+                           accept="image/*,.pdf,.heic,.heif" 
                            multiple 
                            class="dropzone-input">
                 </div>
                 
-                <!-- Progress, file list, etc. -->
-                <!-- ... include the rest of upload-system.html ... -->
+                <div class="upload-progress-container" id="receipt-progress-container">
+                    <div class="progress-header">
+                        <span>Uploading...</span>
+                        <button class="btn-cancel-upload" id="cancel-receipt-upload">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="receipt-progress-fill"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="receipt-file-info">No file selected</span>
+                        <span id="receipt-progress-text">0%</span>
+                    </div>
+                </div>
+                
+                <div class="uploaded-files-container">
+                    <h5 class="files-title">
+                        <i class="fas fa-paperclip"></i>
+                        Uploaded Receipts
+                        <span class="badge" id="receipt-count">0</span>
+                    </h5>
+                    <div class="files-list" id="receipt-files-list">
+                        <!-- Receipt files will appear here -->
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No receipts uploaded yet</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-actions">
+                    <button class="btn btn-process" id="process-receipts-btn" disabled>
+                        <i class="fas fa-magic"></i>
+                        Extract Data from Receipts
+                    </button>
+                </div>
             </div>
             
-            <!-- Transactions Upload Section -->
-            <div class="upload-section" data-mode="transactions">
-                <!-- ... transactions section ... -->
+            <!-- Transactions Upload Section (HIDDEN FOR NOW) -->
+            <div class="upload-section" data-mode="transactions" style="display: none;">
+                <!-- Keep this section hidden for receipts-only mode -->
             </div>
             
             <!-- Status Messages -->
@@ -3716,145 +3981,27 @@ loadStandaloneUploadSystem() {
         
         <!-- Templates -->
         <template id="receipt-file-template">
-            <!-- ... template content ... -->
-        </template>
-        
-        <template id="transaction-row-template">
-            <!-- ... template content ... -->
-        </template>
-    `;
-    
-    wrapper.innerHTML = uploadSystemHTML;
-    
-    // Initialize the upload system
-    setTimeout(() => {
-        if (window.initUploadSystem) {
-            window.initUploadSystem();
-        } else if (window.UploadSystemClass && !window.uploadSystem) {
-            console.log('🚀 Creating new Upload System instance...');
-            window.uploadSystem = new window.UploadSystemClass();
-        }
-        
-        // Customize for receipts only
-        this.customizeUploadSystemForReceipts();
-    }, 100);
-},
-
-customizeUploadSystemForReceipts() {
-    // Hide mode toggle (we only want receipts)
-    const modeToggle = document.querySelector('.upload-mode-toggle');
-    if (modeToggle) {
-        modeToggle.style.display = 'none';
-    }
-    
-    // Hide transactions section
-    const transactionsSection = document.querySelector('[data-mode="transactions"]');
-    if (transactionsSection) {
-        transactionsSection.style.display = 'none';
-    }
-    
-    // Show only receipts section
-    const receiptsSection = document.querySelector('[data-mode="receipts"]');
-    if (receiptsSection) {
-        receiptsSection.classList.add('active');
-        receiptsSection.style.display = 'block';
-    }
-    
-    // Customize the process button
-    const processBtn = document.getElementById('process-receipts-btn');
-    if (processBtn) {
-        processBtn.textContent = 'Add to Farm Transactions';
-        processBtn.addEventListener('click', () => {
-            this.handleUploadedReceipts();
-        });
-    }
-},
-    
-   renderImportReceiptsModal() {
-    return `
-        <div class="import-receipts-container">
-            <div class="quick-actions-section">
-                <h2 class="section-title">Upload Method</h2>
-                <div class="card-grid">
-                    <button class="card-button" id="camera-option">
-                        <div class="card-icon">📷</div>
-                        <span class="card-title">Take Photo</span>
-                        <span class="card-subtitle">Use camera</span>
+            <div class="file-item">
+                <div class="file-icon">
+                    <i class="fas fa-file"></i>
+                </div>
+                <div class="file-info">
+                    <div class="file-name" data-name></div>
+                    <div class="file-meta">
+                        <span class="file-size" data-size></span>
+                        <span class="file-status" data-status></span>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <button class="btn-file-action" data-action="preview">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <button class="card-button" id="upload-option">
-                        <div class="card-icon">📁</div>
-                        <span class="card-title">Upload Files</span>
-                        <span class="card-subtitle">From device</span>
+                    <button class="btn-file-action" data-action="delete">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
-            
-            <!-- UPLOAD SECTION (SHOW BY DEFAULT) -->
-            <div class="upload-section" id="upload-section" style="display: block;">
-                <!-- SIMPLE UPLOAD FOR NOW - WE'LL REPLACE THIS -->
-                <div class="glass-card">
-                    <div class="card-header">
-                        <h3>📁 Upload Receipts</h3>
-                    </div>
-                    <div class="upload-area" id="drop-area" style="min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <div class="upload-icon" style="font-size: 64px;">📄</div>
-                        <h4 style="margin: 16px 0 8px 0;">Drag & Drop Receipts Here</h4>
-                        <p class="upload-subtitle" style="margin-bottom: 16px;">or click to browse files</p>
-                        <p class="upload-formats" style="margin-bottom: 24px;">Supports: JPG, PNG, PDF (Max 10MB)</p>
-                        <input type="file" id="receipt-upload-input" multiple 
-                               accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-                        <button class="btn btn-primary" id="browse-receipts-btn" style="padding: 12px 24px; font-size: 16px;">
-                            <span class="btn-icon">📁</span>
-                            <span class="btn-text">Browse Files</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- CAMERA SECTION (HIDDEN BY DEFAULT) -->
-            <div class="camera-section" id="camera-section" style="display: none;">
-                <div class="glass-card">
-                    <div class="card-header header-flex">
-                        <h3>📷 Camera</h3>
-                        <div class="camera-status" id="camera-status">Ready</div>
-                    </div>
-                    <div class="camera-preview">
-                        <video id="camera-preview" autoplay playsinline></video>
-                        <canvas id="camera-canvas" style="display: none;"></canvas>
-                    </div>
-                    <div class="camera-controls">
-                        <button class="btn btn-outline" id="switch-camera">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Switch Camera</span>
-                        </button>
-                        <button class="btn btn-primary" id="capture-photo">
-                            <span class="btn-icon">📸</span>
-                            <span class="btn-text">Capture</span>
-                        </button>
-                        <button class="btn btn-outline" id="cancel-camera">
-                            <span class="btn-icon">✖️</span>
-                            <span class="btn-text">Back to Upload</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- RECENT SECTION (ALWAYS SHOW) -->
-            <div class="recent-section" id="recent-section" style="display: block;">
-                <div class="glass-card">
-                    <div class="card-header header-flex">
-                        <h3>📋 Recent Receipts</h3>
-                        <button class="btn btn-outline" id="refresh-receipts">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Refresh</span>
-                        </button>
-                    </div>
-                    <div id="recent-receipts-list" class="receipts-list" style="min-height: 100px;">
-                        ${this.renderRecentReceiptsList()}
-                    </div>
-                </div>
-            </div>
-        </div>
+        </template>
     `;
 },
     
