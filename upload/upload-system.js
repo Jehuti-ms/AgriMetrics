@@ -699,15 +699,34 @@ class UploadSystem {
     }
 }
 
-// Initialize when DOM is ready
+let uploadSystemInstance = null;
+
+function initUploadSystem() {
+    if (!uploadSystemInstance) {
+        console.log('🚀 Initializing Upload System...');
+        uploadSystemInstance = new UploadSystem();
+        window.uploadSystem = uploadSystemInstance;
+        window.debugUploadSystem = uploadSystemInstance;
+    }
+    return uploadSystemInstance;
+}
+
+// Initialize only when needed
+window.initUploadSystem = initUploadSystem;
+
+// Or initialize when DOM is ready if elements exist
 document.addEventListener('DOMContentLoaded', () => {
-    window.uploadSystem = new UploadSystem();
+    // Check if upload system elements exist
+    const hasUploadSystem = document.getElementById('upload-system') || 
+                          document.getElementById('receipt-dropzone') || 
+                          document.getElementById('transaction-dropzone');
     
-    // Export for debugging
-    window.debugUploadSystem = window.uploadSystem;
-    
-    console.log('📁 Upload System Loaded!');
-    console.log('Try: debugUploadSystem to inspect');
+    if (hasUploadSystem) {
+        console.log('📁 Upload System elements found, initializing...');
+        initUploadSystem();
+    } else {
+        console.log('📁 Upload System elements not found, will initialize when needed');
+    }
 });
 
 // Add after your UploadSystem class definition
