@@ -98,20 +98,23 @@ const IncomeExpensesModule = {
     },
 
     // ==================== DATA MANAGEMENT ====================
-    async loadData() {
-        console.log('Loading transactions...');
+   async loadData() {
+    console.log('Loading transactions...');
+    
+    try {
+        let loadedFromFirebase = false;
         
-        try {
-            // Try to load from Firebase first if available and user is authenticated
-            if (this.isFirebaseAvailable && window.db && window.firebase?.auth?.().currentUser) {
-                try {
-                    const user = window.firebase.auth().currentUser;
-                    console.log('👤 Loading transactions for user:', user.uid);
+        // Try to load from Firebase first
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                const user = window.firebase.auth().currentUser;
+                if (user) {
+                    console.log('👤 User authenticated:', user.uid);
                     
+                    // SIMPLIFIED QUERY: No orderBy to avoid index requirement
                     const snapshot = await window.db.collection('transactions')
                         .where('userId', '==', user.uid)
-                        .orderBy('createdAt', 'desc')
-                        .limit(100)
+                        .limit(100) // Just limit, no ordering
                         .get();
                     
                     if (!snapshot.empty) {
@@ -136,23 +139,41 @@ const IncomeExpensesModule = {
                             };
                         });
                         
+                        // Sort locally after loading
+                        this.transactions.sort((a, b) => {
+                            const dateA = new Date(a.createdAt || a.date);
+                            const dateB = new Date(b.createdAt || b.date);
+                            return dateB - dateA; // Newest first
+                        });
+                        
                         console.log('✅ Loaded transactions from Firebase:', this.transactions.length);
                         
                         // Save to localStorage for offline use
                         localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
                         localStorage.setItem('last-firebase-sync', new Date().toISOString());
                         
-                        return; // Exit - Firebase load successful
-                    } else {
-                        console.log('📭 No transactions found in Firebase for this user');
+                        loadedFromFirebase = true;
                     }
-                } catch (firebaseError) {
-                    console.warn('⚠️ Firebase load error:', firebaseError.message);
-                    // Continue to localStorage fallback
+                }
+            } catch (firebaseError) {
+                console.error('❌ Firebase load error:', firebaseError);
+                console.log('Error details:', {
+                    code: firebaseError.code,
+                    message: firebaseError.message
+                });
+                
+                // Show user-friendly error
+                if (firebaseError.code === 'permission-denied') {
+                    this.showNotification(
+                        'Firebase permission denied. Using local data for now.',
+                        'warning'
+                    );
                 }
             }
-            
-            // Fallback to localStorage
+        }
+        
+        // Fallback to localStorage if Firebase failed or no data
+        if (!loadedFromFirebase) {
             console.log('🔄 Falling back to localStorage');
             const saved = localStorage.getItem('farm-transactions');
             this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
@@ -163,20 +184,19 @@ const IncomeExpensesModule = {
                     t.source = 'local';
                     t.updatedAt = t.updatedAt || new Date().toISOString();
                 }
-                if (!t.userId) {
-                    t.userId = window.firebase?.auth?.()?.currentUser?.uid || 'anonymous';
-                }
             });
             
             console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
-            
-        } catch (error) {
-            console.error('❌ Error loading transactions:', error);
-            this.transactions = this.getDemoData();
-            console.log('📝 Loaded demo transactions:', this.transactions.length);
         }
-    },
-
+        
+    } catch (error) {
+        console.error('❌ Error loading transactions:', error);
+        // Ultimate fallback to demo data
+        this.transactions = this.getDemoData();
+        console.log('📝 Loaded demo transactions:', this.transactions.length);
+    }
+},
+    
     getDemoData() {
         return [
             {
@@ -212,62 +232,105 @@ async loadReceiptsFromFirebase() {
         if (this.isFirebaseAvailable && window.db) {
             const user = window.firebase?.auth?.().currentUser;
             if (user) {
-                const snapshot = await window.db.collection('receipts')
-                    .where('userId', '==', user.uid)
-                    .where('status', '==', 'pending')
-                    .orderBy('uploadedAt', 'desc')
-                    .limit(50)
-                    .get();
-                
-                if (!snapshot.empty) {
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        
-                        // Convert base64 back to data URL if needed
-                        let downloadURL = data.dataURL;
-                        if (!downloadURL && data.base64Data) {
-                            downloadURL = `data:${data.type};base64,${data.base64Data}`;
-                        }
-                        
-                        const receipt = {
-                            id: data.id,
-                            name: data.name,
-                            downloadURL: downloadURL,
-                            dataURL: downloadURL,
-                            base64Data: data.base64Data,
-                            size: data.size,
-                            type: data.type,
-                            status: data.status,
-                            uploadedAt: data.uploadedAt,
-                            storageType: data.storageType || 'firestore-base64',
-                            userId: data.userId,
-                            source: 'firebase'
-                        };
-                        
-                        // Add to queue if not already there
-                        const existingIndex = this.receiptQueue.findIndex(r => r.id === receipt.id);
-                        if (existingIndex === -1) {
-                            this.receiptQueue.push(receipt);
-                        }
-                    });
+                try {
+                    // SIMPLIFIED QUERY: No complex where clauses, no orderBy
+                    const snapshot = await window.db.collection('receipts')
+                        .where('userId', '==', user.uid)
+                        .limit(50)
+                        .get();
                     
-                    console.log('✅ Loaded receipts from Firestore:', snapshot.size);
-                    
-                    // Update localStorage
-                    localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
-                    
-                    this.updateReceiptQueueUI();
-                    return;
+                    if (!snapshot.empty) {
+                        const firebaseReceipts = [];
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            
+                            // Filter for pending receipts locally
+                            if (data.status === 'pending') {
+                                // Convert base64 back to data URL if needed
+                                let downloadURL = data.dataURL;
+                                if (!downloadURL && data.base64Data) {
+                                    downloadURL = `data:${data.type || 'image/jpeg'};base64,${data.base64Data}`;
+                                }
+                                
+                                firebaseReceipts.push({
+                                    id: data.id || doc.id,
+                                    name: data.name || 'Unnamed receipt',
+                                    downloadURL: downloadURL,
+                                    dataURL: downloadURL,
+                                    base64Data: data.base64Data,
+                                    size: data.size || 0,
+                                    type: data.type || 'image/jpeg',
+                                    status: data.status || 'pending',
+                                    uploadedAt: data.uploadedAt || new Date().toISOString(),
+                                    storageType: data.storageType || 'firestore-base64',
+                                    userId: data.userId || user.uid,
+                                    source: 'firebase'
+                                });
+                            }
+                        });
+                        
+                        console.log('✅ Loaded receipts from Firebase:', firebaseReceipts.length);
+                        
+                        // Merge with existing receipts
+                        this.mergeReceipts(firebaseReceipts);
+                        
+                        this.updateReceiptQueueUI();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Firebase receipts load error:', error.message);
+                    if (error.code === 'failed-precondition') {
+                        console.log('This query requires an index. Please create it in Firebase Console.');
+                    }
                 }
             }
         }
     } catch (error) {
-        console.warn('⚠️ Firebase receipts load error:', error.message);
+        console.warn('⚠️ General receipts load error:', error.message);
     }
     
     // Fallback to localStorage
     this.loadFromLocalStorage();
 },
+
+mergeReceipts(firebaseReceipts) {
+    // Get local receipts
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    
+    // Create a map to avoid duplicates
+    const receiptMap = new Map();
+    
+    // First add all Firebase receipts
+    firebaseReceipts.forEach(receipt => {
+        receiptMap.set(receipt.id, receipt);
+    });
+    
+    // Then add local receipts that aren't in Firebase
+    localReceipts.forEach(localReceipt => {
+        if (!receiptMap.has(localReceipt.id)) {
+            receiptMap.set(localReceipt.id, {
+                ...localReceipt,
+                source: 'local'
+            });
+        }
+    });
+    
+    // Convert back to array
+    this.receiptQueue = Array.from(receiptMap.values())
+        .filter(r => r.status === 'pending') // Only keep pending receipts
+        .sort((a, b) => {
+            // Sort by upload date, newest first
+            const dateA = new Date(a.uploadedAt);
+            const dateB = new Date(b.uploadedAt);
+            return dateB - dateA;
+        });
+    
+    console.log('✅ Merged receipts. Total:', this.receiptQueue.length);
+    
+    // Save the merged list locally
+    localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
+},
+    
     // ==================== GET RECEIPT URL HELPER ====================
 getReceiptURL(receipt) {
     if (!receipt) return '';
@@ -741,7 +804,7 @@ saveReceiptLocally(receipt) {
     console.log('✅ Saved to localStorage:', receipt.id);
 },
 
-saveReceiptToFirebase(receipt) {
+async saveReceiptToFirebase(receipt) {
     if (!this.isFirebaseAvailable || !window.db) {
         throw new Error('Firebase not available');
     }
@@ -769,15 +832,10 @@ saveReceiptToFirebase(receipt) {
         };
         
         // Save to Firestore
-        return window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt)
-            .then(() => {
-                console.log('✅ Saved to Firestore:', receipt.id);
-                return true;
-            })
-            .catch(error => {
-                console.error('❌ Firestore save error:', error);
-                throw error;
-            });
+        await window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt);
+        
+        console.log('✅ Saved to Firestore:', receipt.id);
+        return true;
         
     } catch (error) {
         console.error('❌ Firestore save error:', error);
@@ -3652,60 +3710,94 @@ async uploadReceiptToFirebase(file, onProgress = null) {
 
     // ==================== SYNC METHODS (Missing) ====================
 
-    async syncLocalTransactionsToFirebase() {
-        console.log('🔄 Syncing local transactions to Firebase...');
-        
-        if (!this.isFirebaseAvailable || !window.firebase?.auth?.().currentUser) {
-            console.log('⚠️ Firebase not available or user not authenticated');
+   async syncLocalTransactionsToFirebase() {
+    if (!this.isOnline || !this.isFirebaseAvailable || !window.db) {
+        console.log('Skipping sync - offline or Firebase unavailable');
+        return;
+    }
+    
+    console.log('🔄 Syncing local transactions to Firebase...');
+    
+    try {
+        const user = window.firebase?.auth?.().currentUser;
+        if (!user) {
+            console.log('User not authenticated, skipping sync');
             return;
         }
         
-        const user = window.firebase.auth().currentUser;
+        // Get all local transactions
         const localTransactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
         
-        const unsyncedTransactions = localTransactions.filter(t => 
-            t.source === 'local' || !t.syncedAt
-        );
-        
-        if (unsyncedTransactions.length === 0) {
-            console.log('✅ All transactions are synced');
+        if (localTransactions.length === 0) {
+            console.log('✅ No local transactions to sync');
             return;
         }
         
-        console.log(`🔄 Found ${unsyncedTransactions.length} unsynced transactions`);
+        console.log(`Found ${localTransactions.length} local transactions`);
         
-        for (const transaction of unsyncedTransactions) {
+        // Sync each transaction
+        for (const transaction of localTransactions) {
             try {
+                // Skip demo transactions
+                if (transaction.source === 'demo') continue;
+                
                 const transactionWithUser = {
                     ...transaction,
                     userId: user.uid,
                     syncedAt: new Date().toISOString()
                 };
                 
+                // Use transaction ID as document ID
                 await window.db.collection('transactions')
                     .doc(transaction.id.toString())
                     .set(transactionWithUser, { merge: true });
                 
                 console.log(`✅ Synced transaction: ${transaction.id}`);
                 
-                const index = this.transactions.findIndex(t => t.id === transaction.id);
-                if (index !== -1) {
-                    this.transactions[index] = {
-                        ...transactionWithUser,
-                        source: 'firebase'
-                    };
-                }
-                
             } catch (error) {
-                console.error(`❌ Failed to sync transaction ${transaction.id}:`, error);
+                console.warn(`⚠️ Failed to sync transaction ${transaction.id}:`, error.message);
+                // Continue with other transactions
             }
         }
         
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-        localStorage.setItem('last-firebase-sync', new Date().toISOString());
+        console.log('✅ Transaction sync complete');
         
-        this.showNotification(`Synced ${unsyncedTransactions.length} transactions`, 'success');
-    },
+    } catch (error) {
+        console.error('❌ Error syncing transactions to Firebase:', error);
+    }
+},
+
+    async saveTransactionToFirebase(transactionData) {
+    if (!this.isFirebaseAvailable || !window.db) {
+        throw new Error('Firebase not available');
+    }
+    
+    const user = window.firebase?.auth?.().currentUser;
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+    
+    try {
+        // Ensure transaction has userId
+        const transactionWithUser = {
+            ...transactionData,
+            userId: user.uid,
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Save to Firestore
+        await window.db.collection('transactions')
+            .doc(transactionData.id.toString())
+            .set(transactionWithUser, { merge: true });
+        
+        console.log('✅ Saved transaction to Firebase:', transactionData.id);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Firestore save error:', error);
+        throw error;
+    }
+},
 
     // ==================== UI UPDATE METHODS (Missing) ====================
 
