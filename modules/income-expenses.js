@@ -3662,20 +3662,45 @@ showImportReceiptsModal() {
     // Stop camera if running
     this.stopCamera();
     
-    // Show the modal (your existing code)
+    // Show the modal - assuming you have modal display logic
+    const modal = document.getElementById('import-receipts-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        console.log('✅ Modal shown');
+    }
     
-    // Setup handlers
+    // Reset to initial state (quick actions view)
+    this.showQuickActionsView();
+    
+    // Setup file input when modal opens
     setTimeout(() => {
         console.log('🔄 Setting up handlers...');
         this.setupImportReceiptsHandlers();
         
-        // Skip Upload System for now since it's causing errors
-        console.log('⚠️ Skipping standalone upload system due to errors');
-        // this.initStandaloneUploadSystem(); // COMMENT THIS OUT
+        // Setup file input
+        this.setupFileInput();
         
-        // Show quick actions by default
-        this.showQuickActionsView();
+        console.log('✅ Modal fully initialized');
     }, 100);
+},
+    closeImportReceiptsModal() {
+    console.log('❌ Closing import receipts modal');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Hide the modal
+    const modal = document.getElementById('import-receipts-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        console.log('✅ Modal hidden');
+    }
+    
+    // Reset any file input
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) {
+        fileInput.value = '';
+    }
 },
     
 initStandaloneUploadSystem() {
@@ -4145,19 +4170,36 @@ setupImportReceiptsHandlers() {
         this.showQuickActionsView();  // Go back to quick actions
     });
     
-    // FIX 1: Better file input handling
-    this.setupFileInput();
+    // FIX: Only setup file input AFTER modal is open
+    // Don't call this.setupFileInput() here - it's being called in showImportReceiptsModal
     
-    // Browse button setup - use existing upload-receipt-btn
-    const browseBtn = document.getElementById('browse-receipts-btn') || 
-                     document.getElementById('upload-receipt-btn');
+    // IMPORTANT FIX: The browse button should ONLY work when we're in upload interface
+    // NOT when clicking the main "upload-receipt-btn" to open the modal
     
-    if (browseBtn) {
-        console.log(`✅ Found browse button: ${browseBtn.id}`);
-        browseBtn.onclick = (e) => {
+    // Find the main upload receipt button (opens modal) and the browse button (inside modal)
+    const mainUploadBtn = document.getElementById('upload-receipt-btn');
+    const browseBtnInModal = document.getElementById('browse-receipts-btn');
+    
+    // Main upload button should open modal
+    if (mainUploadBtn) {
+        console.log(`✅ Found main upload button: ${mainUploadBtn.id}`);
+        // Remove any previous listeners to prevent interference
+        mainUploadBtn.onclick = null;
+        mainUploadBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('📂 Browse files clicked');
+            console.log('📤 Main upload receipt button clicked - opening modal');
+            this.showImportReceiptsModal();
+        });
+    }
+    
+    // Browse button inside modal (if exists)
+    if (browseBtnInModal) {
+        console.log(`✅ Found browse button inside modal: ${browseBtnInModal.id}`);
+        browseBtnInModal.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📂 Browse files clicked (inside modal)');
             
             // Create file input if it doesn't exist
             let fileInput = document.getElementById('receipt-upload-input');
@@ -4174,7 +4216,7 @@ setupImportReceiptsHandlers() {
             }
         };
     } else {
-        console.error('❌ Browse button not found');
+        console.log('ℹ️ No separate browse button found in modal, will use main button when in upload mode');
     }
     
     // Other buttons...
