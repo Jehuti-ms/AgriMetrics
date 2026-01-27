@@ -3763,18 +3763,14 @@ initStandaloneUploadSystem() {
     }
 },
 
-   handleUploadOption() {
+  handleUploadOption() {
     console.log('📁 Handling upload option...');
     
-    // Hide camera and method selection sections
-    const cameraSection = document.getElementById('camera-section');
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Hide method selection if it exists
     const methodSelectionSection = document.getElementById('upload-method-selection');
-    
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-        this.stopCamera(); // Stop camera if running
-    }
-    
     if (methodSelectionSection) {
         methodSelectionSection.style.display = 'none';
     }
@@ -4157,9 +4153,20 @@ getStandaloneUploadHTML() {
     });
     
     // Fix 3: Cancel camera button - GO BACK TO METHOD SELECTION
+   // In setupImportReceiptsHandlers(), the cancel camera handler:
     setupButton('cancel-camera', () => {
         console.log('❌ Cancel camera clicked');
-        this.showUploadMethodSelection();  // NEW: Go back to method selection
+        
+        // Check if method selection section exists
+        const methodSelectionSection = document.getElementById('upload-method-selection');
+        
+        if (methodSelectionSection) {
+            // If method selection exists, show it
+            this.showUploadMethodSelection();
+        } else {
+            // Otherwise, show quick actions (main view)
+            this.showQuickActionsView();
+        }
     });
     
     // Fix 4: Browse button setup
@@ -4281,6 +4288,49 @@ getStandaloneUploadHTML() {
         console.log('✅ Kept recent section visible');
     }
 },
+
+    showQuickActionsView() {
+    console.log('🏠 Showing quick actions view...');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Get all sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    console.log('Showing quick actions - sections:', {
+        cameraSection: !!cameraSection,
+        uploadSection: !!uploadSection,
+        recentSection: !!recentSection,
+        quickActionsSection: !!quickActionsSection
+    });
+    
+    // Hide camera and upload sections
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        console.log('✅ Hidden camera section');
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+        console.log('✅ Hidden upload section');
+    }
+    
+    // Show quick actions
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'block';
+        console.log('✅ Showed quick actions section');
+    }
+    
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
+},
     
     setupUploadHandlers() {
         console.log('🔧 Setting up upload handlers...');
@@ -4332,7 +4382,7 @@ getStandaloneUploadHTML() {
 
     // ==================== UPLOAD INTERFACE METHODS (Missing) ====================
 
-  showUploadInterface() {
+showUploadInterface() {
     console.log('📁 Showing upload interface...');
     
     // Stop camera if running
@@ -4352,7 +4402,7 @@ getStandaloneUploadHTML() {
         methodSelectionSection: !!methodSelectionSection
     });
     
-    // Hide camera and method selection
+    // Hide camera, method selection, and quick actions
     if (cameraSection) {
         cameraSection.style.display = 'none';
         console.log('✅ Hidden camera section');
@@ -4363,16 +4413,15 @@ getStandaloneUploadHTML() {
         console.log('✅ Hidden method selection section');
     }
     
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'none';
+        console.log('✅ Hidden quick actions section');
+    }
+    
     // Show upload section
     if (uploadSection) {
         uploadSection.style.display = 'block';
         console.log('✅ Showed upload section');
-    }
-    
-    // Hide quick actions (since we're in upload mode)
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'none';
-        console.log('✅ Hidden quick actions section');
     }
     
     // Keep recent section visible
