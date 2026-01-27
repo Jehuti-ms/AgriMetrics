@@ -81,6 +81,15 @@ class UploadSystem {
     }
     
     setupEventListeners() {
+    // Add null checks:
+        if (this.browseBtn) {
+            this.browseBtn.addEventListener('click', () => this.openFileDialog());
+        }
+        
+        if (this.fileInput) {
+            this.fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        }
+        
         // Mode toggle
         this.modeInputs.forEach(input => {
             input.addEventListener('change', (e) => this.switchMode(e.target.value));
