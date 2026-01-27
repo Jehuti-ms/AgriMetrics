@@ -4212,7 +4212,7 @@ setupImportReceiptsHandlers() {
     });
     
     console.log('✅ Import receipt handlers setup complete');
-}
+},
 
 // Add this method to create file input dynamically
 setupFileInput() {
@@ -4239,7 +4239,7 @@ setupFileInput() {
     } else {
         console.error('❌ Could not setup file input');
     }
-}
+},
 
 // Add this method to create file input
 createFileInput() {
