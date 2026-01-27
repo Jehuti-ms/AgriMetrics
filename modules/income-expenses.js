@@ -551,8 +551,197 @@ saveReceiptLocally(receipt) {
     console.log('✅ Saved to localStorage:', receipt.id);
 },
 
-// ==================== SAVE RECEIPT TO FIREBASE (BASE64) ====================
-async saveReceiptToFirebase(receipt) {
+    showCaptureLoading(show) {
+    let overlay = document.getElementById('capture-loading-overlay');
+    
+    if (show && !overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'capture-loading-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            color: white;
+            animation: fadeIn 0.3s ease-out;
+        `;
+        
+        // Add CSS for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        overlay.innerHTML = `
+            <div style="text-align: center;">
+                <div style="width: 80px; height: 80px; border: 6px solid rgba(255, 255, 255, 0.2); border-top: 6px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 24px;"></div>
+                <div style="font-size: 24px; font-weight: 700; margin-bottom: 12px;">Saving Receipt...</div>
+                <div style="font-size: 16px; opacity: 0.8;">Please wait while we save your photo</div>
+                <div style="margin-top: 24px; font-size: 14px; opacity: 0.6;">✓ Saved locally</div>
+                <div style="font-size: 14px; opacity: 0.6;">🔄 Syncing to cloud...</div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+    } else if (!show && overlay) {
+        overlay.style.animation = 'fadeIn 0.3s ease-out reverse';
+        setTimeout(() => {
+            if (overlay && overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, 300);
+    }
+},
+
+capturePhoto() {
+    console.log('📸 Capturing photo...');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    
+    if (!video || !canvas) {
+        console.error('Video or canvas element not found');
+        this.showNotification('Camera elements missing', 'error');
+        return;
+    }
+    
+    if (!this.cameraStream || video.paused || video.readyState < 2) {
+        console.error('Camera not ready');
+        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+        return;
+    }
+    
+    // Set canvas dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const context = canvas.getContext('2d');
+    
+    try {
+        // Capture frame
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        if (status) status.textContent = 'Processing photo...';
+        
+        // Flash effect
+        video.style.filter = 'brightness(150%) contrast(120%)';
+        setTimeout(() => {
+            video.style.filter = '';
+        }, 200);
+        
+        // Convert to Data URL (Base64)
+        const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+        
+        if (status) status.textContent = 'Saving photo...';
+        
+        // Show loading
+        this.showCaptureLoading(true);
+        
+        // Generate receipt data
+        const timestamp = Date.now();
+        const receipt = this.createReceiptFromBase64(dataURL, timestamp);
+        
+        // Save locally first
+        this.saveReceiptLocally(receipt);
+        
+        // Try to save to Firebase in background
+        this.saveReceiptToFirebase(receipt)
+            .then(() => {
+                if (status) status.textContent = 'Photo saved!';
+                this.showCaptureSuccess(receipt);
+                this.showNotification('✅ Receipt saved!', 'success');
+                
+                // Update UI
+                this.updateModalReceiptsList();
+                this.updateReceiptQueueUI();
+                
+                // Return to upload view
+                setTimeout(() => {
+                    this.showCaptureLoading(false);
+                    this.showUploadInterface();
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('❌ Firebase save error:', error);
+                if (status) status.textContent = 'Saved locally';
+                this.showCaptureSuccess(receipt);
+                this.showNotification('✅ Receipt saved locally!', 'success');
+                
+                // Update UI even if Firebase fails
+                this.updateModalReceiptsList();
+                this.updateReceiptQueueUI();
+                
+                setTimeout(() => {
+                    this.showCaptureLoading(false);
+                    this.showUploadInterface();
+                }, 2000);
+            });
+        
+    } catch (error) {
+        console.error('❌ Capture error:', error);
+        if (status) status.textContent = 'Error';
+        this.showCaptureLoading(false);
+        this.showNotification('Failed to capture photo', 'error');
+    }
+},
+
+createReceiptFromBase64(dataURL, timestamp) {
+    // Extract base64 data from data URL
+    const base64Data = dataURL.split(',')[1];
+    
+    // Calculate approximate size (1 character ≈ 1 byte for base64)
+    const approxSize = Math.floor(base64Data.length * 0.75);
+    
+    const receiptId = `camera_${timestamp}`;
+    
+    return {
+        id: receiptId,
+        name: `receipt_${timestamp}.jpg`,
+        base64Data: base64Data, // Store as base64 for Firestore
+        dataURL: dataURL, // Keep full dataURL for local use
+        size: approxSize,
+        type: 'image/jpeg',
+        status: 'pending',
+        uploadedAt: new Date().toISOString(),
+        storageType: 'firestore-base64',
+        metadata: {
+            capturedAt: new Date().toISOString(),
+            quality: 'medium',
+            resolution: 'original'
+        }
+    };
+},
+
+saveReceiptLocally(receipt) {
+    // Store in memory
+    this.receiptQueue.unshift(receipt);
+    
+    // Store in localStorage for persistence
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    localReceipts.unshift(receipt);
+    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+    
+    console.log('✅ Saved to localStorage:', receipt.id);
+},
+
+saveReceiptToFirebase(receipt) {
     if (!this.isFirebaseAvailable || !window.db) {
         throw new Error('Firebase not available');
     }
@@ -580,10 +769,15 @@ async saveReceiptToFirebase(receipt) {
         };
         
         // Save to Firestore
-        await window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt);
-        
-        console.log('✅ Saved to Firestore:', receipt.id);
-        return true;
+        return window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt)
+            .then(() => {
+                console.log('✅ Saved to Firestore:', receipt.id);
+                return true;
+            })
+            .catch(error => {
+                console.error('❌ Firestore save error:', error);
+                throw error;
+            });
         
     } catch (error) {
         console.error('❌ Firestore save error:', error);
@@ -591,6 +785,342 @@ async saveReceiptToFirebase(receipt) {
     }
 },
 
+showCaptureSuccess(receipt) {
+    // Create success modal
+    const modal = document.createElement('div');
+    modal.id = 'capture-success-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 24px;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        z-index: 10002;
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Get image preview if available
+    let imagePreview = '';
+    if (receipt.type?.startsWith('image/')) {
+        imagePreview = `
+            <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; animation: pulse 2s ease-in-out;">
+                <img src="${receipt.dataURL}" 
+                     alt="Receipt preview" 
+                     style="width: 100%; max-height: 200px; object-fit: contain; background: #f8fafc;">
+            </div>
+        `;
+    }
+    
+    modal.innerHTML = `
+        <div style="position: relative;">
+            <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">Photo Saved!</h3>
+            <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipt has been saved to local storage.</p>
+            
+            ${imagePreview}
+            
+            <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151; font-size: 14px;">File:</span>
+                    <span style="color: #1f2937; font-size: 14px;">${receipt.name}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151; font-size: 14px;">Size:</span>
+                    <span style="color: #1f2937; font-size: 14px;">${this.formatFileSize(receipt.size || 0)}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 600; color: #374151; font-size: 14px;">Status:</span>
+                    <span style="color: #f59e0b; font-weight: bold; font-size: 14px;">Pending</span>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px;">
+                <button id="process-now-btn" 
+                        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
+                               color: white; 
+                               border: none; 
+                               padding: 14px 24px; 
+                               border-radius: 10px; 
+                               font-weight: 700; 
+                               cursor: pointer; 
+                               flex: 1;
+                               font-size: 16px;
+                               transition: all 0.2s;">
+                    🔍 Process Now
+                </button>
+                <button id="close-success-modal" 
+                        style="background: #f1f5f9; 
+                               color: #374151; 
+                               border: none; 
+                               padding: 14px 24px; 
+                               border-radius: 10px; 
+                               font-weight: 700; 
+                               cursor: pointer; 
+                               flex: 1;
+                               font-size: 16px;
+                               transition: all 0.2s;">
+                    Done
+                </button>
+            </div>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                <button id="take-another-btn" 
+                        style="background: none; 
+                               color: #3b82f6; 
+                               border: 2px solid #3b82f6; 
+                               padding: 10px 20px; 
+                               border-radius: 8px; 
+                               font-weight: 600; 
+                               cursor: pointer; 
+                               width: 100%;
+                               margin-bottom: 8px;
+                               transition: all 0.2s;">
+                    📸 Take Another Photo
+                </button>
+                <button id="delete-captured-btn" 
+                        style="background: #fef2f2; 
+                               color: #dc2626; 
+                               border: 2px solid #fecaca; 
+                               padding: 10px 20px; 
+                               border-radius: 8px; 
+                               font-weight: 600; 
+                               cursor: pointer; 
+                               width: 100%;
+                               transition: all 0.2s;">
+                    🗑️ Delete this receipt
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('process-now-btn')?.addEventListener('click', () => {
+        modal.remove();
+        setTimeout(() => {
+            this.processSingleReceipt(receipt.id);
+        }, 100);
+    });
+    
+    document.getElementById('close-success-modal')?.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    document.getElementById('take-another-btn')?.addEventListener('click', () => {
+        modal.remove();
+        // Stay in camera view
+        const status = document.getElementById('camera-status');
+        if (status) status.textContent = 'Ready';
+    });
+    
+    document.getElementById('delete-captured-btn')?.addEventListener('click', () => {
+        if (confirm(`Delete "${receipt.name}"? This action cannot be undone.`)) {
+            modal.remove();
+            this.deleteReceiptFromAllSources(receipt.id);
+        }
+    });
+    
+    // Auto-close after 10 seconds if not clicked
+    setTimeout(() => {
+        if (document.body.contains(modal)) {
+            modal.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    modal.remove();
+                }
+            }, 300);
+        }
+    }, 10000);
+    
+    // Close when clicking outside
+    const closeOnClickOutside = (e) => {
+        if (!modal.contains(e.target)) {
+            modal.remove();
+            document.removeEventListener('click', closeOnClickOutside);
+        }
+    };
+    setTimeout(() => {
+        document.addEventListener('click', closeOnClickOutside);
+    }, 100);
+},
+
+getReceiptURL(receipt) {
+    if (!receipt) return '';
+    
+    // If we already have a dataURL, use it
+    if (receipt.dataURL) return receipt.dataURL;
+    
+    // If we have base64Data, convert it
+    if (receipt.base64Data && receipt.type) {
+        return `data:${receipt.type};base64,${receipt.base64Data}`;
+    }
+    
+    // Fallback to downloadURL
+    return receipt.downloadURL || '';
+},
+
+// ==================== UPDATE: FIXED UPLOAD RECEIPT TO FIREBASE (BASE64) ====================
+uploadReceiptToFirebase(file, onProgress = null) {
+    console.log('📤 Uploading receipt:', file.name);
+    
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+            try {
+                const dataURL = e.target.result;
+                const base64Data = dataURL.split(',')[1];
+                const approxSize = Math.floor(base64Data.length * 0.75);
+                const timestamp = Date.now();
+                const receiptId = `upload_${timestamp}`;
+                
+                // Create receipt object
+                const receipt = {
+                    id: receiptId,
+                    name: file.name,
+                    base64Data: base64Data,
+                    dataURL: dataURL,
+                    size: approxSize,
+                    type: file.type,
+                    status: 'pending',
+                    uploadedAt: new Date().toISOString(),
+                    storageType: 'firestore-base64',
+                    metadata: {
+                        uploadedAt: new Date().toISOString(),
+                        originalSize: file.size,
+                        fileType: file.type
+                    }
+                };
+                
+                // Save locally first
+                this.saveReceiptLocally(receipt);
+                
+                // Try to save to Firebase
+                if (this.isFirebaseAvailable && window.db) {
+                    const user = window.firebase?.auth?.().currentUser;
+                    if (user) {
+                        const firebaseReceipt = {
+                            ...receipt,
+                            userId: user.uid
+                        };
+                        
+                        try {
+                            await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
+                            console.log('✅ Saved to Firestore:', receiptId);
+                        } catch (firestoreError) {
+                            console.warn('⚠️ Firestore save failed, keeping local:', firestoreError.message);
+                        }
+                    }
+                }
+                
+                resolve(receipt);
+                
+            } catch (error) {
+                reject(error);
+            }
+        };
+        
+        reader.onerror = () => {
+            reject(new Error('Failed to read file'));
+        };
+        
+        reader.readAsDataURL(file);
+    });
+},
+    
+// ==================== UPDATE: FIXED LOAD RECEIPTS FROM FIREBASE ====================
+async loadReceiptsFromFirebase() {
+    console.log('Loading receipts from Firebase...');
+    
+    try {
+        if (this.isFirebaseAvailable && window.db) {
+            const user = window.firebase?.auth?.().currentUser;
+            if (user) {
+                try {
+                    // Try to load receipts without complex queries that need indexes
+                    const snapshot = await window.db.collection('receipts')
+                        .where('userId', '==', user.uid)
+                        .limit(50)
+                        .get();
+                    
+                    if (!snapshot.empty) {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            
+                            // Only add pending receipts
+                            if (data.status !== 'pending') return;
+                            
+                            // Convert base64 back to data URL if needed
+                            let downloadURL = data.dataURL;
+                            if (!downloadURL && data.base64Data) {
+                                downloadURL = `data:${data.type || 'image/jpeg'};base64,${data.base64Data}`;
+                            }
+                            
+                            const receipt = {
+                                id: data.id || doc.id,
+                                name: data.name || 'Unnamed receipt',
+                                downloadURL: downloadURL,
+                                dataURL: downloadURL,
+                                base64Data: data.base64Data,
+                                size: data.size || 0,
+                                type: data.type || 'image/jpeg',
+                                status: data.status || 'pending',
+                                uploadedAt: data.uploadedAt || new Date().toISOString(),
+                                storageType: data.storageType || 'firestore-base64',
+                                userId: data.userId,
+                                source: 'firebase'
+                            };
+                            
+                            // Add to queue if not already there
+                            const existingIndex = this.receiptQueue.findIndex(r => r.id === receipt.id);
+                            if (existingIndex === -1) {
+                                this.receiptQueue.push(receipt);
+                            }
+                        });
+                        
+                        console.log('✅ Loaded receipts from Firestore:', this.receiptQueue.filter(r => r.source === 'firebase').length);
+                        
+                        // Update localStorage
+                        localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
+                        
+                        this.updateReceiptQueueUI();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Firebase receipts load error:', error.message);
+                }
+            }
+        }
+    } catch (error) {
+        console.warn('⚠️ General receipts load error:', error.message);
+    }
+    
+    // Fallback to localStorage
+    this.loadFromLocalStorage();
+},
+    
     stopCamera() {
         console.log('🛑 Stopping camera...');
         
@@ -1762,9 +2292,6 @@ async uploadReceiptToFirebase(file, onProgress = null) {
                              📄 Import Receipts
                             ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
                         </button>
-                        <button class="btn btn-outline" id="test-firebase-btn" style="margin-left: 10px;">
-                            🔧 Test Firebase
-                        </button>
                     </div>
                 </div>
 
@@ -2247,8 +2774,7 @@ async uploadReceiptToFirebase(file, onProgress = null) {
         // Main buttons
         setupButton('add-transaction', () => this.showTransactionModal());
         setupButton('upload-receipt-btn', () => this.showImportReceiptsModal());
-        setupButton('test-firebase-btn', () => this.testFirebaseConnection());
-        
+               
         // Quick actions
         setupButton('add-income-btn', () => this.showAddIncome());
         setupButton('add-expense-btn', () => this.showAddExpense());
