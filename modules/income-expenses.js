@@ -3710,25 +3710,39 @@ showImportReceiptsModal() {
     };
     
     // Setup all buttons
-    setupButton('camera-option', () => {
-        console.log('🎯 Camera button clicked');
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        
-        if (uploadSection) uploadSection.style.display = 'none';
-        if (recentSection) recentSection.style.display = 'none';
-        
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
-            
-            setTimeout(() => {
-                console.log('🔄 Initializing camera...');
-                this.initializeCamera();
-            }, 100);
-        }
+setupButton('camera-option', () => {
+    console.log('🎯 Camera button clicked');
+    
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    
+    console.log('Switching to camera:', {
+        cameraSection: !!cameraSection,
+        uploadSection: !!uploadSection,
+        recentSection: !!recentSection
     });
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+        console.log('✅ Hid upload section');
+    }
+    
+    if (recentSection) {
+        recentSection.style.display = 'none';
+        console.log('✅ Hid recent section');
+    }
+    
+    if (cameraSection) {
+        cameraSection.style.display = 'block';
+        console.log('✅ Showed camera section');
+        
+        setTimeout(() => {
+            console.log('🔄 Initializing camera...');
+            this.initializeCamera();
+        }, 100);
+    }
+});
     
     setupButton('upload-option', () => {
         console.log('📁 Upload button clicked');
@@ -3841,24 +3855,46 @@ showImportReceiptsModal() {
 
     // ==================== UPLOAD INTERFACE METHODS (Missing) ====================
 
-    showUploadInterface() {
-        console.log('📁 Showing upload interface...');
-        
-        this.stopCamera();
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        
-        if (cameraSection) cameraSection.style.display = 'none';
-        if (uploadSection) uploadSection.style.display = 'block';
-        if (recentSection && this.receiptQueue.length > 0) {
+   showUploadInterface() {
+    console.log('📁 Showing upload interface...');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Get the sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    
+    console.log('Sections found:', {
+        cameraSection: !!cameraSection,
+        uploadSection: !!uploadSection,
+        recentSection: !!recentSection
+    });
+    
+    // Show upload section
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        console.log('✅ Hidden camera section');
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'block';
+        console.log('✅ Showed upload section');
+    }
+    
+    // Show/hide recent section based on receipts
+    if (recentSection) {
+        if (this.receiptQueue.length > 0) {
             recentSection.style.display = 'block';
-        } else if (recentSection) {
+            console.log('✅ Showed recent section (has receipts)');
+        } else {
             recentSection.style.display = 'none';
+            console.log('✅ Hid recent section (no receipts)');
         }
-    },
-
+    }
+},
+    
     // ==================== VALIDATION METHODS (Missing) ====================
 
     isValidReceiptFile(file) {
