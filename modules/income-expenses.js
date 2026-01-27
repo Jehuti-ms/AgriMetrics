@@ -3592,102 +3592,186 @@ showImportReceiptsModal() {
     
     const content = document.getElementById('import-receipts-content');
     if (content) {
-        // 1. RENDER the HTML (this creates the buttons)
         content.innerHTML = this.renderImportReceiptsModal();
         
-        // 2. WAIT for DOM to update, THEN setup handlers
+        // Load standalone upload system
+        this.loadStandaloneUploadSystem();
+        
         setTimeout(() => {
-            console.log('🔄 DOM updated, setting up handlers...');
+            console.log('🔄 Setting up handlers...');
             this.setupImportReceiptsHandlers();
             this.updateProcessReceiptsButton();
-        }, 50); // Small delay for DOM to be ready
+        }, 50);
     }
 },
 
-    renderImportReceiptsModal() {
-        return `
-            <div class="import-receipts-container">
-                <div class="quick-actions-section">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option">
-                            <div class="card-icon">📷</div>
-                            <span class="card-title">Take Photo</span>
-                            <span class="card-subtitle">Use camera</span>
-                        </button>
-                        <button class="card-button" id="upload-option">
-                            <div class="card-icon">📁</div>
-                            <span class="card-title">Upload Files</span>
-                            <span class="card-subtitle">From device</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="upload-section" id="upload-section" style="display: block;">
-                    <div class="glass-card">
-                        <div class="card-header">
-                            <h3>Upload Receipts</h3>
-                        </div>
-                        <div class="upload-area" id="drop-area">
-                            <div class="upload-icon">📄</div>
-                            <h4>Drag & Drop Receipts</h4>
-                            <p class="upload-subtitle">or click to browse files</p>
-                            <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
-                            <input type="file" id="receipt-upload-input" multiple 
-                                   accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
-                            <button class="btn btn-primary" id="browse-receipts-btn">
-                                <span class="btn-icon">📁</span>
-                                <span class="btn-text">Browse Files</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="camera-section" id="camera-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>Camera Preview</h3>
-                            <div class="camera-status" id="camera-status">Ready</div>
-                        </div>
-                        <div class="camera-preview">
-                            <video id="camera-preview" autoplay playsinline></video>
-                            <canvas id="camera-canvas" style="display: none;"></canvas>
-                        </div>
-                        <div class="camera-controls">
-                            <button class="btn btn-outline" id="switch-camera">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch Camera</span>
-                            </button>
-                            <button class="btn btn-primary" id="capture-photo">
-                                <span class="btn-icon">📸</span>
-                                <span class="btn-text">Capture</span>
-                            </button>
-                            <button class="btn btn-outline" id="cancel-camera">
-                                <span class="btn-icon">✖️</span>
-                                <span class="btn-text">Cancel</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📋 Recent Receipts</h3>
-                            <button class="btn btn-outline" id="refresh-receipts">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Refresh</span>
-                            </button>
-                        </div>
-                        <div id="recent-receipts-list" class="receipts-list">
-                            ${this.renderRecentReceiptsList()}
-                        </div>
-                    </div>
+loadStandaloneUploadSystem() {
+    const wrapper = document.getElementById('standalone-upload-wrapper');
+    if (!wrapper) return;
+    
+    // Method 1: If you have the HTML as a variable
+    const uploadSystemHTML = `
+        <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
+        <div class="upload-system-container" id="upload-system">
+            <!-- Toggle Switch -->
+            <div class="upload-mode-toggle">
+                <div class="toggle-switch">
+                    <input type="radio" id="mode-receipts" name="upload-mode" value="receipts" checked>
+                    <label for="mode-receipts" class="toggle-label">
+                        <i class="fas fa-receipt"></i>
+                        <span>Receipts</span>
+                    </label>
+                    
+                    <input type="radio" id="mode-transactions" name="upload-mode" value="transactions">
+                    <label for="mode-transactions" class="toggle-label">
+                        <i class="fas fa-file-csv"></i>
+                        <span>Transactions</span>
+                    </label>
+                    
+                    <div class="toggle-slider"></div>
                 </div>
             </div>
-        `;
-    },
+            
+            <!-- Receipts Upload Section -->
+            <div class="upload-section active" data-mode="receipts">
+                <div class="upload-header">
+                    <h3 class="upload-title">
+                        <i class="fas fa-receipt text-primary"></i>
+                        Upload Receipts
+                    </h3>
+                    <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
+                </div>
+                
+                <div class="upload-dropzone" id="receipt-dropzone">
+                    <div class="dropzone-content">
+                        <div class="dropzone-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h4 class="dropzone-title">Drop receipt files here</h4>
+                        <p class="dropzone-subtitle">or click to browse</p>
+                        <div class="file-types">
+                            <span class="file-type-badge">JPG</span>
+                            <span class="file-type-badge">PNG</span>
+                            <span class="file-type-badge">PDF</span>
+                            <span class="file-type-badge">HEIC</span>
+                        </div>
+                    </div>
+                    <input type="file" id="receipt-file-input" 
+                           accept=".jpg,.jpeg,.png,.pdf,.heic,.heif" 
+                           multiple 
+                           class="dropzone-input">
+                </div>
+                
+                <!-- Progress, file list, etc. -->
+                <!-- ... include the rest of upload-system.html ... -->
+            </div>
+            
+            <!-- Transactions Upload Section -->
+            <div class="upload-section" data-mode="transactions">
+                <!-- ... transactions section ... -->
+            </div>
+            
+            <!-- Status Messages -->
+            <div class="status-messages">
+                <div class="status-message" id="status-message"></div>
+            </div>
+        </div>
+        
+        <!-- Templates -->
+        <template id="receipt-file-template">
+            <!-- ... template content ... -->
+        </template>
+        
+        <template id="transaction-row-template">
+            <!-- ... template content ... -->
+        </template>
+    `;
+    
+    wrapper.innerHTML = uploadSystemHTML;
+    
+    // Initialize the upload system
+    setTimeout(() => {
+        if (window.initUploadSystem) {
+            window.initUploadSystem();
+        } else if (window.UploadSystemClass && !window.uploadSystem) {
+            console.log('🚀 Creating new Upload System instance...');
+            window.uploadSystem = new window.UploadSystemClass();
+        }
+        
+        // Customize for receipts only
+        this.customizeUploadSystemForReceipts();
+    }, 100);
+},
 
+customizeUploadSystemForReceipts() {
+    // Hide mode toggle (we only want receipts)
+    const modeToggle = document.querySelector('.upload-mode-toggle');
+    if (modeToggle) {
+        modeToggle.style.display = 'none';
+    }
+    
+    // Hide transactions section
+    const transactionsSection = document.querySelector('[data-mode="transactions"]');
+    if (transactionsSection) {
+        transactionsSection.style.display = 'none';
+    }
+    
+    // Show only receipts section
+    const receiptsSection = document.querySelector('[data-mode="receipts"]');
+    if (receiptsSection) {
+        receiptsSection.classList.add('active');
+        receiptsSection.style.display = 'block';
+    }
+    
+    // Customize the process button
+    const processBtn = document.getElementById('process-receipts-btn');
+    if (processBtn) {
+        processBtn.textContent = 'Add to Farm Transactions';
+        processBtn.addEventListener('click', () => {
+            this.handleUploadedReceipts();
+        });
+    }
+},
+    
+    renderImportReceiptsModal() {
+    return `
+        <div class="import-receipts-container">
+            <div class="quick-actions-section">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- REPLACE THIS SECTION WITH STANDALONE UPLOAD SYSTEM -->
+            <div class="upload-section" id="upload-section" style="display: block;">
+                <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
+                <!-- Or load it dynamically -->
+                <div id="standalone-upload-wrapper"></div>
+            </div>
+            
+            <!-- CAMERA SECTION -->
+            <div class="camera-section" id="camera-section" style="display: none;">
+                <!-- ... your camera HTML ... -->
+            </div>
+            
+            <!-- RECENT SECTION -->
+            <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
+                <!-- ... your recent receipts HTML ... -->
+            </div>
+        </div>
+    `;
+},
+    
    setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
