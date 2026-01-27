@@ -2529,6 +2529,43 @@ deleteReceiptFromAllSources: async function(receiptId) {
     height: auto !important;
     width: auto !important;
 }
+
+/* Make sure upload area is visible */
+.upload-area {
+    min-height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--glass-bg) !important;
+    border: 2px dashed var(--glass-border) !important;
+    border-radius: 12px !important;
+    padding: 40px 20px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+/* ======= show upload ======== */
+.upload-area:hover {
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color)10 !important;
+}
+
+.upload-icon {
+    font-size: 64px !important;
+    margin-bottom: 16px !important;
+    color: var(--text-secondary) !important;
+}
+
+/* Make sure sections don't collapse */
+.upload-section, .camera-section, .recent-section {
+    min-height: 100px !important;
+    margin-bottom: 24px !important;
+}
+
+.glass-card {
+    min-height: 150px !important;
+}
     }
             </style>
 
@@ -3733,7 +3770,7 @@ customizeUploadSystemForReceipts() {
     }
 },
     
-    renderImportReceiptsModal() {
+   renderImportReceiptsModal() {
     return `
         <div class="import-receipts-container">
             <div class="quick-actions-section">
@@ -3752,21 +3789,70 @@ customizeUploadSystemForReceipts() {
                 </div>
             </div>
             
-            <!-- REPLACE THIS SECTION WITH STANDALONE UPLOAD SYSTEM -->
+            <!-- UPLOAD SECTION (SHOW BY DEFAULT) -->
             <div class="upload-section" id="upload-section" style="display: block;">
-                <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
-                <!-- Or load it dynamically -->
-                <div id="standalone-upload-wrapper"></div>
+                <!-- SIMPLE UPLOAD FOR NOW - WE'LL REPLACE THIS -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3>📁 Upload Receipts</h3>
+                    </div>
+                    <div class="upload-area" id="drop-area" style="min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <div class="upload-icon" style="font-size: 64px;">📄</div>
+                        <h4 style="margin: 16px 0 8px 0;">Drag & Drop Receipts Here</h4>
+                        <p class="upload-subtitle" style="margin-bottom: 16px;">or click to browse files</p>
+                        <p class="upload-formats" style="margin-bottom: 24px;">Supports: JPG, PNG, PDF (Max 10MB)</p>
+                        <input type="file" id="receipt-upload-input" multiple 
+                               accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                        <button class="btn btn-primary" id="browse-receipts-btn" style="padding: 12px 24px; font-size: 16px;">
+                            <span class="btn-icon">📁</span>
+                            <span class="btn-text">Browse Files</span>
+                        </button>
+                    </div>
+                </div>
             </div>
             
-            <!-- CAMERA SECTION -->
+            <!-- CAMERA SECTION (HIDDEN BY DEFAULT) -->
             <div class="camera-section" id="camera-section" style="display: none;">
-                <!-- ... your camera HTML ... -->
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📷 Camera</h3>
+                        <div class="camera-status" id="camera-status">Ready</div>
+                    </div>
+                    <div class="camera-preview">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn btn-outline" id="switch-camera">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Switch Camera</span>
+                        </button>
+                        <button class="btn btn-primary" id="capture-photo">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Capture</span>
+                        </button>
+                        <button class="btn btn-outline" id="cancel-camera">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Back to Upload</span>
+                        </button>
+                    </div>
+                </div>
             </div>
             
-            <!-- RECENT SECTION -->
-            <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
-                <!-- ... your recent receipts HTML ... -->
+            <!-- RECENT SECTION (ALWAYS SHOW) -->
+            <div class="recent-section" id="recent-section" style="display: block;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📋 Recent Receipts</h3>
+                        <button class="btn btn-outline" id="refresh-receipts">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh</span>
+                        </button>
+                    </div>
+                    <div id="recent-receipts-list" class="receipts-list" style="min-height: 100px;">
+                        ${this.renderRecentReceiptsList()}
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -3955,17 +4041,8 @@ setupButton('camera-option', () => {
         uploadSection: !!uploadSection,
         recentSection: !!recentSection
     });
-
-        // DEBUG: Check the actual HTML
-    if (uploadSection) {
-        console.log('📋 Upload section HTML:', uploadSection.outerHTML);
-        console.log('📋 Upload section display style:', uploadSection.style.display);
-        console.log('📋 Upload section computed display:', window.getComputedStyle(uploadSection).display);
-        console.log('📋 Upload section height:', uploadSection.offsetHeight);
-        console.log('📋 Upload section visibility:', window.getComputedStyle(uploadSection).visibility);
-    }
     
-    // Show upload section
+    // Show upload section, hide camera
     if (cameraSection) {
         cameraSection.style.display = 'none';
         console.log('✅ Hidden camera section');
@@ -3976,14 +4053,21 @@ setupButton('camera-option', () => {
         console.log('✅ Showed upload section');
     }
     
-    // Show/hide recent section based on receipts
+    // KEEP recent section visible even if empty - just show message
     if (recentSection) {
-        if (this.receiptQueue.length > 0) {
-            recentSection.style.display = 'block';
-            console.log('✅ Showed recent section (has receipts)');
-        } else {
-            recentSection.style.display = 'none';
-            console.log('✅ Hid recent section (no receipts)');
+        recentSection.style.display = 'block';
+        console.log('✅ Showed recent section');
+        
+        // Update the content if it's empty
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList && this.receiptQueue.length === 0) {
+            recentList.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No receipts yet</div>
+                    <div style="font-size: 14px;">Upload receipts to see them here</div>
+                </div>
+            `;
         }
     }
 },
