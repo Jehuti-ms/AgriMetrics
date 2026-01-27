@@ -1365,74 +1365,120 @@ async uploadReceiptToFirebase(file, onProgress = null) {
         });
     },
 
-    confirmAndDeleteReceipt(receiptId) {
-        console.log(`🗑️ Confirming deletion for receipt: ${receiptId}`);
-        
-        const receipt = this.receiptQueue.find(r => r.id === receiptId);
-        if (!receipt) {
-            this.showNotification('Receipt not found', 'error');
-            return;
-        }
-        
-        if (confirm(`Are you sure you want to delete "${receipt.name}"?\n\nThis action cannot be undone.`)) {
-            this.deleteReceiptFromAllSources(receiptId);
-        }
-    },
+// Add at the top with other module properties
+isDeleting: false,
 
-    async deleteReceiptFromAllSources(receiptId) {
-        console.log(`🗑️ Deleting receipt: ${receiptId}`);
-        
-        const receipt = this.receiptQueue.find(r => r.id === receiptId);
-        if (!receipt) {
-            this.showNotification('Receipt not found', 'error');
-            return;
+confirmAndDeleteReceipt: function(receiptId) {
+    console.log(`🗑️ Confirming deletion for receipt: ${receiptId}`);
+    
+    // Prevent if already deleting
+    if (this.isDeleting) {
+        this.showNotification('Please wait for previous delete to complete', 'warning');
+        return;
+    }
+    
+    // Get the receipt FIRST
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    // Use a more specific selector - target ONLY delete buttons
+    const deleteBtn = document.querySelector(`.delete-receipt-btn[data-receipt-id="${receiptId}"]`);
+    const originalContent = deleteBtn ? deleteBtn.innerHTML : '';
+    
+    // Store the receipt name before showing confirmation
+    const receiptName = receipt.name;
+    
+    // Single confirmation dialog
+    if (window.confirm(`Are you sure you want to delete "${receiptName}"?\n\nThis action cannot be undone.`)) {
+        // Show immediate visual feedback
+        if (deleteBtn) {
+            deleteBtn.innerHTML = '<span class="btn-icon">⏳</span> Deleting...';
+            deleteBtn.disabled = true;
+            deleteBtn.classList.add('deleting');
         }
         
-        try {
-            // Delete from Firebase Storage if it's a Firebase receipt
-            if (receipt.storageType === 'firebase' && receipt.fileName && window.storage) {
-                try {
-                    const storageRef = window.storage.ref();
-                    await storageRef.child(receipt.fileName).delete();
-                    console.log('✅ Deleted from Firebase Storage:', receipt.fileName);
-                } catch (error) {
-                    console.warn('⚠️ Could not delete from Firebase Storage:', error.message);
-                }
-            }
-            
-            // Delete from Firestore
-            if (this.isFirebaseAvailable && window.db) {
-                try {
-                    await window.db.collection('receipts').doc(receiptId).delete();
-                    console.log('✅ Deleted from Firestore:', receiptId);
-                } catch (error) {
-                    console.warn('⚠️ Could not delete from Firestore:', error.message);
-                }
-            }
-            
-            // Remove from memory
-            this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
-            
-            // Remove from localStorage
-            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-            const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
-            localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            this.updateModalReceiptsList();
-            this.updateProcessReceiptsButton();
-            
-            // Show success
-            this.showNotification(`"${receipt.name}" deleted successfully`, 'success');
-            
-            console.log('✅ Receipt deleted');
-            
-        } catch (error) {
-            console.error('❌ Error deleting receipt:', error);
-            this.showNotification('Failed to delete receipt', 'error');
+        // Proceed with deletion
+        this.deleteReceiptFromAllSources(receiptId);
+    } else {
+        // User cancelled - restore button state
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalContent;
+            deleteBtn.classList.remove('deleting');
         }
-    },
+        console.log('Delete cancelled by user');
+    }
+},
+
+deleteReceiptFromAllSources: async function(receiptId) {
+    // Prevent multiple simultaneous deletes
+    if (this.isDeleting) {
+        this.showNotification('Please wait for previous delete to complete', 'warning');
+        return;
+    }
+    
+    // Get the receipt FIRST
+    const receipt = this.receiptQueue.find(r => r.id === receiptId);
+    if (!receipt) {
+        this.showNotification('Receipt not found', 'error');
+        return;
+    }
+    
+    this.isDeleting = true;
+    
+    try {
+        // Delete from Firebase Storage if it's a Firebase receipt
+        if (receipt.storageType === 'firebase' && receipt.fileName && window.storage) {
+            try {
+                const storageRef = window.storage.ref();
+                await storageRef.child(receipt.fileName).delete();
+                console.log('✅ Deleted from Firebase Storage:', receipt.fileName);
+            } catch (error) {
+                console.warn('⚠️ Could not delete from Firebase Storage:', error.message);
+            }
+        }
+        
+        // Delete from Firestore
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                await window.db.collection('receipts').doc(receiptId).delete();
+                console.log('✅ Deleted from Firestore:', receiptId);
+            } catch (error) {
+                console.warn('⚠️ Could not delete from Firestore:', error.message);
+            }
+        }
+        
+        // Remove from memory
+        this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
+        
+        // Remove from localStorage
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
+        localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+        
+        // Update UI
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+        this.updateProcessReceiptsButton();
+        
+        // Show success
+        this.showNotification(`"${receipt.name}" deleted successfully`, 'success');
+        
+        console.log('✅ Receipt deleted');
+        
+    } catch (error) {
+        console.error('❌ Error deleting receipt:', error);
+        this.showNotification('Failed to delete receipt', 'error');
+    } finally {
+        // Always reset the flag
+        setTimeout(() => {
+            this.isDeleting = false;
+        }, 1000);
+    }
+},
 
     // ==================== RENDER METHODS ====================
     renderModule() {
@@ -2334,7 +2380,73 @@ async uploadReceiptToFirebase(file, onProgress = null) {
     .pending-receipt-item {
         background: rgba(0, 0, 0, 0.25);
     }
+
+.delete-receipt-btn.deleting {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: #9ca3af !important;
 }
+
+/* Add these new styles for receipt modal */
+.receipt-modal-scrollable {
+    max-height: 70vh !important; /* Limit height to 70% of viewport */
+    overflow-y: auto !important; /* Make it scrollable */
+    padding: 20px !important;
+}
+
+.receipt-content-wrapper {
+    max-width: 800px !important; /* Limit width */
+    margin: 0 auto !important;
+    white-space: pre-wrap !important; /* Preserve line breaks */
+    word-wrap: break-word !important; /* Break long words */
+    line-height: 1.5 !important;
+    font-family: monospace !important; /* Better for receipt text */
+    font-size: 14px !important;
+}
+
+/* For very long receipts, add smoother scrolling */
+.receipt-text-container {
+    overflow-x: hidden !important;
+    padding-right: 10px !important;
+}
+
+/* Custom scrollbar for receipt modal */
+.receipt-modal-scrollable::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.receipt-modal-scrollable::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 4px !important;
+}
+
+.receipt-modal-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+.receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .receipt-modal-scrollable {
+        max-height: 80vh !important;
+        padding: 15px !important;
+    }
+    
+    .receipt-content-wrapper {
+        font-size: 12px !important;
+    }
+
+@media (max-width: 480px) {
+    .receipt-modal-scrollable {
+        max-height: 85vh !important;
+        padding: 10px !important;
+    }
+}
+    
             </style>
 
             <div class="module-container">
@@ -2907,10 +3019,6 @@ async uploadReceiptToFirebase(file, onProgress = null) {
         }
     },
 
-    // [Rest of your existing methods - just copy them from your current file]
-    // I'll include the most critical ones below, but you should keep all your existing methods
-    // that aren't listed here
-
     async saveTransaction() {
         console.log('Saving transaction...');
         
@@ -3271,6 +3379,7 @@ async uploadReceiptToFirebase(file, onProgress = null) {
         this.showNotification('Transaction deleted successfully', 'success');
     },
 
+    
     // ==================== RECEIPT FORM HANDLERS (Missing) ====================
 
     handleTransactionReceiptUpload(file) {
