@@ -3688,7 +3688,7 @@ showImportReceiptsModal() {
 initStandaloneUploadSystem() {
     console.log('🚀 Initializing standalone upload system...');
     
-    // Hide the mode toggle (we only want receipts)
+    // Hide the mode toggle
     const modeToggle = document.querySelector('.upload-mode-toggle');
     if (modeToggle) {
         modeToggle.style.display = 'none';
@@ -3712,8 +3712,15 @@ initStandaloneUploadSystem() {
     if (processBtn) {
         processBtn.innerHTML = '<i class="fas fa-magic"></i> Add to Farm Transactions';
         processBtn.addEventListener('click', () => {
-            // Handle uploaded receipts
             this.handleUploadedReceiptsFromStandalone();
+        });
+    }
+    
+    // Add back button handler
+    const backButton = document.getElementById('back-to-main-view');
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            this.showMainView();
         });
     }
     
@@ -3723,6 +3730,77 @@ initStandaloneUploadSystem() {
     }
 },
 
+    showMainView() {
+    console.log('🔙 Returning to main view...');
+    
+    // Get all sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    // Hide camera and upload
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        this.stopCamera();
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+        console.log('✅ Hid upload section');
+    }
+    
+    // Show quick actions
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'block';
+        console.log('✅ Showed quick actions section');
+    }
+    
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
+},
+
+    handleUploadOption() {
+    console.log('📁 Handling upload option...');
+    
+    // Get the sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    console.log('Switching to upload interface...');
+    
+    // Hide camera and quick actions
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        this.stopCamera();
+    }
+    
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'none';
+        console.log('✅ Hid quick actions section');
+    }
+    
+    // Show upload section and load standalone system
+    if (uploadSection) {
+        // Load standalone upload system
+        this.loadStandaloneUploadSystem();
+        
+        uploadSection.style.display = 'block';
+        console.log('✅ Showed upload section');
+    }
+    
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
+},
+    
     handleUploadedReceiptsFromStandalone() {
     console.log('📁 Handling receipts from standalone upload system...');
     
@@ -3825,7 +3903,7 @@ customizeUploadSystemForReceipts() {
             </div>
             
             <!-- REPLACE YOUR SIMPLE UPLOAD WITH STANDALONE SYSTEM -->
-            <div id="upload-section" style="display: block;">
+            <div id="upload-section" style="display: none;">
                 <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
                 ${this.getStandaloneUploadHTML()}
             </div>
@@ -3880,8 +3958,26 @@ customizeUploadSystemForReceipts() {
 getStandaloneUploadHTML() {
     return `
         <div class="upload-system-container" id="upload-system">
-            <!-- Toggle Switch -->
-            <div class="upload-mode-toggle">
+            <!-- BACK BUTTON HEADER -->
+            <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+                <button class="btn btn-outline" id="back-to-main-view" 
+                        style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back</span>
+                </button>
+                <div>
+                    <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
+                        <i class="fas fa-upload" style="color: #4f46e5; margin-right: 8px;"></i>
+                        Upload Files
+                    </h3>
+                    <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
+                        Drag & drop or select files from your device
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Toggle Switch - HIDDEN (we only want receipts) -->
+            <div class="upload-mode-toggle" style="display: none;">
                 <div class="toggle-switch">
                     <input type="radio" id="mode-receipts" name="upload-mode" value="receipts" checked>
                     <label for="mode-receipts" class="toggle-label">
@@ -3901,7 +3997,7 @@ getStandaloneUploadHTML() {
             
             <!-- Receipts Upload Section -->
             <div class="upload-section active" data-mode="receipts">
-                <div class="upload-header">
+                <div class="upload-header" style="margin-bottom: 24px;">
                     <h3 class="upload-title">
                         <i class="fas fa-receipt text-primary"></i>
                         Upload Receipts
@@ -3945,7 +4041,7 @@ getStandaloneUploadHTML() {
                     </div>
                 </div>
                 
-                <div class="uploaded-files-container">
+                <div class="uploaded-files-container" style="margin-top: 24px;">
                     <h5 class="files-title">
                         <i class="fas fa-paperclip"></i>
                         Uploaded Receipts
@@ -3960,17 +4056,17 @@ getStandaloneUploadHTML() {
                     </div>
                 </div>
                 
-                <div class="upload-actions">
+                <div class="upload-actions" style="margin-top: 24px;">
                     <button class="btn btn-process" id="process-receipts-btn" disabled>
                         <i class="fas fa-magic"></i>
-                        Extract Data from Receipts
+                        Add to Farm Transactions
                     </button>
                 </div>
             </div>
             
-            <!-- Transactions Upload Section (HIDDEN FOR NOW) -->
+            <!-- Transactions Upload Section (HIDDEN) -->
             <div class="upload-section" data-mode="transactions" style="display: none;">
-                <!-- Keep this section hidden for receipts-only mode -->
+                <!-- Hidden -->
             </div>
             
             <!-- Status Messages -->
@@ -4027,29 +4123,35 @@ getStandaloneUploadHTML() {
     };
     
     // Setup all buttons
+// In setupImportReceiptsHandlers(), update the camera option handler:
 setupButton('camera-option', () => {
     console.log('🎯 Camera button clicked');
     
     const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
     
-    console.log('Switching to camera:', {
-        cameraSection: !!cameraSection,
-        uploadSection: !!uploadSection,
-        recentSection: !!recentSection
-    });
+    console.log('Switching to camera...');
     
+    // Hide upload and quick actions
     if (uploadSection) {
         uploadSection.style.display = 'none';
         console.log('✅ Hid upload section');
     }
     
-    if (recentSection) {
-        recentSection.style.display = 'none';
-        console.log('✅ Hid recent section');
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'none';
+        console.log('✅ Hid quick actions section');
     }
     
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
+    
+    // Show camera
     if (cameraSection) {
         cameraSection.style.display = 'block';
         console.log('✅ Showed camera section');
@@ -4061,10 +4163,11 @@ setupButton('camera-option', () => {
     }
 });
     
-    setupButton('upload-option', () => {
-        console.log('📁 Upload button clicked');
-        this.showUploadInterface();
-    });
+    // Cancel camera button
+setupButton('cancel-camera', () => {
+    console.log('❌ Cancel camera clicked');
+    this.showMainView();  // Return to main view
+});
     
     setupButton('browse-receipts-btn', () => {
         console.log('📂 Browse files clicked');
@@ -4182,40 +4285,56 @@ setupButton('camera-option', () => {
     const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
     
     console.log('Sections found:', {
         cameraSection: !!cameraSection,
         uploadSection: !!uploadSection,
-        recentSection: !!recentSection
+        recentSection: !!recentSection,
+        quickActionsSection: !!quickActionsSection
     });
     
-    // Show upload section, hide camera
+    // Hide camera and quick actions
     if (cameraSection) {
         cameraSection.style.display = 'none';
         console.log('✅ Hidden camera section');
     }
     
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'none';
+        console.log('✅ Hidden quick actions section');
+    }
+    
+    // Show upload section and load standalone system
     if (uploadSection) {
+        // Load standalone upload system if not already loaded
+        this.loadStandaloneUploadSystem();
+        
         uploadSection.style.display = 'block';
         console.log('✅ Showed upload section');
     }
     
-    // KEEP recent section visible even if empty - just show message
+    // Keep recent section visible
     if (recentSection) {
         recentSection.style.display = 'block';
-        console.log('✅ Showed recent section');
+        console.log('✅ Kept recent section visible');
+    }
+},
+
+loadStandaloneUploadSystem() {
+    const wrapper = document.getElementById('standalone-upload-wrapper');
+    if (!wrapper) return;
+    
+    // Only load if empty
+    if (wrapper.innerHTML.trim() === '') {
+        console.log('📦 Loading standalone upload system...');
         
-        // Update the content if it's empty
-        const recentList = document.getElementById('recent-receipts-list');
-        if (recentList && this.receiptQueue.length === 0) {
-            recentList.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No receipts yet</div>
-                    <div style="font-size: 14px;">Upload receipts to see them here</div>
-                </div>
-            `;
-        }
+        wrapper.innerHTML = this.getStandaloneUploadHTML();
+        
+        // Initialize the upload system
+        setTimeout(() => {
+            this.initStandaloneUploadSystem();
+        }, 100);
     }
 },
     
