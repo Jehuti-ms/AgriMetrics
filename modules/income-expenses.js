@@ -1,4 +1,3 @@
-did you place all of the metods left out in this one? 
 // modules/income-expenses.js - FIXED FOR UPDATED FIREBASE RULES
 console.log('💰 Loading Income & Expenses module...');
 
