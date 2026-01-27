@@ -1232,10 +1232,11 @@ async loadReceiptsFromFirebase() {
     },
 
     // ==================== FILE UPLOAD ====================
-    handleFileUpload(files) {
-    console.log('📤 Handling file upload for', files.length, 'files');
+   handleFileUpload(files) {
+    console.log('📤 handleFileUpload called with', files.length, 'files');
     
     if (!files || files.length === 0) {
+        console.error('❌ No files provided');
         this.showNotification('No files selected', 'error');
         return;
     }
@@ -1243,12 +1244,25 @@ async loadReceiptsFromFirebase() {
     // Show processing message
     this.showNotification(`Processing ${files.length} file(s)...`, 'info');
     
+    console.log('Processing files:', Array.from(files).map(f => ({
+        name: f.name,
+        type: f.type,
+        size: f.size
+    })));
+    
     // Process each file
     Array.from(files).forEach((file, index) => {
-        console.log(`📄 File ${index + 1}:`, file.name, file.type, file.size);
+        console.log(`📄 Processing file ${index + 1}:`, file.name, file.type, file.size);
+        
+        // Check if file is valid
+        if (!this.isValidReceiptFile(file)) {
+            console.error(`❌ Invalid file: ${file.name}`);
+            this.showNotification(`Skipping invalid file: ${file.name}`, 'warning');
+            return;
+        }
         
         // Add to receipt queue
-        const receiptId = Date.now() + index;
+        const receiptId = `upload_${Date.now()}_${index}`;
         const receipt = {
             id: receiptId,
             name: file.name,
@@ -1256,27 +1270,53 @@ async loadReceiptsFromFirebase() {
             size: file.size,
             file: file,
             status: 'pending',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            uploadedAt: new Date().toISOString(),
+            source: 'upload'
         };
         
+        console.log('Created receipt:', receipt);
+        
+        // Add to queue
         this.receiptQueue.push(receipt);
+        
+        // Save locally
+        this.saveReceiptLocally(receipt);
+        
+        // Try to upload to Firebase in background
+        this.uploadReceiptToFirebase(file)
+            .then(uploadedReceipt => {
+                console.log('✅ Firebase upload successful:', uploadedReceipt.id);
+                // Update receipt with Firebase data
+                const index = this.receiptQueue.findIndex(r => r.id === receiptId);
+                if (index !== -1) {
+                    this.receiptQueue[index] = { ...this.receiptQueue[index], ...uploadedReceipt };
+                    this.saveReceiptsToLocalStorage();
+                }
+            })
+            .catch(error => {
+                console.warn('⚠️ Firebase upload failed:', error.message);
+                // Still keep local copy
+            });
         
         // Show in recent list
         this.updateRecentReceiptsList();
-        
-        // Upload to Firebase Storage
-        this.uploadReceiptToStorage(file, receiptId);
     });
     
     // Show success message
     this.showNotification(`${files.length} file(s) added to queue`, 'success');
     
+    // Update UI
+    this.updateReceiptQueueUI();
+    this.updateModalReceiptsList();
+    
     // Return to quick actions view
     setTimeout(() => {
         this.showQuickActionsView();
+        console.log('✅ Files processed, showing quick actions');
     }, 1000);
 },
-
+    
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
     console.log('📤 Uploading receipt:', file.name);
@@ -4252,13 +4292,25 @@ setupFileInput() {
     }
     
     if (fileInput) {
+        console.log('✅ File input found:', {
+            id: fileInput.id,
+            exists: !!fileInput,
+            type: fileInput.type,
+            accept: fileInput.accept
+        });
+        
         fileInput.onchange = (e) => {
-            console.log('📁 Files selected:', e.target.files?.length || 0);
+            console.log('📁 File input changed! Files selected:', e.target.files?.length || 0);
+            console.log('Files:', e.target.files);
+            
             if (e.target.files && e.target.files.length > 0) {
+                console.log('Processing files...');
                 this.handleFileUpload(e.target.files);
                 
                 // Reset the input so same files can be selected again
                 e.target.value = '';
+            } else {
+                console.log('No files selected');
             }
         };
         console.log('✅ File input setup complete');
@@ -4266,7 +4318,7 @@ setupFileInput() {
         console.error('❌ Could not setup file input');
     }
 },
-
+    
 // Add this method to create file input
 createFileInput() {
     try {
