@@ -3088,7 +3088,7 @@ deleteReceiptFromAllSources: async function(receiptId) {
     },
 
     // ==================== EVENT LISTENERS ====================
-  setupEventListeners() {
+setupEventListeners() {
     console.log('Setting up event listeners (event delegation)...');
     
     // Remove old global listeners first
@@ -3215,6 +3215,7 @@ deleteReceiptFromAllSources: async function(receiptId) {
         }
     },
 
+    
     async saveTransaction() {
         console.log('Saving transaction...');
         
@@ -4103,31 +4104,30 @@ getStandaloneUploadHTML() {
 setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
-    // Use this helper to ensure clean event binding
-    const setupButton = (id, handler) => {
+    // Use this helper for modal buttons
+    const setupModalButton = (id, handler) => {
         const button = document.getElementById(id);
         if (button) {
-            console.log(`✅ Setting up ${id}`);
+            console.log(`✅ Setting up modal button: ${id}`);
             
-            // IMPORTANT: Don't prevent default if global handler handles it
             button.onclick = (e) => {
-                // Only stop propagation to prevent global handler interference
+                e.preventDefault();
                 e.stopPropagation();
                 console.log(`Modal button clicked: ${id}`);
                 handler.call(this, e);
             };
         } else {
-            console.error(`❌ Button ${id} not found in modal`);
+            console.log(`ℹ️ Modal button ${id} not found (might not be visible yet)`);
         }
     };
     
-    // Only setup modal-specific buttons
-    setupButton('upload-option', () => {
+    // Setup ALL modal buttons here
+    setupModalButton('upload-option', () => {
         console.log('📁 Upload Files button clicked');
         this.handleUploadOption();
     });
     
-    setupButton('camera-option', () => {
+    setupModalButton('camera-option', () => {
         console.log('🎯 Camera button clicked');
         
         const cameraSection = document.getElementById('camera-section');
@@ -4166,47 +4166,21 @@ setupImportReceiptsHandlers() {
         }
     });
     
-    // Cancel camera button - GO BACK TO QUICK ACTIONS
-    setupButton('cancel-camera', () => {
+    setupModalButton('cancel-camera', () => {
         console.log('❌ Cancel camera clicked');
         this.showQuickActionsView();
     });
     
-    // Setup file input
-    this.setupFileInput();
+    // Add the back button handler here!
+    setupModalButton('back-to-main-view', () => {
+        console.log('🔙 Back to main view clicked (modal handler)');
+        this.showQuickActionsView();
+    });
     
-    // IMPORTANT: Don't setup the main upload-receipt-btn here - it's handled by global handler
-    // The main button to open the modal should NOT be handled here
+    setupModalButton('capture-photo', () => this.capturePhoto());
+    setupModalButton('switch-camera', () => this.switchCamera());
     
-    // Only setup browse button if it exists INSIDE the modal
-    const browseBtnInModal = document.getElementById('browse-receipts-btn');
-    if (browseBtnInModal) {
-        console.log(`✅ Found browse button inside modal: ${browseBtnInModal.id}`);
-        browseBtnInModal.onclick = (e) => {
-            e.stopPropagation(); // Only stop propagation
-            console.log('📂 Browse files clicked (inside modal)');
-            
-            // Create file input if it doesn't exist
-            let fileInput = document.getElementById('receipt-upload-input');
-            if (!fileInput) {
-                console.log('📁 Creating file input dynamically');
-                fileInput = this.createFileInput();
-            }
-            
-            if (fileInput) {
-                fileInput.click();
-            } else {
-                console.error('❌ Could not create file input');
-                this.showNotification('Unable to browse files', 'error');
-            }
-        };
-    }
-    
-    // Other modal buttons...
-    setupButton('capture-photo', () => this.capturePhoto());
-    setupButton('switch-camera', () => this.switchCamera());
-    
-    setupButton('refresh-receipts', () => {
+    setupModalButton('refresh-receipts', () => {
         console.log('🔄 Refresh receipts clicked');
         const recentList = document.getElementById('recent-receipts-list');
         if (recentList) {
@@ -4215,7 +4189,7 @@ setupImportReceiptsHandlers() {
         this.showNotification('Receipts list refreshed', 'success');
     });
     
-    setupButton('process-receipts-btn', () => {
+    setupModalButton('process-receipts-btn', () => {
         const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
         if (pendingReceipts.length === 0) {
@@ -4236,9 +4210,36 @@ setupImportReceiptsHandlers() {
         }
     });
     
-    console.log('✅ Import receipt handlers setup complete');
+    // Setup file input
+    this.setupFileInput();
+    
+    // Setup browse button
+    const browseBtnInModal = document.getElementById('browse-receipts-btn');
+    if (browseBtnInModal) {
+        console.log(`✅ Found browse button inside modal: ${browseBtnInModal.id}`);
+        browseBtnInModal.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📂 Browse files clicked (inside modal)');
+            
+            let fileInput = document.getElementById('receipt-upload-input');
+            if (!fileInput) {
+                console.log('📁 Creating file input dynamically');
+                fileInput = this.createFileInput();
+            }
+            
+            if (fileInput) {
+                fileInput.click();
+            } else {
+                console.error('❌ Could not create file input');
+                this.showNotification('Unable to browse files', 'error');
+            }
+        };
+    }
+    
+    console.log('✅ All modal buttons setup complete');
 },
-
+    
 // Add this method to create file input dynamically
 setupFileInput() {
     console.log('📁 Setting up file input...');
