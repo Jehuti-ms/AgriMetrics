@@ -3763,42 +3763,24 @@ initStandaloneUploadSystem() {
     }
 },
 
-    handleUploadOption() {
+   handleUploadOption() {
     console.log('📁 Handling upload option...');
     
-    // Get the sections
+    // Hide camera and method selection sections
     const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
+    const methodSelectionSection = document.getElementById('upload-method-selection');
     
-    console.log('Switching to upload interface...');
-    
-    // Hide camera and quick actions
     if (cameraSection) {
         cameraSection.style.display = 'none';
-        this.stopCamera();
+        this.stopCamera(); // Stop camera if running
     }
     
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'none';
-        console.log('✅ Hid quick actions section');
+    if (methodSelectionSection) {
+        methodSelectionSection.style.display = 'none';
     }
     
-    // Show upload section and load standalone system
-    if (uploadSection) {
-        // Load standalone upload system
-        this.loadStandaloneUploadSystem();
-        
-        uploadSection.style.display = 'block';
-        console.log('✅ Showed upload section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
+    // Show upload interface
+    this.showUploadInterface();
 },
     
     handleUploadedReceiptsFromStandalone() {
@@ -4101,7 +4083,7 @@ getStandaloneUploadHTML() {
     `;
 },
     
-  setupImportReceiptsHandlers() {
+ setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
     // Use this helper to ensure clean event binding
@@ -4136,10 +4118,16 @@ getStandaloneUploadHTML() {
         const uploadSection = document.getElementById('upload-section');
         const recentSection = document.getElementById('recent-section');
         const quickActionsSection = document.querySelector('.quick-actions-section');
+        const methodSelectionSection = document.getElementById('upload-method-selection');
         
         console.log('Switching to camera...');
         
-        // Hide upload and quick actions
+        // Hide upload method selection, upload section, and quick actions
+        if (methodSelectionSection) {
+            methodSelectionSection.style.display = 'none';
+            console.log('✅ Hid upload method selection section');
+        }
+        
         if (uploadSection) {
             uploadSection.style.display = 'none';
             console.log('✅ Hid upload section');
@@ -4168,14 +4156,13 @@ getStandaloneUploadHTML() {
         }
     });
     
-    // Fix 3: Cancel camera button
+    // Fix 3: Cancel camera button - GO BACK TO METHOD SELECTION
     setupButton('cancel-camera', () => {
         console.log('❌ Cancel camera clicked');
-        this.showUploadInterface();  // This should work
+        this.showUploadMethodSelection();  // NEW: Go back to method selection
     });
-      
-   // Fix 5: Also check for 'browse-receipts-btn' - it might have a different ID
-    // Try alternative IDs if it's not found
+    
+    // Fix 4: Browse button setup
     const browseBtn = document.getElementById('browse-receipts-btn') || 
                      document.getElementById('upload-receipt-btn') ||
                      document.querySelector('[data-action="browse-receipts"]');
@@ -4195,7 +4182,7 @@ getStandaloneUploadHTML() {
         console.error('❌ Browse button not found with any selector');
     }
     
-    // Fix 6: File input handler
+    // Fix 5: File input handler
     const fileInput = document.getElementById('receipt-upload-input');
     if (fileInput) {
         fileInput.onchange = (e) => {
@@ -4243,6 +4230,56 @@ getStandaloneUploadHTML() {
     });
     
     console.log('✅ Import receipt handlers setup complete');
+},
+
+    showUploadMethodSelection() {
+    console.log('📱 Showing upload method selection...');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Get all sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    const methodSelectionSection = document.getElementById('upload-method-selection');
+    
+    console.log('Sections found:', {
+        cameraSection: !!cameraSection,
+        uploadSection: !!uploadSection,
+        recentSection: !!recentSection,
+        quickActionsSection: !!quickActionsSection,
+        methodSelectionSection: !!methodSelectionSection
+    });
+    
+    // Hide camera and upload sections
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        console.log('✅ Hidden camera section');
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+        console.log('✅ Hidden upload section');
+    }
+    
+    // Show method selection and quick actions
+    if (methodSelectionSection) {
+        methodSelectionSection.style.display = 'block';
+        console.log('✅ Showed method selection section');
+    }
+    
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'block';
+        console.log('✅ Showed quick actions section');
+    }
+    
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
 },
     
     setupUploadHandlers() {
@@ -4295,43 +4332,47 @@ getStandaloneUploadHTML() {
 
     // ==================== UPLOAD INTERFACE METHODS (Missing) ====================
 
-   showUploadInterface() {
+  showUploadInterface() {
     console.log('📁 Showing upload interface...');
     
     // Stop camera if running
     this.stopCamera();
     
-    // Get the sections
     const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
+    const methodSelectionSection = document.getElementById('upload-method-selection');
     
     console.log('Sections found:', {
         cameraSection: !!cameraSection,
         uploadSection: !!uploadSection,
         recentSection: !!recentSection,
-        quickActionsSection: !!quickActionsSection
+        quickActionsSection: !!quickActionsSection,
+        methodSelectionSection: !!methodSelectionSection
     });
     
-    // Hide camera and quick actions
+    // Hide camera and method selection
     if (cameraSection) {
         cameraSection.style.display = 'none';
         console.log('✅ Hidden camera section');
     }
     
+    if (methodSelectionSection) {
+        methodSelectionSection.style.display = 'none';
+        console.log('✅ Hidden method selection section');
+    }
+    
+    // Show upload section
+    if (uploadSection) {
+        uploadSection.style.display = 'block';
+        console.log('✅ Showed upload section');
+    }
+    
+    // Hide quick actions (since we're in upload mode)
     if (quickActionsSection) {
         quickActionsSection.style.display = 'none';
         console.log('✅ Hidden quick actions section');
-    }
-    
-    // Show upload section and load standalone system
-    if (uploadSection) {
-        // Load standalone upload system if not already loaded
-        this.loadStandaloneUploadSystem();
-        
-        uploadSection.style.display = 'block';
-        console.log('✅ Showed upload section');
     }
     
     // Keep recent section visible
@@ -4340,7 +4381,7 @@ getStandaloneUploadHTML() {
         console.log('✅ Kept recent section visible');
     }
 },
-
+    
 loadStandaloneUploadSystem() {
     const wrapper = document.getElementById('standalone-upload-wrapper');
     if (!wrapper) return;
