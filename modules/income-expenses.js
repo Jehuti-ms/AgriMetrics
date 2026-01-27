@@ -3871,6 +3871,15 @@ setupButton('camera-option', () => {
         uploadSection: !!uploadSection,
         recentSection: !!recentSection
     });
+
+        // DEBUG: Check the actual HTML
+    if (uploadSection) {
+        console.log('📋 Upload section HTML:', uploadSection.outerHTML);
+        console.log('📋 Upload section display style:', uploadSection.style.display);
+        console.log('📋 Upload section computed display:', window.getComputedStyle(uploadSection).display);
+        console.log('📋 Upload section height:', uploadSection.offsetHeight);
+        console.log('📋 Upload section visibility:', window.getComputedStyle(uploadSection).visibility);
+    }
     
     // Show upload section
     if (cameraSection) {
