@@ -680,6 +680,492 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <style>
+                /* Firebase Receipt Styles */
+                .import-receipts-container { padding: 20px; }
+                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
+                .card-icon { font-size: 32px; margin-bottom: 4px; }
+                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
+                
+                .camera-section .glass-card { margin-bottom: 24px; }
+                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+                .camera-controls { display: flex; gap: 12px; justify-content: center; }
+                
+                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
+                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
+                .upload-icon { font-size: 48px; margin-bottom: 16px; }
+                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
+                
+                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
+                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+                
+                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
+                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
+                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+                .receipt-info { flex: 1; }
+                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+                .receipt-status { font-weight: 600; }
+                .status-pending { color: #f59e0b; }
+                .status-processed { color: #10b981; }
+                .status-error { color: #ef4444; }
+                
+                .empty-state { text-align: center; padding: 40px 20px; }
+                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+                .header-flex { display: flex; justify-content: space-between; align-items: center; }
+                
+                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
+                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
+                
+                /* Spinner Animation */
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                
+                /* Make button children not interfere with clicks */
+                #upload-receipt-btn * { pointer-events: none; }
+                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
+                
+                /* RECEIPT ATTACHMENT FIXES */
+                #receipt-upload-area:hover {
+                    border-color: var(--primary-color);
+                    background: var(--primary-color)10;
+                }
+                
+                #receipt-preview-container {
+                    transition: all 0.3s ease;
+                }
+                
+                #receipt-preview-container.hidden {
+                    display: none !important;
+                }
+                
+                #image-preview.hidden {
+                    display: none !important;
+                }
+                
+                /* Fix modal z-index */
+                .popout-modal {
+                    z-index: 9999;
+                }
+                
+                /* Receipt preview styling */
+                .receipt-preview-item {
+                    background: var(--glass-bg);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-top: 8px;
+                    border: 1px solid var(--glass-border);
+                }
+
+               /* ========= Ensure camera preview is visible ========== */
+            .camera-preview {
+                width: 100%;
+                height: 400px;
+                background: #000;
+                border-radius: 12px;
+                overflow: hidden;
+                margin-bottom: 20px;
+                position: relative;
+                display: block !important;
+            }
+            
+            .camera-preview video {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover;
+                display: block !important;
+                background: #000 !important;
+            }
+            
+            /* Make sure camera section shows when display:block */
+            #camera-section {
+                display: none;
+            }
+            
+            #camera-section[style*="display: block"],
+            #camera-section[style*="display:block"] {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            
+            /* Button styling for better visibility */
+            #camera-option {
+                border: 2px solid transparent;
+                transition: all 0.2s;
+            }
+            
+            #camera-option:hover {
+                border-color: var(--primary-color);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            /* ==================== BASE MODAL STYLES ==================== */
+
+.popout-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center; /* Default: center vertically */
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.popout-modal-content {
+    background: var(--background-color);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+.popout-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* ==================== FIX: HEADER AT TOP ON SMALL/MEDIUM SCREENS ==================== */
+/* This overrides the vertical centering for screens 900px and below */
+
+@media (max-width: 900px) {
+    .popout-modal {
+        align-items: flex-start !important; /* Force to top */
+        padding-top: 0 !important; /* Remove top padding */
+        padding-bottom: 10px; /* Keep small bottom padding */
+    }
+    
+    .popout-modal-content {
+        margin-top: 0 !important; /* Remove auto margin that causes centering */
+        margin-bottom: auto; /* Push to top */
+    }
+    
+    .popout-modal-header {
+        margin-top: 0 !important; /* Ensure no margin above header */
+        padding-top: 16px; /* Keep original padding */
+    }
+}
+
+/* ==================== RESPONSIVE BREAKPOINTS ==================== */
+
+/* Medium screens (901px to 768px) - Already handled above */
+
+/* Tablet screens (768px and below) */
+@media (max-width: 768px) {
+    .popout-modal {
+        padding: 0 15px 15px; /* Top:0, Sides:15px, Bottom:15px */
+    }
+    
+    .popout-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 18px;
+    }
+    
+    .popout-modal-title {
+        font-size: 18px;
+    }
+}
+
+/* Mobile screens (640px and below) */
+@media (max-width: 640px) {
+    .popout-modal {
+        padding: 0 10px 10px; /* Top:0, Sides:10px, Bottom:10px */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        max-height: 95vh;
+        border-radius: 16px;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* Very small phones (400px and below) - full screen */
+@media (max-width: 400px) {
+    .popout-modal {
+        padding: 0 !important; /* No padding on any side */
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        border-radius: 0;
+    }
+}
+
+/* ==================== REST OF THE STYLES (UNCHANGED) ==================== */
+
+.popout-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    flex: 1;
+}
+
+.popout-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    line-height: 1;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.popout-modal-close:hover {
+    background: var(--glass-bg-hover);
+    color: var(--text-primary);
+}
+
+.popout-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.popout-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+/* ==================== FOOTER BUTTON STYLES ==================== */
+
+.popout-modal-footer .btn {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+#cancel-import-receipts {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+}
+
+#cancel-import-receipts:hover {
+    border-color: var(--text-secondary);
+    background: var(--glass-bg-hover);
+}
+
+#process-receipts-btn {
+    position: relative;
+    padding-right: 40px;
+    overflow: visible;
+    background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+    border: none;
+    color: white;
+}
+
+#process-receipts-btn:hover {
+    background: linear-gradient(135deg, #4f46e5, var(--primary-color));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+#process-receipts-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    min-width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    line-height: 1;
+}
+
+/* Stack buttons on medium/small screens */
+@media (max-width: 900px) {
+    .popout-modal-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .popout-modal-footer .btn {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        min-height: 48px;
+        font-size: 15px;
+    }
+    
+    #process-receipts-btn {
+        order: -1;
+    }
+}
+
+/* ==================== IMPORT OPTION BUTTON FIXES ==================== */
+
+.import-option {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.import-option-icon {
+    flex-shrink: 0;
+    margin-right: 12px;
+    width: 24px;
+    height: 24px;
+}
+
+/* CRITICAL FIX: Prevents text truncation in flexbox */
+.import-option-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    font-size: 16px;
+}
+
+/* Adjust for very small screens */
+@media (max-width: 400px) {
+    .import-option-text {
+        font-size: 14px;
+    }
+    
+    .import-option {
+        padding: 10px 12px;
+        min-height: 44px;
+    }
+    
+    .import-option-icon {
+        margin-right: 10px;
+        width: 22px;
+        height: 22px;
+    }
+}
+
+/* ==================== SCROLLING FIXES ==================== */
+
+.popout-modal-body {
+    padding-bottom: 30px;
+}
+
+.import-options-container {
+    padding-bottom: 8px;
+}
+   /* ====== Animation for photo capture ===== */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.new-receipt {
+    animation: pulse 2s infinite;
+}
+
+/* Success modal animation */
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.btn-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.btn-danger:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
                 .delete-receipt-btn {
                     cursor: pointer;
                     transition: all 0.2s;
@@ -702,6 +1188,389 @@ const IncomeExpensesModule = {
                     font-size: 14px;
                     border-radius: 6px;
                 }
+
+                /* ==================== IMPORT RECEIPTS MODAL SPECIFIC STYLES ==================== */
+
+/* Container spacing */
+.import-receipts-container {
+    padding: 20px;
+}
+
+/* Section styling */
+.quick-actions-section {
+    margin-bottom: 24px;
+}
+
+.upload-section,
+.camera-section,
+.recent-section {
+    margin-bottom: 24px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Card header enhancements */
+.card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.card-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Card body padding */
+.glass-card > :not(.card-header) {
+    padding: 24px;
+}
+
+/* Camera status styling */
+.camera-status {
+    font-size: 14px;
+    color: #10b981;
+    font-weight: 500;
+    padding: 4px 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 20px;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Receipts list container */
+.receipts-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+/* Scrollbar styling for receipts list */
+.receipts-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.receipts-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.receipts-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.receipts-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Button icon spacing */
+.btn-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.btn-text {
+    margin-left: 8px;
+}
+
+/* Pending receipt items */
+.pending-receipt-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+}
+
+.pending-receipt-item:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.receipt-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.receipt-details {
+    flex: 1;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Receipt preview in transaction modal */
+#receipt-preview-container {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+}
+
+#image-preview {
+    text-align: center;
+    margin-top: 16px;
+}
+
+#receipt-image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    object-fit: contain;
+}
+
+/* Camera controls container */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 20px;
+    background: var(--glass-bg);
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* Responsive camera controls */
+@media (max-width: 768px) {
+    .camera-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .camera-controls .btn {
+        width: 100%;
+    }
+    
+    .receipt-actions {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .pending-receipt-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .receipt-info {
+        justify-content: space-between;
+    }
+}
+
+/* Drag and drop visual feedback */
+.drag-over {
+    background: rgba(79, 70, 229, 0.1) !important;
+    border-color: var(--primary-color) !important;
+    border-style: solid !important;
+}
+
+/* File input styling */
+#receipt-upload-input {
+    display: none;
+}
+
+/* Browse button */
+#browse-receipts-btn {
+    margin-top: 16px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary-color), #4f46e5);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#browse-receipts-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+/* Animation for new receipts */
+@keyframes highlight {
+    0% { background-color: rgba(16, 185, 129, 0.2); }
+    100% { background-color: transparent; }
+}
+
+.new-receipt-highlight {
+    animation: highlight 2s ease-out;
+}
+
+/* Status colors */
+.status-pending { color: #f59e0b; }
+.status-processed { color: #10b981; }
+.status-attached { color: #3b82f6; }
+.status-error { color: #ef4444; }
+
+/* Progress bar animation */
+@keyframes progress {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 0; }
+}
+
+.progress-bar.uploading {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 40px 40px;
+    animation: progress 2s linear infinite;
+}
+
+/* Modal footer spacing */
+.popout-modal-footer {
+    gap: 12px;
+}
+
+/* Camera option styling */
+#camera-option {
+    border: 2px solid transparent;
+}
+
+#camera-option:hover {
+    border-color: var(--primary-color);
+}
+
+/* Upload option styling */
+#upload-option {
+    border: 2px solid transparent;
+}
+
+#upload-option:hover {
+    border-color: var(--primary-color);
+}
+
+/* Empty state for receipts */
+.receipts-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.receipts-empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* Loading state */
+.loading-receipts {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--glass-border);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+/* File size indicator */
+.file-size {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+/* Camera switch button styling */
+#switch-camera {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Capture button emphasis */
+#capture-photo {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+#capture-photo:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: scale(1.05);
+}
+
+/* Form input focus states for modal */
+.import-receipts-container input:focus,
+.import-receipts-container button:focus,
+.import-receipts-container select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+    .import-receipts-container {
+        padding: 16px;
+    }
+    
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .camera-preview {
+        height: 300px;
+    }
+    
+    .upload-area {
+        padding: 32px 16px;
+    }
+    
+    .upload-icon {
+        font-size: 40px;
+    }
+    
+    .popout-modal-body {
+        padding: 16px;
+    }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .card-button {
+        background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .upload-area {
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .pending-receipt-item {
+        background: rgba(0, 0, 0, 0.25);
+    }
+}
             </style>
 
             <div class="module-container">
