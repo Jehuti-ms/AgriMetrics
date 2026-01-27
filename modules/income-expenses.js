@@ -1233,50 +1233,49 @@ async loadReceiptsFromFirebase() {
 
     // ==================== FILE UPLOAD ====================
     handleFileUpload(files) {
-        console.log('=== HANDLE FILE UPLOAD ===');
-        console.log('Files received:', files.length);
+    console.log('📤 Handling file upload for', files.length, 'files');
+    
+    if (!files || files.length === 0) {
+        this.showNotification('No files selected', 'error');
+        return;
+    }
+    
+    // Show processing message
+    this.showNotification(`Processing ${files.length} file(s)...`, 'info');
+    
+    // Process each file
+    Array.from(files).forEach((file, index) => {
+        console.log(`📄 File ${index + 1}:`, file.name, file.type, file.size);
         
-        if (!files || files.length === 0) return;
-        
-        let processedFiles = 0;
-        const totalFiles = files.length;
-        
-        const processNextFile = (index) => {
-            if (index >= files.length) {
-                if (processedFiles > 0) {
-                    this.showNotification(`${processedFiles} receipt(s) uploaded successfully!`, 'success');
-                    this.updateReceiptQueueUI();
-                    this.updateProcessReceiptsButton();
-                }
-                return;
-            }
-            
-            const file = files[index];
-            
-            // Validate file
-            if (!this.isValidReceiptFile(file)) {
-                this.showNotification(`Skipped ${file.name}: Invalid file type or size`, 'warning');
-                processNextFile(index + 1);
-                return;
-            }
-            
-            // Upload to Firebase
-            this.uploadReceiptToFirebase(file)
-                .then(() => {
-                    processedFiles++;
-                    console.log(`✅ File uploaded: ${file.name}`);
-                    processNextFile(index + 1);
-                })
-                .catch(error => {
-                    console.error(`❌ Upload failed for ${file.name}:`, error);
-                    this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
-                    processNextFile(index + 1);
-                });
+        // Add to receipt queue
+        const receiptId = Date.now() + index;
+        const receipt = {
+            id: receiptId,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            file: file,
+            status: 'pending',
+            timestamp: Date.now()
         };
         
-        // Start processing
-        processNextFile(0);
-    },
+        this.receiptQueue.push(receipt);
+        
+        // Show in recent list
+        this.updateRecentReceiptsList();
+        
+        // Upload to Firebase Storage
+        this.uploadReceiptToStorage(file, receiptId);
+    });
+    
+    // Show success message
+    this.showNotification(`${files.length} file(s) added to queue`, 'success');
+    
+    // Return to quick actions view
+    setTimeout(() => {
+        this.showQuickActionsView();
+    }, 1000);
+},
 
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
@@ -3660,31 +3659,25 @@ deleteReceiptFromAllSources: async function(receiptId) {
 showImportReceiptsModal() {
     console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
     
-    this.hideAllModals();
+    // Stop camera if running
+    this.stopCamera();
     
-    let modal = document.getElementById('import-receipts-modal');
-    if (!modal) {
-        console.error('Modal not found in DOM!');
-        return;
-    }
+    // Show the modal (your existing code)
     
-    modal.classList.remove('hidden');
-    
-    const content = document.getElementById('import-receipts-content');
-    if (content) {
-        content.innerHTML = this.renderImportReceiptsModal();
+    // Setup handlers
+    setTimeout(() => {
+        console.log('🔄 Setting up handlers...');
+        this.setupImportReceiptsHandlers();
         
-        setTimeout(() => {
-            console.log('🔄 Setting up handlers...');
-            this.setupImportReceiptsHandlers();
-            this.updateProcessReceiptsButton();
-            
-            // Initialize the standalone upload system
-            this.initStandaloneUploadSystem();
-        }, 50);
-    }
+        // Skip Upload System for now since it's causing errors
+        console.log('⚠️ Skipping standalone upload system due to errors');
+        // this.initStandaloneUploadSystem(); // COMMENT THIS OUT
+        
+        // Show quick actions by default
+        this.showQuickActionsView();
+    }, 100);
 },
-
+    
 initStandaloneUploadSystem() {
     console.log('🚀 Initializing standalone upload system...');
     
@@ -4079,7 +4072,7 @@ getStandaloneUploadHTML() {
     `;
 },
     
- setupImportReceiptsHandlers() {
+setupImportReceiptsHandlers() {
     console.log('Setting up import receipt handlers');
     
     // Use this helper to ensure clean event binding
@@ -4100,13 +4093,13 @@ getStandaloneUploadHTML() {
         }
     };
     
-    // Fix 1: Add the upload-option handler
+    // Setup upload option
     setupButton('upload-option', () => {
         console.log('📁 Upload Files button clicked');
-        this.handleUploadOption();  // NEW - Call the specific handler
+        this.handleUploadOption();  // Call specific handler
     });
     
-    // Fix 2: This is the camera option handler
+    // Setup camera option
     setupButton('camera-option', () => {
         console.log('🎯 Camera button clicked');
         
@@ -4114,16 +4107,10 @@ getStandaloneUploadHTML() {
         const uploadSection = document.getElementById('upload-section');
         const recentSection = document.getElementById('recent-section');
         const quickActionsSection = document.querySelector('.quick-actions-section');
-        const methodSelectionSection = document.getElementById('upload-method-selection');
         
         console.log('Switching to camera...');
         
-        // Hide upload method selection, upload section, and quick actions
-        if (methodSelectionSection) {
-            methodSelectionSection.style.display = 'none';
-            console.log('✅ Hid upload method selection section');
-        }
-        
+        // Hide upload section and quick actions
         if (uploadSection) {
             uploadSection.style.display = 'none';
             console.log('✅ Hid upload section');
@@ -4152,54 +4139,42 @@ getStandaloneUploadHTML() {
         }
     });
     
-    // Fix 3: Cancel camera button - GO BACK TO METHOD SELECTION
-   // In setupImportReceiptsHandlers(), the cancel camera handler:
+    // Cancel camera button - GO BACK TO QUICK ACTIONS
     setupButton('cancel-camera', () => {
         console.log('❌ Cancel camera clicked');
-        
-        // Check if method selection section exists
-        const methodSelectionSection = document.getElementById('upload-method-selection');
-        
-        if (methodSelectionSection) {
-            // If method selection exists, show it
-            this.showUploadMethodSelection();
-        } else {
-            // Otherwise, show quick actions (main view)
-            this.showQuickActionsView();
-        }
+        this.showQuickActionsView();  // Go back to quick actions
     });
     
-    // Fix 4: Browse button setup
+    // FIX 1: Better file input handling
+    this.setupFileInput();
+    
+    // Browse button setup - use existing upload-receipt-btn
     const browseBtn = document.getElementById('browse-receipts-btn') || 
-                     document.getElementById('upload-receipt-btn') ||
-                     document.querySelector('[data-action="browse-receipts"]');
+                     document.getElementById('upload-receipt-btn');
     
     if (browseBtn) {
-        console.log(`✅ Found browse button: ${browseBtn.id || browseBtn.className}`);
+        console.log(`✅ Found browse button: ${browseBtn.id}`);
         browseBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
             console.log('📂 Browse files clicked');
-            const fileInput = document.getElementById('receipt-upload-input');
+            
+            // Create file input if it doesn't exist
+            let fileInput = document.getElementById('receipt-upload-input');
+            if (!fileInput) {
+                console.log('📁 Creating file input dynamically');
+                fileInput = this.createFileInput();
+            }
+            
             if (fileInput) {
                 fileInput.click();
+            } else {
+                console.error('❌ Could not create file input');
+                this.showNotification('Unable to browse files', 'error');
             }
         };
     } else {
-        console.error('❌ Browse button not found with any selector');
-    }
-    
-    // Fix 5: File input handler
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput) {
-        fileInput.onchange = (e) => {
-            console.log('📁 Files selected:', e.target.files?.length || 0);
-            if (e.target.files && e.target.files.length > 0) {
-                this.handleFileUpload(e.target.files);
-            }
-        };
-    } else {
-        console.error('❌ File input not found');
+        console.error('❌ Browse button not found');
     }
     
     // Other buttons...
@@ -4237,8 +4212,58 @@ getStandaloneUploadHTML() {
     });
     
     console.log('✅ Import receipt handlers setup complete');
-},
+}
 
+// Add this method to create file input dynamically
+setupFileInput() {
+    console.log('📁 Setting up file input...');
+    
+    let fileInput = document.getElementById('receipt-upload-input');
+    
+    if (!fileInput) {
+        console.log('📁 Creating file input dynamically');
+        fileInput = this.createFileInput();
+    }
+    
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            console.log('📁 Files selected:', e.target.files?.length || 0);
+            if (e.target.files && e.target.files.length > 0) {
+                this.handleFileUpload(e.target.files);
+                
+                // Reset the input so same files can be selected again
+                e.target.value = '';
+            }
+        };
+        console.log('✅ File input setup complete');
+    } else {
+        console.error('❌ Could not setup file input');
+    }
+}
+
+// Add this method to create file input
+createFileInput() {
+    try {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'receipt-upload-input';
+        fileInput.name = 'receipt-upload-input';
+        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.gif';
+        fileInput.multiple = true;
+        fileInput.style.display = 'none';
+        fileInput.setAttribute('data-dynamic', 'true');
+        
+        // Add to body
+        document.body.appendChild(fileInput);
+        
+        console.log('✅ Created dynamic file input');
+        return fileInput;
+    } catch (error) {
+        console.error('❌ Error creating file input:', error);
+        return null;
+    }
+},
+    
     showUploadMethodSelection() {
     console.log('📱 Showing upload method selection...');
     
