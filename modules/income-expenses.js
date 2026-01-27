@@ -1232,8 +1232,10 @@ async loadReceiptsFromFirebase() {
     },
 
     // ==================== FILE UPLOAD ====================
-   handleFileUpload(files) {
-    console.log('📤 handleFileUpload called with', files.length, 'files');
+handleFileUpload(files) {
+    console.log('📤 ========== handleFileUpload START ==========');
+    console.log('Files parameter:', files);
+    console.log('Files length:', files?.length || 0);
     
     if (!files || files.length === 0) {
         console.error('❌ No files provided');
@@ -1241,28 +1243,32 @@ async loadReceiptsFromFirebase() {
         return;
     }
     
-    // Show processing message
-    this.showNotification(`Processing ${files.length} file(s)...`, 'info');
+    // Convert to array
+    const fileArray = Array.from(files);
+    console.log(`Processing ${fileArray.length} file(s)...`);
     
-    console.log('Processing files:', Array.from(files).map(f => ({
-        name: f.name,
-        type: f.type,
-        size: f.size
-    })));
+    // Show processing message
+    this.showNotification(`Processing ${fileArray.length} file(s)...`, 'info');
     
     // Process each file
-    Array.from(files).forEach((file, index) => {
-        console.log(`📄 Processing file ${index + 1}:`, file.name, file.type, file.size);
+    fileArray.forEach((file, index) => {
+        console.log(`\n📄 Processing file ${index + 1}:`);
+        console.log('Name:', file.name);
+        console.log('Type:', file.type);
+        console.log('Size:', this.formatFileSize(file.size));
+        console.log('Is valid?', this.isValidReceiptFile(file));
         
-        // Check if file is valid
         if (!this.isValidReceiptFile(file)) {
             console.error(`❌ Invalid file: ${file.name}`);
             this.showNotification(`Skipping invalid file: ${file.name}`, 'warning');
             return;
         }
         
-        // Add to receipt queue
+        // Create receipt ID
         const receiptId = `upload_${Date.now()}_${index}`;
+        console.log('Receipt ID:', receiptId);
+        
+        // Create receipt object
         const receipt = {
             id: receiptId,
             name: file.name,
@@ -1275,15 +1281,18 @@ async loadReceiptsFromFirebase() {
             source: 'upload'
         };
         
-        console.log('Created receipt:', receipt);
+        console.log('Created receipt object:', receipt);
         
         // Add to queue
         this.receiptQueue.push(receipt);
+        console.log('Added to receiptQueue. Total:', this.receiptQueue.length);
         
         // Save locally
         this.saveReceiptLocally(receipt);
+        console.log('Saved to localStorage');
         
         // Try to upload to Firebase in background
+        console.log('Starting Firebase upload...');
         this.uploadReceiptToFirebase(file)
             .then(uploadedReceipt => {
                 console.log('✅ Firebase upload successful:', uploadedReceipt.id);
@@ -1292,29 +1301,63 @@ async loadReceiptsFromFirebase() {
                 if (index !== -1) {
                     this.receiptQueue[index] = { ...this.receiptQueue[index], ...uploadedReceipt };
                     this.saveReceiptsToLocalStorage();
+                    console.log('Updated receipt with Firebase data');
                 }
             })
             .catch(error => {
                 console.warn('⚠️ Firebase upload failed:', error.message);
-                // Still keep local copy
+                console.log('Keeping local copy only');
             });
-        
-        // Show in recent list
-        this.updateRecentReceiptsList();
     });
     
-    // Show success message
-    this.showNotification(`${files.length} file(s) added to queue`, 'success');
-    
     // Update UI
+    console.log('Updating UI...');
+    this.updateRecentReceiptsList();
     this.updateReceiptQueueUI();
     this.updateModalReceiptsList();
     
+    // Show success message
+    this.showNotification(`${fileArray.length} file(s) added to queue`, 'success');
+    
     // Return to quick actions view
+    console.log('Returning to quick actions view...');
     setTimeout(() => {
         this.showQuickActionsView();
         console.log('✅ Files processed, showing quick actions');
     }, 1000);
+    
+    console.log('📤 ========== handleFileUpload END ==========');
+},
+
+    isValidReceiptFile(file) {
+    if (!file) return false;
+    
+    // Check file types
+    const validTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/heic',
+        'image/heif',
+        'application/pdf'
+    ];
+    
+    // Check size (max 20MB)
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    
+    const isValidType = validTypes.includes(file.type.toLowerCase());
+    const isValidSize = file.size <= maxSize;
+    
+    console.log('File validation:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        isValidType,
+        isValidSize
+    });
+    
+    return isValidType && isValidSize;
 },
     
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
@@ -4250,8 +4293,65 @@ setupImportReceiptsHandlers() {
         }
     });
     
-    // Setup file input
-    this.setupFileInput();
+    // ==================== DIRECT FILE INPUT SETUP ====================
+    console.log('🔧 Setting up direct file input...');
+    
+    // Create or get file input
+    let fileInput = document.getElementById('receipt-upload-input');
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'receipt-upload-input';
+        fileInput.name = 'receipt-upload-input';
+        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
+        fileInput.multiple = true;
+        fileInput.style.display = 'none';
+        fileInput.setAttribute('data-dynamic', 'true');
+        document.body.appendChild(fileInput);
+        console.log('✅ Created new file input');
+    } else {
+        console.log('✅ Found existing file input');
+    }
+    
+    // Remove any existing listeners
+    fileInput.onchange = null;
+    fileInput.removeEventListener('change', this._fileInputHandler);
+    
+    // Create handler function
+    this._fileInputHandler = (e) => {
+        console.log('📁 DIRECT: File input changed!');
+        console.log('Event:', e);
+        console.log('Target:', e.target);
+        console.log('Files:', e.target.files);
+        
+        if (e.target.files && e.target.files.length > 0) {
+            console.log(`Processing ${e.target.files.length} file(s)`);
+            
+            // Log each file
+            Array.from(e.target.files).forEach((file, i) => {
+                console.log(`File ${i + 1}:`, {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: file.lastModified
+                });
+            });
+            
+            // Process files
+            this.handleFileUpload(e.target.files);
+            
+            // Reset the input
+            e.target.value = '';
+        } else {
+            console.log('No files selected or files array empty');
+        }
+    };
+    
+    // Add new listener
+    fileInput.addEventListener('change', this._fileInputHandler.bind(this));
+    
+    console.log('✅ Direct file input setup complete with listener');
+    // ==================== END DIRECT FILE INPUT ====================
     
     // Setup browse button
     const browseBtnInModal = document.getElementById('browse-receipts-btn');
@@ -4262,19 +4362,17 @@ setupImportReceiptsHandlers() {
             e.stopPropagation();
             console.log('📂 Browse files clicked (inside modal)');
             
-            let fileInput = document.getElementById('receipt-upload-input');
-            if (!fileInput) {
-                console.log('📁 Creating file input dynamically');
-                fileInput = this.createFileInput();
-            }
-            
+            // Trigger the file input click
             if (fileInput) {
+                console.log('Triggering file input click...');
                 fileInput.click();
             } else {
-                console.error('❌ Could not create file input');
+                console.error('❌ File input not found');
                 this.showNotification('Unable to browse files', 'error');
             }
         };
+    } else {
+        console.log('ℹ️ No separate browse button found in modal');
     }
     
     console.log('✅ All modal buttons setup complete');
