@@ -1242,16 +1242,6 @@ async loadReceiptsFromFirebase() {
 handleFileUpload(files) {
     console.log('📤 ========== handleFileUpload START ==========');
     
-    // ✅ Add this check first
-    if (typeof this.updateRecentReceiptsList !== 'function') {
-        console.error('❌ updateRecentReceiptsList is not a function! Available methods:', Object.keys(this));
-        this.updateRecentReceiptsList = () => {
-            console.log('⚠️ updateRecentReceiptsList placeholder called');
-            // Add a temporary implementation
-            this.showNotification('Receipt list update not available', 'warning');
-        };
-    }
-    
     if (!files || files.length === 0) {
         this.showNotification('No files selected', 'error');
         return;
@@ -1313,7 +1303,8 @@ handleFileUpload(files) {
                 this.receiptQueue.push(receipt);
                 newReceipts.push(receipt);
                 
-                this.updateRecentReceiptsList();
+                // ✅ CHANGED: Use renderRecentReceiptsList instead of updateRecentReceiptsList
+                this.renderRecentReceiptsList();  // This method exists in your module
                 this.updateReceiptQueueUI();
                 this.updateModalReceiptsList();
                 
