@@ -62,7 +62,9 @@ const IncomeExpensesModule = {
                 this.syncLocalTransactionsToFirebase();
             }, 3000);
         }
-
+        //Temp test button
+        this.addTestButton();
+        
         this.renderModule();
         this.initialized = true;
         
@@ -1242,114 +1244,148 @@ async loadReceiptsFromFirebase() {
 // ✅ SIMPLE FIX - Use your existing showImportReceiptsModal
 handleFileUpload(files) {
     console.log('🎯 ========== handleFileUpload CALLED ==========');
-    console.log('📁 Files received:', files.length);
+    console.log('📁 Number of files:', files.length);
+    
+    // ✅ ADD THIS DEBUGGING:
+    console.log('🔍 Module context:', this);
+    console.log('🔍 showNotification exists?', typeof this.showNotification);
     
     if (!files || files.length === 0) {
-        console.log('❌ No files');
+        this.showNotification('No files selected', 'error');
         return;
     }
     
     const fileArray = Array.from(files);
-    console.log('📄 File names:', fileArray.map(f => f.name));
+    this.showNotification(`Uploading ${fileArray.length} file(s)...`, 'info');
     
-    // Show processing notification
-    if (this.showNotification) {
-        this.showNotification(`Processing ${fileArray.length} file(s)...`, 'info');
-    }
+    // Store 'this' reference
+    const self = this;
     
-    const newReceipts = [];
-    let processedCount = 0;
-    const totalFiles = fileArray.length;
+    // Process first file (simplified)
+    const file = fileArray[0];
+    const reader = new FileReader();
     
-    const checkIfAllProcessed = () => {
-        processedCount++;
-        console.log(`✅ ${processedCount}/${totalFiles} files processed`);
-        
-        if (processedCount === totalFiles) {
-            console.log('🎉 ALL FILES PROCESSED! New receipts:', newReceipts.length);
+    reader.onload = function(e) {
+        try {
+            const dataURL = e.target.result;
+            const base64Data = dataURL.split(',')[1];
+            const receiptId = 'upload_' + Date.now();
             
-            if (newReceipts.length > 0) {
-                // ✅ SHOW SUCCESS MODAL - This will definitely work
-                setTimeout(() => {
-                    this.showUploadSuccessModal(newReceipts);
-                }, 300);
-                
-                // Show notification
-                if (this.showNotification) {
-                    this.showNotification(`${newReceipts.length} file(s) uploaded!`, 'success');
-                }
+            console.log('✅ File loaded:', file.name);
+            
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                base64Data: base64Data,
+                dataURL: dataURL,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                storageType: 'firestore-base64',
+                source: 'upload'
+            };
+            
+            // Save receipt
+            if (self.saveReceiptLocally) {
+                self.saveReceiptLocally(receipt);
             }
+            
+            if (self.receiptQueue) {
+                self.receiptQueue.push(receipt);
+            }
+            
+            // Show SUCCESS MODAL
+            self.showSimpleSuccessModal([receipt]);
+            
+            // Update UI
+            if (self.renderRecentReceiptsList) {
+                self.renderRecentReceiptsList();
+            }
+            
+            if (self.updateReceiptQueueUI) {
+                self.updateReceiptQueueUI();
+            }
+            
+            console.log('✅ Upload complete!');
+            
+        } catch (error) {
+            console.error('❌ Error:', error);
+            self.showNotification('Upload failed', 'error');
         }
     };
     
-    // Process each file
-    fileArray.forEach((file, index) => {
-        console.log(`📄 Processing: ${file.name}`);
-        
-        const reader = new FileReader();
-        
-        // ✅ Use arrow function with stored 'this'
-        const self = this;
-        
-        reader.onload = function(e) {
-            try {
-                const dataURL = e.target.result;
-                const base64Data = dataURL.split(',')[1];
-                const receiptId = `upload_${Date.now()}_${index}`;
-                
-                console.log(`✅ Loaded: ${file.name}`);
-                
-                const receipt = {
-                    id: receiptId,
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    base64Data: base64Data,
-                    dataURL: dataURL,
-                    status: 'pending',
-                    uploadedAt: new Date().toISOString(),
-                    storageType: 'firestore-base64',
-                    source: 'upload'
-                };
-                
-                // Save receipt
-                if (self.saveReceiptLocally) {
-                    self.saveReceiptLocally(receipt);
-                }
-                
-                if (self.receiptQueue) {
-                    self.receiptQueue.push(receipt);
-                }
-                
-                newReceipts.push(receipt);
-                
-                // Update UI
-                if (self.renderRecentReceiptsList) {
-                    self.renderRecentReceiptsList();
-                }
-                
-                if (self.updateReceiptQueueUI) {
-                    self.updateReceiptQueueUI();
-                }
-                
-                console.log(`✓ ${file.name} saved`);
-                
-            } catch (error) {
-                console.error('❌ Error:', error);
-            } finally {
-                checkIfAllProcessed();
-            }
-        };
-        
-        reader.onerror = function() {
-            console.error('❌ Failed to read:', file.name);
-            checkIfAllProcessed();
-        };
-        
-        reader.readAsDataURL(file);
-    });
+    reader.onerror = function() {
+        console.error('❌ Failed to read file');
+        self.showNotification('Failed to read file', 'error');
+    };
+    
+    reader.readAsDataURL(file);
 },
 
+    showSimpleSuccessModal(receipts) {
+    console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 99999;
+            border: 2px solid #4CAF50;
+        ">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 40px;">✅</div>
+                <h3 style="margin: 10px 0; color: #333;">Upload Complete!</h3>
+                <p style="color: #666; margin: 0;">
+                    Successfully uploaded: <strong>${receipts[0].name}</strong>
+                </p>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="
+                    this.parentElement.parentElement.remove();
+                    const overlay = document.getElementById('modal-overlay');
+                    if (overlay) overlay.remove();
+                " style="
+                    flex: 1;
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 12px;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    cursor: pointer;
+                ">
+                    OK
+                </button>
+            </div>
+        </div>
+        
+        <div id="modal-overlay" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99998;
+        "></div>
+    `;
+    
+    // Add to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    console.log('✅ Modal shown!');
+},
+    
     showUploadSuccessModal(receipts) {
     console.log('🪟 CREATING SUCCESS MODAL for', receipts.length, 'receipts');
     
@@ -4008,20 +4044,27 @@ initStandaloneUploadSystem() {
     }
 },
 
-  handleUploadOption() {
+ handleUploadOption() {
     console.log('📁 Handling upload option...');
     
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Hide method selection if it exists
-    const methodSelectionSection = document.getElementById('upload-method-selection');
-    if (methodSelectionSection) {
-        methodSelectionSection.style.display = 'none';
-    }
-    
-    // Show upload interface
+    // First show the upload interface
     this.showUploadInterface();
+    
+    // Wait a moment, then trigger file selection
+    setTimeout(() => {
+        console.log('🖱️ Triggering file selection...');
+        
+        // Get or create file input
+        let fileInput = document.querySelector('input[type="file"][id^="receipt-file-input-"]');
+        if (!fileInput) {
+            fileInput = this.setupFileInput();
+        }
+        
+        if (fileInput) {
+            console.log('✅ Clicking file input:', fileInput.id);
+            fileInput.click();
+        }
+    }, 300);
 },
     
     handleUploadedReceiptsFromStandalone() {
@@ -4348,25 +4391,24 @@ setupImportReceiptsHandlers() {
 setupModalButton('upload-option', () => {
     console.log('📁 Upload Files button clicked');
     
-    // First show the upload interface
+    // Show upload interface
     this.showUploadInterface();
     
-    // Then trigger file input click
+    // Wait a bit then trigger file input
     setTimeout(() => {
-        // Get the latest file input
-        const fileInputs = document.querySelectorAll('input[type="file"][id^="receipt-upload-input-"]');
-        if (fileInputs.length > 0) {
-            const latestInput = fileInputs[fileInputs.length - 1];
-            console.log('🖱️ Clicking file input:', latestInput.id);
-            latestInput.click();
-        } else {
-            console.log('🔄 No file input found, creating one...');
-            const newInput = this.setupFileInput();
-            if (newInput) {
-                newInput.click();
-            }
+        console.log('🖱️ Triggering file input...');
+        
+        // Get existing file input or create new one
+        let fileInput = document.querySelector('input[type="file"][id^="receipt-file-input-"]');
+        if (!fileInput) {
+            fileInput = this.setupFileInput();
         }
-    }, 100);
+        
+        if (fileInput) {
+            console.log('✅ Clicking file input:', fileInput.id);
+            fileInput.click();
+        }
+    }, 300);
 });
 
 setupModalButton('camera-option', () => {
@@ -4541,54 +4583,65 @@ setupModalButton('process-receipts-btn', () => {
 setupFileInput() {
     console.log('📁 Setting up file input...');
     
-    // Get the module instance - ALWAYS use this pattern
-    const module = window.FarmModules.getModule('income-expenses');
-    if (!module) {
-        console.error('❌ Module not found!');
-        return null;
-    }
+    // Get module reference
+    const module = this;
     
-    // Remove ALL existing file inputs to prevent duplicates
-    document.querySelectorAll('input[type="file"]').forEach(input => {
-        if (input.id && input.id.includes('receipt-upload')) {
-            console.log('🗑️ Removing old file input:', input.id);
-            input.remove();
-        }
-    });
-    
-    // Create fresh file input
+    // Create file input
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.id = 'receipt-upload-input-' + Date.now();
+    fileInput.id = 'receipt-file-input-' + Date.now();
     fileInput.accept = 'image/*,.pdf,.txt';
     fileInput.multiple = true;
     fileInput.style.display = 'none';
     
     document.body.appendChild(fileInput);
-    console.log('✅ Created new file input:', fileInput.id);
+    console.log('✅ Created file input:', fileInput.id);
     
-    // ✅ SIMPLE EVENT HANDLER THAT CANNOT FAIL
-    fileInput.onchange = function(e) {
-        console.log('🎯 FILE INPUT CHANGE EVENT FIRED!');
-        console.log('📁 Files selected:', e.target.files?.length || 0);
+    // Add event listener
+    fileInput.addEventListener('change', function(e) {
+        console.log('🎯 FILE INPUT CHANGE EVENT!');
         
         if (e.target.files && e.target.files.length > 0) {
             console.log('📤 Calling handleFileUpload...');
             
-            // Call the module's handleFileUpload method
-            if (module && module.handleFileUpload) {
+            // Call the module's method
+            if (module.handleFileUpload) {
                 module.handleFileUpload(e.target.files);
-            } else {
-                console.error('❌ Module or method not found!');
             }
-            
-            // Reset the input
-            e.target.value = '';
+        }
+    });
+    
+    return fileInput;
+},
+
+    // Add this method to your module
+addTestButton() {
+    const button = document.createElement('button');
+    button.textContent = '🧪 Debug Upload';
+    button.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #FF5722;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 9999;
+        font-weight: bold;
+    `;
+    
+    button.onclick = () => {
+        console.log('🧪 Test button clicked');
+        const fileInput = this.setupFileInput();
+        if (fileInput) {
+            fileInput.click();
         }
     };
     
-    console.log('✅ File input ready with event listener');
-    return fileInput;
+    document.body.appendChild(button);
+    console.log('✅ Test button added');
 },
     
 // Add this method to create file input
