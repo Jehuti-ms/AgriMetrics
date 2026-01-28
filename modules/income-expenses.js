@@ -4066,23 +4066,7 @@ initStandaloneUploadSystem() {
     console.log('📁 Handling upload option...');
     
     // First show the upload interface
-    this.showUploadInterface();
-    
-    // Wait a moment, then trigger file selection
-    setTimeout(() => {
-        console.log('🖱️ Triggering file selection...');
-        
-        // Get or create file input
-        let fileInput = document.querySelector('input[type="file"][id^="receipt-file-input-"]');
-        if (!fileInput) {
-            fileInput = this.setupFileInput();
-        }
-        
-        if (fileInput) {
-            console.log('✅ Clicking file input:', fileInput.id);
-            fileInput.click();
-        }
-    }, 300);
+    this.showUploadInterface();   
 },
     
     handleUploadedReceiptsFromStandalone() {
