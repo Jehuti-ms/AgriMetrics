@@ -1241,44 +1241,26 @@ async loadReceiptsFromFirebase() {
     // ==================== FILE UPLOAD ====================
 handleFileUpload(files) {
     console.log('📤 ========== handleFileUpload START ==========');
-    console.log('Files parameter:', files);
-    console.log('Files length:', files?.length || 0);
     
     if (!files || files.length === 0) {
-        console.error('❌ No files provided');
         this.showNotification('No files selected', 'error');
         return;
     }
     
-    // Convert to array
     const fileArray = Array.from(files);
-    console.log(`Processing ${fileArray.length} file(s)...`);
-    
-    // Show processing message
     this.showNotification(`Processing ${fileArray.length} file(s)...`, 'info');
     
-    // Create an array to hold all receipts
     const newReceipts = [];
     let processedCount = 0;
     const totalFiles = fileArray.length;
     
-    // Function to check if all files are processed
     const checkIfAllProcessed = () => {
         processedCount++;
-        console.log(`Processed ${processedCount}/${totalFiles} files`);
-        
         if (processedCount === totalFiles) {
-            console.log('🎉 All files processed');
-            console.log('New receipts created:', newReceipts.length);
-            
             if (newReceipts.length > 0) {
-                // Show success modal
                 setTimeout(() => {
-                    console.log('Showing success modal with receipts:', newReceipts);
                     this.showFileUploadSuccess(newReceipts);
                 }, 500);
-                
-                // Show final notification
                 this.showNotification(`${newReceipts.length} file(s) uploaded successfully!`, 'success');
             } else {
                 this.showNotification('No valid files were uploaded', 'warning');
@@ -1287,86 +1269,57 @@ handleFileUpload(files) {
         }
     };
     
-    // Process each file
     fileArray.forEach((file, index) => {
-        console.log(`\n📄 Processing file ${index + 1}:`);
-        console.log('Name:', file.name);
-        console.log('Type:', file.type);
-        console.log('Size:', this.formatFileSize(file.size));
-        
         if (!this.isValidReceiptFile(file)) {
-            console.error(`❌ Invalid file: ${file.name}`);
             this.showNotification(`Skipping invalid file: ${file.name}`, 'warning');
             checkIfAllProcessed();
             return;
         }
         
-        // Read file for preview and base64 conversion
         const reader = new FileReader();
         
+        // ✅ USE ARROW FUNCTION - preserves "this" context
         reader.onload = async (e) => {
             try {
                 const dataURL = e.target.result;
                 const base64Data = dataURL.split(',')[1];
-                const timestamp = Date.now();
-                const receiptId = `upload_${timestamp}_${index}`;
+                const receiptId = `upload_${Date.now()}_${index}`;
                 
-                console.log('Receipt ID:', receiptId);
-                console.log('DataURL length:', dataURL.length);
-                console.log('Base64 length:', base64Data.length);
-                
-                // Create receipt object with base64
                 const receipt = {
                     id: receiptId,
                     name: file.name,
                     type: file.type,
                     size: file.size,
                     base64Data: base64Data,
-                    dataURL: dataURL, // Keep dataURL for preview
+                    dataURL: dataURL,
                     status: 'pending',
-                    timestamp: timestamp,
                     uploadedAt: new Date().toISOString(),
                     storageType: 'firestore-base64',
                     source: 'upload'
                 };
                 
-                console.log('Created receipt object with base64');
-                
-                // Save locally first
+                // ✅ All "this" calls work correctly with arrow function
                 this.saveReceiptLocally(receipt);
-                console.log('Saved to localStorage');
-                
-                // Add to queue
                 this.receiptQueue.push(receipt);
-                console.log('Added to receiptQueue. Total:', this.receiptQueue.length);
-                
-                // Add to new receipts array for preview
                 newReceipts.push(receipt);
                 
-                // Update UI immediately
                 this.updateRecentReceiptsList();
                 this.updateReceiptQueueUI();
                 this.updateModalReceiptsList();
                 
-                // Try to save to Firestore (base64 version) - in background
+                // Firebase upload in background
                 if (this.isFirebaseAvailable && window.db) {
                     setTimeout(async () => {
                         try {
                             const user = window.firebase?.auth?.().currentUser;
                             if (user) {
-                                const firebaseReceipt = {
-                                    ...receipt,
-                                    userId: user.uid
-                                };
-                                
+                                const firebaseReceipt = { ...receipt, userId: user.uid };
                                 await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
-                                console.log('✅ Saved to Firestore (base64):', receiptId);
                             }
-                        } catch (firestoreError) {
-                            console.warn('⚠️ Firestore save failed:', firestoreError.message);
-                            console.log('Keeping local copy only');
+                        } catch (error) {
+                            console.warn('⚠️ Firestore save failed:', error.message);
                         }
-                    }, 1000); // Delay to prevent blocking UI
+                    }, 1000);
                 }
                 
             } catch (error) {
@@ -1377,20 +1330,13 @@ handleFileUpload(files) {
             }
         };
         
+        // ✅ Also use arrow functions for error handlers
         reader.onerror = (error) => {
             console.error('❌ Error reading file:', error);
             this.showNotification(`Error reading file: ${file.name}`, 'error');
             checkIfAllProcessed();
         };
         
-        reader.onabort = (error) => {
-            console.error('❌ File read aborted:', error);
-            this.showNotification(`File read cancelled: ${file.name}`, 'error');
-            checkIfAllProcessed();
-        };
-        
-        // Read file as data URL for base64 conversion
-        console.log('Starting FileReader for file:', file.name);
         reader.readAsDataURL(file);
     });
     
