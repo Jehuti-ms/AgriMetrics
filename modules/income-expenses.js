@@ -1265,30 +1265,24 @@ handleFileUpload(files) {
                 // Show success notification
                 this.showNotification(`${newReceipts.length} file(s) uploaded successfully!`, 'success');
                 
-                // ✅ SHOW THE UPLOAD SUCCESS MODAL IMMEDIATELY
+                // ✅ SHOW THE UPLOAD SUCCESS MODAL - SIMPLE DIRECT APPROACH
                 setTimeout(() => {
-                    console.log('🪟 Attempting to show upload success modal...');
+                    console.log('🪟 Showing upload success modal...');
                     
-                    // First try: Use showFileUploadSuccess if it exists
-                    if (typeof this.showFileUploadSuccess === 'function') {
-                        console.log('✅ Calling showFileUploadSuccess');
-                        this.showFileUploadSuccess(newReceipts);
-                    } 
-                    // Second try: Show receipts in a modal
-                    else if (newReceipts.length > 0) {
-                        console.log('⚠️ showFileUploadSuccess not found, creating modal');
-                        this.showReceiptsPreviewModal(newReceipts);
+                    // OPTION 1: Use your existing showImportReceiptsModal if it exists
+                    if (typeof this.showImportReceiptsModal === 'function') {
+                        console.log('✅ Using showImportReceiptsModal');
+                        this.showImportReceiptsModal();
                     }
-                }, 300);
+                    // OPTION 2: Create a simple alert-style modal
+                    else {
+                        console.log('⚠️ Creating simple success modal');
+                        this.createSimpleUploadSuccessModal(newReceipts);
+                    }
+                }, 500);
                 
             } else {
                 this.showNotification('No valid files were uploaded', 'warning');
-                // Go back to quick actions view
-                setTimeout(() => {
-                    if (typeof this.showQuickActionsView === 'function') {
-                        this.showQuickActionsView();
-                    }
-                }, 1000);
             }
         }
     };
@@ -1304,7 +1298,6 @@ handleFileUpload(files) {
         
         const reader = new FileReader();
         
-        // ✅ USE ARROW FUNCTION - preserves "this" context
         reader.onload = async (e) => {
             try {
                 const dataURL = e.target.result;
@@ -1322,16 +1315,16 @@ handleFileUpload(files) {
                     dataURL: dataURL,
                     status: 'pending',
                     uploadedAt: new Date().toISOString(),
-                    storageType: 'firestore-base64',
+                    storageType: 'firebase-base64',
                     source: 'upload'
                 };
                 
-                // ✅ Save and update UI
+                // Save and update UI
                 this.saveReceiptLocally(receipt);
                 this.receiptQueue.push(receipt);
                 newReceipts.push(receipt);
                 
-                // ✅ Update UI components
+                // Update UI components
                 if (typeof this.renderRecentReceiptsList === 'function') {
                     this.renderRecentReceiptsList();
                 }
@@ -1371,7 +1364,6 @@ handleFileUpload(files) {
             }
         };
         
-        // ✅ Also use arrow functions for error handlers
         reader.onerror = (error) => {
             console.error('❌ Error reading file:', error);
             this.showNotification(`Error reading file: ${file.name}`, 'error');
@@ -1384,178 +1376,141 @@ handleFileUpload(files) {
     console.log('📤 ========== handleFileUpload END ==========');
 },
 
-// ✅ ADD THIS METHOD IF IT DOESN'T EXIST - DROP IT IN YOUR MODULE
-showReceiptsPreviewModal(receipts) {
-    console.log('🪟 Creating receipts preview modal for', receipts.length, 'receipt(s)');
+// ✅ SIMPLE MODAL THAT WILL DEFINITELY SHOW
+createSimpleUploadSuccessModal(receipts) {
+    console.log('🎪 Creating simple upload success modal');
     
     // Remove any existing modal first
-    const existingModal = document.getElementById('receipts-preview-modal');
+    const existingModal = document.querySelector('.upload-success-modal');
     if (existingModal) {
         existingModal.remove();
     }
     
-    // Create modal HTML
+    // Create a very simple modal that's hard to miss
     const modalHTML = `
-        <div class="modal active" id="receipts-preview-modal" style="z-index: 10000;">
-            <div class="modal-overlay"></div>
-            <div class="modal-container" style="max-width: 700px;">
-                <div class="modal-header">
-                    <h2 class="modal-title">📁 Upload Successful!</h2>
-                    <button class="btn-close close-receipts-modal">&times;</button>
+        <div class="upload-success-modal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        ">
+            <div style="
+                background: white;
+                border-radius: 12px;
+                padding: 30px;
+                max-width: 500px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease;
+            ">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                    <h2 style="margin: 0 0 10px 0; color: #2c3e50;">Upload Successful!</h2>
+                    <p style="color: #7f8c8d; margin: 0;">${receipts.length} file(s) uploaded successfully</p>
                 </div>
-                <div class="modal-body">
-                    <div class="upload-success-message" style="margin-bottom: 20px;">
-                        <p>✅ Successfully uploaded <strong>${receipts.length}</strong> receipt(s)</p>
-                        <p class="text-muted">What would you like to do next?</p>
-                    </div>
-                    
-                    <div class="receipts-list-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                        <h4 style="margin-top: 0; margin-bottom: 15px;">Uploaded Receipts:</h4>
-                        <div class="receipts-list">
-                            ${receipts.map((receipt, index) => `
-                                <div class="receipt-item" style="display: flex; align-items: center; padding: 10px; border-bottom: ${index < receipts.length - 1 ? '1px solid #f0f0f0' : 'none'};">
-                                    <div class="receipt-icon" style="margin-right: 12px; font-size: 20px; color: #4a6fa5;">
-                                        ${receipt.type.includes('image') ? '🖼️' : '📄'}
-                                    </div>
-                                    <div class="receipt-info" style="flex-grow: 1;">
-                                        <div class="receipt-name" style="font-weight: 500; margin-bottom: 3px;">${receipt.name}</div>
-                                        <div class="receipt-details" style="font-size: 12px; color: #666;">
-                                            ${this.formatFileSize ? this.formatFileSize(receipt.size) : (receipt.size / 1024).toFixed(1) + ' KB'} • 
-                                            Uploaded just now
-                                        </div>
-                                    </div>
-                                    <button class="btn-small view-receipt-btn" data-receipt-id="${receipt.id}" style="margin-left: 10px; font-size: 12px; padding: 4px 8px;">Preview</button>
-                                </div>
-                            `).join('')}
+                
+                <div style="
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-bottom: 25px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                ">
+                    <h4 style="margin-top: 0; color: #495057;">Uploaded Files:</h4>
+                    ${receipts.map(receipt => `
+                        <div style="
+                            display: flex;
+                            align-items: center;
+                            padding: 8px;
+                            border-bottom: 1px solid #e9ecef;
+                        ">
+                            <span style="margin-right: 10px; color: #4a6fa5;">${receipt.type.includes('image') ? '🖼️' : '📄'}</span>
+                            <span style="flex-grow: 1; font-weight: 500;">${receipt.name}</span>
+                            <span style="font-size: 12px; color: #6c757d;">
+                                ${receipt.size > 1024 ? (receipt.size / 1024).toFixed(1) + ' KB' : receipt.size + ' B'}
+                            </span>
                         </div>
-                    </div>
-                    
-                    <div class="action-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button class="btn btn-primary" id="process-receipts-now" style="flex: 1;">
-                            🚀 Process Receipts Now
-                        </button>
-                        <button class="btn btn-secondary" id="add-more-receipts" style="flex: 1;">
-                            📁 Add More Files
-                        </button>
-                        <button class="btn btn-outline close-receipts-modal" style="flex: 1;">
-                            Close
-                        </button>
-                    </div>
+                    `).join('')}
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button id="processNowBtn" style="
+                        flex: 1;
+                        background: #4a6fa5;
+                        color: white;
+                        border: none;
+                        padding: 12px;
+                        border-radius: 6px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#3a5a90'" onmouseout="this.style.background='#4a6fa5'">
+                        🚀 Process Now
+                    </button>
+                    <button id="closeModalBtn" style="
+                        flex: 1;
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 12px;
+                        border-radius: 6px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    " onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#6c757d'">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
+        
+        <style>
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
     `;
     
     // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
-    // Get modal reference
-    const modal = document.getElementById('receipts-preview-modal');
-    
     // Add event listeners
-    const closeModal = () => {
-        modal.remove();
-        // Show quick actions view after closing
-        if (typeof this.showQuickActionsView === 'function') {
-            this.showQuickActionsView();
-        }
-    };
-    
-    // Close buttons
-    modal.querySelectorAll('.close-receipts-modal').forEach(btn => {
-        btn.addEventListener('click', closeModal);
-    });
-    
-    // Close on overlay click
-    modal.querySelector('.modal-overlay').addEventListener('click', closeModal);
-    
-    // View receipt buttons
-    modal.querySelectorAll('.view-receipt-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const receiptId = e.target.dataset.receiptId;
-            const receipt = receipts.find(r => r.id === receiptId);
-            if (receipt && typeof this.showReceiptPreviewInTransactionModal === 'function') {
-                this.showReceiptPreviewInTransactionModal(receipt);
-            }
-        });
-    });
-    
-    // Process receipts button
-    modal.querySelector('#process-receipts-now').addEventListener('click', () => {
-        modal.remove();
+    document.getElementById('processNowBtn').addEventListener('click', () => {
+        document.querySelector('.upload-success-modal').remove();
         if (typeof this.processPendingReceipts === 'function') {
             this.processPendingReceipts();
-        } else {
-            this.showNotification('Processing receipts...', 'info');
         }
     });
     
-    // Add more receipts button
-    modal.querySelector('#add-more-receipts').addEventListener('click', () => {
-        modal.remove();
-        // Trigger file input again
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.multiple = true;
-        fileInput.accept = 'image/*,.pdf,.txt';
-        fileInput.style.display = 'none';
-        fileInput.onchange = (e) => {
-            if (e.target.files.length > 0) {
-                this.handleFileUpload(e.target.files);
-            }
-        };
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        setTimeout(() => document.body.removeChild(fileInput), 1000);
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+        document.querySelector('.upload-success-modal').remove();
     });
     
-    console.log('✅ Modal created and event listeners added');
-},
-    
-   isValidReceiptFile(file) {
-    if (!file) {
-        console.error('❌ No file provided');
-        return false;
-    }
-    
-    // Check file types
-    const validTypes = [
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/gif',
-        'image/heic',
-        'image/heif',
-        'application/pdf',
-        'text/plain'
-    ];
-    
-    // Check size (max 10MB for base64 - Firestore has limits)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    
-    const fileType = file.type.toLowerCase();
-    const isValidType = validTypes.includes(fileType) || file.name.match(/\.(jpg|jpeg|png|gif|heic|heif|pdf|txt)$/i);
-    const isValidSize = file.size <= maxSize;
-    
-    console.log('File validation:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        isValidType,
-        isValidSize
+    // Also close when clicking outside
+    document.querySelector('.upload-success-modal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('upload-success-modal')) {
+            e.target.remove();
+        }
     });
     
-    if (!isValidType) {
-        console.warn('Invalid file type:', file.type);
-        this.showNotification(`Invalid file type: ${file.name}. Please use images or PDF.`, 'error');
-    }
-    
-    if (!isValidSize) {
-        console.warn('File too large:', file.size);
-        this.showNotification(`File too large: ${file.name}. Max 10MB.`, 'error');
-    }
-    
-    return isValidType && isValidSize;
+    console.log('✅ Simple modal created and displayed');
 },
     
     showFileUploadSuccess(receipts) {
