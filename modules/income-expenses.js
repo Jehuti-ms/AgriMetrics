@@ -4415,41 +4415,7 @@ setupImportReceiptsHandlers() {
 
     setupModalButton('camera-option', () => {
         console.log('🎯 Camera button clicked');
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        console.log('Switching to camera...');
-        
-        // Hide upload section and quick actions
-        if (uploadSection) {
-            uploadSection.style.display = 'none';
-            console.log('✅ Hid upload section');
-        }
-        
-        if (quickActionsSection) {
-            quickActionsSection.style.display = 'none';
-            console.log('✅ Hid quick actions section');
-        }
-        
-        // Keep recent section visible
-        if (recentSection) {
-            recentSection.style.display = 'block';
-            console.log('✅ Kept recent section visible');
-        }
-        
-        // Show camera
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
-            console.log('✅ Showed camera section');
-            
-            setTimeout(() => {
-                console.log('🔄 Initializing camera...');
-                this.initializeCamera();
-            }, 100);
-        }
+        // ... camera code ...
     });
 
     setupModalButton('cancel-camera', () => {
@@ -4553,71 +4519,153 @@ setupImportReceiptsHandlers() {
     fileInput.addEventListener('change', this._fileInputHandler.bind(this));
     
     console.log('✅ Direct file input setup complete with listener');
+       
+    console.log('✅ All import receipt handlers setup complete');
+},
+
+    setupStandaloneUploadSystem() {
+    console.log('🔧 Setting up standalone upload system...');
     
-    // ==================== DRAG AND DROP SETUP ====================
-    console.log('🔧 Setting up drag and drop...');
+    // Wait a bit for the HTML to be in the DOM
+    setTimeout(() => {
+        const dropzone = document.getElementById('receipt-dropzone');
+        const standaloneFileInput = document.getElementById('receipt-file-input');
+        
+        if (!dropzone || !standaloneFileInput) {
+            console.log('⚠️ Standalone upload elements not found yet');
+            return;
+        }
+        
+        console.log('✅ Found standalone upload elements');
+        
+        // Check if already has listeners
+        if (dropzone.getAttribute('data-listener-attached')) {
+            console.log('✅ Dropzone already has listeners');
+            return;
+        }
+        
+        // Click to browse
+        dropzone.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📁 Dropzone clicked (standalone system)');
+            standaloneFileInput.click();
+        });
+        
+        // File input change
+        standaloneFileInput.addEventListener('change', (e) => {
+            console.log('📁 Standalone file input changed:', e.target.files?.length || 0);
+            
+            if (e.target.files && e.target.files.length > 0) {
+                console.log('📤 Calling handleFileUpload for selected files...');
+                this.handleFileUpload(e.target.files);
+                
+                // Reset input
+                e.target.value = '';
+            }
+        });
+        
+        // Drag and drop events
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('drag-over');
+        });
+        
+        dropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+            
+            console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                console.log('📤 Calling handleFileUpload for dropped files...');
+                this.handleFileUpload(e.dataTransfer.files);
+            }
+        });
+        
+        // Mark as having listeners
+        dropzone.setAttribute('data-listener-attached', 'true');
+        standaloneFileInput.setAttribute('data-listener-attached', 'true');
+        
+        console.log('✅ Standalone upload system setup complete');
+    }, 500);
+},
+
+    // ==================== SEPARATE DRAG AND DROP METHOD ====================
+setupStandaloneDragAndDrop() {
+    console.log('🔧 Setting up standalone drag and drop...');
     
     const dropzone = document.getElementById('receipt-dropzone');
     if (!dropzone) {
-        console.log('ℹ️ Drag dropzone not found (might be in standalone system)');
-    } else {
-        const standaloneFileInput = document.getElementById('receipt-file-input');
-        if (!standaloneFileInput) {
-            console.error('❌ receipt-file-input not found in standalone system');
-        } else {
-            // Click to browse
-            dropzone.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('📁 Dropzone clicked');
-                standaloneFileInput.click();
-            });
-            
-            // Drag and drop events
-            dropzone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropzone.classList.add('drag-over');
-            });
-            
-            dropzone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropzone.classList.remove('drag-over');
-            });
-            
-            dropzone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropzone.classList.remove('drag-over');
-                
-                console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
-                
-                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    console.log('📤 Calling handleFileUpload for dropped files...');
-                    this.handleFileUpload(e.dataTransfer.files);
-                }
-            });
-            
-            // File input change
-            standaloneFileInput.addEventListener('change', (e) => {
-                console.log('📁 Standalone file input changed:', e.target.files?.length || 0);
-                
-                if (e.target.files && e.target.files.length > 0) {
-                    console.log('📤 Calling handleFileUpload for selected files...');
-                    this.handleFileUpload(e.target.files);
-                    
-                    // Reset input
-                    e.target.value = '';
-                }
-            });
-            
-            console.log('✅ Drag and drop setup complete');
-        }
+        console.log('❌ receipt-dropzone not found');
+        return;
     }
     
-    console.log('✅ All import receipt handlers setup complete');
-}, // <-- This is the CORRECT closing brace for setupImportReceiptsHandlers()
+    const standaloneFileInput = document.getElementById('receipt-file-input');
+    if (!standaloneFileInput) {
+        console.error('❌ receipt-file-input not found in standalone system');
+        return;
+    }
+    
+    console.log('✅ Found standalone upload elements');
+    
+    // Click to browse
+    dropzone.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('📁 Dropzone clicked');
+        standaloneFileInput.click();
+    });
+    
+    // Drag and drop events
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add('drag-over');
+    });
+    
+    dropzone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('drag-over');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove('drag-over');
+        
+        console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            console.log('📤 Calling handleFileUpload for dropped files...');
+            this.handleFileUpload(e.dataTransfer.files);
+        }
+    });
+    
+    // File input change
+    standaloneFileInput.addEventListener('change', (e) => {
+        console.log('📁 Standalone file input changed:', e.target.files?.length || 0);
+        
+        if (e.target.files && e.target.files.length > 0) {
+            console.log('📤 Calling handleFileUpload for selected files...');
+            this.handleFileUpload(e.target.files);
+            
+            // Reset input
+            e.target.value = '';
+        }
+    });
+    
+    console.log('✅ Standalone drag and drop setup complete');
+}, // <-- END of setupStandaloneDragAndDrop()
 
     
     // ==================== DIRECT FILE INPUT SETUP ====================
@@ -4938,6 +4986,11 @@ showUploadInterface() {
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Upload interface shown');
+    
+    // ✅ ADD THIS: Setup standalone system after showing
+    setTimeout(() => {
+        this.setupStandaloneUploadSystem();
+    }, 500);
 },
     
 loadStandaloneUploadSystem() {
