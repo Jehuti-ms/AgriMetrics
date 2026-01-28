@@ -3154,6 +3154,25 @@ deleteReceiptFromAllSources: async function(receiptId) {
                             </button>
                         </div>
                     </div>
+
+<! ========test ========>
+                    <button onclick="
+    const module = window.IncomeExpensesModule || 
+                  (window.FarmModules && window.FarmModules.getModule('income-expenses'));
+    if (module && module.setupFileInput) {
+        const input = module.setupFileInput();
+        input.click();
+    }
+" style="
+    background: #4a6fa5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+">
+    📁 Test File Upload
+</button>
                 `).join('')}
             </div>
         `;
