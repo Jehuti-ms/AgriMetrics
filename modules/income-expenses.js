@@ -4395,11 +4395,7 @@ setupModalButton('upload-option', () => {
     
     // Show upload interface
     this.showUploadInterface();
-    
-    // Wait a bit then trigger file input
-    setTimeout(() => {
-        console.log('🖱️ Triggering file input...');
-        
+          
         // Get existing file input or create new one
         let fileInput = document.querySelector('input[type="file"][id^="receipt-file-input-"]');
         if (!fileInput) {
