@@ -1239,6 +1239,7 @@ async loadReceiptsFromFirebase() {
     },
 
     // ==================== FILE UPLOAD ====================
+// ✅ SIMPLE FIX - Use your existing showImportReceiptsModal
 handleFileUpload(files) {
     console.log('📤 ========== handleFileUpload START ==========');
     
@@ -1256,42 +1257,42 @@ handleFileUpload(files) {
     
     const checkIfAllProcessed = () => {
         processedCount++;
-        console.log(`✅ Processed ${processedCount}/${totalFiles} files`);
         
         if (processedCount === totalFiles) {
-            console.log('🎯 All files processed. New receipts:', newReceipts.length);
+            console.log('✅ All files processed');
             
             if (newReceipts.length > 0) {
-                // Show success notification
-                this.showNotification(`${newReceipts.length} file(s) uploaded successfully!`, 'success');
+                // Show success
+                this.showNotification(`${newReceipts.length} file(s) uploaded!`, 'success');
                 
-                // ✅ SHOW THE UPLOAD SUCCESS MODAL - SIMPLE DIRECT APPROACH
+                // ✅ USE YOUR EXISTING MODAL SYSTEM
+                // Wait a moment then show the import modal
                 setTimeout(() => {
-                    console.log('🪟 Showing upload success modal...');
+                    console.log('🪟 Calling showImportReceiptsModal()');
                     
-                    // OPTION 1: Use your existing showImportReceiptsModal if it exists
+                    // Method 1: If you want to show the import receipts modal
                     if (typeof this.showImportReceiptsModal === 'function') {
-                        console.log('✅ Using showImportReceiptsModal');
                         this.showImportReceiptsModal();
                     }
-                    // OPTION 2: Create a simple alert-style modal
-                    else {
-                        console.log('⚠️ Creating simple success modal');
-                        this.createSimpleUploadSuccessModal(newReceipts);
+                    // Method 2: Show transaction modal to process receipts
+                    else if (typeof this.showTransactionModal === 'function') {
+                        this.showTransactionModal();
                     }
-                }, 500);
+                    // Method 3: Just process receipts directly
+                    else if (typeof this.processPendingReceipts === 'function') {
+                        this.processPendingReceipts();
+                    }
+                }, 300);
                 
             } else {
-                this.showNotification('No valid files were uploaded', 'warning');
+                this.showNotification('No valid files uploaded', 'warning');
             }
         }
     };
     
     fileArray.forEach((file, index) => {
-        console.log(`📄 Processing file ${index + 1}: ${file.name}`);
-        
         if (!this.isValidReceiptFile(file)) {
-            this.showNotification(`Skipping invalid file: ${file.name}`, 'warning');
+            this.showNotification(`Skipping: ${file.name}`, 'warning');
             checkIfAllProcessed();
             return;
         }
@@ -1303,8 +1304,6 @@ handleFileUpload(files) {
                 const dataURL = e.target.result;
                 const base64Data = dataURL.split(',')[1];
                 const receiptId = `upload_${Date.now()}_${index}`;
-                
-                console.log(`✅ File loaded: ${file.name}, ID: ${receiptId}`);
                 
                 const receipt = {
                     id: receiptId,
@@ -1319,54 +1318,26 @@ handleFileUpload(files) {
                     source: 'upload'
                 };
                 
-                // Save and update UI
+                // Save receipt
                 this.saveReceiptLocally(receipt);
                 this.receiptQueue.push(receipt);
                 newReceipts.push(receipt);
                 
-                // Update UI components
-                if (typeof this.renderRecentReceiptsList === 'function') {
-                    this.renderRecentReceiptsList();
-                }
-                
-                if (typeof this.updateReceiptQueueUI === 'function') {
-                    this.updateReceiptQueueUI();
-                }
-                
-                if (typeof this.updateModalReceiptsList === 'function') {
-                    this.updateModalReceiptsList();
-                }
-                
-                // Show immediate success for this file
-                this.showNotification(`✓ ${file.name} uploaded`, 'success');
-                
-                // Firebase upload in background
-                if (this.isFirebaseAvailable && window.db) {
-                    setTimeout(async () => {
-                        try {
-                            const user = window.firebase?.auth?.().currentUser;
-                            if (user) {
-                                const firebaseReceipt = { ...receipt, userId: user.uid };
-                                await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
-                                console.log(`🔥 Saved ${file.name} to Firestore`);
-                            }
-                        } catch (error) {
-                            console.warn('⚠️ Firestore save failed:', error.message);
-                        }
-                    }, 1000);
-                }
+                // Update UI
+                this.renderRecentReceiptsList && this.renderRecentReceiptsList();
+                this.updateReceiptQueueUI && this.updateReceiptQueueUI();
+                this.updateModalReceiptsList && this.updateModalReceiptsList();
                 
             } catch (error) {
-                console.error('❌ Error processing file:', error);
-                this.showNotification(`Error processing file: ${file.name}`, 'error');
+                console.error('Error:', error);
+                this.showNotification(`Error: ${file.name}`, 'error');
             } finally {
                 checkIfAllProcessed();
             }
         };
         
-        reader.onerror = (error) => {
-            console.error('❌ Error reading file:', error);
-            this.showNotification(`Error reading file: ${file.name}`, 'error');
+        reader.onerror = () => {
+            this.showNotification(`Read error: ${file.name}`, 'error');
             checkIfAllProcessed();
         };
         
@@ -1375,89 +1346,6 @@ handleFileUpload(files) {
     
     console.log('📤 ========== handleFileUpload END ==========');
 },
-
-// ✅ ULTRA SIMPLE ALERT-STYLE MODAL
-createSimpleUploadSuccessModal(receipts) {
-    console.log('🎪 Creating ultra simple modal');
-    
-    // Create modal container
-    const modal = document.createElement('div');
-    modal.innerHTML = `
-        <div style="
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            z-index: 99999;
-            border-left: 5px solid #4CAF50;
-            min-width: 300px;
-            max-width: 400px;
-        ">
-            <h3 style="margin: 0 0 10px 0; color: #2c3e50;">✅ Upload Complete!</h3>
-            <p style="margin: 0 0 15px 0; color: #7f8c8d;">
-                ${receipts.length} file(s) uploaded
-            </p>
-            <div style="
-                background: #f8f9fa;
-                padding: 10px;
-                border-radius: 5px;
-                margin-bottom: 15px;
-                max-height: 150px;
-                overflow-y: auto;
-            ">
-                ${receipts.map((r, i) => `
-                    <div style="padding: 3px 0; font-size: 14px;">
-                        ${i+1}. ${r.name}
-                    </div>
-                `).join('')}
-            </div>
-            <button style="
-                background: #4a6fa5;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                margin-right: 10px;
-            " id="simpleProcessBtn">Process</button>
-            <button style="
-                background: #6c757d;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-            " id="simpleCloseBtn">Close</button>
-        </div>
-    `;
-    
-    // Add to page
-    document.body.appendChild(modal);
-    
-    // Event listeners
-    modal.querySelector('#simpleProcessBtn').addEventListener('click', () => {
-        modal.remove();
-        if (typeof this.processPendingReceipts === 'function') {
-            this.processPendingReceipts();
-        }
-    });
-    
-    modal.querySelector('#simpleCloseBtn').addEventListener('click', () => {
-        modal.remove();
-    });
-    
-    // Auto-remove after 10 seconds
-    setTimeout(() => {
-        if (document.body.contains(modal)) {
-            modal.remove();
-        }
-    }, 10000);
-    
-    console.log('✅ Ultra simple modal displayed');
-},    
     
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
