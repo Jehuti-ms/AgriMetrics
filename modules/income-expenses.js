@@ -4617,9 +4617,11 @@ setupImportReceiptsHandlers() {
     }
     
     console.log('✅ All import receipt handlers setup complete');
-}, 
+}, // <-- This is the CORRECT closing brace for setupImportReceiptsHandlers()
+
     
     // ==================== DIRECT FILE INPUT SETUP ====================
+    setupDirectFileInput() {
     console.log('🔧 Setting up direct file input...');
     
     // Create or get file input
