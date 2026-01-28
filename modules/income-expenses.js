@@ -62,6 +62,9 @@ const IncomeExpensesModule = {
                 this.syncLocalTransactionsToFirebase();
             }, 3000);
         }
+
+        // Make sure receiptQueue is initialized
+        this.receiptQueue = this.receiptQueue || [];
                 
         this.renderModule();
         this.initialized = true;
@@ -1243,49 +1246,95 @@ async loadReceiptsFromFirebase() {
 handleFileUpload(files) {
     console.log('🎯 handleFileUpload called with', files.length, 'files');
     
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+        console.log('❌ No files');
+        return;
+    }
     
-    const file = files[0]; // Just process first file for now
+    const file = files[0]; // Process first file
+    console.log('📄 Processing:', file.name);
     
     const reader = new FileReader();
+    
     reader.onload = (e) => {
         try {
             const dataURL = e.target.result;
             const receiptId = 'upload_' + Date.now();
             
+            console.log('✅ File loaded, creating receipt object...');
+            
+            // ✅ CREATE THE EXACT SAME RECEIPT OBJECT AS CAMERA
             const receipt = {
                 id: receiptId,
                 name: file.name,
                 type: file.type,
                 size: file.size,
-                dataURL: dataURL,
+                dataURL: dataURL,  // Camera stores dataURL
                 status: 'pending',
                 uploadedAt: new Date().toISOString(),
-                source: 'upload'
+                source: 'upload'  // Camera uses 'camera'
             };
             
-            // ✅ Save locally (JUST LIKE CAMERA)
-            this.saveReceiptLocally(receipt);
-            this.receiptQueue.push(receipt);
+            console.log('📦 Receipt created:', receipt);
             
-            // ✅ Update UI (JUST LIKE CAMERA)
-            this.renderRecentReceiptsList();
-            this.updateReceiptQueueUI();
+            // ✅ USE THE EXACT SAME SAVE METHOD AS CAMERA
+            if (this.saveReceiptLocally) {
+                this.saveReceiptLocally(receipt);
+                console.log('✅ Called saveReceiptLocally');
+            }
             
-            // ✅ Show success notification (JUST LIKE CAMERA)
-            this.showNotification(`Uploaded: ${file.name}`, 'success');
+            // ✅ CHECK: Is receipt actually in receiptQueue?
+            console.log('🔍 Checking receiptQueue after save:', {
+                queueLength: this.receiptQueue?.length || 0,
+                containsReceipt: this.receiptQueue?.some(r => r.id === receiptId) || false,
+                receiptQueue: this.receiptQueue
+            });
             
-            console.log('✅ File uploaded successfully');
+            // ✅ UPDATE THE UI - CALL THE EXACT SAME METHOD
+            console.log('🔄 Calling renderRecentReceiptsList...');
+            if (this.renderRecentReceiptsList) {
+                // Update the HTML in the modal
+                const recentList = document.getElementById('recent-receipts-list');
+                if (recentList) {
+                    recentList.innerHTML = this.renderRecentReceiptsList();
+                    console.log('✅ Updated recent-receipts-list HTML');
+                }
+                
+                // Also update the grid if it exists
+                const recentGrid = document.getElementById('recent-receipts-grid');
+                if (recentGrid) {
+                    recentGrid.innerHTML = this.renderRecentReceiptsList();
+                    console.log('✅ Updated recent-receipts-grid HTML');
+                }
+            }
+            
+            // ✅ UPDATE QUEUE UI
+            if (this.updateReceiptQueueUI) {
+                this.updateReceiptQueueUI();
+                console.log('✅ Updated receipt queue UI');
+            }
+            
+            // ✅ SHOW NOTIFICATION
+            if (this.showNotification) {
+                this.showNotification(`Uploaded: ${file.name}`, 'success');
+                console.log('✅ Notification shown');
+            }
+            
+            console.log('✅ Upload complete!');
             
         } catch (error) {
             console.error('❌ Upload error:', error);
-            this.showNotification('Upload failed', 'error');
+            if (this.showNotification) {
+                this.showNotification('Upload failed', 'error');
+            }
         }
     };
     
-    reader.onerror = () => {
-        console.error('❌ File read error');
-        this.showNotification('Failed to read file', 'error');
+    reader.onerror = (error) => {
+        console.error('❌ FileReader error:', error);
+        if (this.showNotification) {
+            this.showNotification('Failed to read file', 'error');
+        }
     };
     
     reader.readAsDataURL(file);
