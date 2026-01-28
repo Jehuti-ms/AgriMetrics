@@ -1241,86 +1241,56 @@ async loadReceiptsFromFirebase() {
     // ==================== FILE UPLOAD ====================
 // ✅ SIMPLE FIX - Use your existing showImportReceiptsModal
 handleFileUpload(files) {
-    console.log('🎯 ========== handleFileUpload CALLED ==========');
-    console.log('📁 Number of files:', files.length);
+    console.log('🎯 handleFileUpload called with', files.length, 'files');
     
-    // ✅ ADD THIS DEBUGGING:
-    console.log('🔍 Module context:', this);
-    console.log('🔍 showNotification exists?', typeof this.showNotification);
+    if (!files || files.length === 0) return;
     
-    if (!files || files.length === 0) {
-        this.showNotification('No files selected', 'error');
-        return;
-    }
+    const file = files[0]; // Just process first file for now
     
-    const fileArray = Array.from(files);
-    this.showNotification(`Uploading ${fileArray.length} file(s)...`, 'info');
-    
-    // Store 'this' reference
-    const self = this;
-    
-    // Process first file (simplified)
-    const file = fileArray[0];
     const reader = new FileReader();
-    
-    reader.onload = function(e) {
+    reader.onload = (e) => {
         try {
             const dataURL = e.target.result;
-            const base64Data = dataURL.split(',')[1];
             const receiptId = 'upload_' + Date.now();
-            
-            console.log('✅ File loaded:', file.name);
             
             const receipt = {
                 id: receiptId,
                 name: file.name,
                 type: file.type,
                 size: file.size,
-                base64Data: base64Data,
                 dataURL: dataURL,
                 status: 'pending',
                 uploadedAt: new Date().toISOString(),
-                storageType: 'firestore-base64',
                 source: 'upload'
             };
             
-            // Save receipt
-            if (self.saveReceiptLocally) {
-                self.saveReceiptLocally(receipt);
-            }
+            // ✅ Save locally (JUST LIKE CAMERA)
+            this.saveReceiptLocally(receipt);
+            this.receiptQueue.push(receipt);
             
-            if (self.receiptQueue) {
-                self.receiptQueue.push(receipt);
-            }
+            // ✅ Update UI (JUST LIKE CAMERA)
+            this.renderRecentReceiptsList();
+            this.updateReceiptQueueUI();
             
-            // Show SUCCESS MODAL
-            self.showSimpleSuccessModal([receipt]);
+            // ✅ Show success notification (JUST LIKE CAMERA)
+            this.showNotification(`Uploaded: ${file.name}`, 'success');
             
-            // Update UI
-            if (self.renderRecentReceiptsList) {
-                self.renderRecentReceiptsList();
-            }
-            
-            if (self.updateReceiptQueueUI) {
-                self.updateReceiptQueueUI();
-            }
-            
-            console.log('✅ Upload complete!');
+            console.log('✅ File uploaded successfully');
             
         } catch (error) {
-            console.error('❌ Error:', error);
-            self.showNotification('Upload failed', 'error');
+            console.error('❌ Upload error:', error);
+            this.showNotification('Upload failed', 'error');
         }
     };
     
-    reader.onerror = function() {
-        console.error('❌ Failed to read file');
-        self.showNotification('Failed to read file', 'error');
+    reader.onerror = () => {
+        console.error('❌ File read error');
+        this.showNotification('Failed to read file', 'error');
     };
     
     reader.readAsDataURL(file);
 },
-
+    
     showSimpleSuccessModal(receipts) {
     console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
     
@@ -4770,47 +4740,18 @@ showUploadInterface() {
     // Stop camera if running
     this.stopCamera();
     
+    // Hide camera and quick actions, show upload section
     const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
-    const methodSelectionSection = document.getElementById('upload-method-selection');
     
-    console.log('Sections found:', {
-        cameraSection: !!cameraSection,
-        uploadSection: !!uploadSection,
-        recentSection: !!recentSection,
-        quickActionsSection: !!quickActionsSection,
-        methodSelectionSection: !!methodSelectionSection
-    });
+    if (cameraSection) cameraSection.style.display = 'none';
+    if (quickActionsSection) quickActionsSection.style.display = 'none';
+    if (uploadSection) uploadSection.style.display = 'block';
+    if (recentSection) recentSection.style.display = 'block';
     
-    // Hide camera, method selection, and quick actions
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-        console.log('✅ Hidden camera section');
-    }
-    
-    if (methodSelectionSection) {
-        methodSelectionSection.style.display = 'none';
-        console.log('✅ Hidden method selection section');
-    }
-    
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'none';
-        console.log('✅ Hidden quick actions section');
-    }
-    
-    // Show upload section
-    if (uploadSection) {
-        uploadSection.style.display = 'block';
-        console.log('✅ Showed upload section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
+    console.log('✅ Upload interface shown');
 },
     
 loadStandaloneUploadSystem() {
