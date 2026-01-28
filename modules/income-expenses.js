@@ -1376,397 +1376,88 @@ handleFileUpload(files) {
     console.log('📤 ========== handleFileUpload END ==========');
 },
 
-// ✅ SIMPLE MODAL THAT WILL DEFINITELY SHOW
+// ✅ ULTRA SIMPLE ALERT-STYLE MODAL
 createSimpleUploadSuccessModal(receipts) {
-    console.log('🎪 Creating simple upload success modal');
+    console.log('🎪 Creating ultra simple modal');
     
-    // Remove any existing modal first
-    const existingModal = document.querySelector('.upload-success-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Create a very simple modal that's hard to miss
-    const modalHTML = `
-        <div class="upload-success-modal" style="
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+        <div style="
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             z-index: 99999;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            border-left: 5px solid #4CAF50;
+            min-width: 300px;
+            max-width: 400px;
         ">
+            <h3 style="margin: 0 0 10px 0; color: #2c3e50;">✅ Upload Complete!</h3>
+            <p style="margin: 0 0 15px 0; color: #7f8c8d;">
+                ${receipts.length} file(s) uploaded
+            </p>
             <div style="
-                background: white;
-                border-radius: 12px;
-                padding: 30px;
-                max-width: 500px;
-                width: 90%;
-                max-height: 80vh;
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 15px;
+                max-height: 150px;
                 overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                animation: slideIn 0.3s ease;
             ">
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
-                    <h2 style="margin: 0 0 10px 0; color: #2c3e50;">Upload Successful!</h2>
-                    <p style="color: #7f8c8d; margin: 0;">${receipts.length} file(s) uploaded successfully</p>
-                </div>
-                
-                <div style="
-                    background: #f8f9fa;
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 25px;
-                    max-height: 200px;
-                    overflow-y: auto;
-                ">
-                    <h4 style="margin-top: 0; color: #495057;">Uploaded Files:</h4>
-                    ${receipts.map(receipt => `
-                        <div style="
-                            display: flex;
-                            align-items: center;
-                            padding: 8px;
-                            border-bottom: 1px solid #e9ecef;
-                        ">
-                            <span style="margin-right: 10px; color: #4a6fa5;">${receipt.type.includes('image') ? '🖼️' : '📄'}</span>
-                            <span style="flex-grow: 1; font-weight: 500;">${receipt.name}</span>
-                            <span style="font-size: 12px; color: #6c757d;">
-                                ${receipt.size > 1024 ? (receipt.size / 1024).toFixed(1) + ' KB' : receipt.size + ' B'}
-                            </span>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div style="display: flex; gap: 10px;">
-                    <button id="processNowBtn" style="
-                        flex: 1;
-                        background: #4a6fa5;
-                        color: white;
-                        border: none;
-                        padding: 12px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: background 0.2s;
-                    " onmouseover="this.style.background='#3a5a90'" onmouseout="this.style.background='#4a6fa5'">
-                        🚀 Process Now
-                    </button>
-                    <button id="closeModalBtn" style="
-                        flex: 1;
-                        background: #6c757d;
-                        color: white;
-                        border: none;
-                        padding: 12px;
-                        border-radius: 6px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: background 0.2s;
-                    " onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#6c757d'">
-                        Close
-                    </button>
-                </div>
+                ${receipts.map((r, i) => `
+                    <div style="padding: 3px 0; font-size: 14px;">
+                        ${i+1}. ${r.name}
+                    </div>
+                `).join('')}
             </div>
+            <button style="
+                background: #4a6fa5;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-right: 10px;
+            " id="simpleProcessBtn">Process</button>
+            <button style="
+                background: #6c757d;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+            " id="simpleCloseBtn">Close</button>
         </div>
-        
-        <style>
-            @keyframes slideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        </style>
     `;
     
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    // Add to page
+    document.body.appendChild(modal);
     
-    // Add event listeners
-    document.getElementById('processNowBtn').addEventListener('click', () => {
-        document.querySelector('.upload-success-modal').remove();
+    // Event listeners
+    modal.querySelector('#simpleProcessBtn').addEventListener('click', () => {
+        modal.remove();
         if (typeof this.processPendingReceipts === 'function') {
             this.processPendingReceipts();
         }
     });
     
-    document.getElementById('closeModalBtn').addEventListener('click', () => {
-        document.querySelector('.upload-success-modal').remove();
-    });
-    
-    // Also close when clicking outside
-    document.querySelector('.upload-success-modal').addEventListener('click', (e) => {
-        if (e.target.classList.contains('upload-success-modal')) {
-            e.target.remove();
-        }
-    });
-    
-    console.log('✅ Simple modal created and displayed');
-},
-    
-    showFileUploadSuccess(receipts) {
-    console.log('🎉 Showing file upload success for', receipts.length, 'files');
-    
-    // Create success modal
-    const modal = document.createElement('div');
-    modal.id = 'upload-success-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 24px;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        z-index: 10002;
-        text-align: center;
-        max-width: 500px;
-        width: 90%;
-        max-height: 85vh;
-        overflow-y: auto;
-        animation: slideIn 0.3s ease-out;
-    `;
-    
-    // Add CSS animation if not already added
-    if (!document.getElementById('upload-success-styles')) {
-        const style = document.createElement('style');
-        style.id = 'upload-success-styles';
-        style.textContent = `
-            @keyframes slideIn {
-                from { opacity: 0; transform: translate(-50%, -40%); }
-                to { opacity: 1; transform: translate(-50%, -50%); }
-            }
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-            }
-            #upload-success-modal::-webkit-scrollbar {
-                width: 6px;
-            }
-            #upload-success-modal::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.05);
-                border-radius: 3px;
-            }
-            #upload-success-modal::-webkit-scrollbar-thumb {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 3px;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
-    // Create preview content
-    let previewContent = '';
-    let fileList = '';
-    
-    if (receipts.length === 1) {
-        // Single file - show preview
-        const receipt = receipts[0];
-        
-        let imagePreview = '';
-        if (receipt.type?.startsWith('image/') && receipt.dataURL) {
-            imagePreview = `
-                <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; animation: pulse 2s ease-in-out; max-height: 200px; overflow: hidden;">
-                    <img src="${receipt.dataURL}" 
-                         alt="Receipt preview" 
-                         style="width: 100%; max-height: 200px; object-fit: contain; background: #f8fafc;">
-                </div>
-            `;
-        }
-        
-        previewContent = `
-            <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
-            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">File Uploaded!</h3>
-            <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipt has been saved to local storage.</p>
-            
-            ${imagePreview}
-            
-            <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span style="font-weight: 600; color: #374151; font-size: 14px;">File:</span>
-                    <span style="color: #1f2937; font-size: 14px;">${receipt.name}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                    <span style="font-weight: 600; color: #374151; font-size: 14px;">Size:</span>
-                    <span style="color: #1f2937; font-size: 14px;">${this.formatFileSize(receipt.size || 0)}</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-weight: 600; color: #374151; font-size: 14px;">Status:</span>
-                    <span style="color: #f59e0b; font-weight: bold; font-size: 14px;">Pending</span>
-                </div>
-            </div>
-        `;
-    } else {
-        // Multiple files - show list
-        previewContent = `
-            <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
-            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">${receipts.length} Files Uploaded!</h3>
-            <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipts have been saved to local storage.</p>
-            
-            <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
-                <div style="font-weight: 600; color: #374151; font-size: 14px; margin-bottom: 12px;">Uploaded Files:</div>
-                ${receipts.map((receipt, index) => `
-                    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e7eb; ${index === receipts.length - 1 ? 'border-bottom: none;' : ''}">
-                        <span style="font-size: 20px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 500; color: #1f2937; font-size: 14px;">${receipt.name}</div>
-                            <div style="font-size: 12px; color: #6b7280;">${this.formatFileSize(receipt.size || 0)}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
-    
-    modal.innerHTML = `
-        <div style="position: relative; min-height: 0;">
-            ${previewContent}
-            
-            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap;">
-                <button id="process-uploaded-btn" 
-                        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
-                               color: white; 
-                               border: none; 
-                               padding: 14px 24px; 
-                               border-radius: 10px; 
-                               font-weight: 700; 
-                               cursor: pointer; 
-                               flex: 1;
-                               font-size: 16px;
-                               transition: all 0.2s;
-                               min-width: 140px;">
-                    🔍 Process Now
-                </button>
-                <button id="close-upload-modal" 
-                        style="background: #f1f5f9; 
-                               color: #374151; 
-                               border: none; 
-                               padding: 14px 24px; 
-                               border-radius: 10px; 
-                               font-weight: 700; 
-                               cursor: pointer; 
-                               flex: 1;
-                               font-size: 16px;
-                               transition: all 0.2s;
-                               min-width: 140px;">
-                    Done
-                </button>
-            </div>
-            
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
-                <button id="upload-more-btn" 
-                        style="background: none; 
-                               color: #3b82f6; 
-                               border: 2px solid #3b82f6; 
-                               padding: 10px 20px; 
-                               border-radius: 8px; 
-                               font-weight: 600; 
-                               cursor: pointer; 
-                               width: 100%;
-                               margin-bottom: 8px;
-                               transition: all 0.2s;">
-                    📁 Upload More Files
-                </button>
-                <button id="delete-uploaded-btn" 
-                        style="background: #fef2f2; 
-                               color: #dc2626; 
-                               border: 2px solid #fecaca; 
-                               padding: 10px 20px; 
-                               border-radius: 8px; 
-                               font-weight: 600; 
-                               cursor: pointer; 
-                               width: 100%;
-                               transition: all 0.2s;">
-                    🗑️ Delete all uploaded files
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Add event listeners
-    document.getElementById('process-uploaded-btn')?.addEventListener('click', () => {
+    modal.querySelector('#simpleCloseBtn').addEventListener('click', () => {
         modal.remove();
-        setTimeout(() => {
-            if (receipts.length === 1) {
-                this.processSingleReceipt(receipts[0].id);
-            } else {
-                if (confirm(`Process ${receipts.length} uploaded receipts?`)) {
-                    receipts.forEach((receipt, index) => {
-                        setTimeout(() => {
-                            this.processSingleReceipt(receipt.id);
-                        }, index * 500);
-                    });
-                }
-            }
-        }, 100);
     });
     
-    document.getElementById('close-upload-modal')?.addEventListener('click', () => {
-        modal.remove();
-        // Return to quick actions view
-        this.showQuickActionsView();
-    });
-    
-    document.getElementById('upload-more-btn')?.addEventListener('click', () => {
-        modal.remove();
-        // Stay in upload interface
-        const fileInput = document.getElementById('receipt-upload-input');
-        if (fileInput) {
-            setTimeout(() => fileInput.click(), 100);
-        }
-    });
-    
-    document.getElementById('delete-uploaded-btn')?.addEventListener('click', () => {
-        if (confirm(`Delete ${receipts.length} uploaded file(s)? This action cannot be undone.`)) {
-            modal.remove();
-            receipts.forEach(receipt => {
-                this.deleteReceiptFromAllSources(receipt.id);
-            });
-            // Return to quick actions view
-            this.showQuickActionsView();
-        }
-    });
-    
-    // Auto-close after 10 seconds if not clicked
+    // Auto-remove after 10 seconds
     setTimeout(() => {
         if (document.body.contains(modal)) {
-            modal.style.animation = 'slideIn 0.3s ease-out reverse';
-            setTimeout(() => {
-                if (document.body.contains(modal)) {
-                    modal.remove();
-                    this.showQuickActionsView();
-                }
-            }, 300);
+            modal.remove();
         }
     }, 10000);
     
-    // Close when clicking outside
-    const closeOnClickOutside = (e) => {
-        if (!modal.contains(e.target)) {
-            modal.remove();
-            document.removeEventListener('click', closeOnClickOutside);
-            this.showQuickActionsView();
-        }
-    };
-    setTimeout(() => {
-        document.addEventListener('click', closeOnClickOutside);
-    }, 100);
-},
-
-    
+    console.log('✅ Ultra simple modal displayed');
+},    
     
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
