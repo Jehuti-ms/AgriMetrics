@@ -1256,20 +1256,46 @@ handleFileUpload(files) {
     
     const checkIfAllProcessed = () => {
         processedCount++;
+        console.log(`✅ Processed ${processedCount}/${totalFiles} files`);
+        
         if (processedCount === totalFiles) {
+            console.log('🎯 All files processed. New receipts:', newReceipts.length);
+            
             if (newReceipts.length > 0) {
-                setTimeout(() => {
-                    this.showFileUploadSuccess(newReceipts);
-                }, 500);
+                // Show success notification
                 this.showNotification(`${newReceipts.length} file(s) uploaded successfully!`, 'success');
+                
+                // ✅ SHOW THE UPLOAD SUCCESS MODAL IMMEDIATELY
+                setTimeout(() => {
+                    console.log('🪟 Attempting to show upload success modal...');
+                    
+                    // First try: Use showFileUploadSuccess if it exists
+                    if (typeof this.showFileUploadSuccess === 'function') {
+                        console.log('✅ Calling showFileUploadSuccess');
+                        this.showFileUploadSuccess(newReceipts);
+                    } 
+                    // Second try: Show receipts in a modal
+                    else if (newReceipts.length > 0) {
+                        console.log('⚠️ showFileUploadSuccess not found, creating modal');
+                        this.showReceiptsPreviewModal(newReceipts);
+                    }
+                }, 300);
+                
             } else {
                 this.showNotification('No valid files were uploaded', 'warning');
-                this.showQuickActionsView();
+                // Go back to quick actions view
+                setTimeout(() => {
+                    if (typeof this.showQuickActionsView === 'function') {
+                        this.showQuickActionsView();
+                    }
+                }, 1000);
             }
         }
     };
     
     fileArray.forEach((file, index) => {
+        console.log(`📄 Processing file ${index + 1}: ${file.name}`);
+        
         if (!this.isValidReceiptFile(file)) {
             this.showNotification(`Skipping invalid file: ${file.name}`, 'warning');
             checkIfAllProcessed();
@@ -1285,6 +1311,8 @@ handleFileUpload(files) {
                 const base64Data = dataURL.split(',')[1];
                 const receiptId = `upload_${Date.now()}_${index}`;
                 
+                console.log(`✅ File loaded: ${file.name}, ID: ${receiptId}`);
+                
                 const receipt = {
                     id: receiptId,
                     name: file.name,
@@ -1298,15 +1326,26 @@ handleFileUpload(files) {
                     source: 'upload'
                 };
                 
-                // ✅ All "this" calls work correctly with arrow function
+                // ✅ Save and update UI
                 this.saveReceiptLocally(receipt);
                 this.receiptQueue.push(receipt);
                 newReceipts.push(receipt);
                 
-                // ✅ CHANGED: Use renderRecentReceiptsList instead of updateRecentReceiptsList
-                this.renderRecentReceiptsList();  // This method exists in your module
-                this.updateReceiptQueueUI();
-                this.updateModalReceiptsList();
+                // ✅ Update UI components
+                if (typeof this.renderRecentReceiptsList === 'function') {
+                    this.renderRecentReceiptsList();
+                }
+                
+                if (typeof this.updateReceiptQueueUI === 'function') {
+                    this.updateReceiptQueueUI();
+                }
+                
+                if (typeof this.updateModalReceiptsList === 'function') {
+                    this.updateModalReceiptsList();
+                }
+                
+                // Show immediate success for this file
+                this.showNotification(`✓ ${file.name} uploaded`, 'success');
                 
                 // Firebase upload in background
                 if (this.isFirebaseAvailable && window.db) {
@@ -1316,6 +1355,7 @@ handleFileUpload(files) {
                             if (user) {
                                 const firebaseReceipt = { ...receipt, userId: user.uid };
                                 await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
+                                console.log(`🔥 Saved ${file.name} to Firestore`);
                             }
                         } catch (error) {
                             console.warn('⚠️ Firestore save failed:', error.message);
@@ -1342,6 +1382,134 @@ handleFileUpload(files) {
     });
     
     console.log('📤 ========== handleFileUpload END ==========');
+},
+
+// ✅ ADD THIS METHOD IF IT DOESN'T EXIST - DROP IT IN YOUR MODULE
+showReceiptsPreviewModal(receipts) {
+    console.log('🪟 Creating receipts preview modal for', receipts.length, 'receipt(s)');
+    
+    // Remove any existing modal first
+    const existingModal = document.getElementById('receipts-preview-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal active" id="receipts-preview-modal" style="z-index: 10000;">
+            <div class="modal-overlay"></div>
+            <div class="modal-container" style="max-width: 700px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">📁 Upload Successful!</h2>
+                    <button class="btn-close close-receipts-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="upload-success-message" style="margin-bottom: 20px;">
+                        <p>✅ Successfully uploaded <strong>${receipts.length}</strong> receipt(s)</p>
+                        <p class="text-muted">What would you like to do next?</p>
+                    </div>
+                    
+                    <div class="receipts-list-container" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <h4 style="margin-top: 0; margin-bottom: 15px;">Uploaded Receipts:</h4>
+                        <div class="receipts-list">
+                            ${receipts.map((receipt, index) => `
+                                <div class="receipt-item" style="display: flex; align-items: center; padding: 10px; border-bottom: ${index < receipts.length - 1 ? '1px solid #f0f0f0' : 'none'};">
+                                    <div class="receipt-icon" style="margin-right: 12px; font-size: 20px; color: #4a6fa5;">
+                                        ${receipt.type.includes('image') ? '🖼️' : '📄'}
+                                    </div>
+                                    <div class="receipt-info" style="flex-grow: 1;">
+                                        <div class="receipt-name" style="font-weight: 500; margin-bottom: 3px;">${receipt.name}</div>
+                                        <div class="receipt-details" style="font-size: 12px; color: #666;">
+                                            ${this.formatFileSize ? this.formatFileSize(receipt.size) : (receipt.size / 1024).toFixed(1) + ' KB'} • 
+                                            Uploaded just now
+                                        </div>
+                                    </div>
+                                    <button class="btn-small view-receipt-btn" data-receipt-id="${receipt.id}" style="margin-left: 10px; font-size: 12px; padding: 4px 8px;">Preview</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn btn-primary" id="process-receipts-now" style="flex: 1;">
+                            🚀 Process Receipts Now
+                        </button>
+                        <button class="btn btn-secondary" id="add-more-receipts" style="flex: 1;">
+                            📁 Add More Files
+                        </button>
+                        <button class="btn btn-outline close-receipts-modal" style="flex: 1;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Get modal reference
+    const modal = document.getElementById('receipts-preview-modal');
+    
+    // Add event listeners
+    const closeModal = () => {
+        modal.remove();
+        // Show quick actions view after closing
+        if (typeof this.showQuickActionsView === 'function') {
+            this.showQuickActionsView();
+        }
+    };
+    
+    // Close buttons
+    modal.querySelectorAll('.close-receipts-modal').forEach(btn => {
+        btn.addEventListener('click', closeModal);
+    });
+    
+    // Close on overlay click
+    modal.querySelector('.modal-overlay').addEventListener('click', closeModal);
+    
+    // View receipt buttons
+    modal.querySelectorAll('.view-receipt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const receiptId = e.target.dataset.receiptId;
+            const receipt = receipts.find(r => r.id === receiptId);
+            if (receipt && typeof this.showReceiptPreviewInTransactionModal === 'function') {
+                this.showReceiptPreviewInTransactionModal(receipt);
+            }
+        });
+    });
+    
+    // Process receipts button
+    modal.querySelector('#process-receipts-now').addEventListener('click', () => {
+        modal.remove();
+        if (typeof this.processPendingReceipts === 'function') {
+            this.processPendingReceipts();
+        } else {
+            this.showNotification('Processing receipts...', 'info');
+        }
+    });
+    
+    // Add more receipts button
+    modal.querySelector('#add-more-receipts').addEventListener('click', () => {
+        modal.remove();
+        // Trigger file input again
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.multiple = true;
+        fileInput.accept = 'image/*,.pdf,.txt';
+        fileInput.style.display = 'none';
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                this.handleFileUpload(e.target.files);
+            }
+        };
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        setTimeout(() => document.body.removeChild(fileInput), 1000);
+    });
+    
+    console.log('✅ Modal created and event listeners added');
 },
     
    isValidReceiptFile(file) {
