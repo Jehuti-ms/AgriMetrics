@@ -1244,7 +1244,14 @@ async loadReceiptsFromFirebase() {
     // ==================== FILE UPLOAD ====================
 // ✅ SIMPLE FIX - Use your existing showImportReceiptsModal
 handleFileUpload(files) {
-    console.log('🎯 handleFileUpload called with', files.length, 'files');
+    console.log('🎯 ========== handleFileUpload START ==========');
+    console.log('📁 Number of files:', files.length);
+    
+    // Debug: Check if this is the correct module
+    console.log('🔍 Module context:', this);
+    console.log('🔍 Module name:', this.name);
+    console.log('🔍 saveReceiptLocally exists?', typeof this.saveReceiptLocally);
+    console.log('🔍 receiptQueue:', this.receiptQueue);
     
     if (!files || files.length === 0) {
         console.log('❌ No files');
@@ -1252,91 +1259,85 @@ handleFileUpload(files) {
     }
     
     const file = files[0]; // Process first file
-    console.log('📄 Processing:', file.name);
+    console.log('📄 Processing file:', file.name);
+    console.log('📄 File type:', file.type);
+    console.log('📄 File size:', file.size);
     
     const reader = new FileReader();
     
     reader.onload = (e) => {
+        console.log('✅ FileReader loaded successfully');
+        
         try {
             const dataURL = e.target.result;
+            console.log('📊 Data URL length:', dataURL.length);
+            
             const receiptId = 'upload_' + Date.now();
+            console.log('🎫 Receipt ID:', receiptId);
             
-            console.log('✅ File loaded, creating receipt object...');
-            
-            // ✅ CREATE THE EXACT SAME RECEIPT OBJECT AS CAMERA
             const receipt = {
                 id: receiptId,
                 name: file.name,
                 type: file.type,
                 size: file.size,
-                dataURL: dataURL,  // Camera stores dataURL
+                dataURL: dataURL,
                 status: 'pending',
                 uploadedAt: new Date().toISOString(),
-                source: 'upload'  // Camera uses 'camera'
+                source: 'upload'
             };
             
             console.log('📦 Receipt created:', receipt);
             
-            // ✅ USE THE EXACT SAME SAVE METHOD AS CAMERA
+            // ✅ 1. Save locally
+            console.log('💾 Calling saveReceiptLocally...');
             if (this.saveReceiptLocally) {
                 this.saveReceiptLocally(receipt);
                 console.log('✅ Called saveReceiptLocally');
+            } else {
+                console.error('❌ saveReceiptLocally not found!');
             }
             
-            // ✅ CHECK: Is receipt actually in receiptQueue?
+            // ✅ 2. Check receiptQueue immediately
             console.log('🔍 Checking receiptQueue after save:', {
-                queueLength: this.receiptQueue?.length || 0,
-                containsReceipt: this.receiptQueue?.some(r => r.id === receiptId) || false,
-                receiptQueue: this.receiptQueue
+                length: this.receiptQueue.length,
+                containsReceipt: this.receiptQueue.some(r => r.id === receiptId),
+                lastReceipt: this.receiptQueue[0]
             });
             
-            // ✅ UPDATE THE UI - CALL THE EXACT SAME METHOD
-            console.log('🔄 Calling renderRecentReceiptsList...');
-            if (this.renderRecentReceiptsList) {
-                // Update the HTML in the modal
-                const recentList = document.getElementById('recent-receipts-list');
-                if (recentList) {
-                    recentList.innerHTML = this.renderRecentReceiptsList();
-                    console.log('✅ Updated recent-receipts-list HTML');
-                }
-                
-                // Also update the grid if it exists
-                const recentGrid = document.getElementById('recent-receipts-grid');
-                if (recentGrid) {
-                    recentGrid.innerHTML = this.renderRecentReceiptsList();
-                    console.log('✅ Updated recent-receipts-grid HTML');
-                }
-            }
+            // ✅ 3. Force update UI
+            console.log('🔄 Updating UI...');
+            this.updateReceiptQueueUI();
+            this.updateModalReceiptsList();
             
-            // ✅ UPDATE QUEUE UI
-            if (this.updateReceiptQueueUI) {
-                this.updateReceiptQueueUI();
-                console.log('✅ Updated receipt queue UI');
-            }
+            // ✅ 4. Show notification
+            console.log('🔔 Showing notification...');
+            this.showNotification(`Uploaded: ${file.name}`, 'success');
             
-            // ✅ SHOW NOTIFICATION
-            if (this.showNotification) {
-                this.showNotification(`Uploaded: ${file.name}`, 'success');
-                console.log('✅ Notification shown');
-            }
+            // ✅ 5. Show success modal
+            console.log('🪟 Showing success modal...');
+            this.showSimpleSuccessModal([receipt]);
             
-            console.log('✅ Upload complete!');
+            console.log('✅ ========== handleFileUpload SUCCESS ==========');
             
         } catch (error) {
-            console.error('❌ Upload error:', error);
-            if (this.showNotification) {
-                this.showNotification('Upload failed', 'error');
-            }
+            console.error('❌ Error in handleFileUpload:', error);
+            console.error('❌ Error stack:', error.stack);
+            this.showNotification('Upload failed: ' + error.message, 'error');
         }
     };
     
     reader.onerror = (error) => {
         console.error('❌ FileReader error:', error);
-        if (this.showNotification) {
-            this.showNotification('Failed to read file', 'error');
-        }
+        console.error('❌ FileReader error details:', reader.error);
+        this.showNotification('Failed to read file', 'error');
     };
     
+    reader.onabort = () => {
+        console.error('❌ FileReader aborted');
+        this.showNotification('File reading cancelled', 'error');
+    };
+    
+    console.log('📖 Starting FileReader readAsDataURL...');
     reader.readAsDataURL(file);
 },
     
@@ -4407,93 +4408,216 @@ setupImportReceiptsHandlers() {
     };
     
     // Setup ALL modal buttons here
-// Setup ALL modal buttons here
-setupModalButton('upload-option', () => {
-    console.log('📁 Upload Files button clicked');
-    this.showUploadInterface();
-});
+    setupModalButton('upload-option', () => {
+        console.log('📁 Upload Files button clicked');
+        this.showUploadInterface();
+    });
 
-setupModalButton('camera-option', () => {
-    console.log('🎯 Camera button clicked');
-    
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    console.log('Switching to camera...');
-    
-    // Hide upload section and quick actions
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-        console.log('✅ Hid upload section');
-    }
-    
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'none';
-        console.log('✅ Hid quick actions section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
-    
-    // Show camera
-    if (cameraSection) {
-        cameraSection.style.display = 'block';
-        console.log('✅ Showed camera section');
+    setupModalButton('camera-option', () => {
+        console.log('🎯 Camera button clicked');
         
-        setTimeout(() => {
-            console.log('🔄 Initializing camera...');
-            this.initializeCamera();
-        }, 100);
-    }
-});
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        const quickActionsSection = document.querySelector('.quick-actions-section');
+        
+        console.log('Switching to camera...');
+        
+        // Hide upload section and quick actions
+        if (uploadSection) {
+            uploadSection.style.display = 'none';
+            console.log('✅ Hid upload section');
+        }
+        
+        if (quickActionsSection) {
+            quickActionsSection.style.display = 'none';
+            console.log('✅ Hid quick actions section');
+        }
+        
+        // Keep recent section visible
+        if (recentSection) {
+            recentSection.style.display = 'block';
+            console.log('✅ Kept recent section visible');
+        }
+        
+        // Show camera
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            console.log('✅ Showed camera section');
+            
+            setTimeout(() => {
+                console.log('🔄 Initializing camera...');
+                this.initializeCamera();
+            }, 100);
+        }
+    });
 
-setupModalButton('cancel-camera', () => {
-    console.log('❌ Cancel camera clicked');
-    this.showQuickActionsView();
-});
+    setupModalButton('cancel-camera', () => {
+        console.log('❌ Cancel camera clicked');
+        this.showQuickActionsView();
+    });
 
-setupModalButton('back-to-main-view', () => {
-    console.log('🔙 Back to main view clicked (modal handler)');
-    this.showQuickActionsView();
-});
+    setupModalButton('back-to-main-view', () => {
+        console.log('🔙 Back to main view clicked (modal handler)');
+        this.showQuickActionsView();
+    });
 
-setupModalButton('capture-photo', () => this.capturePhoto());
-setupModalButton('switch-camera', () => this.switchCamera());
+    setupModalButton('capture-photo', () => this.capturePhoto());
+    setupModalButton('switch-camera', () => this.switchCamera());
 
-setupModalButton('refresh-receipts', () => {
-    console.log('🔄 Refresh receipts clicked');
-    const recentList = document.getElementById('recent-receipts-list');
-    if (recentList) {
-        recentList.innerHTML = this.renderRecentReceiptsList();
-    }
-    this.showNotification('Receipts list refreshed', 'success');
-});
+    setupModalButton('refresh-receipts', () => {
+        console.log('🔄 Refresh receipts clicked');
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList) {
+            recentList.innerHTML = this.renderRecentReceiptsList();
+        }
+        this.showNotification('Receipts list refreshed', 'success');
+    });
 
-setupModalButton('process-receipts-btn', () => {
-    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    setupModalButton('process-receipts-btn', () => {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        
+        if (pendingReceipts.length === 0) {
+            this.showNotification('No pending receipts to process', 'info');
+            return;
+        }
+        
+        if (pendingReceipts.length === 1) {
+            this.processSingleReceipt(pendingReceipts[0].id);
+        } else {
+            if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+                pendingReceipts.forEach((receipt, index) => {
+                    setTimeout(() => {
+                        this.processSingleReceipt(receipt.id);
+                    }, index * 500);
+                });
+            }
+        }
+    });
     
-    if (pendingReceipts.length === 0) {
-        this.showNotification('No pending receipts to process', 'info');
-        return;
-    }
+    // ==================== DIRECT FILE INPUT SETUP ====================
+    console.log('🔧 Setting up direct file input...');
     
-    if (pendingReceipts.length === 1) {
-        this.processSingleReceipt(pendingReceipts[0].id);
+    // Create or get file input
+    let fileInput = document.getElementById('receipt-upload-input');
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'receipt-upload-input';
+        fileInput.name = 'receipt-upload-input';
+        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
+        fileInput.multiple = true;
+        fileInput.style.display = 'none';
+        fileInput.setAttribute('data-dynamic', 'true');
+        document.body.appendChild(fileInput);
+        console.log('✅ Created new file input');
     } else {
-        if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
-            pendingReceipts.forEach((receipt, index) => {
-                setTimeout(() => {
-                    this.processSingleReceipt(receipt.id);
-                }, index * 500);
+        console.log('✅ Found existing file input');
+    }
+    
+    // Remove any existing listeners
+    fileInput.onchange = null;
+    fileInput.removeEventListener('change', this._fileInputHandler);
+    
+    // Create handler function
+    this._fileInputHandler = (e) => {
+        console.log('📁 DIRECT: File input changed!');
+        console.log('Event:', e);
+        console.log('Target:', e.target);
+        console.log('Files:', e.target.files);
+        
+        if (e.target.files && e.target.files.length > 0) {
+            console.log(`Processing ${e.target.files.length} file(s)`);
+            
+            // Log each file
+            Array.from(e.target.files).forEach((file, i) => {
+                console.log(`File ${i + 1}:`, {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: file.lastModified
+                });
             });
+            
+            // Process files
+            this.handleFileUpload(e.target.files);
+            
+            // Reset the input
+            e.target.value = '';
+        } else {
+            console.log('No files selected or files array empty');
+        }
+    };
+    
+    // Add new listener
+    fileInput.addEventListener('change', this._fileInputHandler.bind(this));
+    
+    console.log('✅ Direct file input setup complete with listener');
+    
+    // ==================== DRAG AND DROP SETUP ====================
+    console.log('🔧 Setting up drag and drop...');
+    
+    const dropzone = document.getElementById('receipt-dropzone');
+    if (!dropzone) {
+        console.log('ℹ️ Drag dropzone not found (might be in standalone system)');
+    } else {
+        const standaloneFileInput = document.getElementById('receipt-file-input');
+        if (!standaloneFileInput) {
+            console.error('❌ receipt-file-input not found in standalone system');
+        } else {
+            // Click to browse
+            dropzone.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📁 Dropzone clicked');
+                standaloneFileInput.click();
+            });
+            
+            // Drag and drop events
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('drag-over');
+            });
+            
+            dropzone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('drag-over');
+            });
+            
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('drag-over');
+                
+                console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
+                
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    console.log('📤 Calling handleFileUpload for dropped files...');
+                    this.handleFileUpload(e.dataTransfer.files);
+                }
+            });
+            
+            // File input change
+            standaloneFileInput.addEventListener('change', (e) => {
+                console.log('📁 Standalone file input changed:', e.target.files?.length || 0);
+                
+                if (e.target.files && e.target.files.length > 0) {
+                    console.log('📤 Calling handleFileUpload for selected files...');
+                    this.handleFileUpload(e.target.files);
+                    
+                    // Reset input
+                    e.target.value = '';
+                }
+            });
+            
+            console.log('✅ Drag and drop setup complete');
         }
     }
-});
+    
+    console.log('✅ All import receipt handlers setup complete');
+}, 
     
     // ==================== DIRECT FILE INPUT SETUP ====================
     console.log('🔧 Setting up direct file input...');
