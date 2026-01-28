@@ -608,6 +608,13 @@ saveReceiptLocally(receipt) {
     
     // Store in localStorage for persistence
     const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    
+    // Remove existing receipt with same ID if any
+    const existingIndex = localReceipts.findIndex(r => r.id === receipt.id);
+    if (existingIndex !== -1) {
+        localReceipts.splice(existingIndex, 1);
+    }
+    
     localReceipts.unshift(receipt);
     localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
     
@@ -1250,87 +1257,151 @@ handleFileUpload(files) {
     // Show processing message
     this.showNotification(`Processing ${fileArray.length} file(s)...`, 'info');
     
+    // Create an array to hold all receipts
+    const newReceipts = [];
+    let processedCount = 0;
+    const totalFiles = fileArray.length;
+    
+    // Function to check if all files are processed
+    const checkIfAllProcessed = () => {
+        processedCount++;
+        console.log(`Processed ${processedCount}/${totalFiles} files`);
+        
+        if (processedCount === totalFiles) {
+            console.log('🎉 All files processed');
+            console.log('New receipts created:', newReceipts.length);
+            
+            if (newReceipts.length > 0) {
+                // Show success modal
+                setTimeout(() => {
+                    console.log('Showing success modal with receipts:', newReceipts);
+                    this.showFileUploadSuccess(newReceipts);
+                }, 500);
+                
+                // Show final notification
+                this.showNotification(`${newReceipts.length} file(s) uploaded successfully!`, 'success');
+            } else {
+                this.showNotification('No valid files were uploaded', 'warning');
+                this.showQuickActionsView();
+            }
+        }
+    };
+    
     // Process each file
     fileArray.forEach((file, index) => {
         console.log(`\n📄 Processing file ${index + 1}:`);
         console.log('Name:', file.name);
         console.log('Type:', file.type);
         console.log('Size:', this.formatFileSize(file.size));
-        console.log('Is valid?', this.isValidReceiptFile(file));
         
         if (!this.isValidReceiptFile(file)) {
             console.error(`❌ Invalid file: ${file.name}`);
             this.showNotification(`Skipping invalid file: ${file.name}`, 'warning');
+            checkIfAllProcessed();
             return;
         }
         
-        // Create receipt ID
-        const receiptId = `upload_${Date.now()}_${index}`;
-        console.log('Receipt ID:', receiptId);
+        // Read file for preview and base64 conversion
+        const reader = new FileReader();
         
-        // Create receipt object
-        const receipt = {
-            id: receiptId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            file: file,
-            status: 'pending',
-            timestamp: Date.now(),
-            uploadedAt: new Date().toISOString(),
-            source: 'upload'
+        reader.onload = async (e) => {
+            try {
+                const dataURL = e.target.result;
+                const base64Data = dataURL.split(',')[1];
+                const timestamp = Date.now();
+                const receiptId = `upload_${timestamp}_${index}`;
+                
+                console.log('Receipt ID:', receiptId);
+                console.log('DataURL length:', dataURL.length);
+                console.log('Base64 length:', base64Data.length);
+                
+                // Create receipt object with base64
+                const receipt = {
+                    id: receiptId,
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    base64Data: base64Data,
+                    dataURL: dataURL, // Keep dataURL for preview
+                    status: 'pending',
+                    timestamp: timestamp,
+                    uploadedAt: new Date().toISOString(),
+                    storageType: 'firestore-base64',
+                    source: 'upload'
+                };
+                
+                console.log('Created receipt object with base64');
+                
+                // Save locally first
+                this.saveReceiptLocally(receipt);
+                console.log('Saved to localStorage');
+                
+                // Add to queue
+                this.receiptQueue.push(receipt);
+                console.log('Added to receiptQueue. Total:', this.receiptQueue.length);
+                
+                // Add to new receipts array for preview
+                newReceipts.push(receipt);
+                
+                // Update UI immediately
+                this.updateRecentReceiptsList();
+                this.updateReceiptQueueUI();
+                this.updateModalReceiptsList();
+                
+                // Try to save to Firestore (base64 version) - in background
+                if (this.isFirebaseAvailable && window.db) {
+                    setTimeout(async () => {
+                        try {
+                            const user = window.firebase?.auth?.().currentUser;
+                            if (user) {
+                                const firebaseReceipt = {
+                                    ...receipt,
+                                    userId: user.uid
+                                };
+                                
+                                await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
+                                console.log('✅ Saved to Firestore (base64):', receiptId);
+                            }
+                        } catch (firestoreError) {
+                            console.warn('⚠️ Firestore save failed:', firestoreError.message);
+                            console.log('Keeping local copy only');
+                        }
+                    }, 1000); // Delay to prevent blocking UI
+                }
+                
+            } catch (error) {
+                console.error('❌ Error processing file:', error);
+                this.showNotification(`Error processing file: ${file.name}`, 'error');
+            } finally {
+                checkIfAllProcessed();
+            }
         };
         
-        console.log('Created receipt object:', receipt);
+        reader.onerror = (error) => {
+            console.error('❌ Error reading file:', error);
+            this.showNotification(`Error reading file: ${file.name}`, 'error');
+            checkIfAllProcessed();
+        };
         
-        // Add to queue
-        this.receiptQueue.push(receipt);
-        console.log('Added to receiptQueue. Total:', this.receiptQueue.length);
+        reader.onabort = (error) => {
+            console.error('❌ File read aborted:', error);
+            this.showNotification(`File read cancelled: ${file.name}`, 'error');
+            checkIfAllProcessed();
+        };
         
-        // Save locally
-        this.saveReceiptLocally(receipt);
-        console.log('Saved to localStorage');
-        
-        // Try to upload to Firebase in background
-        console.log('Starting Firebase upload...');
-        this.uploadReceiptToFirebase(file)
-            .then(uploadedReceipt => {
-                console.log('✅ Firebase upload successful:', uploadedReceipt.id);
-                // Update receipt with Firebase data
-                const index = this.receiptQueue.findIndex(r => r.id === receiptId);
-                if (index !== -1) {
-                    this.receiptQueue[index] = { ...this.receiptQueue[index], ...uploadedReceipt };
-                    this.saveReceiptsToLocalStorage();
-                    console.log('Updated receipt with Firebase data');
-                }
-            })
-            .catch(error => {
-                console.warn('⚠️ Firebase upload failed:', error.message);
-                console.log('Keeping local copy only');
-            });
+        // Read file as data URL for base64 conversion
+        console.log('Starting FileReader for file:', file.name);
+        reader.readAsDataURL(file);
     });
-    
-    // Update UI
-    console.log('Updating UI...');
-    this.updateRecentReceiptsList();
-    this.updateReceiptQueueUI();
-    this.updateModalReceiptsList();
-    
-    // Show success message
-    this.showNotification(`${fileArray.length} file(s) added to queue`, 'success');
-    
-    // Return to quick actions view
-    console.log('Returning to quick actions view...');
-    setTimeout(() => {
-        this.showQuickActionsView();
-        console.log('✅ Files processed, showing quick actions');
-    }, 1000);
     
     console.log('📤 ========== handleFileUpload END ==========');
 },
-
-    isValidReceiptFile(file) {
-    if (!file) return false;
+    
+   isValidReceiptFile(file) {
+    if (!file) {
+        console.error('❌ No file provided');
+        return false;
+    }
     
     // Check file types
     const validTypes = [
@@ -1340,13 +1411,15 @@ handleFileUpload(files) {
         'image/gif',
         'image/heic',
         'image/heif',
-        'application/pdf'
+        'application/pdf',
+        'text/plain'
     ];
     
-    // Check size (max 20MB)
-    const maxSize = 20 * 1024 * 1024; // 20MB
+    // Check size (max 10MB for base64 - Firestore has limits)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     
-    const isValidType = validTypes.includes(file.type.toLowerCase());
+    const fileType = file.type.toLowerCase();
+    const isValidType = validTypes.includes(fileType) || file.name.match(/\.(jpg|jpeg|png|gif|heic|heif|pdf|txt)$/i);
     const isValidSize = file.size <= maxSize;
     
     console.log('File validation:', {
@@ -1357,8 +1430,273 @@ handleFileUpload(files) {
         isValidSize
     });
     
+    if (!isValidType) {
+        console.warn('Invalid file type:', file.type);
+        this.showNotification(`Invalid file type: ${file.name}. Please use images or PDF.`, 'error');
+    }
+    
+    if (!isValidSize) {
+        console.warn('File too large:', file.size);
+        this.showNotification(`File too large: ${file.name}. Max 10MB.`, 'error');
+    }
+    
     return isValidType && isValidSize;
 },
+    
+    showFileUploadSuccess(receipts) {
+    console.log('🎉 Showing file upload success for', receipts.length, 'files');
+    
+    // Create success modal
+    const modal = document.createElement('div');
+    modal.id = 'upload-success-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 24px;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        z-index: 10002;
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Add CSS animation if not already added
+    if (!document.getElementById('upload-success-styles')) {
+        const style = document.createElement('style');
+        style.id = 'upload-success-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translate(-50%, -40%); }
+                to { opacity: 1; transform: translate(-50%, -50%); }
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+            #upload-success-modal::-webkit-scrollbar {
+                width: 6px;
+            }
+            #upload-success-modal::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.05);
+                border-radius: 3px;
+            }
+            #upload-success-modal::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 3px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Create preview content
+    let previewContent = '';
+    let fileList = '';
+    
+    if (receipts.length === 1) {
+        // Single file - show preview
+        const receipt = receipts[0];
+        
+        let imagePreview = '';
+        if (receipt.type?.startsWith('image/') && receipt.dataURL) {
+            imagePreview = `
+                <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; animation: pulse 2s ease-in-out; max-height: 200px; overflow: hidden;">
+                    <img src="${receipt.dataURL}" 
+                         alt="Receipt preview" 
+                         style="width: 100%; max-height: 200px; object-fit: contain; background: #f8fafc;">
+                </div>
+            `;
+        }
+        
+        previewContent = `
+            <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">File Uploaded!</h3>
+            <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipt has been saved to local storage.</p>
+            
+            ${imagePreview}
+            
+            <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151; font-size: 14px;">File:</span>
+                    <span style="color: #1f2937; font-size: 14px;">${receipt.name}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: #374151; font-size: 14px;">Size:</span>
+                    <span style="color: #1f2937; font-size: 14px;">${this.formatFileSize(receipt.size || 0)}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 600; color: #374151; font-size: 14px;">Status:</span>
+                    <span style="color: #f59e0b; font-weight: bold; font-size: 14px;">Pending</span>
+                </div>
+            </div>
+        `;
+    } else {
+        // Multiple files - show list
+        previewContent = `
+            <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
+            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">${receipts.length} Files Uploaded!</h3>
+            <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipts have been saved to local storage.</p>
+            
+            <div style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
+                <div style="font-weight: 600; color: #374151; font-size: 14px; margin-bottom: 12px;">Uploaded Files:</div>
+                ${receipts.map((receipt, index) => `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e7eb; ${index === receipts.length - 1 ? 'border-bottom: none;' : ''}">
+                        <span style="font-size: 20px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500; color: #1f2937; font-size: 14px;">${receipt.name}</div>
+                            <div style="font-size: 12px; color: #6b7280;">${this.formatFileSize(receipt.size || 0)}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    modal.innerHTML = `
+        <div style="position: relative; min-height: 0;">
+            ${previewContent}
+            
+            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap;">
+                <button id="process-uploaded-btn" 
+                        style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
+                               color: white; 
+                               border: none; 
+                               padding: 14px 24px; 
+                               border-radius: 10px; 
+                               font-weight: 700; 
+                               cursor: pointer; 
+                               flex: 1;
+                               font-size: 16px;
+                               transition: all 0.2s;
+                               min-width: 140px;">
+                    🔍 Process Now
+                </button>
+                <button id="close-upload-modal" 
+                        style="background: #f1f5f9; 
+                               color: #374151; 
+                               border: none; 
+                               padding: 14px 24px; 
+                               border-radius: 10px; 
+                               font-weight: 700; 
+                               cursor: pointer; 
+                               flex: 1;
+                               font-size: 16px;
+                               transition: all 0.2s;
+                               min-width: 140px;">
+                    Done
+                </button>
+            </div>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                <button id="upload-more-btn" 
+                        style="background: none; 
+                               color: #3b82f6; 
+                               border: 2px solid #3b82f6; 
+                               padding: 10px 20px; 
+                               border-radius: 8px; 
+                               font-weight: 600; 
+                               cursor: pointer; 
+                               width: 100%;
+                               margin-bottom: 8px;
+                               transition: all 0.2s;">
+                    📁 Upload More Files
+                </button>
+                <button id="delete-uploaded-btn" 
+                        style="background: #fef2f2; 
+                               color: #dc2626; 
+                               border: 2px solid #fecaca; 
+                               padding: 10px 20px; 
+                               border-radius: 8px; 
+                               font-weight: 600; 
+                               cursor: pointer; 
+                               width: 100%;
+                               transition: all 0.2s;">
+                    🗑️ Delete all uploaded files
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    document.getElementById('process-uploaded-btn')?.addEventListener('click', () => {
+        modal.remove();
+        setTimeout(() => {
+            if (receipts.length === 1) {
+                this.processSingleReceipt(receipts[0].id);
+            } else {
+                if (confirm(`Process ${receipts.length} uploaded receipts?`)) {
+                    receipts.forEach((receipt, index) => {
+                        setTimeout(() => {
+                            this.processSingleReceipt(receipt.id);
+                        }, index * 500);
+                    });
+                }
+            }
+        }, 100);
+    });
+    
+    document.getElementById('close-upload-modal')?.addEventListener('click', () => {
+        modal.remove();
+        // Return to quick actions view
+        this.showQuickActionsView();
+    });
+    
+    document.getElementById('upload-more-btn')?.addEventListener('click', () => {
+        modal.remove();
+        // Stay in upload interface
+        const fileInput = document.getElementById('receipt-upload-input');
+        if (fileInput) {
+            setTimeout(() => fileInput.click(), 100);
+        }
+    });
+    
+    document.getElementById('delete-uploaded-btn')?.addEventListener('click', () => {
+        if (confirm(`Delete ${receipts.length} uploaded file(s)? This action cannot be undone.`)) {
+            modal.remove();
+            receipts.forEach(receipt => {
+                this.deleteReceiptFromAllSources(receipt.id);
+            });
+            // Return to quick actions view
+            this.showQuickActionsView();
+        }
+    });
+    
+    // Auto-close after 10 seconds if not clicked
+    setTimeout(() => {
+        if (document.body.contains(modal)) {
+            modal.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => {
+                if (document.body.contains(modal)) {
+                    modal.remove();
+                    this.showQuickActionsView();
+                }
+            }, 300);
+        }
+    }, 10000);
+    
+    // Close when clicking outside
+    const closeOnClickOutside = (e) => {
+        if (!modal.contains(e.target)) {
+            modal.remove();
+            document.removeEventListener('click', closeOnClickOutside);
+            this.showQuickActionsView();
+        }
+    };
+    setTimeout(() => {
+        document.addEventListener('click', closeOnClickOutside);
+    }, 100);
+},
+
+    
     
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
