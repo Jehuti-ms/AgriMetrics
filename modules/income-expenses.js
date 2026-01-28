@@ -4390,23 +4390,10 @@ setupImportReceiptsHandlers() {
     };
     
     // Setup ALL modal buttons here
+// Setup ALL modal buttons here
 setupModalButton('upload-option', () => {
     console.log('📁 Upload Files button clicked');
-    
-    // Show upload interface
     this.showUploadInterface();
-          
-        // Get existing file input or create new one
-        let fileInput = document.querySelector('input[type="file"][id^="receipt-file-input-"]');
-        if (!fileInput) {
-            fileInput = this.setupFileInput();
-        }
-        
-        if (fileInput) {
-            console.log('✅ Clicking file input:', fileInput.id);
-            fileInput.click();
-        }
-    }, 300);
 });
 
 setupModalButton('camera-option', () => {
@@ -4453,7 +4440,6 @@ setupModalButton('cancel-camera', () => {
     this.showQuickActionsView();
 });
 
-// Add the back button handler here!
 setupModalButton('back-to-main-view', () => {
     console.log('🔙 Back to main view clicked (modal handler)');
     this.showQuickActionsView();
