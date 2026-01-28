@@ -3511,7 +3511,6 @@ setupEventListeners() {
         }
     },
 
-    
     async saveTransaction() {
         console.log('Saving transaction...');
         
@@ -3872,7 +3871,6 @@ setupEventListeners() {
         this.showNotification('Transaction deleted successfully', 'success');
     },
 
-    
     // ==================== RECEIPT FORM HANDLERS (Missing) ====================
 
     handleTransactionReceiptUpload(file) {
@@ -4586,10 +4584,12 @@ setupModalButton('process-receipts-btn', () => {
 setupFileInput() {
     console.log('📁 Setting up file input...');
     
-    // Get module reference
-    const module = this;
+    // Remove any existing file inputs
+    document.querySelectorAll('input[type="file"][id^="receipt-file-input-"]').forEach(input => {
+        input.remove();
+    });
     
-    // Create file input
+    // Create new file input
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.id = 'receipt-file-input-' + Date.now();
@@ -4597,19 +4597,30 @@ setupFileInput() {
     fileInput.multiple = true;
     fileInput.style.display = 'none';
     
+    // Add to body
     document.body.appendChild(fileInput);
     console.log('✅ Created file input:', fileInput.id);
     
-    // Add event listener
+    // ✅ CRITICAL: Store module reference
+    const module = window.FarmModules.getModule('income-expenses');
+    if (!module) {
+        console.error('❌ Module not found');
+        return fileInput;
+    }
+    
+    // ✅ SIMPLE, DIRECT EVENT LISTENER
     fileInput.addEventListener('change', function(e) {
-        console.log('🎯 FILE INPUT CHANGE EVENT!');
+        console.log('🎯 FILE INPUT CHANGE EVENT FIRED!');
+        console.log('📁 Files:', e.target.files?.length || 0);
         
         if (e.target.files && e.target.files.length > 0) {
             console.log('📤 Calling handleFileUpload...');
             
-            // Call the module's method
+            // Direct call to module
             if (module.handleFileUpload) {
                 module.handleFileUpload(e.target.files);
+            } else {
+                console.error('❌ handleFileUpload not found on module');
             }
         }
     });
