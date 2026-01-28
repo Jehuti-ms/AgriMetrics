@@ -62,9 +62,7 @@ const IncomeExpensesModule = {
                 this.syncLocalTransactionsToFirebase();
             }, 3000);
         }
-        //Temp test button
-        this.addTestButton();
-        
+                
         this.renderModule();
         this.initialized = true;
         
@@ -1326,9 +1324,12 @@ handleFileUpload(files) {
     showSimpleSuccessModal(receipts) {
     console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
     
-    // Create modal HTML
+    // Create a unique ID for this modal
+    const modalId = 'upload-success-modal-' + Date.now();
+    
+    // Create modal HTML WITHOUT inline event handlers
     const modalHTML = `
-        <div style="
+        <div id="${modalId}" style="
             position: fixed;
             top: 50%;
             left: 50%;
@@ -1351,11 +1352,7 @@ handleFileUpload(files) {
             </div>
             
             <div style="display: flex; gap: 10px;">
-                <button onclick="
-                    this.parentElement.parentElement.remove();
-                    const overlay = document.getElementById('modal-overlay');
-                    if (overlay) overlay.remove();
-                " style="
+                <button id="${modalId}-ok-btn" style="
                     flex: 1;
                     background: #4CAF50;
                     color: white;
@@ -1370,7 +1367,7 @@ handleFileUpload(files) {
             </div>
         </div>
         
-        <div id="modal-overlay" style="
+        <div id="${modalId}-overlay" style="
             position: fixed;
             top: 0;
             left: 0;
@@ -1384,6 +1381,27 @@ handleFileUpload(files) {
     // Add to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     console.log('✅ Modal shown!');
+    
+    // ✅ Add event listeners AFTER the modal is in the DOM
+    setTimeout(() => {
+        const modal = document.getElementById(modalId);
+        const overlay = document.getElementById(modalId + '-overlay');
+        const okButton = document.getElementById(modalId + '-ok-btn');
+        
+        if (okButton) {
+            okButton.addEventListener('click', () => {
+                if (modal) modal.remove();
+                if (overlay) overlay.remove();
+            });
+        }
+        
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                if (modal) modal.remove();
+                if (overlay) overlay.remove();
+            });
+        }
+    }, 10);
 },
     
     showUploadSuccessModal(receipts) {
@@ -4613,37 +4631,7 @@ setupFileInput() {
     
     return fileInput;
 },
-
-    // Add this method to your module
-addTestButton() {
-    const button = document.createElement('button');
-    button.textContent = '🧪 Debug Upload';
-    button.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: #FF5722;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        z-index: 9999;
-        font-weight: bold;
-    `;
-    
-    button.onclick = () => {
-        console.log('🧪 Test button clicked');
-        const fileInput = this.setupFileInput();
-        if (fileInput) {
-            fileInput.click();
-        }
-    };
-    
-    document.body.appendChild(button);
-    console.log('✅ Test button added');
-},
-    
+   
 // Add this method to create file input
 createFileInput() {
     try {
