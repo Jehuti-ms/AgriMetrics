@@ -4345,93 +4345,112 @@ setupImportReceiptsHandlers() {
     };
     
     // Setup ALL modal buttons here
-    setupModalButton('upload-option', () => {
-        console.log('📁 Upload Files button clicked');
-        this.handleUploadOption();
-    });
+setupModalButton('upload-option', () => {
+    console.log('📁 Upload Files button clicked');
     
-    setupModalButton('camera-option', () => {
-        console.log('🎯 Camera button clicked');
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        console.log('Switching to camera...');
-        
-        // Hide upload section and quick actions
-        if (uploadSection) {
-            uploadSection.style.display = 'none';
-            console.log('✅ Hid upload section');
-        }
-        
-        if (quickActionsSection) {
-            quickActionsSection.style.display = 'none';
-            console.log('✅ Hid quick actions section');
-        }
-        
-        // Keep recent section visible
-        if (recentSection) {
-            recentSection.style.display = 'block';
-            console.log('✅ Kept recent section visible');
-        }
-        
-        // Show camera
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
-            console.log('✅ Showed camera section');
-            
-            setTimeout(() => {
-                console.log('🔄 Initializing camera...');
-                this.initializeCamera();
-            }, 100);
-        }
-    });
+    // First show the upload interface
+    this.showUploadInterface();
     
-    setupModalButton('cancel-camera', () => {
-        console.log('❌ Cancel camera clicked');
-        this.showQuickActionsView();
-    });
-    
-    // Add the back button handler here!
-    setupModalButton('back-to-main-view', () => {
-        console.log('🔙 Back to main view clicked (modal handler)');
-        this.showQuickActionsView();
-    });
-    
-    setupModalButton('capture-photo', () => this.capturePhoto());
-    setupModalButton('switch-camera', () => this.switchCamera());
-    
-    setupModalButton('refresh-receipts', () => {
-        console.log('🔄 Refresh receipts clicked');
-        const recentList = document.getElementById('recent-receipts-list');
-        if (recentList) {
-            recentList.innerHTML = this.renderRecentReceiptsList();
-        }
-        this.showNotification('Receipts list refreshed', 'success');
-    });
-    
-    setupModalButton('process-receipts-btn', () => {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        
-        if (pendingReceipts.length === 0) {
-            this.showNotification('No pending receipts to process', 'info');
-            return;
-        }
-        
-        if (pendingReceipts.length === 1) {
-            this.processSingleReceipt(pendingReceipts[0].id);
+    // Then trigger file input click
+    setTimeout(() => {
+        // Get the latest file input
+        const fileInputs = document.querySelectorAll('input[type="file"][id^="receipt-upload-input-"]');
+        if (fileInputs.length > 0) {
+            const latestInput = fileInputs[fileInputs.length - 1];
+            console.log('🖱️ Clicking file input:', latestInput.id);
+            latestInput.click();
         } else {
-            if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
-                pendingReceipts.forEach((receipt, index) => {
-                    setTimeout(() => {
-                        this.processSingleReceipt(receipt.id);
-                    }, index * 500);
-                });
+            console.log('🔄 No file input found, creating one...');
+            const newInput = this.setupFileInput();
+            if (newInput) {
+                newInput.click();
             }
         }
-    });
+    }, 100);
+});
+
+setupModalButton('camera-option', () => {
+    console.log('🎯 Camera button clicked');
+    
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    console.log('Switching to camera...');
+    
+    // Hide upload section and quick actions
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+        console.log('✅ Hid upload section');
+    }
+    
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'none';
+        console.log('✅ Hid quick actions section');
+    }
+    
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
+    
+    // Show camera
+    if (cameraSection) {
+        cameraSection.style.display = 'block';
+        console.log('✅ Showed camera section');
+        
+        setTimeout(() => {
+            console.log('🔄 Initializing camera...');
+            this.initializeCamera();
+        }, 100);
+    }
+});
+
+setupModalButton('cancel-camera', () => {
+    console.log('❌ Cancel camera clicked');
+    this.showQuickActionsView();
+});
+
+// Add the back button handler here!
+setupModalButton('back-to-main-view', () => {
+    console.log('🔙 Back to main view clicked (modal handler)');
+    this.showQuickActionsView();
+});
+
+setupModalButton('capture-photo', () => this.capturePhoto());
+setupModalButton('switch-camera', () => this.switchCamera());
+
+setupModalButton('refresh-receipts', () => {
+    console.log('🔄 Refresh receipts clicked');
+    const recentList = document.getElementById('recent-receipts-list');
+    if (recentList) {
+        recentList.innerHTML = this.renderRecentReceiptsList();
+    }
+    this.showNotification('Receipts list refreshed', 'success');
+});
+
+setupModalButton('process-receipts-btn', () => {
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    
+    if (pendingReceipts.length === 0) {
+        this.showNotification('No pending receipts to process', 'info');
+        return;
+    }
+    
+    if (pendingReceipts.length === 1) {
+        this.processSingleReceipt(pendingReceipts[0].id);
+    } else {
+        if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+            pendingReceipts.forEach((receipt, index) => {
+                setTimeout(() => {
+                    this.processSingleReceipt(receipt.id);
+                }, index * 500);
+            });
+        }
+    }
+});
     
     // ==================== DIRECT FILE INPUT SETUP ====================
     console.log('🔧 Setting up direct file input...');
@@ -4522,9 +4541,17 @@ setupImportReceiptsHandlers() {
 setupFileInput() {
     console.log('📁 Setting up file input...');
     
-    // Remove ALL existing file inputs first
+    // Get the module instance - ALWAYS use this pattern
+    const module = window.FarmModules.getModule('income-expenses');
+    if (!module) {
+        console.error('❌ Module not found!');
+        return null;
+    }
+    
+    // Remove ALL existing file inputs to prevent duplicates
     document.querySelectorAll('input[type="file"]').forEach(input => {
-        if (input.id.includes('receipt-upload')) {
+        if (input.id && input.id.includes('receipt-upload')) {
+            console.log('🗑️ Removing old file input:', input.id);
             input.remove();
         }
     });
@@ -4537,38 +4564,30 @@ setupFileInput() {
     fileInput.multiple = true;
     fileInput.style.display = 'none';
     
-    // Add to page
     document.body.appendChild(fileInput);
+    console.log('✅ Created new file input:', fileInput.id);
     
-    // ✅ Get module reference - same as console code
-    const module = window.IncomeExpensesModule || 
-                  (window.FarmModules && window.FarmModules.getModule('income-expenses'));
-    
-    if (!module) {
-        console.error('❌ Module not found!');
-        return;
-    }
-    
-    // ✅ Direct event handler - no context issues
+    // ✅ SIMPLE EVENT HANDLER THAT CANNOT FAIL
     fileInput.onchange = function(e) {
-        console.log('🎯 FILE INPUT TRIGGERED! Files:', e.target.files?.length || 0);
+        console.log('🎯 FILE INPUT CHANGE EVENT FIRED!');
+        console.log('📁 Files selected:', e.target.files?.length || 0);
         
         if (e.target.files && e.target.files.length > 0) {
             console.log('📤 Calling handleFileUpload...');
             
-            // ✅ Direct module call - same as console
-            if (module.handleFileUpload) {
+            // Call the module's handleFileUpload method
+            if (module && module.handleFileUpload) {
                 module.handleFileUpload(e.target.files);
             } else {
-                console.error('❌ handleFileUpload not found!');
+                console.error('❌ Module or method not found!');
             }
             
-            // Reset
+            // Reset the input
             e.target.value = '';
         }
     };
     
-    console.log('✅ File input ready. ID:', fileInput.id);
+    console.log('✅ File input ready with event listener');
     return fileInput;
 },
     
