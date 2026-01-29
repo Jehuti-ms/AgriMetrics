@@ -352,37 +352,168 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
-   initializeCamera() {
+   async initializeCamera() {
     console.log('📷 Initializing camera...');
+    console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
     
-    return new Promise((resolve, reject) => {
-        try {
-            const video = document.getElementById('camera-preview');
-            const status = document.getElementById('camera-status');
-            
-            if (!video) {
-                console.error('❌ Camera preview element not found');
-                this.showNotification('Camera preview element missing', 'error');
-                reject(new Error('Camera preview element missing'));
-                this.showUploadInterface();
-                return;
-            }
-            
-            // Stop existing stream first
-            this.stopCamera();
-            
-            if (status) status.textContent = 'Requesting camera access...';
-            
-            // First try: specific constraints
-            this.attemptCameraAccess(video, status, resolve, reject);
-                
-        } catch (error) {
-            console.error('🚨 Camera initialization error:', error);
-            this.showNotification('Camera initialization failed', 'error');
+    try {
+        const video = document.getElementById('camera-preview');
+        const status = document.getElementById('camera-status');
+        
+        if (!video) {
+            console.error('❌ Camera preview element not found');
+            this.showNotification('Camera preview element missing', 'error');
             this.showUploadInterface();
-            reject(error);
+            return;
         }
-    });
+        
+        // Stop existing stream first
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        
+        // Reset video element
+        video.srcObject = null;
+        video.pause();
+        video.load();
+        
+        if (status) status.textContent = 'Requesting camera access...';
+        
+        // Detect screen size and adjust constraints
+        const screenWidth = window.innerWidth;
+        let constraints;
+        
+        if (screenWidth >= 768 && screenWidth <= 1024) {
+            // Medium screens: use more compatible settings
+            console.log('📱 Medium screen detected, using basic constraints');
+            constraints = {
+                video: {
+                    facingMode: this.cameraFacingMode,
+                    width: { ideal: 640 },  // Lower resolution for compatibility
+                    height: { ideal: 480 }
+                },
+                audio: false
+            };
+        } else {
+            // Other screens: normal constraints
+            constraints = {
+                video: {
+                    facingMode: this.cameraFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+        }
+        
+        console.log('Using constraints:', constraints);
+        
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        console.log('✅ Camera access granted');
+        this.cameraStream = stream;
+        video.srcObject = stream;
+        
+        // Force video dimensions to match stream
+        const track = stream.getVideoTracks()[0];
+        const settings = track.getSettings();
+        console.log('Camera settings:', settings);
+        
+        // Set video dimensions
+        if (settings.width && settings.height) {
+            video.style.width = '100%';
+            video.style.height = '100%';
+            console.log(`Video dimensions set to: ${settings.width}x${settings.height}`);
+        }
+        
+        // Play video
+        const playPromise = video.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log('📹 Video is playing successfully');
+                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                if (status) status.textContent = `${cameraType} Camera - Ready`;
+                
+                const switchBtn = document.getElementById('switch-camera');
+                if (switchBtn) {
+                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                    switchBtn.innerHTML = `
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Switch to ${nextMode}</span>
+                    `;
+                }
+            }).catch(error => {
+                console.error('Video play error:', error);
+                // Try again without waiting for promise
+                setTimeout(() => {
+                    video.play().catch(e => {
+                        console.error('Video play retry failed:', e);
+                        this.showNotification('Camera preview failed', 'error');
+                    });
+                }, 100);
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Camera error:', error);
+        let errorMessage = 'Camera access denied.';
+        if (error.name === 'NotFoundError') {
+            errorMessage = 'No camera found on this device.';
+        } else if (error.name === 'NotAllowedError') {
+            errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
+        } else if (error.name === 'NotReadableError') {
+            errorMessage = 'Camera is already in use by another application. Please close other camera apps.';
+            // Try fallback with minimal constraints
+            this.tryMinimalCameraSetup();
+            return;
+        } else if (error.name === 'OverconstrainedError') {
+            errorMessage = 'Camera constraints cannot be satisfied. Trying simpler settings...';
+            this.tryMinimalCameraSetup();
+            return;
+        }
+        this.showNotification(errorMessage, 'error');
+        this.showUploadInterface();
+    }
+},
+
+// Add a fallback method for minimal camera setup:
+async tryMinimalCameraSetup() {
+    console.log('🔄 Trying minimal camera setup...');
+    
+    try {
+        const video = document.getElementById('camera-preview');
+        const status = document.getElementById('camera-status');
+        
+        if (!video) return;
+        
+        if (status) status.textContent = 'Trying alternative setup...';
+        
+        // Minimal constraints that should work on any device
+        const minimalConstraints = {
+            video: true, // Let the browser decide everything
+            audio: false
+        };
+        
+        const stream = await navigator.mediaDevices.getUserMedia(minimalConstraints);
+        
+        console.log('✅ Minimal camera setup successful');
+        this.cameraStream = stream;
+        video.srcObject = stream;
+        
+        // Force play
+        video.play().catch(() => {
+            // Ignore play errors for minimal setup
+        });
+        
+        if (status) status.textContent = 'Camera Ready (Basic Mode)';
+        
+    } catch (error) {
+        console.error('❌ Minimal camera setup also failed:', error);
+        this.showNotification('Camera not available. Please use file upload instead.', 'error');
+        this.showUploadInterface();
+    }
 },
 
 attemptCameraAccess(video, status, resolve, reject, isRetry = false) {
@@ -1271,7 +1402,7 @@ async saveReceiptToFirebase(receipt) {
         }, 100);
     },
 
- showCameraInterface() {
+showCameraInterface() {
     console.log('📷 Showing camera interface...');
     
     const cameraSection = document.getElementById('camera-section');
@@ -1283,16 +1414,30 @@ async saveReceiptToFirebase(receipt) {
     if (quickActionsSection) quickActionsSection.style.display = 'none';
     if (cameraSection) {
         cameraSection.style.display = 'block';
-        // SIMPLIFIED: Initialize camera immediately
+        
+        // Force reflow to ensure DOM is ready
+        void cameraSection.offsetHeight;
+        
+        // Initialize camera with a delay to ensure video element is ready
         setTimeout(() => {
-            this.initializeCamera();
+            const video = document.getElementById('camera-preview');
+            if (video) {
+                // Reset video element
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+            }
+            
+            setTimeout(() => {
+                this.initializeCamera();
+            }, 50);
         }, 100);
     }
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
 },
-
+ 
     // ==================== EVENT HANDLERS ====================
     setupImportReceiptsHandlers() {
         console.log('Setting up import receipt handlers');
@@ -2284,6 +2429,261 @@ async saveReceiptToFirebase(receipt) {
                 .status-processed {
                     color: #10b981;
                 }
+
+                // =========== Camera Fix ============
+               .camera-preview {
+                   width: 100%;
+                   height: 400px;
+                   background: #000;
+                   border-radius: 12px;
+                   overflow: hidden;
+                   margin-bottom: 20px;
+                   position: relative;
+               }
+               
+               .camera-preview video {
+                   width: 100%;
+                   height: 100%;
+                   object-fit: cover;
+                   display: block;
+                   background: #000;
+               }
+               
+               /* Responsive adjustments */
+               @media (max-width: 768px) {
+                   .camera-preview {
+                       height: 300px;
+                   }
+               }
+               
+               @media (max-width: 480px) {
+                   .camera-preview {
+                       height: 250px;
+                   }
+               }
+
+                /* MODAL FIXES FOR RESPONSIVE DESIGN */
+            @media (max-width: 768px) {
+                .popout-modal-content {
+                    width: 95% !important;
+                    max-height: 85vh !important;
+                    margin: 10px auto !important;
+                }
+                
+                #import-receipts-modal {
+                    padding: 10px !important;
+                    align-items: flex-start !important;
+                }
+            }
+            
+            @media (max-height: 700px) {
+                .popout-modal-content {
+                    max-height: 95vh !important;
+                }
+            }
+            
+            /* Camera preview responsive */
+            .camera-preview {
+                width: 100%;
+                height: 400px;
+                background: #000;
+                border-radius: 12px;
+                overflow: hidden;
+                margin-bottom: 20px;
+                position: relative;
+                display: block !important;
+            }
+            
+            .camera-preview video {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover;
+                display: block !important;
+                background: #000 !important;
+            }
+            
+            /* Responsive button containers */
+            .header-actions {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap; /* KEY: Allows buttons to wrap on small screens */
+            }
+            
+            /* Responsive stats grid */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            
+            /* Responsive quick actions */
+            .quick-action-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            
+            /* Mobile-specific fixes */
+            @media (max-width: 768px) {
+                /* Stack header buttons vertically */
+                .header-actions {
+                    flex-direction: column;
+                }
+                
+                /* Make buttons full width on mobile */
+                .btn {
+                    width: 100%;
+                    justify-content: center;
+                }
+                
+                /* Adjust camera preview height */
+                .camera-preview {
+                    height: 300px;
+                }
+                
+                /* Make modal content scrollable */
+                .popout-modal-body {
+                    max-height: 60vh;
+                    overflow-y: auto;
+                }
+                
+                /* Stack receipt actions vertically */
+                .receipt-actions {
+                    flex-direction: column;
+                    width: 100%;
+                }
+                
+                .receipt-actions .btn {
+                    width: 100%;
+                    margin-bottom: 8px;
+                }
+            }
+            
+            /* Small mobile devices */
+            @media (max-width: 480px) {
+                .camera-preview {
+                    height: 250px;
+                }
+                
+                .stats-grid,
+                .quick-action-grid {
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                }
+                
+                /* Reduce padding for small screens */
+                .glass-card,
+                .stat-card {
+                    padding: 16px;
+                }
+                
+                /* Smaller text on mobile */
+                .module-title {
+                    font-size: 24px;
+                }
+                
+                .module-subtitle {
+                    font-size: 14px;
+                }
+            }
+            
+            /* Medium screen specific fixes (768px - 1024px) */
+            @media (min-width: 769px) and (max-width: 1024px) {
+                /* KEY: This was missing - medium screen specific fixes */
+                .camera-preview {
+                    height: 350px;
+                }
+                
+                /* Ensure buttons don't overflow */
+                .header-actions {
+                    gap: 8px;
+                }
+                
+                /* Make modal slightly smaller on medium screens */
+                .popout-modal-content {
+                    width: 85% !important;
+                }
+                
+                /* Adjust transaction items for medium screens */
+                .transaction-item {
+                    padding: 12px !important;
+                }
+            }
+            
+            /* Fix for receipt actions on different screen sizes */
+            @media (min-width: 769px) {
+                .pending-receipt-item {
+                    position: relative;
+                    padding-right: 200px !important;
+                }
+                
+                .receipt-actions {
+                    position: absolute !important;
+                    right: 16px !important;
+                    top: 50% !important;
+                    transform: translateY(-50%) !important;
+                    display: flex !important;
+                    gap: 8px !important;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .pending-receipt-item {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 12px;
+                }
+                
+                .receipt-actions {
+                    display: flex !important;
+                    justify-content: flex-end;
+                    gap: 8px;
+                    margin-top: 12px;
+                }
+            }
+            
+            /* Ensure receipt cards don't overflow */
+            .receipt-card, .pending-receipt-item {
+                overflow: hidden;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+            
+            /* Truncate long receipt names */
+            .receipt-name {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 200px;
+            }
+            
+            @media (max-width: 768px) {
+                .receipt-name {
+                    max-width: 150px;
+                }
+            }
+            
+            @media (max-width: 480px) {
+                .receipt-name {
+                    max-width: 100px;
+                }
+            }
+            
+            /* Scrollable modal content for all screens */
+            .popout-modal-body {
+                max-height: 70vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+            }
+            
+            /* Fix for iOS Safari modal scrolling */
+            @supports (-webkit-touch-callout: none) {
+                .popout-modal-body {
+                    max-height: 80vh;
+                }
+            }
             </style>
 
             <div class="module-container">
@@ -2557,6 +2957,51 @@ async saveReceiptToFirebase(receipt) {
 
     renderImportReceiptsModal() {
         return `
+
+         <style>
+            /* Add responsive camera styles */
+            .camera-preview-container {
+                position: relative;
+                width: 100%;
+                height: 0;
+                padding-bottom: 75%; /* 4:3 aspect ratio for camera */
+                background: #000;
+                border-radius: 12px;
+                overflow: hidden;
+                margin-bottom: 20px;
+            }
+            
+            .camera-preview-container video {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transform: scaleX(-1); /* Mirror for selfie view */
+            }
+            
+            /* For medium screens, ensure proper sizing */
+            @media (min-width: 768px) and (max-width: 1024px) {
+                .camera-preview-container {
+                    padding-bottom: 66.67%; /* 3:2 aspect ratio for medium screens */
+                    max-height: 400px;
+                }
+                
+                .camera-section .glass-card {
+                    margin: 0 auto;
+                    max-width: 600px;
+                }
+            }
+            
+            /* For very small screens */
+            @media (max-width: 480px) {
+                .camera-preview-container {
+                    padding-bottom: 100%; /* Square aspect ratio */
+                }
+            }
+        </style>
+        
             <div style="padding: 20px;">
                 <div class="quick-actions-section">
                     <h2 class="section-title" style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 16px;">Upload Method</h2>
@@ -2620,11 +3065,10 @@ async saveReceiptToFirebase(receipt) {
                             <h3 style="margin: 0; color: #1f2937; font-size: 18px;">📷 Camera</h3>
                             <div id="camera-status" style="color: #6b7280; font-size: 14px;">Ready</div>
                         </div>
-                        <div class="camera-preview">
-                            <!-- SIMPLIFIED: No muted attribute, let browser handle it -->
-                            <video id="camera-preview" autoplay playsinline></video>
-                            <canvas id="camera-canvas" style="display: none;"></canvas>
-                        </div>
+                        <div class="camera-preview-container">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
                         <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
                             <button class="btn btn-outline" id="switch-camera">
                                 🔄 Switch Camera
