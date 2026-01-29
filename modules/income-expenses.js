@@ -1233,49 +1233,50 @@ async loadReceiptsFromFirebase() {
 
     // ==================== FILE UPLOAD ====================
     handleFileUpload(files) {
-    console.log('📤 Handling file upload for', files.length, 'files');
-    
-    if (!files || files.length === 0) {
-        this.showNotification('No files selected', 'error');
-        return;
-    }
-    
-    // Show processing message
-    this.showNotification(`Processing ${files.length} file(s)...`, 'info');
-    
-    // Process each file
-    Array.from(files).forEach((file, index) => {
-        console.log(`📄 File ${index + 1}:`, file.name, file.type, file.size);
+        console.log('=== HANDLE FILE UPLOAD ===');
+        console.log('Files received:', files.length);
         
-        // Add to receipt queue
-        const receiptId = Date.now() + index;
-        const receipt = {
-            id: receiptId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            file: file,
-            status: 'pending',
-            timestamp: Date.now()
+        if (!files || files.length === 0) return;
+        
+        let processedFiles = 0;
+        const totalFiles = files.length;
+        
+        const processNextFile = (index) => {
+            if (index >= files.length) {
+                if (processedFiles > 0) {
+                    this.showNotification(`${processedFiles} receipt(s) uploaded successfully!`, 'success');
+                    this.updateReceiptQueueUI();
+                    this.updateProcessReceiptsButton();
+                }
+                return;
+            }
+            
+            const file = files[index];
+            
+            // Validate file
+            if (!this.isValidReceiptFile(file)) {
+                this.showNotification(`Skipped ${file.name}: Invalid file type or size`, 'warning');
+                processNextFile(index + 1);
+                return;
+            }
+            
+            // Upload to Firebase
+            this.uploadReceiptToFirebase(file)
+                .then(() => {
+                    processedFiles++;
+                    console.log(`✅ File uploaded: ${file.name}`);
+                    processNextFile(index + 1);
+                })
+                .catch(error => {
+                    console.error(`❌ Upload failed for ${file.name}:`, error);
+                    this.showNotification(`Failed to upload ${file.name}: ${error.message}`, 'error');
+                    processNextFile(index + 1);
+                });
         };
         
-        this.receiptQueue.push(receipt);
-        
-        // Show in recent list
-        this.updateRecentReceiptsList();
-        
-        // Upload to Firebase Storage
-        this.uploadReceiptToStorage(file, receiptId);
-    });
-    
-    // Show success message
-    this.showNotification(`${files.length} file(s) added to queue`, 'success');
-    
-    // Return to quick actions view
-    setTimeout(() => {
-        this.showQuickActionsView();
-    }, 1000);
-},
+        // Start processing
+        processNextFile(0);
+    },
 
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
@@ -2528,86 +2529,6 @@ deleteReceiptFromAllSources: async function(receiptId) {
     height: auto !important;
     width: auto !important;
 }
-
-/* Make sure upload area is visible */
-.upload-area {
-    min-height: 200px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: var(--glass-bg) !important;
-    border: 2px dashed var(--glass-border) !important;
-    border-radius: 12px !important;
-    padding: 40px 20px !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-}
-
-/* ======= show upload ======== */
-.upload-area:hover {
-    border-color: var(--primary-color) !important;
-    background: var(--primary-color)10 !important;
-}
-
-.upload-icon {
-    font-size: 64px !important;
-    margin-bottom: 16px !important;
-    color: var(--text-secondary) !important;
-}
-
-/* Make sure sections don't collapse */
-.upload-section, .camera-section, .recent-section {
-    min-height: 100px !important;
-    margin-bottom: 24px !important;
-}
-
-.glass-card {
-    min-height: 150px !important;
-}
-
-/* Add this to your existing CSS */
-.upload-system-container {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    max-width: 100%;
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #e5e7eb;
-}
-
-.upload-dropzone {
-    border: 2px dashed #d1d5db;
-    border-radius: 10px;
-    padding: 40px 20px;
-    text-align: center;
-    background: #f9fafb;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.upload-dropzone:hover {
-    border-color: #4f46e5;
-    background: #f0f1ff;
-}
-
-.dropzone-icon {
-    font-size: 48px;
-    color: #9ca3af;
-    margin-bottom: 16px;
-}
-
-.dropzone-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #374151;
-}
-
-.dropzone-subtitle {
-    color: #6b7280;
-    margin-bottom: 20px;
-}
     }
             </style>
 
@@ -3088,7 +3009,7 @@ deleteReceiptFromAllSources: async function(receiptId) {
     },
 
     // ==================== EVENT LISTENERS ====================
-setupEventListeners() {
+  setupEventListeners() {
     console.log('Setting up event listeners (event delegation)...');
     
     // Remove old global listeners first
@@ -3215,7 +3136,6 @@ setupEventListeners() {
         }
     },
 
-    
     async saveTransaction() {
         console.log('Saving transaction...');
         
@@ -3657,732 +3577,197 @@ setupEventListeners() {
 
     // ==================== IMPORT RECEIPTS MODAL (Missing) ====================
 
-showImportReceiptsModal() {
-    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Show the modal
-    const modal = document.getElementById('import-receipts-modal');
-    if (modal) {
-        modal.style.display = 'block';
-        modal.classList.remove('hidden');
-        console.log('✅ Modal shown');
-    }
-    
-    // Set the modal content
-    const importReceiptsContent = document.getElementById('import-receipts-content');
-    if (importReceiptsContent) {
-        importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
-    }
-    
-    // Setup handlers AFTER content is rendered
-    setTimeout(() => {
-        console.log('🔄 Setting up handlers...');
-        this.setupImportReceiptsHandlers();
-        this.setupFileInput();
-        this.showQuickActionsView(); // Start with quick actions
-        console.log('✅ Modal fully initialized');
-    }, 100);
-},
-    
-    closeImportReceiptsModal() {
-    console.log('❌ Closing import receipts modal');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Hide the modal
-    const modal = document.getElementById('import-receipts-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        console.log('✅ Modal hidden');
-    }
-    
-    // Reset any file input
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput) {
-        fileInput.value = '';
-    }
-},
-    
-initStandaloneUploadSystem() {
-    console.log('🚀 Initializing standalone upload system...');
-    
-    // Hide the mode toggle
-    const modeToggle = document.querySelector('.upload-mode-toggle');
-    if (modeToggle) {
-        modeToggle.style.display = 'none';
-    }
-    
-    // Hide transactions section
-    const transactionsSection = document.querySelector('[data-mode="transactions"]');
-    if (transactionsSection) {
-        transactionsSection.style.display = 'none';
-    }
-    
-    // Show only receipts section
-    const receiptsSection = document.querySelector('[data-mode="receipts"]');
-    if (receiptsSection) {
-        receiptsSection.classList.add('active');
-        receiptsSection.style.display = 'block';
-    }
-    
-    // Customize the process button
-    const processBtn = document.getElementById('process-receipts-btn');
-    if (processBtn) {
-        processBtn.innerHTML = '<i class="fas fa-magic"></i> Add to Farm Transactions';
-        processBtn.addEventListener('click', () => {
-            this.handleUploadedReceiptsFromStandalone();
-        });
-    }
-    
-    // Add back button handler
-    const backButton = document.getElementById('back-to-main-view');
-    if (backButton) {
-        backButton.addEventListener('click', () => {
-            this.showMainView();
-        });
-    }
-    
-    // Initialize the upload system if available
-    if (window.initUploadSystem) {
-        window.initUploadSystem();
-    }
-},
-
-    showMainView() {
-    console.log('🔙 Returning to main view...');
-    
-    // Get all sections
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    // Hide camera and upload
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-        this.stopCamera();
-    }
-    
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-        console.log('✅ Hid upload section');
-    }
-    
-    // Show quick actions
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'block';
-        console.log('✅ Showed quick actions section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
-},
-
-  handleUploadOption() {
-    console.log('📁 Handling upload option...');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Hide method selection if it exists
-    const methodSelectionSection = document.getElementById('upload-method-selection');
-    if (methodSelectionSection) {
-        methodSelectionSection.style.display = 'none';
-    }
-    
-    // Show upload interface
-    this.showUploadInterface();
-},
-    
-    handleUploadedReceiptsFromStandalone() {
-    console.log('📁 Handling receipts from standalone upload system...');
-    
-    // Check if uploadSystem has files
-    if (window.uploadSystem && window.uploadSystem.receiptFiles && window.uploadSystem.receiptFiles.length > 0) {
-        const receiptFiles = window.uploadSystem.receiptFiles;
+    showImportReceiptsModal() {
+        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
         
-        console.log(`Processing ${receiptFiles.length} uploaded receipt(s)`);
+        this.hideAllModals();
         
-        // Convert to your receipt format
-        receiptFiles.forEach((fileData, index) => {
-            const receipt = {
-                id: `standalone_${Date.now()}_${index}`,
-                name: fileData.name,
-                size: fileData.size,
-                type: fileData.type,
-                status: 'pending',
-                uploadedAt: new Date().toISOString(),
-                source: 'standalone-upload'
-            };
-            
-            // Add to your queue
-            this.addReceiptToQueue(receipt);
-        });
-        
-        this.showNotification(`${receiptFiles.length} receipt(s) added to farm transactions`, 'success');
-        
-        // Clear the upload system
-        window.uploadSystem.receiptFiles = [];
-        
-        // Update UI
-        this.updateReceiptQueueUI();
-        this.updateModalReceiptsList();
-        
-        // Close modal
-        this.hideImportReceiptsModal();
-    } else {
-        this.showNotification('No receipts to process', 'info');
-    }
-},
-
-addReceiptToQueue(receipt) {
-    this.receiptQueue.unshift(receipt);
-    
-    // Save to localStorage
-    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-    localReceipts.unshift(receipt);
-    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-    
-    console.log('✅ Added receipt to queue:', receipt.name);
-},
-
-customizeUploadSystemForReceipts() {
-    // Hide mode toggle (we only want receipts)
-    const modeToggle = document.querySelector('.upload-mode-toggle');
-    if (modeToggle) {
-        modeToggle.style.display = 'none';
-    }
-    
-    // Hide transactions section
-    const transactionsSection = document.querySelector('[data-mode="transactions"]');
-    if (transactionsSection) {
-        transactionsSection.style.display = 'none';
-    }
-    
-    // Show only receipts section
-    const receiptsSection = document.querySelector('[data-mode="receipts"]');
-    if (receiptsSection) {
-        receiptsSection.classList.add('active');
-        receiptsSection.style.display = 'block';
-    }
-    
-    // Customize the process button
-    const processBtn = document.getElementById('process-receipts-btn');
-    if (processBtn) {
-        processBtn.textContent = 'Add to Farm Transactions';
-        processBtn.addEventListener('click', () => {
-            this.handleUploadedReceipts();
-        });
-    }
-},
-    
-  renderImportReceiptsModal() {
-    return `
-        <div class="import-receipts-container">
-            <div class="quick-actions-section">
-                <h2 class="section-title">Upload Method</h2>
-                <div class="card-grid">
-                    <button class="card-button" id="camera-option">
-                        <div class="card-icon">📷</div>
-                        <span class="card-title">Take Photo</span>
-                        <span class="card-subtitle">Use camera</span>
-                    </button>
-                    <button class="card-button" id="upload-option">
-                        <div class="card-icon">📁</div>
-                        <span class="card-title">Upload Files</span>
-                        <span class="card-subtitle">From device</span>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- REPLACE YOUR SIMPLE UPLOAD WITH STANDALONE SYSTEM -->
-            <div id="upload-section" style="display: none;">
-                <!-- PASTE YOUR ENTIRE upload-system.html CONTENT HERE -->
-                ${this.getStandaloneUploadHTML()}
-            </div>
-            
-            <!-- CAMERA SECTION -->
-            <div class="camera-section" id="camera-section" style="display: none;">
-                <div class="glass-card">
-                    <div class="card-header header-flex">
-                        <h3>📷 Camera</h3>
-                        <div class="camera-status" id="camera-status">Ready</div>
-                    </div>
-                    <div class="camera-preview">
-                        <video id="camera-preview" autoplay playsinline></video>
-                        <canvas id="camera-canvas" style="display: none;"></canvas>
-                    </div>
-                    <div class="camera-controls">
-                        <button class="btn btn-outline" id="switch-camera">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Switch Camera</span>
-                        </button>
-                        <button class="btn btn-primary" id="capture-photo">
-                            <span class="btn-icon">📸</span>
-                            <span class="btn-text">Capture</span>
-                        </button>
-                        <button class="btn btn-outline" id="cancel-camera">
-                            <span class="btn-icon">✖️</span>
-                            <span class="btn-text">Back to Upload</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- RECENT SECTION -->
-            <div class="recent-section" id="recent-section" style="display: block;">
-                <div class="glass-card">
-                    <div class="card-header header-flex">
-                        <h3>📋 Recent Receipts</h3>
-                        <button class="btn btn-outline" id="refresh-receipts">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Refresh</span>
-                        </button>
-                    </div>
-                    <div id="recent-receipts-list" class="receipts-list">
-                        ${this.renderRecentReceiptsList()}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-},
-
-getStandaloneUploadHTML() {
-    return `
-        <div class="upload-system-container" id="upload-system">
-            <!-- BACK BUTTON HEADER -->
-            <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
-                <button class="btn btn-outline" id="back-to-main-view" 
-                        style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Back</span>
-                </button>
-                <div>
-                    <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
-                        <i class="fas fa-upload" style="color: #4f46e5; margin-right: 8px;"></i>
-                        Upload Files
-                    </h3>
-                    <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
-                        Drag & drop or select files from your device
-                    </p>
-                </div>
-            </div>
-            
-            <!-- Toggle Switch - HIDDEN (we only want receipts) -->
-            <div class="upload-mode-toggle" style="display: none;">
-                <div class="toggle-switch">
-                    <input type="radio" id="mode-receipts" name="upload-mode" value="receipts" checked>
-                    <label for="mode-receipts" class="toggle-label">
-                        <i class="fas fa-receipt"></i>
-                        <span>Receipts</span>
-                    </label>
-                    
-                    <input type="radio" id="mode-transactions" name="upload-mode" value="transactions">
-                    <label for="mode-transactions" class="toggle-label">
-                        <i class="fas fa-file-csv"></i>
-                        <span>Transactions</span>
-                    </label>
-                    
-                    <div class="toggle-slider"></div>
-                </div>
-            </div>
-            
-            <!-- Receipts Upload Section -->
-            <div class="upload-section active" data-mode="receipts">
-                <div class="upload-header" style="margin-bottom: 24px;">
-                    <h3 class="upload-title">
-                        <i class="fas fa-receipt text-primary"></i>
-                        Upload Receipts
-                    </h3>
-                    <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
-                </div>
-                
-                <div class="upload-dropzone" id="receipt-dropzone">
-                    <div class="dropzone-content">
-                        <div class="dropzone-icon">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                        </div>
-                        <h4 class="dropzone-title">Drop receipt files here</h4>
-                        <p class="dropzone-subtitle">or click to browse</p>
-                        <div class="file-types">
-                            <span class="file-type-badge">JPG</span>
-                            <span class="file-type-badge">PNG</span>
-                            <span class="file-type-badge">PDF</span>
-                            <span class="file-type-badge">HEIC</span>
-                        </div>
-                    </div>
-                    <input type="file" id="receipt-file-input" 
-                           accept="image/*,.pdf,.heic,.heif" 
-                           multiple 
-                           class="dropzone-input">
-                </div>
-                
-                <div class="upload-progress-container" id="receipt-progress-container">
-                    <div class="progress-header">
-                        <span>Uploading...</span>
-                        <button class="btn-cancel-upload" id="cancel-receipt-upload">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="receipt-progress-fill"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span id="receipt-file-info">No file selected</span>
-                        <span id="receipt-progress-text">0%</span>
-                    </div>
-                </div>
-                
-                <div class="uploaded-files-container" style="margin-top: 24px;">
-                    <h5 class="files-title">
-                        <i class="fas fa-paperclip"></i>
-                        Uploaded Receipts
-                        <span class="badge" id="receipt-count">0</span>
-                    </h5>
-                    <div class="files-list" id="receipt-files-list">
-                        <!-- Receipt files will appear here -->
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <p>No receipts uploaded yet</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="upload-actions" style="margin-top: 24px;">
-                    <button class="btn btn-process" id="process-receipts-btn" disabled>
-                        <i class="fas fa-magic"></i>
-                        Add to Farm Transactions
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Transactions Upload Section (HIDDEN) -->
-            <div class="upload-section" data-mode="transactions" style="display: none;">
-                <!-- Hidden -->
-            </div>
-            
-            <!-- Status Messages -->
-            <div class="status-messages">
-                <div class="status-message" id="status-message"></div>
-            </div>
-        </div>
-        
-        <!-- Templates -->
-        <template id="receipt-file-template">
-            <div class="file-item">
-                <div class="file-icon">
-                    <i class="fas fa-file"></i>
-                </div>
-                <div class="file-info">
-                    <div class="file-name" data-name></div>
-                    <div class="file-meta">
-                        <span class="file-size" data-size></span>
-                        <span class="file-status" data-status></span>
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="btn-file-action" data-action="preview">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-file-action" data-action="delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </template>
-    `;
-},
-    
-setupImportReceiptsHandlers() {
-    console.log('Setting up import receipt handlers');
-    
-    // Use this helper for modal buttons
-    const setupModalButton = (id, handler) => {
-        const button = document.getElementById(id);
-        if (button) {
-            console.log(`✅ Setting up modal button: ${id}`);
-            
-            button.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log(`Modal button clicked: ${id}`);
-                handler.call(this, e);
-            };
-        } else {
-            console.log(`ℹ️ Modal button ${id} not found (might not be visible yet)`);
-        }
-    };
-    
-    // Setup ALL modal buttons here
-    setupModalButton('upload-option', () => {
-        console.log('📁 Upload Files button clicked');
-        this.handleUploadOption();
-    });
-    
-    setupModalButton('camera-option', () => {
-        console.log('🎯 Camera button clicked');
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        console.log('Switching to camera...');
-        
-        // Hide upload section and quick actions
-        if (uploadSection) {
-            uploadSection.style.display = 'none';
-            console.log('✅ Hid upload section');
-        }
-        
-        if (quickActionsSection) {
-            quickActionsSection.style.display = 'none';
-            console.log('✅ Hid quick actions section');
-        }
-        
-        // Keep recent section visible
-        if (recentSection) {
-            recentSection.style.display = 'block';
-            console.log('✅ Kept recent section visible');
-        }
-        
-        // Show camera
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
-            console.log('✅ Showed camera section');
-            
-            setTimeout(() => {
-                console.log('🔄 Initializing camera...');
-                this.initializeCamera();
-            }, 100);
-        }
-    });
-    
-    setupModalButton('cancel-camera', () => {
-        console.log('❌ Cancel camera clicked');
-        this.showQuickActionsView();
-    });
-    
-    // Add the back button handler here!
-    setupModalButton('back-to-main-view', () => {
-        console.log('🔙 Back to main view clicked (modal handler)');
-        this.showQuickActionsView();
-    });
-    
-    setupModalButton('capture-photo', () => this.capturePhoto());
-    setupModalButton('switch-camera', () => this.switchCamera());
-    
-    setupModalButton('refresh-receipts', () => {
-        console.log('🔄 Refresh receipts clicked');
-        const recentList = document.getElementById('recent-receipts-list');
-        if (recentList) {
-            recentList.innerHTML = this.renderRecentReceiptsList();
-        }
-        this.showNotification('Receipts list refreshed', 'success');
-    });
-    
-    setupModalButton('process-receipts-btn', () => {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        
-        if (pendingReceipts.length === 0) {
-            this.showNotification('No pending receipts to process', 'info');
+        let modal = document.getElementById('import-receipts-modal');
+        if (!modal) {
+            console.error('Modal not found in DOM!');
             return;
         }
         
-        if (pendingReceipts.length === 1) {
-            this.processSingleReceipt(pendingReceipts[0].id);
-        } else {
-            if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
-                pendingReceipts.forEach((receipt, index) => {
+        modal.classList.remove('hidden');
+        
+        const content = document.getElementById('import-receipts-content');
+        if (content) {
+            content.innerHTML = this.renderImportReceiptsModal();
+        }
+        
+        this.setupImportReceiptsHandlers();
+        this.updateProcessReceiptsButton();
+    },
+
+    renderImportReceiptsModal() {
+        return `
+            <div class="import-receipts-container">
+                <div class="quick-actions-section">
+                    <h2 class="section-title">Upload Method</h2>
+                    <div class="card-grid">
+                        <button class="card-button" id="camera-option">
+                            <div class="card-icon">📷</div>
+                            <span class="card-title">Take Photo</span>
+                            <span class="card-subtitle">Use camera</span>
+                        </button>
+                        <button class="card-button" id="upload-option">
+                            <div class="card-icon">📁</div>
+                            <span class="card-title">Upload Files</span>
+                            <span class="card-subtitle">From device</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="upload-section" id="upload-section" style="display: block;">
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h3>Upload Receipts</h3>
+                        </div>
+                        <div class="upload-area" id="drop-area">
+                            <div class="upload-icon">📄</div>
+                            <h4>Drag & Drop Receipts</h4>
+                            <p class="upload-subtitle">or click to browse files</p>
+                            <p class="upload-formats">Supports: JPG, PNG, PDF (Max 10MB)</p>
+                            <input type="file" id="receipt-upload-input" multiple 
+                                   accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                            <button class="btn btn-primary" id="browse-receipts-btn">
+                                <span class="btn-icon">📁</span>
+                                <span class="btn-text">Browse Files</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="camera-section" id="camera-section" style="display: none;">
+                    <div class="glass-card">
+                        <div class="card-header header-flex">
+                            <h3>Camera Preview</h3>
+                            <div class="camera-status" id="camera-status">Ready</div>
+                        </div>
+                        <div class="camera-preview">
+                            <video id="camera-preview" autoplay playsinline></video>
+                            <canvas id="camera-canvas" style="display: none;"></canvas>
+                        </div>
+                        <div class="camera-controls">
+                            <button class="btn btn-outline" id="switch-camera">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Switch Camera</span>
+                            </button>
+                            <button class="btn btn-primary" id="capture-photo">
+                                <span class="btn-icon">📸</span>
+                                <span class="btn-text">Capture</span>
+                            </button>
+                            <button class="btn btn-outline" id="cancel-camera">
+                                <span class="btn-icon">✖️</span>
+                                <span class="btn-text">Cancel</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-section" id="recent-section" style="${this.receiptQueue.length > 0 ? '' : 'display: none;'}">
+                    <div class="glass-card">
+                        <div class="card-header header-flex">
+                            <h3>📋 Recent Receipts</h3>
+                            <button class="btn btn-outline" id="refresh-receipts">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Refresh</span>
+                            </button>
+                        </div>
+                        <div id="recent-receipts-list" class="receipts-list">
+                            ${this.renderRecentReceiptsList()}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    setupImportReceiptsHandlers() {
+        console.log('Setting up import receipt handlers');
+        
+        const cameraOptionBtn = document.getElementById('camera-option');
+        if (cameraOptionBtn) {
+            cameraOptionBtn.addEventListener('click', () => {
+                console.log('🎯 Camera button clicked');
+                
+                const cameraSection = document.getElementById('camera-section');
+                const uploadSection = document.getElementById('upload-section');
+                const recentSection = document.getElementById('recent-section');
+                
+                if (uploadSection) uploadSection.style.display = 'none';
+                if (recentSection) recentSection.style.display = 'none';
+                
+                if (cameraSection) {
+                    cameraSection.style.display = 'block';
+                    
                     setTimeout(() => {
-                        this.processSingleReceipt(receipt.id);
-                    }, index * 500);
+                        console.log('🔄 Initializing camera...');
+                        this.initializeCamera();
+                    }, 100);
+                }
+            });
+        }
+        
+        const uploadOptionBtn = document.getElementById('upload-option');
+        if (uploadOptionBtn) {
+            uploadOptionBtn.addEventListener('click', () => {
+                console.log('📁 Upload button clicked');
+                this.showUploadInterface();
+            });
+        }
+        
+        const setupButton = (id, handler) => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handler.call(this, e);
                 });
             }
-        }
-    });
-    
-    // Setup file input
-    this.setupFileInput();
-    
-    // Setup browse button
-    const browseBtnInModal = document.getElementById('browse-receipts-btn');
-    if (browseBtnInModal) {
-        console.log(`✅ Found browse button inside modal: ${browseBtnInModal.id}`);
-        browseBtnInModal.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('📂 Browse files clicked (inside modal)');
+        };
+        
+        setupButton('capture-photo', () => this.capturePhoto());
+        setupButton('switch-camera', () => this.switchCamera());
+        setupButton('cancel-camera', () => {
+            console.log('❌ Cancel camera clicked');
+            this.showUploadInterface();
+        });
+        
+        setupButton('refresh-receipts', () => {
+            console.log('🔄 Refresh receipts clicked');
+            const recentList = document.getElementById('recent-receipts-list');
+            if (recentList) {
+                recentList.innerHTML = this.renderRecentReceiptsList();
+            }
+            this.showNotification('Receipts list refreshed', 'success');
+        });
+        
+        setupButton('process-receipts-btn', () => {
+            const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
             
-            let fileInput = document.getElementById('receipt-upload-input');
-            if (!fileInput) {
-                console.log('📁 Creating file input dynamically');
-                fileInput = this.createFileInput();
+            if (pendingReceipts.length === 0) {
+                this.showNotification('No pending receipts to process', 'info');
+                return;
             }
             
-            if (fileInput) {
-                fileInput.click();
+            if (pendingReceipts.length === 1) {
+                this.processSingleReceipt(pendingReceipts[0].id);
             } else {
-                console.error('❌ Could not create file input');
-                this.showNotification('Unable to browse files', 'error');
+                if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+                    pendingReceipts.forEach((receipt, index) => {
+                        setTimeout(() => {
+                            this.processSingleReceipt(receipt.id);
+                        }, index * 500);
+                    });
+                }
             }
-        };
-    }
-    
-    console.log('✅ All modal buttons setup complete');
-},
-    
-// Add this method to create file input dynamically
-setupFileInput() {
-    console.log('📁 Setting up file input...');
-    
-    let fileInput = document.getElementById('receipt-upload-input');
-    
-    if (!fileInput) {
-        console.log('📁 Creating file input dynamically');
-        fileInput = this.createFileInput();
-    }
-    
-    if (fileInput) {
-        fileInput.onchange = (e) => {
-            console.log('📁 Files selected:', e.target.files?.length || 0);
-            if (e.target.files && e.target.files.length > 0) {
-                this.handleFileUpload(e.target.files);
-                
-                // Reset the input so same files can be selected again
-                e.target.value = '';
-            }
-        };
-        console.log('✅ File input setup complete');
-    } else {
-        console.error('❌ Could not setup file input');
-    }
-},
-
-// Add this method to create file input
-createFileInput() {
-    try {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'receipt-upload-input';
-        fileInput.name = 'receipt-upload-input';
-        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.gif';
-        fileInput.multiple = true;
-        fileInput.style.display = 'none';
-        fileInput.setAttribute('data-dynamic', 'true');
+        });
         
-        // Add to body
-        document.body.appendChild(fileInput);
-        
-        console.log('✅ Created dynamic file input');
-        return fileInput;
-    } catch (error) {
-        console.error('❌ Error creating file input:', error);
-        return null;
-    }
-},
-    
-    showUploadMethodSelection() {
-    console.log('📱 Showing upload method selection...');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Get all sections
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    const methodSelectionSection = document.getElementById('upload-method-selection');
-    
-    console.log('Sections found:', {
-        cameraSection: !!cameraSection,
-        uploadSection: !!uploadSection,
-        recentSection: !!recentSection,
-        quickActionsSection: !!quickActionsSection,
-        methodSelectionSection: !!methodSelectionSection
-    });
-    
-    // Hide camera and upload sections
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-        console.log('✅ Hidden camera section');
-    }
-    
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-        console.log('✅ Hidden upload section');
-    }
-    
-    // Show method selection and quick actions
-    if (methodSelectionSection) {
-        methodSelectionSection.style.display = 'block';
-        console.log('✅ Showed method selection section');
-    }
-    
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'block';
-        console.log('✅ Showed quick actions section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
-},
+        this.setupUploadHandlers();
+    },
 
-    showQuickActionsView() {
-    console.log('🏠 Showing quick actions view...');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Get all sections
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    console.log('Showing quick actions - sections:', {
-        cameraSection: !!cameraSection,
-        uploadSection: !!uploadSection,
-        recentSection: !!recentSection,
-        quickActionsSection: !!quickActionsSection
-    });
-    
-    // Hide camera and upload sections
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-        console.log('✅ Hidden camera section');
-    }
-    
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-        console.log('✅ Hidden upload section');
-    }
-    
-    // Show quick actions
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'block';
-        console.log('✅ Showed quick actions section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
-},
-    
     setupUploadHandlers() {
         console.log('🔧 Setting up upload handlers...');
         
@@ -4433,72 +3818,24 @@ createFileInput() {
 
     // ==================== UPLOAD INTERFACE METHODS (Missing) ====================
 
-showUploadInterface() {
-    console.log('📁 Showing upload interface...');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    const methodSelectionSection = document.getElementById('upload-method-selection');
-    
-    console.log('Sections found:', {
-        cameraSection: !!cameraSection,
-        uploadSection: !!uploadSection,
-        recentSection: !!recentSection,
-        quickActionsSection: !!quickActionsSection,
-        methodSelectionSection: !!methodSelectionSection
-    });
-    
-    // Hide camera, method selection, and quick actions
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-        console.log('✅ Hidden camera section');
-    }
-    
-    if (methodSelectionSection) {
-        methodSelectionSection.style.display = 'none';
-        console.log('✅ Hidden method selection section');
-    }
-    
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'none';
-        console.log('✅ Hidden quick actions section');
-    }
-    
-    // Show upload section
-    if (uploadSection) {
-        uploadSection.style.display = 'block';
-        console.log('✅ Showed upload section');
-    }
-    
-    // Keep recent section visible
-    if (recentSection) {
-        recentSection.style.display = 'block';
-        console.log('✅ Kept recent section visible');
-    }
-},
-    
-loadStandaloneUploadSystem() {
-    const wrapper = document.getElementById('standalone-upload-wrapper');
-    if (!wrapper) return;
-    
-    // Only load if empty
-    if (wrapper.innerHTML.trim() === '') {
-        console.log('📦 Loading standalone upload system...');
+    showUploadInterface() {
+        console.log('📁 Showing upload interface...');
         
-        wrapper.innerHTML = this.getStandaloneUploadHTML();
+        this.stopCamera();
         
-        // Initialize the upload system
-        setTimeout(() => {
-            this.initStandaloneUploadSystem();
-        }, 100);
-    }
-},
-    
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        
+        if (cameraSection) cameraSection.style.display = 'none';
+        if (uploadSection) uploadSection.style.display = 'block';
+        if (recentSection && this.receiptQueue.length > 0) {
+            recentSection.style.display = 'block';
+        } else if (recentSection) {
+            recentSection.style.display = 'none';
+        }
+    },
+
     // ==================== VALIDATION METHODS (Missing) ====================
 
     isValidReceiptFile(file) {
