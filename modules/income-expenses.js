@@ -63,9 +63,6 @@ const IncomeExpensesModule = {
             }, 3000);
         }
 
-        // Make sure receiptQueue is initialized
-        this.receiptQueue = this.receiptQueue || [];
-                
         this.renderModule();
         this.initialized = true;
         
@@ -611,13 +608,6 @@ saveReceiptLocally(receipt) {
     
     // Store in localStorage for persistence
     const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-    
-    // Remove existing receipt with same ID if any
-    const existingIndex = localReceipts.findIndex(r => r.id === receipt.id);
-    if (existingIndex !== -1) {
-        localReceipts.splice(existingIndex, 1);
-    }
-    
     localReceipts.unshift(receipt);
     localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
     
@@ -1242,319 +1232,51 @@ async loadReceiptsFromFirebase() {
     },
 
     // ==================== FILE UPLOAD ====================
-// ✅ SIMPLE FIX - Use your existing showImportReceiptsModal
-handleFileUpload(files) {
-    console.log('🎯 ========== handleFileUpload START ==========');
-    console.log('📁 Number of files:', files.length);
-    
-    // Debug: Check if this is the correct module
-    console.log('🔍 Module context:', this);
-    console.log('🔍 Module name:', this.name);
-    console.log('🔍 saveReceiptLocally exists?', typeof this.saveReceiptLocally);
-    console.log('🔍 receiptQueue:', this.receiptQueue);
+    handleFileUpload(files) {
+    console.log('📤 Handling file upload for', files.length, 'files');
     
     if (!files || files.length === 0) {
-        console.log('❌ No files');
+        this.showNotification('No files selected', 'error');
         return;
     }
     
-    const file = files[0]; // Process first file
-    console.log('📄 Processing file:', file.name);
-    console.log('📄 File type:', file.type);
-    console.log('📄 File size:', file.size);
+    // Show processing message
+    this.showNotification(`Processing ${files.length} file(s)...`, 'info');
     
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        console.log('✅ FileReader loaded successfully');
+    // Process each file
+    Array.from(files).forEach((file, index) => {
+        console.log(`📄 File ${index + 1}:`, file.name, file.type, file.size);
         
-        try {
-            const dataURL = e.target.result;
-            console.log('📊 Data URL length:', dataURL.length);
-            
-            const receiptId = 'upload_' + Date.now();
-            console.log('🎫 Receipt ID:', receiptId);
-            
-            const receipt = {
-                id: receiptId,
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                dataURL: dataURL,
-                status: 'pending',
-                uploadedAt: new Date().toISOString(),
-                source: 'upload'
-            };
-            
-            console.log('📦 Receipt created:', receipt);
-            
-            // ✅ 1. Save locally
-            console.log('💾 Calling saveReceiptLocally...');
-            if (this.saveReceiptLocally) {
-                this.saveReceiptLocally(receipt);
-                console.log('✅ Called saveReceiptLocally');
-            } else {
-                console.error('❌ saveReceiptLocally not found!');
-            }
-            
-            // ✅ 2. Check receiptQueue immediately
-            console.log('🔍 Checking receiptQueue after save:', {
-                length: this.receiptQueue.length,
-                containsReceipt: this.receiptQueue.some(r => r.id === receiptId),
-                lastReceipt: this.receiptQueue[0]
-            });
-            
-            // ✅ 3. Force update UI
-            console.log('🔄 Updating UI...');
-            this.updateReceiptQueueUI();
-            this.updateModalReceiptsList();
-            
-            // ✅ 4. Show notification
-            console.log('🔔 Showing notification...');
-            this.showNotification(`Uploaded: ${file.name}`, 'success');
-            
-            // ✅ 5. Show success modal
-            console.log('🪟 Showing success modal...');
-            this.showSimpleSuccessModal([receipt]);
-            
-            console.log('✅ ========== handleFileUpload SUCCESS ==========');
-            
-        } catch (error) {
-            console.error('❌ Error in handleFileUpload:', error);
-            console.error('❌ Error stack:', error.stack);
-            this.showNotification('Upload failed: ' + error.message, 'error');
-        }
-    };
-    
-    reader.onerror = (error) => {
-        console.error('❌ FileReader error:', error);
-        console.error('❌ FileReader error details:', reader.error);
-        this.showNotification('Failed to read file', 'error');
-    };
-    
-    reader.onabort = () => {
-        console.error('❌ FileReader aborted');
-        this.showNotification('File reading cancelled', 'error');
-    };
-    
-    console.log('📖 Starting FileReader readAsDataURL...');
-    reader.readAsDataURL(file);
-},
-    
-    showSimpleSuccessModal(receipts) {
-    console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
-    
-    // Create a unique ID for this modal
-    const modalId = 'upload-success-modal-' + Date.now();
-    
-    // Create modal HTML WITHOUT inline event handlers
-    const modalHTML = `
-        <div id="${modalId}" style="
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 99999;
-            border: 2px solid #4CAF50;
-        ">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 40px;">✅</div>
-                <h3 style="margin: 10px 0; color: #333;">Upload Complete!</h3>
-                <p style="color: #666; margin: 0;">
-                    Successfully uploaded: <strong>${receipts[0].name}</strong>
-                </p>
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button id="${modalId}-ok-btn" style="
-                    flex: 1;
-                    background: #4CAF50;
-                    color: white;
-                    border: none;
-                    padding: 12px;
-                    border-radius: 5px;
-                    font-weight: bold;
-                    cursor: pointer;
-                ">
-                    OK
-                </button>
-            </div>
-        </div>
+        // Add to receipt queue
+        const receiptId = Date.now() + index;
+        const receipt = {
+            id: receiptId,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            file: file,
+            status: 'pending',
+            timestamp: Date.now()
+        };
         
-        <div id="${modalId}-overlay" style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 99998;
-        "></div>
-    `;
+        this.receiptQueue.push(receipt);
+        
+        // Show in recent list
+        this.updateRecentReceiptsList();
+        
+        // Upload to Firebase Storage
+        this.uploadReceiptToStorage(file, receiptId);
+    });
     
-    // Add to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    console.log('✅ Modal shown!');
+    // Show success message
+    this.showNotification(`${files.length} file(s) added to queue`, 'success');
     
-    // ✅ Add event listeners AFTER the modal is in the DOM
+    // Return to quick actions view
     setTimeout(() => {
-        const modal = document.getElementById(modalId);
-        const overlay = document.getElementById(modalId + '-overlay');
-        const okButton = document.getElementById(modalId + '-ok-btn');
-        
-        if (okButton) {
-            okButton.addEventListener('click', () => {
-                if (modal) modal.remove();
-                if (overlay) overlay.remove();
-            });
-        }
-        
-        if (overlay) {
-            overlay.addEventListener('click', () => {
-                if (modal) modal.remove();
-                if (overlay) overlay.remove();
-            });
-        }
-    }, 10);
+        this.showQuickActionsView();
+    }, 1000);
 },
-    
-    showUploadSuccessModal(receipts) {
-    console.log('🪟 CREATING SUCCESS MODAL for', receipts.length, 'receipts');
-    
-    // Remove any existing modal
-    const existingModal = document.getElementById('upload-success-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // Create modal HTML - SIMPLE and GUARANTEED to show
-    const modalHTML = `
-        <div id="upload-success-modal" style="
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            z-index: 999999;
-            border: 3px solid #4CAF50;
-        ">
-            <div style="text-align: center;">
-                <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
-                <h2 style="margin: 0 0 10px 0; color: #333;">Upload Successful!</h2>
-                <p style="color: #666; margin: 0 0 20px 0;">
-                    ${receipts.length} file(s) uploaded successfully
-                </p>
-            </div>
-            
-            <div style="
-                background: #f5f5f5;
-                border-radius: 8px;
-                padding: 15px;
-                margin-bottom: 25px;
-                max-height: 200px;
-                overflow-y: auto;
-            ">
-                ${receipts.map((receipt, i) => `
-                    <div style="
-                        padding: 8px;
-                        border-bottom: ${i < receipts.length - 1 ? '1px solid #ddd' : 'none'};
-                        display: flex;
-                        align-items: center;
-                    ">
-                        <span style="margin-right: 10px; font-size: 20px;">
-                            ${receipt.type.includes('image') ? '🖼️' : '📄'}
-                        </span>
-                        <span style="flex-grow: 1; font-weight: 500;">${receipt.name}</span>
-                    </div>
-                `).join('')}
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button id="process-btn" style="
-                    flex: 1;
-                    background: #4CAF50;
-                    color: white;
-                    border: none;
-                    padding: 15px;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    cursor: pointer;
-                ">
-                    🚀 Process Now
-                </button>
-                <button id="close-btn" style="
-                    flex: 1;
-                    background: #666;
-                    color: white;
-                    border: none;
-                    padding: 15px;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: bold;
-                    cursor: pointer;
-                ">
-                    Close
-                </button>
-            </div>
-        </div>
-        
-        <!-- Overlay -->
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 999998;
-        " id="modal-overlay"></div>
-    `;
-    
-    // Add to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    console.log('✅ Modal added to page');
-    
-    // Add event listeners
-    const module = window.IncomeExpensesModule || 
-                  (window.FarmModules && window.FarmModules.getModule('income-expenses'));
-    
-    // Close button
-    document.getElementById('close-btn').onclick = function() {
-        document.getElementById('upload-success-modal').remove();
-        document.getElementById('modal-overlay').remove();
-    };
-    
-    // Overlay click
-    document.getElementById('modal-overlay').onclick = function() {
-        document.getElementById('upload-success-modal').remove();
-        document.getElementById('modal-overlay').remove();
-    };
-    
-    // Process button
-    document.getElementById('process-btn').onclick = function() {
-        document.getElementById('upload-success-modal').remove();
-        document.getElementById('modal-overlay').remove();
-        
-        if (module && module.processPendingReceipts) {
-            module.processPendingReceipts();
-        }
-    };
-    
-    console.log('✅ Modal event listeners added');
-},
-    
+
    // ==================== FIXED: UPLOAD RECEIPT TO FIREBASE (BASE64 VERSION) ====================
 async uploadReceiptToFirebase(file, onProgress = null) {
     console.log('📤 Uploading receipt:', file.name);
@@ -3228,25 +2950,6 @@ deleteReceiptFromAllSources: async function(receiptId) {
                             </button>
                         </div>
                     </div>
-
-<! ========test ========>
-                    <button onclick="
-    const module = window.IncomeExpensesModule || 
-                  (window.FarmModules && window.FarmModules.getModule('income-expenses'));
-    if (module && module.setupFileInput) {
-        const input = module.setupFileInput();
-        input.click();
-    }
-" style="
-    background: #4a6fa5;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-">
-    📁 Test File Upload
-</button>
                 `).join('')}
             </div>
         `;
@@ -3512,6 +3215,7 @@ setupEventListeners() {
         }
     },
 
+    
     async saveTransaction() {
         console.log('Saving transaction...');
         
@@ -3872,6 +3576,7 @@ setupEventListeners() {
         this.showNotification('Transaction deleted successfully', 'success');
     },
 
+    
     // ==================== RECEIPT FORM HANDLERS (Missing) ====================
 
     handleTransactionReceiptUpload(file) {
@@ -4080,11 +3785,20 @@ initStandaloneUploadSystem() {
     }
 },
 
- handleUploadOption() {
+  handleUploadOption() {
     console.log('📁 Handling upload option...');
     
-    // First show the upload interface
-    this.showUploadInterface();   
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Hide method selection if it exists
+    const methodSelectionSection = document.getElementById('upload-method-selection');
+    if (methodSelectionSection) {
+        methodSelectionSection.style.display = 'none';
+    }
+    
+    // Show upload interface
+    this.showUploadInterface();
 },
     
     handleUploadedReceiptsFromStandalone() {
@@ -4410,27 +4124,62 @@ setupImportReceiptsHandlers() {
     // Setup ALL modal buttons here
     setupModalButton('upload-option', () => {
         console.log('📁 Upload Files button clicked');
-        this.showUploadInterface();
+        this.handleUploadOption();
     });
-
+    
     setupModalButton('camera-option', () => {
         console.log('🎯 Camera button clicked');
-        // ... camera code ...
+        
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        const quickActionsSection = document.querySelector('.quick-actions-section');
+        
+        console.log('Switching to camera...');
+        
+        // Hide upload section and quick actions
+        if (uploadSection) {
+            uploadSection.style.display = 'none';
+            console.log('✅ Hid upload section');
+        }
+        
+        if (quickActionsSection) {
+            quickActionsSection.style.display = 'none';
+            console.log('✅ Hid quick actions section');
+        }
+        
+        // Keep recent section visible
+        if (recentSection) {
+            recentSection.style.display = 'block';
+            console.log('✅ Kept recent section visible');
+        }
+        
+        // Show camera
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            console.log('✅ Showed camera section');
+            
+            setTimeout(() => {
+                console.log('🔄 Initializing camera...');
+                this.initializeCamera();
+            }, 100);
+        }
     });
-
+    
     setupModalButton('cancel-camera', () => {
         console.log('❌ Cancel camera clicked');
         this.showQuickActionsView();
     });
-
+    
+    // Add the back button handler here!
     setupModalButton('back-to-main-view', () => {
         console.log('🔙 Back to main view clicked (modal handler)');
         this.showQuickActionsView();
     });
-
+    
     setupModalButton('capture-photo', () => this.capturePhoto());
     setupModalButton('switch-camera', () => this.switchCamera());
-
+    
     setupModalButton('refresh-receipts', () => {
         console.log('🔄 Refresh receipts clicked');
         const recentList = document.getElementById('recent-receipts-list');
@@ -4439,7 +4188,7 @@ setupImportReceiptsHandlers() {
         }
         this.showNotification('Receipts list refreshed', 'success');
     });
-
+    
     setupModalButton('process-receipts-btn', () => {
         const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
@@ -4461,273 +4210,8 @@ setupImportReceiptsHandlers() {
         }
     });
     
-    // ==================== DIRECT FILE INPUT SETUP ====================
-    console.log('🔧 Setting up direct file input...');
-    
-    // Create or get file input
-    let fileInput = document.getElementById('receipt-upload-input');
-    if (!fileInput) {
-        fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'receipt-upload-input';
-        fileInput.name = 'receipt-upload-input';
-        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
-        fileInput.multiple = true;
-        fileInput.style.display = 'none';
-        fileInput.setAttribute('data-dynamic', 'true');
-        document.body.appendChild(fileInput);
-        console.log('✅ Created new file input');
-    } else {
-        console.log('✅ Found existing file input');
-    }
-    
-    // Remove any existing listeners
-    fileInput.onchange = null;
-    fileInput.removeEventListener('change', this._fileInputHandler);
-    
-    // Create handler function
-    this._fileInputHandler = (e) => {
-        console.log('📁 DIRECT: File input changed!');
-        console.log('Event:', e);
-        console.log('Target:', e.target);
-        console.log('Files:', e.target.files);
-        
-        if (e.target.files && e.target.files.length > 0) {
-            console.log(`Processing ${e.target.files.length} file(s)`);
-            
-            // Log each file
-            Array.from(e.target.files).forEach((file, i) => {
-                console.log(`File ${i + 1}:`, {
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    lastModified: file.lastModified
-                });
-            });
-            
-            // Process files
-            this.handleFileUpload(e.target.files);
-            
-            // Reset the input
-            e.target.value = '';
-        } else {
-            console.log('No files selected or files array empty');
-        }
-    };
-    
-    // Add new listener
-    fileInput.addEventListener('change', this._fileInputHandler.bind(this));
-    
-    console.log('✅ Direct file input setup complete with listener');
-       
-    console.log('✅ All import receipt handlers setup complete');
-},
-
-    setupStandaloneUploadSystem() {
-    console.log('🔧 Setting up standalone upload system...');
-    
-    // Wait a bit for the HTML to be in the DOM
-    setTimeout(() => {
-        const dropzone = document.getElementById('receipt-dropzone');
-        const standaloneFileInput = document.getElementById('receipt-file-input');
-        
-        if (!dropzone || !standaloneFileInput) {
-            console.log('⚠️ Standalone upload elements not found yet');
-            return;
-        }
-        
-        console.log('✅ Found standalone upload elements');
-        
-        // Check if already has listeners
-        if (dropzone.getAttribute('data-listener-attached')) {
-            console.log('✅ Dropzone already has listeners');
-            return;
-        }
-        
-        // Click to browse
-        dropzone.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('📁 Dropzone clicked (standalone system)');
-            standaloneFileInput.click();
-        });
-        
-        // File input change
-        standaloneFileInput.addEventListener('change', (e) => {
-            console.log('📁 Standalone file input changed:', e.target.files?.length || 0);
-            
-            if (e.target.files && e.target.files.length > 0) {
-                console.log('📤 Calling handleFileUpload for selected files...');
-                this.handleFileUpload(e.target.files);
-                
-                // Reset input
-                e.target.value = '';
-            }
-        });
-        
-        // Drag and drop events
-        dropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dropzone.classList.add('drag-over');
-        });
-        
-        dropzone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dropzone.classList.remove('drag-over');
-        });
-        
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dropzone.classList.remove('drag-over');
-            
-            console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
-            
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                console.log('📤 Calling handleFileUpload for dropped files...');
-                this.handleFileUpload(e.dataTransfer.files);
-            }
-        });
-        
-        // Mark as having listeners
-        dropzone.setAttribute('data-listener-attached', 'true');
-        standaloneFileInput.setAttribute('data-listener-attached', 'true');
-        
-        console.log('✅ Standalone upload system setup complete');
-    }, 500);
-},
-
-    // ==================== SEPARATE DRAG AND DROP METHOD ====================
-setupStandaloneDragAndDrop() {
-    console.log('🔧 Setting up standalone drag and drop...');
-    
-    const dropzone = document.getElementById('receipt-dropzone');
-    if (!dropzone) {
-        console.log('❌ receipt-dropzone not found');
-        return;
-    }
-    
-    const standaloneFileInput = document.getElementById('receipt-file-input');
-    if (!standaloneFileInput) {
-        console.error('❌ receipt-file-input not found in standalone system');
-        return;
-    }
-    
-    console.log('✅ Found standalone upload elements');
-    
-    // Click to browse
-    dropzone.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('📁 Dropzone clicked');
-        standaloneFileInput.click();
-    });
-    
-    // Drag and drop events
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.add('drag-over');
-    });
-    
-    dropzone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.remove('drag-over');
-    });
-    
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.remove('drag-over');
-        
-        console.log('📁 Files dropped:', e.dataTransfer.files?.length || 0);
-        
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            console.log('📤 Calling handleFileUpload for dropped files...');
-            this.handleFileUpload(e.dataTransfer.files);
-        }
-    });
-    
-    // File input change
-    standaloneFileInput.addEventListener('change', (e) => {
-        console.log('📁 Standalone file input changed:', e.target.files?.length || 0);
-        
-        if (e.target.files && e.target.files.length > 0) {
-            console.log('📤 Calling handleFileUpload for selected files...');
-            this.handleFileUpload(e.target.files);
-            
-            // Reset input
-            e.target.value = '';
-        }
-    });
-    
-    console.log('✅ Standalone drag and drop setup complete');
-}, // <-- END of setupStandaloneDragAndDrop()
-
-    
-    // ==================== DIRECT FILE INPUT SETUP ====================
-    setupDirectFileInput() {
-    console.log('🔧 Setting up direct file input...');
-    
-    // Create or get file input
-    let fileInput = document.getElementById('receipt-upload-input');
-    if (!fileInput) {
-        fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'receipt-upload-input';
-        fileInput.name = 'receipt-upload-input';
-        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
-        fileInput.multiple = true;
-        fileInput.style.display = 'none';
-        fileInput.setAttribute('data-dynamic', 'true');
-        document.body.appendChild(fileInput);
-        console.log('✅ Created new file input');
-    } else {
-        console.log('✅ Found existing file input');
-    }
-    
-    // Remove any existing listeners
-    fileInput.onchange = null;
-    fileInput.removeEventListener('change', this._fileInputHandler);
-    
-    // Create handler function
-    this._fileInputHandler = (e) => {
-        console.log('📁 DIRECT: File input changed!');
-        console.log('Event:', e);
-        console.log('Target:', e.target);
-        console.log('Files:', e.target.files);
-        
-        if (e.target.files && e.target.files.length > 0) {
-            console.log(`Processing ${e.target.files.length} file(s)`);
-            
-            // Log each file
-            Array.from(e.target.files).forEach((file, i) => {
-                console.log(`File ${i + 1}:`, {
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    lastModified: file.lastModified
-                });
-            });
-            
-            // Process files
-            this.handleFileUpload(e.target.files);
-            
-            // Reset the input
-            e.target.value = '';
-        } else {
-            console.log('No files selected or files array empty');
-        }
-    };
-    
-    // Add new listener
-    fileInput.addEventListener('change', this._fileInputHandler.bind(this));
-    
-    console.log('✅ Direct file input setup complete with listener');
-    // ==================== END DIRECT FILE INPUT ====================
+    // Setup file input
+    this.setupFileInput();
     
     // Setup browse button
     const browseBtnInModal = document.getElementById('browse-receipts-btn');
@@ -4738,17 +4222,19 @@ setupStandaloneDragAndDrop() {
             e.stopPropagation();
             console.log('📂 Browse files clicked (inside modal)');
             
-            // Trigger the file input click
+            let fileInput = document.getElementById('receipt-upload-input');
+            if (!fileInput) {
+                console.log('📁 Creating file input dynamically');
+                fileInput = this.createFileInput();
+            }
+            
             if (fileInput) {
-                console.log('Triggering file input click...');
                 fileInput.click();
             } else {
-                console.error('❌ File input not found');
+                console.error('❌ Could not create file input');
                 this.showNotification('Unable to browse files', 'error');
             }
         };
-    } else {
-        console.log('ℹ️ No separate browse button found in modal');
     }
     
     console.log('✅ All modal buttons setup complete');
@@ -4758,50 +4244,29 @@ setupStandaloneDragAndDrop() {
 setupFileInput() {
     console.log('📁 Setting up file input...');
     
-    // Remove any existing file inputs
-    document.querySelectorAll('input[type="file"][id^="receipt-file-input-"]').forEach(input => {
-        input.remove();
-    });
+    let fileInput = document.getElementById('receipt-upload-input');
     
-    // Create new file input
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.id = 'receipt-file-input-' + Date.now();
-    fileInput.accept = 'image/*,.pdf,.txt';
-    fileInput.multiple = true;
-    fileInput.style.display = 'none';
-    
-    // Add to body
-    document.body.appendChild(fileInput);
-    console.log('✅ Created file input:', fileInput.id);
-    
-    // ✅ CRITICAL: Store module reference
-    const module = window.FarmModules.getModule('income-expenses');
-    if (!module) {
-        console.error('❌ Module not found');
-        return fileInput;
+    if (!fileInput) {
+        console.log('📁 Creating file input dynamically');
+        fileInput = this.createFileInput();
     }
     
-    // ✅ SIMPLE, DIRECT EVENT LISTENER
-    fileInput.addEventListener('change', function(e) {
-        console.log('🎯 FILE INPUT CHANGE EVENT FIRED!');
-        console.log('📁 Files:', e.target.files?.length || 0);
-        
-        if (e.target.files && e.target.files.length > 0) {
-            console.log('📤 Calling handleFileUpload...');
-            
-            // Direct call to module
-            if (module.handleFileUpload) {
-                module.handleFileUpload(e.target.files);
-            } else {
-                console.error('❌ handleFileUpload not found on module');
+    if (fileInput) {
+        fileInput.onchange = (e) => {
+            console.log('📁 Files selected:', e.target.files?.length || 0);
+            if (e.target.files && e.target.files.length > 0) {
+                this.handleFileUpload(e.target.files);
+                
+                // Reset the input so same files can be selected again
+                e.target.value = '';
             }
-        }
-    });
-    
-    return fileInput;
+        };
+        console.log('✅ File input setup complete');
+    } else {
+        console.error('❌ Could not setup file input');
+    }
 },
-   
+
 // Add this method to create file input
 createFileInput() {
     try {
@@ -4974,23 +4439,47 @@ showUploadInterface() {
     // Stop camera if running
     this.stopCamera();
     
-    // Hide camera and quick actions, show upload section
     const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
+    const methodSelectionSection = document.getElementById('upload-method-selection');
     
-    if (cameraSection) cameraSection.style.display = 'none';
-    if (quickActionsSection) quickActionsSection.style.display = 'none';
-    if (uploadSection) uploadSection.style.display = 'block';
-    if (recentSection) recentSection.style.display = 'block';
+    console.log('Sections found:', {
+        cameraSection: !!cameraSection,
+        uploadSection: !!uploadSection,
+        recentSection: !!recentSection,
+        quickActionsSection: !!quickActionsSection,
+        methodSelectionSection: !!methodSelectionSection
+    });
     
-    console.log('✅ Upload interface shown');
+    // Hide camera, method selection, and quick actions
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        console.log('✅ Hidden camera section');
+    }
     
-    // ✅ ADD THIS: Setup standalone system after showing
-    setTimeout(() => {
-        this.setupStandaloneUploadSystem();
-    }, 500);
+    if (methodSelectionSection) {
+        methodSelectionSection.style.display = 'none';
+        console.log('✅ Hidden method selection section');
+    }
+    
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'none';
+        console.log('✅ Hidden quick actions section');
+    }
+    
+    // Show upload section
+    if (uploadSection) {
+        uploadSection.style.display = 'block';
+        console.log('✅ Showed upload section');
+    }
+    
+    // Keep recent section visible
+    if (recentSection) {
+        recentSection.style.display = 'block';
+        console.log('✅ Kept recent section visible');
+    }
 },
     
 loadStandaloneUploadSystem() {
