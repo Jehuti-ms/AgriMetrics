@@ -1,18 +1,15 @@
 // modules/income-expenses.js - COMPLETE FIXED VERSION
 console.log('💰 Loading Income & Expenses module...');
 
-const Broadcaster = window.DataBroadcaster || {
-    recordCreated: () => {},
-    recordUpdated: () => {},
-    recordDeleted: () => {}
-};
-
 const IncomeExpensesModule = {
     name: 'income-expenses',
     initialized: false,
     element: null,
     transactions: [],
-    categories: ['feed', 'medical', 'equipment', 'labor', 'utilities', 'sales', 'other'],
+    categories: {
+        income: ['sales', 'services', 'grants', 'other-income'],
+        expense: ['feed', 'medical', 'equipment', 'labor', 'utilities', 'maintenance', 'transport', 'marketing', 'other-expense']
+    },
     currentEditingId: null,
     receiptQueue: [],
     cameraStream: null,
@@ -36,14 +33,7 @@ const IncomeExpensesModule = {
 
         // Check if Firebase services are available
         this.isFirebaseAvailable = !!(window.firebase && window.db);
-        console.log('Firebase available:', this.isFirebaseAvailable, {
-            firebase: !!window.firebase,
-            db: !!window.db
-        });
-
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
+        console.log('Firebase available:', this.isFirebaseAvailable);
 
         // Setup network detection
         this.setupNetworkDetection();
@@ -52,7 +42,9 @@ const IncomeExpensesModule = {
         this.loadData();
         
         // Load receipts from Firebase
-        this.loadReceiptsFromFirebase();
+        if (this.isFirebaseAvailable) {
+            this.loadReceiptsFromFirebase();
+        }
 
         // Setup global click handler for receipts
         this.setupReceiptActionListeners();
@@ -125,9 +117,9 @@ const IncomeExpensesModule = {
                                 const data = doc.data();
                                 return {
                                     id: data.id || parseInt(doc.id),
-                                    date: data.date,
-                                    type: data.type,
-                                    category: data.category,
+                                    date: data.date || new Date().toISOString().split('T')[0],
+                                    type: data.type || 'expense',
+                                    category: data.category || 'other-expense',
                                     amount: parseFloat(data.amount) || 0,
                                     description: data.description || '',
                                     paymentMethod: data.paymentMethod || 'cash',
@@ -142,7 +134,7 @@ const IncomeExpensesModule = {
                                 };
                             });
                             
-                            // Sort locally after loading
+                            // Sort by date (newest first)
                             this.transactions.sort((a, b) => {
                                 const dateA = new Date(a.createdAt || a.date);
                                 const dateB = new Date(b.createdAt || b.date);
@@ -195,10 +187,14 @@ const IncomeExpensesModule = {
     },
     
     getDemoData() {
+        const now = new Date();
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
         return [
             {
                 id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
+                date: now.toISOString().split('T')[0],
                 type: 'income',
                 category: 'sales',
                 amount: 1500,
@@ -208,8 +204,24 @@ const IncomeExpensesModule = {
                 notes: 'First harvest of the season',
                 receipt: null,
                 userId: 'demo',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                createdAt: now.toISOString(),
+                updatedAt: now.toISOString(),
+                source: 'demo'
+            },
+            {
+                id: Date.now() + 1,
+                date: yesterday.toISOString().split('T')[0],
+                type: 'expense',
+                category: 'feed',
+                amount: 450,
+                description: 'Animal feed purchase',
+                paymentMethod: 'card',
+                reference: 'FED001',
+                notes: 'Monthly feed supply',
+                receipt: null,
+                userId: 'demo',
+                createdAt: yesterday.toISOString(),
+                updatedAt: yesterday.toISOString(),
                 source: 'demo'
             }
         ];
@@ -222,72 +234,77 @@ const IncomeExpensesModule = {
 
     // ==================== RECEIPT MANAGEMENT ====================
     async loadReceiptsFromFirebase() {
+        if (!this.isFirebaseAvailable || !window.db) {
+            console.log('Firebase not available, loading from localStorage');
+            this.loadFromLocalStorage();
+            return;
+        }
+        
         console.log('Loading receipts from Firebase...');
         
         try {
-            if (this.isFirebaseAvailable && window.db) {
-                const user = window.firebase?.auth?.().currentUser;
-                if (user) {
-                    try {
-                        const snapshot = await window.db.collection('receipts')
-                            .where('userId', '==', user.uid)
-                            .limit(50)
-                            .get();
-                        
-                        if (!snapshot.empty) {
-                            const firebaseReceipts = [];
-                            snapshot.forEach(doc => {
-                                const data = doc.data();
-                                
-                                if (data.status === 'pending') {
-                                    let downloadURL = data.dataURL;
-                                    if (!downloadURL && data.base64Data) {
-                                        downloadURL = `data:${data.type || 'image/jpeg'};base64,${data.base64Data}`;
-                                    }
-                                    
-                                    firebaseReceipts.push({
-                                        id: data.id || doc.id,
-                                        name: data.name || 'Unnamed receipt',
-                                        downloadURL: downloadURL,
-                                        dataURL: downloadURL,
-                                        base64Data: data.base64Data,
-                                        size: data.size || 0,
-                                        type: data.type || 'image/jpeg',
-                                        status: data.status || 'pending',
-                                        uploadedAt: data.uploadedAt || new Date().toISOString(),
-                                        storageType: data.storageType || 'firestore-base64',
-                                        userId: data.userId || user.uid,
-                                        source: 'firebase'
-                                    });
-                                }
-                            });
-                            
-                            console.log('✅ Loaded receipts from Firebase:', firebaseReceipts.length);
-                            
-                            this.mergeReceipts(firebaseReceipts);
-                            this.updateReceiptQueueUI();
-                            return;
-                        }
-                    } catch (error) {
-                        console.warn('⚠️ Firebase receipts load error:', error.message);
-                    }
-                }
+            const user = window.firebase?.auth?.().currentUser;
+            if (!user) {
+                console.log('User not authenticated, loading from localStorage');
+                this.loadFromLocalStorage();
+                return;
             }
+            
+            const snapshot = await window.db.collection('receipts')
+                .where('userId', '==', user.uid)
+                .limit(50)
+                .get();
+            
+            const firebaseReceipts = [];
+            
+            if (!snapshot.empty) {
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    if (data.status === 'pending') {
+                        let downloadURL = data.dataURL;
+                        if (!downloadURL && data.base64Data) {
+                            downloadURL = `data:${data.type || 'image/jpeg'};base64,${data.base64Data}`;
+                        }
+                        
+                        firebaseReceipts.push({
+                            id: data.id || doc.id,
+                            name: data.name || 'Unnamed receipt',
+                            downloadURL: downloadURL,
+                            dataURL: downloadURL,
+                            base64Data: data.base64Data,
+                            size: data.size || 0,
+                            type: data.type || 'image/jpeg',
+                            status: data.status || 'pending',
+                            uploadedAt: data.uploadedAt || new Date().toISOString(),
+                            storageType: data.storageType || 'firestore-base64',
+                            userId: data.userId || user.uid,
+                            source: 'firebase'
+                        });
+                    }
+                });
+                
+                console.log('✅ Loaded receipts from Firebase:', firebaseReceipts.length);
+            }
+            
+            this.mergeReceipts(firebaseReceipts);
+            
         } catch (error) {
-            console.warn('⚠️ General receipts load error:', error.message);
+            console.warn('⚠️ Firebase receipts load error:', error.message);
+            this.loadFromLocalStorage();
         }
-        
-        this.loadFromLocalStorage();
     },
 
     mergeReceipts(firebaseReceipts) {
         const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
         const receiptMap = new Map();
         
+        // Add Firebase receipts first
         firebaseReceipts.forEach(receipt => {
             receiptMap.set(receipt.id, receipt);
         });
         
+        // Add local receipts if not already in map
         localReceipts.forEach(localReceipt => {
             if (!receiptMap.has(localReceipt.id)) {
                 receiptMap.set(localReceipt.id, {
@@ -307,6 +324,7 @@ const IncomeExpensesModule = {
         
         console.log('✅ Merged receipts. Total:', this.receiptQueue.length);
         localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
+        this.updateReceiptQueueUI();
     },
     
     loadFromLocalStorage() {
@@ -334,94 +352,72 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
-   // ==================== FIXED: CAMERA PREVIEW ====================
-initializeCamera() {
-    console.log('📷 Initializing camera...');
-    
-    try {
-        const video = document.getElementById('camera-preview');
-        const status = document.getElementById('camera-status');
+    async initializeCamera() {
+        console.log('📷 Initializing camera...');
         
-        if (!video) {
-            console.error('❌ Camera preview element not found');
-            this.showNotification('Camera preview element missing', 'error');
-            this.showUploadInterface();
-            return;
-        }
-        
-        // Clear any existing stream
-        if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => track.stop());
-            this.cameraStream = null;
-        }
-        
-        if (status) status.textContent = 'Requesting camera access...';
-        
-        // Ensure camera section is visible
-        const cameraSection = document.getElementById('camera-section');
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
-            cameraSection.style.opacity = '1';
-            cameraSection.style.visibility = 'visible';
-        }
-        
-        const constraints = {
-            video: {
-                facingMode: this.cameraFacingMode,
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            },
-            audio: false
-        };
-        
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                console.log('✅ Camera access granted');
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                
-                // Force video to play
-                video.muted = true;
-                video.play()
-                    .then(() => {
-                        console.log('📹 Video is playing successfully');
-                        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                        if (status) status.textContent = `${cameraType} Camera - Ready`;
-                        
-                        // Update switch button
-                        const switchBtn = document.getElementById('switch-camera');
-                        if (switchBtn) {
-                            const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                            switchBtn.innerHTML = `
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch to ${nextMode}</span>
-                            `;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('❌ Video play error:', error);
-                        this.showNotification('Failed to start camera playback', 'error');
-                        this.showUploadInterface();
-                    });
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error);
-                let errorMessage = 'Camera access denied.';
-                if (error.name === 'NotFoundError') {
-                    errorMessage = 'No camera found on this device.';
-                } else if (error.name === 'NotAllowedError') {
-                    errorMessage = 'Camera permission denied.';
-                }
-                this.showNotification(errorMessage, 'error');
-                this.showUploadInterface();
-            });
+        try {
+            const video = document.getElementById('camera-preview');
+            const status = document.getElementById('camera-status');
             
-    } catch (error) {
-        console.error('🚨 Camera initialization error:', error);
-        this.showNotification('Camera initialization failed', 'error');
-        this.showUploadInterface();
-    }
-},
+            if (!video) {
+                console.error('❌ Camera preview element not found');
+                this.showNotification('Camera preview element missing', 'error');
+                this.showUploadInterface();
+                return;
+            }
+            
+            // Stop existing stream
+            if (this.cameraStream) {
+                this.cameraStream.getTracks().forEach(track => track.stop());
+                this.cameraStream = null;
+            }
+            
+            if (status) status.textContent = 'Requesting camera access...';
+            
+            const constraints = {
+                video: {
+                    facingMode: this.cameraFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            console.log('✅ Camera access granted');
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            
+            await video.play();
+            
+            console.log('📹 Video is playing successfully');
+            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+            if (status) status.textContent = `${cameraType} Camera - Ready`;
+            
+            const switchBtn = document.getElementById('switch-camera');
+            if (switchBtn) {
+                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                switchBtn.innerHTML = `
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">Switch to ${nextMode}</span>
+                `;
+            }
+            
+        } catch (error) {
+            console.error('❌ Camera error:', error);
+            let errorMessage = 'Camera access denied.';
+            if (error.name === 'NotFoundError') {
+                errorMessage = 'No camera found on this device.';
+            } else if (error.name === 'NotAllowedError') {
+                errorMessage = 'Camera permission denied.';
+            } else if (error.name === 'NotReadableError') {
+                errorMessage = 'Camera is already in use.';
+            }
+            this.showNotification(errorMessage, 'error');
+            this.showUploadInterface();
+        }
+    },
 
     capturePhoto() {
         console.log('📸 Capturing photo...');
@@ -442,21 +438,25 @@ initializeCamera() {
             return;
         }
         
+        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         
         const context = canvas.getContext('2d');
         
         try {
+            // Draw video frame to canvas
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             if (status) status.textContent = 'Processing photo...';
             
+            // Add visual feedback
             video.style.filter = 'brightness(150%) contrast(120%)';
             setTimeout(() => {
                 video.style.filter = '';
             }, 200);
             
+            // Convert to data URL
             const dataURL = canvas.toDataURL('image/jpeg', 0.85);
             
             if (status) status.textContent = 'Saving photo...';
@@ -466,8 +466,10 @@ initializeCamera() {
             const timestamp = Date.now();
             const receipt = this.createReceiptFromBase64(dataURL, timestamp);
             
+            // Save locally
             this.saveReceiptLocally(receipt);
             
+            // Try to save to Firebase
             this.saveReceiptToFirebase(receipt)
                 .then(() => {
                     if (status) status.textContent = 'Photo saved!';
@@ -529,11 +531,15 @@ initializeCamera() {
     },
 
     saveReceiptLocally(receipt) {
+        // Remove if already exists
+        this.receiptQueue = this.receiptQueue.filter(r => r.id !== receipt.id);
+        
+        // Add to beginning of queue
         this.receiptQueue.unshift(receipt);
         
         const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-        
         const existingIndex = localReceipts.findIndex(r => r.id === receipt.id);
+        
         if (existingIndex !== -1) {
             localReceipts.splice(existingIndex, 1);
         }
@@ -582,10 +588,14 @@ initializeCamera() {
     },
 
     showCaptureLoading(show) {
-        let overlay = document.getElementById('capture-loading-overlay');
+        const existingOverlay = document.getElementById('capture-loading-overlay');
         
-        if (show && !overlay) {
-            overlay = document.createElement('div');
+        if (show) {
+            if (existingOverlay) {
+                existingOverlay.remove();
+            }
+            
+            const overlay = document.createElement('div');
             overlay.id = 'capture-loading-overlay';
             overlay.style.cssText = `
                 position: fixed;
@@ -601,21 +611,7 @@ initializeCamera() {
                 align-items: center;
                 z-index: 10001;
                 color: white;
-                animation: fadeIn 0.3s ease-out;
             `;
-            
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `;
-            document.head.appendChild(style);
             
             overlay.innerHTML = `
                 <div style="text-align: center;">
@@ -628,17 +624,28 @@ initializeCamera() {
             `;
             
             document.body.appendChild(overlay);
-        } else if (!show && overlay) {
-            overlay.style.animation = 'fadeIn 0.3s ease-out reverse';
-            setTimeout(() => {
-                if (overlay && overlay.parentNode) {
-                    overlay.parentNode.removeChild(overlay);
+            
+            // Add spinner animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
                 }
-            }, 300);
+            `;
+            document.head.appendChild(style);
+            
+        } else if (existingOverlay) {
+            existingOverlay.remove();
         }
     },
 
     showCaptureSuccess(receipt) {
+        const existingModal = document.getElementById('capture-success-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
         const modal = document.createElement('div');
         modal.id = 'capture-success-modal';
         modal.style.cssText = `
@@ -656,38 +663,12 @@ initializeCamera() {
             width: 90%;
             max-height: 85vh;
             overflow-y: auto;
-            animation: slideIn 0.3s ease-out;
         `;
-        
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideIn {
-                from { opacity: 0; transform: translate(-50%, -40%); }
-                to { opacity: 1; transform: translate(-50%, -50%); }
-            }
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-            }
-            #capture-success-modal::-webkit-scrollbar {
-                width: 6px;
-            }
-            #capture-success-modal::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.05);
-                border-radius: 3px;
-            }
-            #capture-success-modal::-webkit-scrollbar-thumb {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 3px;
-            }
-        `;
-        document.head.appendChild(style);
         
         let imagePreview = '';
         if (receipt.type?.startsWith('image/')) {
             imagePreview = `
-                <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; animation: pulse 2s ease-in-out; max-height: 200px; overflow: hidden;">
+                <div style="margin: 20px 0; border-radius: 12px; overflow: hidden; border: 2px solid #e5e7eb; max-height: 200px; overflow: hidden;">
                     <img src="${receipt.dataURL}" 
                          alt="Receipt preview" 
                          style="width: 100%; max-height: 200px; object-fit: contain; background: #f8fafc;">
@@ -697,7 +678,7 @@ initializeCamera() {
         
         modal.innerHTML = `
             <div style="position: relative; min-height: 0;">
-                <div style="font-size: 64px; color: #10b981; margin-bottom: 16px; animation: pulse 2s ease-in-out;">✅</div>
+                <div style="font-size: 64px; color: #10b981; margin-bottom: 16px;">✅</div>
                 <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 24px; font-weight: 700;">Photo Saved!</h3>
                 <p style="color: #6b7280; margin-bottom: 20px; font-size: 16px;">Your receipt has been saved to local storage.</p>
                 
@@ -729,7 +710,6 @@ initializeCamera() {
                                    cursor: pointer; 
                                    flex: 1;
                                    font-size: 16px;
-                                   transition: all 0.2s;
                                    min-width: 140px;">
                         🔍 Process Now
                     </button>
@@ -743,7 +723,6 @@ initializeCamera() {
                                    cursor: pointer; 
                                    flex: 1;
                                    font-size: 16px;
-                                   transition: all 0.2s;
                                    min-width: 140px;">
                         Done
                     </button>
@@ -759,8 +738,7 @@ initializeCamera() {
                                    font-weight: 600; 
                                    cursor: pointer; 
                                    width: 100%;
-                                   margin-bottom: 8px;
-                                   transition: all 0.2s;">
+                                   margin-bottom: 8px;">
                         📸 Take Another Photo
                     </button>
                     <button id="delete-captured-btn" 
@@ -771,8 +749,7 @@ initializeCamera() {
                                    border-radius: 8px; 
                                    font-weight: 600; 
                                    cursor: pointer; 
-                                   width: 100%;
-                                   transition: all 0.2s;">
+                                   width: 100%;">
                         🗑️ Delete this receipt
                     </button>
                 </div>
@@ -781,50 +758,37 @@ initializeCamera() {
         
         document.body.appendChild(modal);
         
-        document.getElementById('process-now-btn')?.addEventListener('click', () => {
+        // Add event listeners
+        document.getElementById('process-now-btn').addEventListener('click', () => {
             modal.remove();
             setTimeout(() => {
                 this.processSingleReceipt(receipt.id);
             }, 100);
         });
         
-        document.getElementById('close-success-modal')?.addEventListener('click', () => {
+        document.getElementById('close-success-modal').addEventListener('click', () => {
             modal.remove();
         });
         
-        document.getElementById('take-another-btn')?.addEventListener('click', () => {
+        document.getElementById('take-another-btn').addEventListener('click', () => {
             modal.remove();
             const status = document.getElementById('camera-status');
             if (status) status.textContent = 'Ready';
         });
         
-        document.getElementById('delete-captured-btn')?.addEventListener('click', () => {
+        document.getElementById('delete-captured-btn').addEventListener('click', () => {
             if (confirm(`Delete "${receipt.name}"? This action cannot be undone.`)) {
                 modal.remove();
                 this.deleteReceiptFromAllSources(receipt.id);
             }
         });
         
+        // Auto-close after 10 seconds
         setTimeout(() => {
             if (document.body.contains(modal)) {
-                modal.style.animation = 'slideIn 0.3s ease-out reverse';
-                setTimeout(() => {
-                    if (document.body.contains(modal)) {
-                        modal.remove();
-                    }
-                }, 300);
+                modal.remove();
             }
         }, 10000);
-        
-        const closeOnClickOutside = (e) => {
-            if (!modal.contains(e.target)) {
-                modal.remove();
-                document.removeEventListener('click', closeOnClickOutside);
-            }
-        };
-        setTimeout(() => {
-            document.addEventListener('click', closeOnClickOutside);
-        }, 100);
     },
 
     stopCamera() {
@@ -864,387 +828,62 @@ initializeCamera() {
     },
 
     // ==================== FILE UPLOAD ====================
-   // ==================== FIXED: FILE UPLOAD SIMPLIFIED ====================
-handleFileUpload(files) {
-    console.log('📤 handleFileUpload called with', files.length, 'files');
-    
-    if (!files || files.length === 0) {
-        this.showNotification('No files selected', 'error');
-        return;
-    }
-    
-    const file = files[0]; // Process first file
-    
-    console.log('📄 Processing file:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-    });
-    
-    // Create receipt object
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        try {
-            const dataURL = e.target.result;
-            const receiptId = 'upload_' + Date.now();
-            
-            const receipt = {
-                id: receiptId,
-                name: file.name,
-                dataURL: dataURL,
-                size: file.size,
-                type: file.type,
-                status: 'pending',
-                uploadedAt: new Date().toISOString(),
-                source: 'upload'
-            };
-            
-            // Add to receipt queue
-            this.addReceiptToQueue(receipt);
-            
-            // Update UI
-            this.updateReceiptQueueUI();
-            this.updateModalReceiptsList();
-            
-            // Show success
-            this.showNotification(`✅ "${file.name}" uploaded successfully!`, 'success');
-            
-            // Show success modal
-            this.showSimpleSuccessModal([receipt]);
-            
-        } catch (error) {
-            console.error('❌ Error processing file:', error);
-            this.showNotification('Failed to process file: ' + error.message, 'error');
-        }
-    };
-    
-    reader.onerror = () => {
-        this.showNotification('Failed to read file', 'error');
-    };
-    
-    reader.readAsDataURL(file);
-},
-
-    // ==================== FIXED: ADD RECEIPT TO QUEUE ====================
-addReceiptToQueue(receipt) {
-    console.log('➕ Adding receipt to queue:', receipt.name);
-    
-    // Add to memory queue
-    this.receiptQueue.unshift(receipt);
-    
-    // Save to localStorage
-    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-    localReceipts.unshift(receipt);
-    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-    
-    console.log('✅ Receipt added. Queue length:', this.receiptQueue.length);
-},
-
-    // ==================== FIXED: SHOW SIMPLE SUCCESS MODAL ====================
-showSimpleSuccessModal(receipts) {
-    console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
-    
-    // Remove any existing modal
-    const existingModal = document.getElementById('simple-success-modal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    const modalId = 'simple-success-modal-' + Date.now();
-    const receipt = receipts[0];
-    
-    const modalHTML = `
-        <div id="${modalId}" style="
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            z-index: 999999;
-            border: 2px solid #10b981;
-        ">
-            <div style="text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-                <h3 style="margin: 0 0 8px 0; color: #1f2937;">Upload Successful!</h3>
-                <p style="color: #6b7280; margin: 0 0 20px 0;">
-                    "${receipt.name}" has been uploaded.
-                </p>
-                
-                ${receipt.type?.startsWith('image/') ? `
-                    <div style="margin: 16px 0; border-radius: 8px; overflow: hidden; max-height: 200px;">
-                        <img src="${receipt.dataURL}" 
-                             alt="Preview" 
-                             style="width: 100%; max-height: 200px; object-fit: contain;">
-                    </div>
-                ` : ''}
-                
-                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 16px 0; text-align: left;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="color: #6b7280;">File:</span>
-                        <span style="font-weight: 600;">${receipt.name}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span style="color: #6b7280;">Size:</span>
-                        <span>${this.formatFileSize(receipt.size)}</span>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 12px;">
-                    <button id="${modalId}-process" style="
-                        flex: 1;
-                        background: #3b82f6;
-                        color: white;
-                        border: none;
-                        padding: 12px;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    ">
-                        🔍 Process Now
-                    </button>
-                    <button id="${modalId}-close" style="
-                        flex: 1;
-                        background: #f1f5f9;
-                        color: #374151;
-                        border: none;
-                        padding: 12px;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                    ">
-                        Done
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 999998;
-        " id="${modalId}-overlay"></div>
-    `;
-    
-    // Add to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Add event listeners
-    setTimeout(() => {
-        const modal = document.getElementById(modalId);
-        const overlay = document.getElementById(modalId + '-overlay');
+    handleFileUpload(files) {
+        console.log('🎯 Handling file upload:', files.length, 'files');
         
-        // Process button
-        document.getElementById(modalId + '-process')?.addEventListener('click', () => {
-            modal?.remove();
-            overlay?.remove();
-            this.processSingleReceipt(receipt.id);
-        });
-        
-        // Close button
-        document.getElementById(modalId + '-close')?.addEventListener('click', () => {
-            modal?.remove();
-            overlay?.remove();
-        });
-        
-        // Overlay click
-        overlay?.addEventListener('click', () => {
-            modal?.remove();
-            overlay?.remove();
-        });
-    }, 10);
-},
-    
-    showUploadSuccessModal(receipts) {
-        console.log('🪟 CREATING SUCCESS MODAL for', receipts.length, 'receipts');
-        
-        const existingModal = document.getElementById('upload-success-modal');
-        if (existingModal) {
-            existingModal.remove();
+        if (!files || files.length === 0) {
+            return;
         }
         
-        const modalHTML = `
-            <div id="upload-success-modal" style="
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                border-radius: 12px;
-                padding: 30px;
-                width: 90%;
-                max-width: 500px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                z-index: 999999;
-                border: 3px solid #4CAF50;
-            ">
-                <div style="text-align: center;">
-                    <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
-                    <h2 style="margin: 0 0 10px 0; color: #333;">Upload Successful!</h2>
-                    <p style="color: #666; margin: 0 0 20px 0;">
-                        ${receipts.length} file(s) uploaded successfully
-                    </p>
-                </div>
-                
-                <div style="
-                    background: #f5f5f5;
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 25px;
-                    max-height: 200px;
-                    overflow-y: auto;
-                ">
-                    ${receipts.map((receipt, i) => `
-                        <div style="
-                            padding: 8px;
-                            border-bottom: ${i < receipts.length - 1 ? '1px solid #ddd' : 'none'};
-                            display: flex;
-                            align-items: center;
-                        ">
-                            <span style="margin-right: 10px; font-size: 20px;">
-                                ${receipt.type.includes('image') ? '🖼️' : '📄'}
-                            </span>
-                            <span style="flex-grow: 1; font-weight: 500;">${receipt.name}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div style="display: flex; gap: 10px;">
-                    <button id="process-btn" style="
-                        flex: 1;
-                        background: #4CAF50;
-                        color: white;
-                        border: none;
-                        padding: 15px;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        cursor: pointer;
-                    ">
-                        🚀 Process Now
-                    </button>
-                    <button id="close-btn" style="
-                        flex: 1;
-                        background: #666;
-                        color: white;
-                        border: none;
-                        padding: 15px;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        cursor: pointer;
-                    ">
-                        Close
-                    </button>
-                </div>
-            </div>
+        // Process each file
+        Array.from(files).forEach(file => {
+            console.log('📄 Processing file:', file.name);
             
-            <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 999998;
-            " id="modal-overlay"></div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        console.log('✅ Modal added to page');
-        
-        const module = window.IncomeExpensesModule || 
-                      (window.FarmModules && window.FarmModules.getModule('income-expenses'));
-        
-        document.getElementById('close-btn').onclick = function() {
-            document.getElementById('upload-success-modal').remove();
-            document.getElementById('modal-overlay').remove();
-        };
-        
-        document.getElementById('modal-overlay').onclick = function() {
-            document.getElementById('upload-success-modal').remove();
-            document.getElementById('modal-overlay').remove();
-        };
-        
-        document.getElementById('process-btn').onclick = function() {
-            document.getElementById('upload-success-modal').remove();
-            document.getElementById('modal-overlay').remove();
-            
-            if (module && module.processPendingReceipts) {
-                module.processPendingReceipts();
-            }
-        };
-        
-        console.log('✅ Modal event listeners added');
-    },
-
-    async uploadReceiptToFirebase(file, onProgress = null) {
-        console.log('📤 Uploading receipt:', file.name);
-        
-        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             
-            reader.onload = async (e) => {
+            reader.onload = (e) => {
                 try {
                     const dataURL = e.target.result;
-                    const base64Data = dataURL.split(',')[1];
-                    const approxSize = Math.floor(base64Data.length * 0.75);
-                    const timestamp = Date.now();
-                    const receiptId = `upload_${timestamp}`;
+                    const receiptId = 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                     
                     const receipt = {
                         id: receiptId,
                         name: file.name,
-                        base64Data: base64Data,
-                        dataURL: dataURL,
-                        size: approxSize,
                         type: file.type,
+                        size: file.size,
+                        dataURL: dataURL,
                         status: 'pending',
                         uploadedAt: new Date().toISOString(),
-                        storageType: 'firestore-base64',
-                        metadata: {
-                            uploadedAt: new Date().toISOString(),
-                            originalSize: file.size,
-                            fileType: file.type
-                        }
+                        source: 'upload'
                     };
                     
+                    console.log('📦 Receipt created:', receipt);
+                    
+                    // Save locally
                     this.saveReceiptLocally(receipt);
                     
-                    if (this.isFirebaseAvailable && window.db) {
-                        const user = window.firebase?.auth?.().currentUser;
-                        if (user) {
-                            const firebaseReceipt = {
-                                ...receipt,
-                                userId: user.uid
-                            };
-                            
-                            try {
-                                await window.db.collection('receipts').doc(receiptId).set(firebaseReceipt);
-                                console.log('✅ Saved to Firestore:', receiptId);
-                            } catch (firestoreError) {
-                                console.warn('⚠️ Firestore save failed, keeping local:', firestoreError.message);
-                            }
-                        }
+                    // Try to save to Firebase
+                    if (this.isFirebaseAvailable) {
+                        this.saveReceiptToFirebase(receipt).catch(error => {
+                            console.warn('⚠️ Failed to save to Firebase:', error.message);
+                        });
                     }
                     
-                    resolve(receipt);
+                    // Update UI
+                    this.updateReceiptQueueUI();
+                    this.updateModalReceiptsList();
+                    
+                    this.showNotification(`Uploaded: ${file.name}`, 'success');
                     
                 } catch (error) {
-                    reject(error);
+                    console.error('❌ Error processing file:', error);
+                    this.showNotification('Upload failed: ' + error.message, 'error');
                 }
             };
             
-            reader.onerror = () => {
-                reject(new Error('Failed to read file'));
+            reader.onerror = (error) => {
+                console.error('❌ FileReader error:', error);
+                this.showNotification('Failed to read file', 'error');
             };
             
             reader.readAsDataURL(file);
@@ -1255,27 +894,24 @@ showSimpleSuccessModal(receipts) {
     setupReceiptActionListeners() {
         console.log('🔧 Setting up receipt action listeners...');
         
+        // Use event delegation for dynamic elements
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-receipt-btn')) {
-                const btn = e.target.closest('.delete-receipt-btn');
-                const receiptId = btn.dataset.receiptId;
-                
+            const deleteBtn = e.target.closest('.delete-receipt-btn');
+            if (deleteBtn) {
+                const receiptId = deleteBtn.dataset.receiptId;
                 if (receiptId) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🗑️ Delete button clicked:', receiptId);
                     this.confirmAndDeleteReceipt(receiptId);
                 }
             }
             
-            if (e.target.closest('.process-receipt-btn, .process-btn')) {
-                const btn = e.target.closest('.process-receipt-btn, .process-btn');
-                const receiptId = btn.dataset.receiptId;
-                
+            const processBtn = e.target.closest('.process-receipt-btn, .process-btn');
+            if (processBtn) {
+                const receiptId = processBtn.dataset.receiptId;
                 if (receiptId) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🔍 Process button clicked:', receiptId);
                     this.processSingleReceipt(receiptId);
                 }
             }
@@ -1296,44 +932,25 @@ showSimpleSuccessModal(receipts) {
             return;
         }
         
-        const deleteBtn = document.querySelector(`.delete-receipt-btn[data-receipt-id="${receiptId}"]`);
-        const originalContent = deleteBtn ? deleteBtn.innerHTML : '';
-        
-        const receiptName = receipt.name;
-        
-        if (window.confirm(`Are you sure you want to delete "${receiptName}"?\n\nThis action cannot be undone.`)) {
-            if (deleteBtn) {
-                deleteBtn.innerHTML = '<span class="btn-icon">⏳</span> Deleting...';
-                deleteBtn.disabled = true;
-                deleteBtn.classList.add('deleting');
-            }
-            
+        if (confirm(`Are you sure you want to delete "${receipt.name}"?\n\nThis action cannot be undone.`)) {
             this.deleteReceiptFromAllSources(receiptId);
-        } else {
-            if (deleteBtn) {
-                deleteBtn.disabled = false;
-                deleteBtn.innerHTML = originalContent;
-                deleteBtn.classList.remove('deleting');
-            }
-            console.log('Delete cancelled by user');
         }
     },
 
-    deleteReceiptFromAllSources: async function(receiptId) {
+    async deleteReceiptFromAllSources(receiptId) {
         if (this.isDeleting) {
-            this.showNotification('Please wait for previous delete to complete', 'warning');
             return;
         }
         
         const receipt = this.receiptQueue.find(r => r.id === receiptId);
         if (!receipt) {
-            this.showNotification('Receipt not found', 'error');
             return;
         }
         
         this.isDeleting = true;
         
         try {
+            // Delete from Firebase Storage if applicable
             if (receipt.storageType === 'firebase' && receipt.fileName && window.storage) {
                 try {
                     const storageRef = window.storage.ref();
@@ -1344,6 +961,7 @@ showSimpleSuccessModal(receipts) {
                 }
             }
             
+            // Delete from Firestore
             if (this.isFirebaseAvailable && window.db) {
                 try {
                     await window.db.collection('receipts').doc(receiptId).delete();
@@ -1353,130 +971,107 @@ showSimpleSuccessModal(receipts) {
                 }
             }
             
+            // Remove from local arrays
             this.receiptQueue = this.receiptQueue.filter(r => r.id !== receiptId);
             
             const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
             const updatedReceipts = localReceipts.filter(r => r.id !== receiptId);
             localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
             
+            // Update UI
             this.updateReceiptQueueUI();
             this.updateModalReceiptsList();
             this.updateProcessReceiptsButton();
             
             this.showNotification(`"${receipt.name}" deleted successfully`, 'success');
             
-            console.log('✅ Receipt deleted');
-            
         } catch (error) {
             console.error('❌ Error deleting receipt:', error);
             this.showNotification('Failed to delete receipt', 'error');
         } finally {
-            setTimeout(() => {
-                this.isDeleting = false;
-            }, 1000);
+            this.isDeleting = false;
         }
     },
 
     // ==================== MODAL MANAGEMENT ====================
-    // ==================== FIXED: MODAL SHOW/HIDE METHODS ====================
-showImportReceiptsModal() {
-    console.log('🎯 SHOWING IMPORT RECEIPTS MODAL');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Show the modal
-    const modal = document.getElementById('import-receipts-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-        console.log('✅ Modal shown with display: flex');
-    }
-    
-    // Set the modal content
-    const importReceiptsContent = document.getElementById('import-receipts-content');
-    if (importReceiptsContent) {
-        importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
-    }
-    
-    // Setup handlers
-    setTimeout(() => {
-        this.setupImportReceiptsHandlers();
-        this.showQuickActionsView();
-    }, 100);
-},
+    showImportReceiptsModal() {
+        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
+        
+        this.stopCamera();
+        
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+            console.log('✅ Modal shown');
+        } else {
+            console.error('❌ Modal element not found');
+            return;
+        }
+        
+        // Load content
+        const importReceiptsContent = document.getElementById('import-receipts-content');
+        if (importReceiptsContent) {
+            importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
+        }
+        
+        // Setup handlers after a short delay
+        setTimeout(() => {
+            this.setupImportReceiptsHandlers();
+            this.setupFileInput();
+            this.setupDragAndDrop();
+            this.showQuickActionsView();
+        }, 100);
+    },
 
     hideImportReceiptsModal() {
-    console.log('❌ Hiding import receipts modal');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Hide the modal
-    const modal = document.getElementById('import-receipts-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
-    }
-},
+        console.log('❌ Closing import receipts modal');
+        
+        this.stopCamera();
+        
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+        }
+        
+        // Reset file input
+        const fileInput = document.getElementById('receipt-upload-input');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    },
 
-  // ==================== FIXED: TRANSACTION MODAL METHODS ====================
-showTransactionModal(transactionId = null) {
-    console.log('📝 Showing transaction modal');
-    
-    this.hideAllModals();
-    this.currentEditingId = transactionId;
-    
-    const modal = document.getElementById('transaction-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-    }
-    
-    // Reset form
-    const form = document.getElementById('transaction-form');
-    if (form) {
-        form.reset();
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
+    showTransactionModal(transactionId = null) {
+        this.hideAllModals();
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.remove('hidden');
+        this.currentEditingId = transactionId;
         
-        // Hide delete button for new transactions
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) {
-            deleteBtn.style.display = 'none';
+        const form = document.getElementById('transaction-form');
+        if (form) {
+            form.reset();
+            const dateInput = document.getElementById('transaction-date');
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+            const deleteBtn = document.getElementById('delete-transaction');
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            const title = document.getElementById('transaction-modal-title');
+            if (title) title.textContent = 'Add Transaction';
+            this.clearReceiptPreview();
+            
+            if (transactionId) {
+                setTimeout(() => this.editTransaction(transactionId), 50);
+            }
         }
-        
-        // Set title
-        const title = document.getElementById('transaction-modal-title');
-        if (title) {
-            title.textContent = transactionId ? 'Edit Transaction' : 'Add Transaction';
-        }
-        
-        // Clear receipt preview
-        this.clearReceiptPreview();
-        
-        // Load transaction data if editing
-        if (transactionId) {
-            setTimeout(() => this.editTransaction(transactionId), 50);
-        }
-    }
-},
+    },
 
     hideTransactionModal() {
-    console.log('❌ Hiding transaction modal');
-    
-    const modal = document.getElementById('transaction-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
-    }
-    
-    this.currentEditingId = null;
-    this.receiptPreview = null;
-    this.clearReceiptPreview();
-},
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.add('hidden');
+        this.currentEditingId = null;
+        this.receiptPreview = null;
+        this.clearReceiptPreview();
+    },
 
     showAddIncome() {
         this.showTransactionModal();
@@ -1498,45 +1093,25 @@ showTransactionModal(transactionId = null) {
         document.querySelectorAll('.popout-modal').forEach(modal => {
             modal.classList.add('hidden');
         });
-        
         this.stopCamera();
     },
 
-    // ==================== FIXED: SHOW QUICK ACTIONS ====================
-showQuickActionsView() {
-    console.log('🏠 Showing quick actions view...');
-    
-    // Stop camera if running
-    this.stopCamera();
-    
-    // Get all sections
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    // Hide camera and upload sections
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
-    if (uploadSection) {
-        uploadSection.style.display = 'none';
-    }
-    
-    // Show quick actions section
-    if (quickActionsSection) {
-        quickActionsSection.style.display = 'block';
-    }
-    
-    // Always show recent section
-    if (recentSection) {
-        recentSection.style.display = 'block';
-    }
-    
-    console.log('✅ Quick actions view shown');
-},
-
+    // ==================== VIEW MANAGEMENT ====================
+    showQuickActionsView() {
+        console.log('🏠 Showing quick actions view...');
+        
+        this.stopCamera();
+        
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        const quickActionsSection = document.querySelector('.quick-actions-section');
+        
+        if (cameraSection) cameraSection.style.display = 'none';
+        if (uploadSection) uploadSection.style.display = 'none';
+        if (quickActionsSection) quickActionsSection.style.display = 'block';
+        if (recentSection) recentSection.style.display = 'block';
+    },
 
     showUploadInterface() {
         console.log('📁 Showing upload interface...');
@@ -1553,8 +1128,7 @@ showQuickActionsView() {
         if (uploadSection) uploadSection.style.display = 'block';
         if (recentSection) recentSection.style.display = 'block';
         
-        console.log('✅ Upload interface shown');
-        
+        // Setup drag and drop after showing
         setTimeout(() => {
             this.setupDragAndDrop();
         }, 100);
@@ -1572,74 +1146,47 @@ showQuickActionsView() {
         if (quickActionsSection) quickActionsSection.style.display = 'none';
         if (cameraSection) {
             cameraSection.style.display = 'block';
-            this.initializeCamera();
+            // Initialize camera after showing
+            setTimeout(() => {
+                this.initializeCamera();
+            }, 100);
         }
         if (recentSection) recentSection.style.display = 'block';
-        
-        console.log('✅ Camera interface shown');
     },
 
     // ==================== EVENT HANDLERS ====================
     setupImportReceiptsHandlers() {
         console.log('Setting up import receipt handlers');
         
-        const setupModalButton = (id, handler) => {
+        // Helper function to setup buttons
+        const setupButton = (id, handler) => {
             const button = document.getElementById(id);
             if (button) {
-                console.log(`✅ Setting up modal button: ${id}`);
-                
+                // Remove existing listeners
                 const newButton = button.cloneNode(true);
                 button.parentNode.replaceChild(newButton, button);
                 
-                newButton.onclick = (e) => {
+                newButton.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log(`Modal button clicked: ${id}`);
                     handler.call(this, e);
-                };
-                
-                return newButton;
-            } else {
-                console.log(`ℹ️ Modal button ${id} not found`);
-                return null;
+                });
             }
         };
         
-        setupModalButton('upload-option', () => {
-            console.log('📁 Upload Files button clicked');
-            this.showUploadInterface();
-        });
-
-        setupModalButton('camera-option', () => {
-            console.log('🎯 Camera button clicked');
-            this.showCameraInterface();
-        });
-
-        setupModalButton('cancel-camera', () => {
-            console.log('❌ Cancel camera clicked');
-            this.showQuickActionsView();
-        });
-
-        setupModalButton('back-to-main-view', () => {
-            console.log('🔙 Back to main view clicked');
-            this.showQuickActionsView();
-        });
-
-        setupModalButton('capture-photo', () => this.capturePhoto());
-        setupModalButton('switch-camera', () => this.switchCamera());
-
-        setupModalButton('refresh-receipts', () => {
-            console.log('🔄 Refresh receipts clicked');
-            const recentList = document.getElementById('recent-receipts-list');
-            if (recentList) {
-                recentList.innerHTML = this.renderRecentReceiptsList();
-            }
-            this.showNotification('Receipts list refreshed', 'success');
-        });
-
+        // Setup all modal buttons
+        setupButton('upload-option', () => this.showUploadInterface());
+        setupButton('camera-option', () => this.showCameraInterface());
+        setupButton('cancel-camera', () => this.showQuickActionsView());
+        setupButton('back-to-main-view', () => this.showQuickActionsView());
+        setupButton('capture-photo', () => this.capturePhoto());
+        setupButton('switch-camera', () => this.switchCamera());
+        setupButton('refresh-receipts', () => this.refreshReceiptsList());
+        
+        // Process receipts button
         const processBtn = document.getElementById('process-receipts-btn');
         if (processBtn) {
-            processBtn.onclick = (e) => {
+            processBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -1651,55 +1198,55 @@ showQuickActionsView() {
                 }
                 
                 if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
-                    pendingReceipts.forEach((receipt, index) => {
-                        setTimeout(() => {
-                            this.processSingleReceipt(receipt.id);
-                        }, index * 500);
-                    });
+                    this.processPendingReceipts();
                 }
-            };
+            });
         }
-        
-        this.setupFileInput();
-        setTimeout(() => {
-            this.setupDragAndDrop();
-        }, 500);
+    },
+
+    refreshReceiptsList() {
+        console.log('🔄 Refresh receipts clicked');
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList) {
+            recentList.innerHTML = this.renderRecentReceiptsList();
+        }
+        this.showNotification('Receipts list refreshed', 'success');
     },
 
     setupDragAndDrop() {
         console.log('🔧 Setting up drag and drop...');
         
-        const dropArea = document.getElementById('receipt-upload-area');
+        const dropArea = document.getElementById('receipt-dropzone');
         if (!dropArea) {
-            console.log('ℹ️ No receipt-upload-area found');
+            console.log('ℹ️ No drop area found');
             return;
         }
         
+        // Clear existing handlers
         dropArea.ondragover = null;
         dropArea.ondragleave = null;
         dropArea.ondrop = null;
         dropArea.onclick = null;
         
+        // Click handler
         dropArea.onclick = () => {
-            console.log('📁 Drop area clicked');
-            const fileInput = document.getElementById('receipt-upload-input');
+            const fileInput = document.getElementById('receipt-file-input');
             if (fileInput) {
                 fileInput.click();
             }
         };
         
+        // Drag handlers
         dropArea.ondragover = (e) => {
             e.preventDefault();
             e.stopPropagation();
             dropArea.classList.add('drag-over');
-            console.log('📁 Drag over drop area');
         };
         
         dropArea.ondragleave = (e) => {
             e.preventDefault();
             e.stopPropagation();
             dropArea.classList.remove('drag-over');
-            console.log('📁 Drag left drop area');
         };
         
         dropArea.ondrop = (e) => {
@@ -1707,166 +1254,116 @@ showQuickActionsView() {
             e.stopPropagation();
             dropArea.classList.remove('drag-over');
             
-            console.log('📁 Files dropped on receipt-upload-area');
-            
             if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                console.log(`📤 Processing ${e.dataTransfer.files.length} dropped file(s)`);
                 this.handleFileUpload(e.dataTransfer.files);
             }
         };
-        
-        console.log('✅ Drag and drop setup complete');
     },
 
     setupFileInput() {
         console.log('📁 Setting up file input...');
         
-        let fileInput = document.getElementById('receipt-upload-input');
+        let fileInput = document.getElementById('receipt-file-input');
         if (!fileInput) {
             fileInput = document.createElement('input');
             fileInput.type = 'file';
-            fileInput.id = 'receipt-upload-input';
-            fileInput.name = 'receipt-upload-input';
+            fileInput.id = 'receipt-file-input';
             fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
             fileInput.multiple = true;
             fileInput.style.display = 'none';
-            fileInput.setAttribute('data-dynamic', 'true');
             document.body.appendChild(fileInput);
-            console.log('✅ Created new file input');
         }
         
-        fileInput.onchange = null;
-        
-        const fileInputHandler = (e) => {
-            console.log('📁 File input changed!');
-            
+        fileInput.onchange = (e) => {
             if (e.target.files && e.target.files.length > 0) {
-                console.log(`Processing ${e.target.files.length} file(s)`);
                 this.handleFileUpload(e.target.files);
                 e.target.value = '';
             }
         };
-        
-        fileInput.addEventListener('change', fileInputHandler.bind(this));
-        console.log('✅ File input setup complete');
     },
 
-   // ==================== FIXED: SIMPLIFIED EVENT LISTENERS ====================
-setupEventListeners() {
-    console.log('Setting up event listeners...');
-    
-    // Remove all old listeners first
-    const buttons = [
-        'add-transaction',
-        'upload-receipt-btn',
-        'add-income-btn',
-        'add-expense-btn',
-        'financial-report-btn',
-        'category-analysis-btn',
-        'save-transaction',
-        'delete-transaction',
-        'cancel-transaction',
-        'close-transaction-modal',
-        'close-import-receipts',
-        'cancel-import-receipts',
-        'refresh-receipts-btn',
-        'process-all-receipts',
-        'export-transactions'
-    ];
-    
-    buttons.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.onclick = null;
-            const newElement = element.cloneNode(true);
-            element.parentNode.replaceChild(newElement, element);
+    setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
+        // Remove existing handlers
+        if (this._globalClickHandler) {
+            document.removeEventListener('click', this._globalClickHandler);
+            document.removeEventListener('change', this._globalChangeHandler);
         }
-    });
-    
-    // Setup specific listeners
-    setTimeout(() => {
-        // Main module buttons
-        document.getElementById('add-transaction')?.addEventListener('click', () => {
-            this.showTransactionModal();
-        });
         
-        document.getElementById('upload-receipt-btn')?.addEventListener('click', () => {
-            this.showImportReceiptsModal();
-        });
-        
-        document.getElementById('add-income-btn')?.addEventListener('click', () => {
-            this.showAddIncome();
-        });
-        
-        document.getElementById('add-expense-btn')?.addEventListener('click', () => {
-            this.showAddExpense();
-        });
-        
-        document.getElementById('financial-report-btn')?.addEventListener('click', () => {
-            this.generateFinancialReport();
-        });
-        
-        document.getElementById('category-analysis-btn')?.addEventListener('click', () => {
-            this.generateCategoryAnalysis();
-        });
-        
-        // Transaction modal buttons
-        document.getElementById('save-transaction')?.addEventListener('click', (e) => {
+        // Global click handler
+        this._globalClickHandler = (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            
+            const buttonId = button.id;
+            if (!buttonId) return;
+            
             e.preventDefault();
-            this.saveTransaction();
-        });
+            e.stopPropagation();
+            
+            console.log(`Button clicked: ${buttonId}`);
+            
+            switch(buttonId) {
+                case 'add-transaction':
+                    this.showTransactionModal();
+                    break;
+                case 'upload-receipt-btn':
+                    this.showImportReceiptsModal();
+                    break;
+                case 'add-income-btn':
+                    this.showAddIncome();
+                    break;
+                case 'add-expense-btn':
+                    this.showAddExpense();
+                    break;
+                case 'financial-report-btn':
+                    this.generateFinancialReport();
+                    break;
+                case 'category-analysis-btn':
+                    this.generateCategoryAnalysis();
+                    break;
+                case 'save-transaction':
+                    this.saveTransaction();
+                    break;
+                case 'delete-transaction':
+                    this.deleteTransaction();
+                    break;
+                case 'cancel-transaction':
+                    this.hideTransactionModal();
+                    break;
+                case 'close-transaction-modal':
+                    this.hideTransactionModal();
+                    break;
+                case 'close-import-receipts':
+                    this.hideImportReceiptsModal();
+                    break;
+                case 'cancel-import-receipts':
+                    this.hideImportReceiptsModal();
+                    break;
+                case 'refresh-receipts-btn':
+                    this.loadReceiptsFromFirebase();
+                    this.showNotification('Receipts refreshed', 'success');
+                    break;
+                case 'process-all-receipts':
+                    this.processPendingReceipts();
+                    break;
+                case 'export-transactions':
+                    this.exportTransactions();
+                    break;
+            }
+        };
         
-        document.getElementById('delete-transaction')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.deleteTransaction();
-        });
-        
-        document.getElementById('cancel-transaction')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.hideTransactionModal();
-        });
-        
-        document.getElementById('close-transaction-modal')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.hideTransactionModal();
-        });
-        
-        // Import receipts modal buttons
-        document.getElementById('close-import-receipts')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.hideImportReceiptsModal();
-        });
-        
-        document.getElementById('cancel-import-receipts')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.hideImportReceiptsModal();
-        });
-        
-        // Other buttons
-        document.getElementById('refresh-receipts-btn')?.addEventListener('click', () => {
-            this.loadReceiptsFromFirebase();
-            this.showNotification('Receipts refreshed', 'success');
-        });
-        
-        document.getElementById('process-all-receipts')?.addEventListener('click', () => {
-            this.processPendingReceipts();
-        });
-        
-        document.getElementById('export-transactions')?.addEventListener('click', () => {
-            this.exportTransactions();
-        });
-        
-        // Transaction filter
-        const filter = document.getElementById('transaction-filter');
-        if (filter) {
-            filter.onchange = null;
-            filter.addEventListener('change', (e) => {
+        // Global change handler
+        this._globalChangeHandler = (e) => {
+            if (e.target.id === 'transaction-filter') {
                 this.filterTransactions(e.target.value);
-            });
-        }
+            }
+        };
         
-    }, 100);
-},
+        document.addEventListener('click', this._globalClickHandler);
+        document.addEventListener('change', this._globalChangeHandler);
+    },
 
     setupReceiptFormHandlers() {
         const uploadArea = document.getElementById('receipt-upload-area');
@@ -1902,32 +1399,23 @@ setupEventListeners() {
             return;
         }
         
-        const idInput = document.getElementById('transaction-id');
-        if (idInput) idInput.value = transaction.id;
+        // Fill form with transaction data
+        const fields = {
+            'transaction-id': transaction.id,
+            'transaction-date': transaction.date,
+            'transaction-type': transaction.type,
+            'transaction-category': transaction.category,
+            'transaction-amount': transaction.amount,
+            'transaction-description': transaction.description,
+            'transaction-payment': transaction.paymentMethod || 'cash',
+            'transaction-reference': transaction.reference || '',
+            'transaction-notes': transaction.notes || ''
+        };
         
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = transaction.date;
-        
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = transaction.type;
-        
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = transaction.category;
-        
-        const amountInput = document.getElementById('transaction-amount');
-        if (amountInput) amountInput.value = transaction.amount;
-        
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) descriptionInput.value = transaction.description;
-        
-        const paymentSelect = document.getElementById('transaction-payment');
-        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
-        
-        const referenceInput = document.getElementById('transaction-reference');
-        if (referenceInput) referenceInput.value = transaction.reference || '';
-        
-        const notesInput = document.getElementById('transaction-notes');
-        if (notesInput) notesInput.value = transaction.notes || '';
+        Object.entries(fields).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.value = value;
+        });
         
         const deleteBtn = document.getElementById('delete-transaction');
         if (deleteBtn) deleteBtn.style.display = 'block';
@@ -1938,14 +1426,6 @@ setupEventListeners() {
         if (transaction.receipt) {
             this.receiptPreview = transaction.receipt;
             this.showReceiptPreviewInTransactionModal(transaction.receipt);
-        } else {
-            this.receiptPreview = null;
-            this.clearReceiptPreview();
-        }
-        
-        const modal = document.getElementById('transaction-modal');
-        if (modal && modal.classList.contains('hidden')) {
-            modal.classList.remove('hidden');
         }
     },
 
@@ -1957,6 +1437,7 @@ setupEventListeners() {
             userId = window.firebase.auth().currentUser.uid;
         }
         
+        // Get form values
         const id = document.getElementById('transaction-id')?.value || Date.now();
         const date = document.getElementById('transaction-date')?.value;
         const type = document.getElementById('transaction-type')?.value;
@@ -1967,6 +1448,7 @@ setupEventListeners() {
         const reference = document.getElementById('transaction-reference')?.value || '';
         const notes = document.getElementById('transaction-notes')?.value || '';
         
+        // Validation
         if (!date || !type || !category || !amount || !description) {
             this.showNotification('Please fill in all required fields', 'error');
             return;
@@ -1977,6 +1459,7 @@ setupEventListeners() {
             return;
         }
         
+        // Prepare receipt data
         let receiptData = null;
         if (this.receiptPreview) {
             receiptData = {
@@ -1990,6 +1473,7 @@ setupEventListeners() {
             };
         }
         
+        // Prepare transaction data
         const transactionData = {
             id: parseInt(id),
             date,
@@ -2010,45 +1494,42 @@ setupEventListeners() {
         
         try {
             if (existingIndex > -1) {
+                // Update existing transaction
                 this.transactions[existingIndex] = transactionData;
-                
-                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                this.saveData();
                 
                 if (this.isFirebaseAvailable && window.db) {
                     try {
                         await window.db.collection('transactions')
                             .doc(id.toString())
                             .set(transactionData, { merge: true });
-                        console.log('✅ Transaction updated in Firebase:', id);
                     } catch (firebaseError) {
                         console.warn('⚠️ Failed to update in Firebase:', firebaseError.message);
-                        this.showNotification('Saved locally (Firebase error)', 'warning');
                     }
                 }
                 
                 this.showNotification('Transaction updated successfully!', 'success');
                 
             } else {
+                // Add new transaction
                 transactionData.id = transactionData.id || Date.now();
                 this.transactions.unshift(transactionData);
-                
-                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                this.saveData();
                 
                 if (this.isFirebaseAvailable && window.db) {
                     try {
                         await window.db.collection('transactions')
                             .doc(transactionData.id.toString())
                             .set(transactionData);
-                        console.log('✅ Transaction saved to Firebase:', transactionData.id);
                     } catch (firebaseError) {
                         console.warn('⚠️ Failed to save to Firebase:', firebaseError.message);
-                        this.showNotification('Saved locally (Firebase error)', 'warning');
                     }
                 }
                 
                 this.showNotification('Transaction saved successfully!', 'success');
             }
             
+            // Update UI
             this.updateStats();
             this.updateTransactionsList();
             this.updateCategoryBreakdown();
@@ -2078,9 +1559,11 @@ setupEventListeners() {
         const transaction = this.transactions.find(t => t.id == transactionId);
         if (!transaction) return;
         
+        // Remove from local array
         this.transactions = this.transactions.filter(t => t.id != transactionId);
         this.saveData();
         
+        // Remove from Firebase
         if (this.isFirebaseAvailable && window.db) {
             try {
                 await window.db.collection('transactions')
@@ -2091,6 +1574,7 @@ setupEventListeners() {
             }
         }
         
+        // Update UI
         this.updateStats();
         this.updateTransactionsList();
         this.updateCategoryBreakdown();
@@ -2186,6 +1670,7 @@ setupEventListeners() {
         
         this.showNotification(`Processing "${receipt.name}"...`, 'info');
         
+        // Open transaction modal for this receipt
         this.showTransactionModal();
         
         setTimeout(() => {
@@ -2200,6 +1685,7 @@ setupEventListeners() {
                 descriptionInput.value = `Receipt: ${receipt.name}`;
             }
             
+            // Attach receipt to transaction
             if (receipt.type && receipt.type.startsWith('image/')) {
                 this.receiptPreview = {
                     ...receipt,
@@ -2304,36 +1790,6 @@ setupEventListeners() {
         }
     },
 
-    async saveTransactionToFirebase(transactionData) {
-        if (!this.isFirebaseAvailable || !window.db) {
-            throw new Error('Firebase not available');
-        }
-        
-        const user = window.firebase?.auth?.().currentUser;
-        if (!user) {
-            throw new Error('User not authenticated');
-        }
-        
-        try {
-            const transactionWithUser = {
-                ...transactionData,
-                userId: user.uid,
-                updatedAt: new Date().toISOString()
-            };
-            
-            await window.db.collection('transactions')
-                .doc(transactionData.id.toString())
-                .set(transactionWithUser, { merge: true });
-            
-            console.log('✅ Saved transaction to Firebase:', transactionData.id);
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Firestore save error:', error);
-            throw error;
-        }
-    },
-
     // ==================== UI RENDERING ====================
     renderModule() {
         if (!this.element) return;
@@ -2366,7 +1822,7 @@ setupEventListeners() {
                 }
                 
                 .popout-modal-content {
-                    background: var(--background-color) !important;
+                    background: white !important;
                     border-radius: 20px !important;
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
                     max-width: 600px !important;
@@ -2379,125 +1835,227 @@ setupEventListeners() {
                     position: relative !important;
                 }
                 
-                @media (max-width: 768px) {
-                    .popout-modal-content {
-                        width: 95% !important;
-                        max-height: 85vh !important;
-                        margin: 10px auto !important;
-                    }
-                    
-                    #import-receipts-modal {
-                        padding: 10px !important;
-                        align-items: flex-start !important;
-                    }
-                }
-                
-                @media (max-height: 700px) {
-                    .popout-modal-content {
-                        max-height: 95vh !important;
-                    }
-                }
-                
                 /* Drag & drop styles */
-                #receipt-upload-area.drag-over {
+                .drag-over {
                     border-color: #3b82f6 !important;
                     background: rgba(59, 130, 246, 0.1) !important;
                     border-style: solid !important;
                 }
                 
-                #drop-area.drag-over {
-                    border-color: #3b82f6 !important;
-                    background: rgba(59, 130, 246, 0.1) !important;
-                }
-                
-                .popout-modal-header {
-                    position: sticky !important;
-                    top: 0 !important;
-                    background: var(--glass-bg) !important;
-                    z-index: 100 !important;
-                }
-                
                 /* ==================== BASE STYLES ==================== */
-                .import-receipts-container { padding: 20px; }
-                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
-                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
-                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
-                .card-icon { font-size: 32px; margin-bottom: 4px; }
-                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
-                
-                .camera-section .glass-card { margin-bottom: 24px; }
-                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
-                .camera-controls { display: flex; gap: 12px; justify-content: center; }
-                
-                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
-                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
-                .upload-icon { font-size: 48px; margin-bottom: 16px; }
-                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
-                
-                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
-                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
-                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
-                
-                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
-                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
-                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-                .receipt-info { flex: 1; }
-                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-                .receipt-status { font-weight: 600; }
-                .status-pending { color: #f59e0b; }
-                .status-processed { color: #10b981; }
-                .status-error { color: #ef4444; }
-                
-                .empty-state { text-align: center; padding: 40px 20px; }
-                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-                .header-flex { display: flex; justify-content: space-between; align-items: center; }
-                
-                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
-                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
-                
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
-                
-                #upload-receipt-btn * { pointer-events: none; }
-                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
-                
-                #receipt-upload-area:hover {
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
+                .module-container {
+                    padding: 20px;
                 }
                 
-                #receipt-preview-container {
-                    transition: all 0.3s ease;
+                .module-header {
+                    margin-bottom: 30px;
                 }
                 
-                #receipt-preview-container.hidden {
-                    display: none !important;
+                .module-title {
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin: 0 0 8px 0;
                 }
                 
-                #image-preview.hidden {
-                    display: none !important;
+                .module-subtitle {
+                    color: #6b7280;
+                    margin: 0 0 20px 0;
+                }
+                
+                .header-actions {
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+                
+                .btn {
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    border: none;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+                }
+                
+                .btn-primary {
+                    background: #3b82f6;
+                    color: white;
+                }
+                
+                .btn-primary:hover {
+                    background: #2563eb;
+                }
+                
+                .btn-outline {
+                    background: transparent;
+                    color: #374151;
+                    border: 1px solid #d1d5db;
+                }
+                
+                .btn-outline:hover {
+                    background: #f9fafb;
+                    border-color: #9ca3af;
+                }
+                
+                .btn-danger {
+                    background: #fee2e2;
+                    color: #dc2626;
+                    border: 1px solid #fecaca;
+                }
+                
+                .btn-danger:hover {
+                    background: #fecaca;
+                }
+                
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }
+                
+                .stat-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 24px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                    border: 1px solid #e5e7eb;
+                    text-align: center;
+                }
+                
+                .quick-action-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 30px;
+                }
+                
+                .quick-action-btn {
+                    background: white;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    padding: 24px;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 12px;
+                }
+                
+                .quick-action-btn:hover {
+                    border-color: #3b82f6;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+                
+                .glass-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 24px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                    border: 1px solid #e5e7eb;
+                    margin-bottom: 24px;
+                }
+                
+                .receipt-queue-badge {
+                    background: #ef4444;
+                    color: white;
+                    border-radius: 10px;
+                    padding: 2px 8px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    margin-left: 8px;
+                }
+                
+                .form-input {
+                    width: 100%;
+                    padding: 10px 12px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    box-sizing: border-box;
+                }
+                
+                .form-input:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+                
+                .form-label {
+                    display: block;
+                    margin-bottom: 6px;
+                    font-weight: 500;
+                    color: #374151;
+                    font-size: 14px;
                 }
                 
                 .popout-modal {
-                    z-index: 9999;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
                 }
                 
-                .receipt-preview-item {
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-top: 8px;
-                    border: 1px solid var(--glass-border);
+                .popout-modal.hidden {
+                    display: none;
                 }
-
+                
+                .popout-modal-header {
+                    padding: 20px;
+                    border-bottom: 1px solid #e5e7eb;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                
+                .popout-modal-title {
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #1f2937;
+                }
+                
+                .popout-modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #6b7280;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .popout-modal-body {
+                    padding: 20px;
+                    overflow-y: auto;
+                    flex: 1;
+                }
+                
+                .popout-modal-footer {
+                    padding: 20px;
+                    border-top: 1px solid #e5e7eb;
+                    display: flex;
+                    gap: 12px;
+                    justify-content: flex-end;
+                }
+                
                 .camera-preview {
                     width: 100%;
                     height: 400px;
@@ -2505,245 +2063,14 @@ setupEventListeners() {
                     border-radius: 12px;
                     overflow: hidden;
                     margin-bottom: 20px;
-                    position: relative;
-                    display: block !important;
                 }
                 
                 .camera-preview video {
-                    width: 100% !important;
-                    height: 100% !important;
+                    width: 100%;
+                    height: 100%;
                     object-fit: cover;
-                    display: block !important;
-                    background: #000 !important;
                 }
                 
-                #camera-section {
-                    display: none;
-                }
-                
-                #camera-section[style*="display: block"],
-                #camera-section[style*="display:block"] {
-                    display: block !important;
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                }
-                
-                #camera-option {
-                    border: 2px solid transparent;
-                    transition: all 0.2s;
-                }
-                
-                #camera-option:hover {
-                    border-color: var(--primary-color);
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-
-                @keyframes pulse {
-                    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-                    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-                }
-
-                .new-receipt {
-                    animation: pulse 2s infinite;
-                }
-
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translate(-50%, -40%); }
-                    to { opacity: 1; transform: translate(-50%, -50%); }
-                }
-
-                .delete-receipt-btn {
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .delete-receipt-btn:hover {
-                    background-color: #dc2626 !important;
-                    color: white !important;
-                }
-                .btn-danger {
-                    background: #fef2f2;
-                    color: #dc2626;
-                    border: 1px solid #fecaca;
-                }
-                .btn-danger:hover {
-                    background: #fee2e2;
-                    border-color: #fca5a5;
-                }
-                .btn-sm {
-                    padding: 6px 12px;
-                    font-size: 14px;
-                    border-radius: 6px;
-                }
-
-                .delete-receipt-btn.deleting {
-                    opacity: 0.7;
-                    cursor: not-allowed;
-                    background-color: #9ca3af !important;
-                }
-
-                .receipt-modal-scrollable {
-                    max-height: 70vh !important;
-                    overflow-y: auto !important;
-                    padding: 20px !important;
-                }
-
-                .receipt-content-wrapper {
-                    max-width: 800px !important;
-                    margin: 0 auto !important;
-                    white-space: pre-wrap !important;
-                    word-wrap: break-word !important;
-                    line-height: 1.5 !important;
-                    font-family: monospace !important;
-                    font-size: 14px !important;
-                }
-
-                .receipt-text-container {
-                    overflow-x: hidden !important;
-                    padding-right: 10px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar {
-                    width: 8px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar-track {
-                    background: rgba(0, 0, 0, 0.1) !important;
-                    border-radius: 4px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.3) !important;
-                    border-radius: 4px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.4) !important;
-                }
-
-                @media (max-width: 768px) {
-                    .receipt-modal-scrollable {
-                        max-height: 80vh !important;
-                        padding: 15px !important;
-                    }
-                    
-                    .receipt-content-wrapper {
-                        font-size: 12px !important;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .receipt-modal-scrollable {
-                        max-height: 85vh !important;
-                        padding: 10px !important;
-                    }
-                }
-
-                .process-receipt-btn,
-                .delete-receipt-btn {
-                    display: inline-flex !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                    position: relative !important;
-                    z-index: 10 !important;
-                }
-
-                @media (min-width: 769px) {
-                    .pending-receipt-item {
-                        position: relative;
-                        padding-right: 200px !important;
-                    }
-                    
-                    .receipt-actions {
-                        position: absolute !important;
-                        right: 16px !important;
-                        top: 50% !important;
-                        transform: translateY(-50%) !important;
-                        display: flex !important;
-                        gap: 8px !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        z-index: 100 !important;
-                    }
-                    
-                    .receipt-actions .btn {
-                        min-width: 80px !important;
-                        height: 36px !important;
-                        display: inline-flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        white-space: nowrap !important;
-                    }
-                }
-
-                @media (max-width: 768px) {
-                    .pending-receipt-item {
-                        flex-direction: column;
-                        align-items: stretch;
-                        gap: 12px;
-                    }
-                    
-                    .receipt-actions {
-                        display: flex !important;
-                        justify-content: flex-end;
-                        gap: 8px;
-                        margin-top: 12px;
-                    }
-                }
-
-                .receipt-card .receipt-actions,
-                .pending-receipt-item .receipt-actions {
-                    overflow: visible !important;
-                    clip: auto !important;
-                    clip-path: none !important;
-                    height: auto !important;
-                    width: auto !important;
-                }
-
-                .upload-area {
-                    min-height: 200px !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    background: var(--glass-bg) !important;
-                    border: 2px dashed var(--glass-border) !important;
-                    border-radius: 12px !important;
-                    padding: 40px 20px !important;
-                    cursor: pointer !important;
-                    transition: all 0.3s ease !important;
-                }
-
-                .upload-area:hover {
-                    border-color: var(--primary-color) !important;
-                    background: var(--primary-color)10 !important;
-                }
-
-                .upload-icon {
-                    font-size: 64px !important;
-                    margin-bottom: 16px !important;
-                    color: var(--text-secondary) !important;
-                }
-
-                .upload-section, .camera-section, .recent-section {
-                    min-height: 100px !important;
-                    margin-bottom: 24px !important;
-                }
-
-                .glass-card {
-                    min-height: 150px !important;
-                }
-
-                .upload-system-container {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-                    max-width: 100%;
-                    background: #ffffff;
-                    border-radius: 12px;
-                    padding: 20px;
-                    border: 1px solid #e5e7eb;
-                }
-
                 .upload-dropzone {
                     border: 2px dashed #d1d5db;
                     border-radius: 10px;
@@ -2752,29 +2079,71 @@ setupEventListeners() {
                     background: #f9fafb;
                     margin-bottom: 20px;
                     cursor: pointer;
+                    transition: all 0.2s;
                 }
-
+                
                 .upload-dropzone:hover {
-                    border-color: #4f46e5;
+                    border-color: #3b82f6;
                     background: #f0f1ff;
                 }
-
+                
                 .dropzone-icon {
                     font-size: 48px;
                     color: #9ca3af;
                     margin-bottom: 16px;
                 }
-
+                
                 .dropzone-title {
                     font-size: 18px;
                     font-weight: 600;
                     margin-bottom: 8px;
                     color: #374151;
                 }
-
+                
                 .dropzone-subtitle {
                     color: #6b7280;
                     margin-bottom: 20px;
+                }
+                
+                .file-type-badge {
+                    background: #e5e7eb;
+                    color: #374151;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    margin: 0 2px;
+                }
+                
+                @media (max-width: 768px) {
+                    .popout-modal-content {
+                        width: 95%;
+                        max-height: 85vh;
+                    }
+                    
+                    .header-actions {
+                        flex-direction: column;
+                    }
+                    
+                    .btn {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+                
+                .amount-income {
+                    color: #10b981;
+                }
+                
+                .amount-expense {
+                    color: #ef4444;
+                }
+                
+                .status-pending {
+                    color: #f59e0b;
+                }
+                
+                .status-processed {
+                    color: #10b981;
                 }
             </style>
 
@@ -2787,22 +2156,21 @@ setupEventListeners() {
                        <button class="btn btn-primary" id="add-transaction">
                             ➕ Add Transaction
                         </button>
-                        <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                        <button class="btn btn-primary" id="upload-receipt-btn">
                              📄 Import Receipts
-                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
+                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge">${pendingReceipts.length}</span>` : ''}
                         </button>
                     </div>
                 </div>
 
                 <!-- Pending Receipts Section -->
                 ${pendingReceipts.length > 0 ? `
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
+                    <div class="glass-card" id="pending-receipts-section">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
+                            <h3 style="color: #1f2937; font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
                             <div style="display: flex; gap: 12px;">
                                 <button class="btn btn-outline" id="refresh-receipts-btn">
-                                    <span class="btn-icon">🔄</span>
-                                    <span class="btn-text">Refresh</span>
+                                    🔄 Refresh
                                 </button>
                                 <button class="btn btn-primary" id="process-all-receipts">
                                     ⚡ Process All
@@ -2819,23 +2187,23 @@ setupEventListeners() {
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Total Income</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Total Expenses</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Net Income</div>
                     </div>
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;">${stats.transactionCount}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Transactions</div>
                     </div>
                 </div>
 
@@ -2843,37 +2211,37 @@ setupEventListeners() {
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-income-btn">
                         <div style="font-size: 32px;">💰</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Add Income</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Record farm income</span>
                     </button>
                     <button class="quick-action-btn" id="add-expense-btn">
                         <div style="font-size: 32px;">💸</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Add Expense</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Record farm expenses</span>
                     </button>
                     <button class="quick-action-btn" id="financial-report-btn">
                         <div style="font-size: 32px;">📊</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Financial Report</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">View financial summary</span>
                     </button>
                     <button class="quick-action-btn" id="category-analysis-btn">
                         <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Category Analysis</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Breakdown by category</span>
                     </button>
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                <div class="glass-card" style="margin-bottom: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
+                        <h3 style="color: #1f2937; font-size: 20px;">📋 Recent Transactions</h3>
                         <div style="display: flex; gap: 12px;">
                             <select id="transaction-filter" class="form-input" style="width: auto;">
                                 <option value="all">All Transactions</option>
                                 <option value="income">Income Only</option>
                                 <option value="expense">Expenses Only</option>
                             </select>
-                            <button class="btn-outline" id="export-transactions">Export</button>
+                            <button class="btn btn-outline" id="export-transactions">Export</button>
                         </div>
                     </div>
                     <div id="transactions-list">
@@ -2882,8 +2250,8 @@ setupEventListeners() {
                 </div>
 
                 <!-- Category Breakdown -->
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
+                <div class="glass-card">
+                    <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
                     <div id="category-breakdown">
                         ${this.renderCategoryBreakdown()}
                     </div>
@@ -2904,11 +2272,10 @@ setupEventListeners() {
                         </div>
                     </div>
                     <div class="popout-modal-footer">
-                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; min-width: 0;">Cancel</button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none; flex: 1; min-width: 0; position: relative;">
-                            <span class="btn-icon">⚡</span>
-                            <span class="btn-text">Process Receipts</span>
-                            <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
+                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
+                            ⚡ Process Receipts
+                            <span id="process-receipts-count" style="background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; margin-left: 8px;">
                                 0
                             </span>
                         </button>
@@ -2962,7 +2329,7 @@ setupEventListeners() {
                                             <option value="transport">Transport</option>
                                             <option value="marketing">Marketing</option>
                                             <option value="other-expense">Other Expenses</option>
-                                    </optgroup>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div>
@@ -3001,55 +2368,43 @@ setupEventListeners() {
                             <!-- Receipt Section -->
                             <div style="margin-bottom: 16px;">
                                 <label class="form-label">Receipt (Optional)</label>
-                                <div id="receipt-upload-area" style="border: 2px dashed var(--glass-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px;">
-                                    <div style="font-size: 48px; margin-bottom: 8px;">📄</div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Attach Receipt</div>
-                                    <div style="color: var(--text-secondary); font-size: 14px;">Click to upload or drag & drop</div>
-                                    <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Supports JPG, PNG, PDF (Max 10MB)</div>
+                                <div id="receipt-upload-area" class="upload-dropzone" style="margin-bottom: 12px;">
+                                    <div class="dropzone-icon">📄</div>
+                                    <h4 class="dropzone-title">Attach Receipt</h4>
+                                    <p class="dropzone-subtitle">Click to upload or drag & drop</p>
+                                    <div style="display: flex; gap: 4px; justify-content: center;">
+                                        <span class="file-type-badge">JPG</span>
+                                        <span class="file-type-badge">PNG</span>
+                                        <span class="file-type-badge">PDF</span>
+                                    </div>
                                     <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
                                 </div>
                                 
                                 <!-- Receipt Preview -->
                                 <div id="receipt-preview-container" class="hidden">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <div style="font-size: 24px;">📄</div>
                                             <div>
-                                                <div style="font-weight: 600; color: var(--text-primary);" id="receipt-filename">receipt.jpg</div>
-                                                <div style="font-size: 12px; color: var(--text-secondary);" id="receipt-size">2.5 MB</div>
+                                                <div style="font-weight: 600; color: #374151;" id="receipt-filename">receipt.jpg</div>
+                                                <div style="font-size: 12px; color: #6b7280;" id="receipt-size">2.5 MB</div>
                                             </div>
                                         </div>
-                                        <button type="button" id="remove-receipt" class="btn-icon" style="color: var(--text-secondary);">🗑️</button>
+                                        <button type="button" id="remove-receipt" class="btn btn-outline" style="padding: 6px 12px;">🗑️</button>
                                     </div>
                                     
                                     <!-- Image Preview -->
                                     <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #e5e7eb;">
                                     </div>
-                                    
-                                    <!-- Process Button -->
-                                    <button type="button" id="process-receipt-btn" class="btn-outline" style="width: 100%; margin-top: 8px;">
-                                        🔍 Extract Information from Receipt
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- OCR Results -->
-                            <div id="ocr-results" class="hidden" style="background: #f0f9ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <h4 style="color: #1e40af; margin: 0;">📄 Extracted from Receipt</h4>
-                                    <button type="button" id="use-ocr-data" class="btn-primary" style="font-size: 12px; padding: 4px 8px;">Apply</button>
-                                </div>
-                                <div id="ocr-details" style="font-size: 14px; color: #374151;">
-                                    <!-- OCR extracted details will appear here -->
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
+                        <button type="button" class="btn btn-outline" id="cancel-transaction">Cancel</button>
+                        <button type="button" class="btn btn-danger" id="delete-transaction" style="display: none;">Delete</button>
+                        <button type="button" class="btn btn-primary" id="save-transaction">Save Transaction</button>
                     </div>
                 </div>
             </div>
@@ -3057,119 +2412,87 @@ setupEventListeners() {
 
         this.setupEventListeners();
         this.setupReceiptFormHandlers();
-        
-        setTimeout(() => {
-            this.setupReceiptActionListeners();
-        }, 100);
+        this.setupReceiptActionListeners();
     },
 
     renderImportReceiptsModal() {
         return `
-            <div class="import-receipts-container">
+            <div style="padding: 20px;">
                 <div class="quick-actions-section">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option">
-                            <div class="card-icon">📷</div>
-                            <span class="card-title">Take Photo</span>
-                            <span class="card-subtitle">Use camera</span>
+                    <h2 class="section-title" style="font-size: 18px; font-weight: 600; color: #1f2937; margin-bottom: 16px;">Upload Method</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                        <button class="quick-action-btn" id="camera-option" style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                            <div style="font-size: 32px;">📷</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Take Photo</span>
+                            <span style="font-size: 12px; color: #6b7280;">Use camera</span>
                         </button>
-                        <button class="card-button" id="upload-option">
-                            <div class="card-icon">📁</div>
-                            <span class="card-title">Upload Files</span>
-                            <span class="card-subtitle">From device</span>
+                        <button class="quick-action-btn" id="upload-option" style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                            <div style="font-size: 32px;">📁</div>
+                            <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Upload Files</span>
+                            <span style="font-size: 12px; color: #6b7280;">From device</span>
                         </button>
                     </div>
                 </div>
                 
                 <!-- UPLOAD SECTION -->
                 <div id="upload-section" style="display: none;">
-                    <div class="upload-system-container" id="upload-system">
-                        <!-- BACK BUTTON HEADER -->
-                        <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
-                            <button class="btn btn-outline" id="back-to-main-view" 
-                                    style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
-                                <span>←</span>
-                                <span>Back</span>
-                            </button>
-                            <div>
-                                <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
-                                    📤 Upload Files
-                                </h3>
-                                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
-                                    Drag & drop or select files from your device
-                                </p>
+                    <!-- BACK BUTTON HEADER -->
+                    <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+                        <button class="btn btn-outline" id="back-to-main-view" 
+                                style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
+                            <span>←</span>
+                            <span>Back</span>
+                        </button>
+                        <div>
+                            <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
+                                📤 Upload Files
+                            </h3>
+                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
+                                Drag & drop or select files from your device
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload Dropzone -->
+                    <div class="upload-dropzone" id="receipt-dropzone">
+                        <div class="dropzone-content">
+                            <div class="dropzone-icon">📁</div>
+                            <h4 class="dropzone-title">Drop receipt files here</h4>
+                            <p class="dropzone-subtitle">or click to browse</p>
+                            <div class="file-types">
+                                <span class="file-type-badge">JPG</span>
+                                <span class="file-type-badge">PNG</span>
+                                <span class="file-type-badge">PDF</span>
+                                <span class="file-type-badge">HEIC</span>
                             </div>
                         </div>
-                        
-                        <!-- Receipts Upload Section -->
-                        <div class="upload-section active" data-mode="receipts">
-                            <div class="upload-header" style="margin-bottom: 24px;">
-                                <h3 class="upload-title">
-                                    📄 Upload Receipts
-                                </h3>
-                                <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
-                            </div>
-                            
-                            <div class="upload-dropzone" id="receipt-dropzone">
-                                <div class="dropzone-content">
-                                    <div class="dropzone-icon">
-                                        📁
-                                    </div>
-                                    <h4 class="dropzone-title">Drop receipt files here</h4>
-                                    <p class="dropzone-subtitle">or click to browse</p>
-                                    <div class="file-types">
-                                        <span class="file-type-badge">JPG</span>
-                                        <span class="file-type-badge">PNG</span>
-                                        <span class="file-type-badge">PDF</span>
-                                        <span class="file-type-badge">HEIC</span>
-                                    </div>
-                                </div>
-                                <input type="file" id="receipt-file-input" 
-                                       accept="image/*,.pdf,.heic,.heif" 
-                                       multiple 
-                                       class="dropzone-input" style="display: none;">
-                            </div>
-                            
-                            <div class="uploaded-files-container" style="margin-top: 24px;">
-                                <h5 class="files-title">
-                                    📎 Uploaded Receipts
-                                    <span class="badge" id="receipt-count">0</span>
-                                </h5>
-                                <div class="files-list" id="receipt-files-list">
-                                    <div class="empty-state">
-                                        📭
-                                        <p>No receipts uploaded yet</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <input type="file" id="receipt-file-input" 
+                               accept="image/*,.pdf,.heic,.heif" 
+                               multiple 
+                               class="dropzone-input" style="display: none;">
                     </div>
                 </div>
                 
                 <!-- CAMERA SECTION -->
                 <div class="camera-section" id="camera-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📷 Camera</h3>
-                            <div class="camera-status" id="camera-status">Ready</div>
+                    <div class="glass-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #1f2937; font-size: 18px;">📷 Camera</h3>
+                            <div id="camera-status" style="color: #6b7280; font-size: 14px;">Ready</div>
                         </div>
                         <div class="camera-preview">
                             <video id="camera-preview" autoplay playsinline></video>
                             <canvas id="camera-canvas" style="display: none;"></canvas>
                         </div>
-                        <div class="camera-controls">
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
                             <button class="btn btn-outline" id="switch-camera">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch Camera</span>
+                                🔄 Switch Camera
                             </button>
                             <button class="btn btn-primary" id="capture-photo">
-                                <span class="btn-icon">📸</span>
-                                <span class="btn-text">Capture</span>
+                                📸 Capture
                             </button>
                             <button class="btn btn-outline" id="cancel-camera">
-                                <span class="btn-icon">✖️</span>
-                                <span class="btn-text">Back to Upload</span>
+                                ✖️ Back to Upload
                             </button>
                         </div>
                     </div>
@@ -3177,12 +2500,11 @@ setupEventListeners() {
                 
                 <!-- RECENT SECTION -->
                 <div class="recent-section" id="recent-section" style="display: block;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📋 Recent Receipts</h3>
+                    <div class="glass-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb; margin-top: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #1f2937; font-size: 18px;">📋 Recent Receipts</h3>
                             <button class="btn btn-outline" id="refresh-receipts">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Refresh</span>
+                                🔄 Refresh
                             </button>
                         </div>
                         <div id="recent-receipts-list" class="receipts-list">
@@ -3197,53 +2519,42 @@ setupEventListeners() {
     renderPendingReceiptsList(receipts) {
         if (receipts.length === 0) {
             return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
                     <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
                     <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
+                    <div style="font-size: 14px; color: #6b7280;">Upload receipts to get started</div>
                 </div>
             `;
         }
 
         return `
-            <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${receipts.map(receipt => `
-                    <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
-                            <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
-                            <div class="receipt-details">
-                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
-                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
+                    <div data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                            <div>
+                                <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">${receipt.name}</div>
+                                <div style="font-size: 12px; color: #6b7280; display: flex; gap: 8px; align-items: center;">
                                     <span>${this.formatFileSize(receipt.size || 0)}</span>
                                     <span>•</span>
-                                    <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
+                                    <span class="status-pending">Pending</span>
                                     <span>•</span>
                                     <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="receipt-actions" style="display: flex; gap: 8px;">
-                            ${receipt.downloadURL ? `
-                                <a href="${receipt.downloadURL.startsWith('http') ? receipt.downloadURL : '#'}" 
-                                           target="_blank" 
-                                           class="btn btn-sm btn-outline" 
-                                           title="View receipt" 
-                                           style="padding: 6px 12px;"
-                                           onclick="${!receipt.downloadURL.startsWith('http') ? 'event.preventDefault(); alert(\'Receipt unavailable\');' : ''}"> 
-                                    <span class="btn-icon">👁️</span>
-                                </a>
-                            ` : ''}
-                            <button class="btn btn-sm btn-primary process-receipt-btn" 
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-outline process-receipt-btn" 
                                     data-receipt-id="${receipt.id}" 
                                     style="padding: 6px 12px;">
-                                <span class="btn-icon">🔍</span>
-                                <span class="btn-text">Process</span>
+                                🔍 Process
                             </button>
-                            <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                            <button class="btn btn-danger delete-receipt-btn" 
                                     data-receipt-id="${receipt.id}" 
                                     style="padding: 6px 12px;" 
                                     title="Delete receipt">
-                                <span class="btn-icon">🗑️</span>
+                                🗑️
                             </button>
                         </div>
                     </div>
@@ -3255,50 +2566,41 @@ setupEventListeners() {
     renderRecentReceiptsList() {
         if (this.receiptQueue.length === 0) {
             return `
-                <div class="empty-state">
-                    <div class="empty-icon">📄</div>
-                    <h4>No receipts found</h4>
-                    <p>Upload receipts to get started</p>
+                <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <h4 style="margin: 0 0 8px 0; color: #6b7280;">No receipts found</h4>
+                    <p style="margin: 0; color: #6b7280;">Upload receipts to get started</p>
                 </div>
             `;
         }
         
-        const recentReceipts = this.receiptQueue
-            .slice(0, 5)
-            .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+        const recentReceipts = this.receiptQueue.slice(0, 5);
         
         return `
-            <div class="receipts-grid" id="recent-receipts-grid">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
                 ${recentReceipts.map(receipt => {
                     return `
-                        <div class="receipt-card" data-receipt-id="${receipt.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px;">
-                            <div class="receipt-preview">
-                                ${receipt.type?.startsWith('image/') && receipt.downloadURL?.startsWith('http') ? 
-                                    `<img src="${receipt.downloadURL}" alt="${receipt.name}" 
-                                          loading="lazy" 
-                                          style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">` : 
-                                    `<div class="file-icon" style="font-size: 24px;">📄</div>`
-                                }
-                            </div>
-                            <div class="receipt-info" style="flex: 1;">
-                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
-                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary);">
-                                    <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
-                                    <span>•</span>
-                                    <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                        <div data-receipt-id="${receipt.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+                            <div style="font-size: 24px;">📄</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">${receipt.name}</div>
+                                <div style="font-size: 12px; color: #6b7280;">
+                                    <span>${this.formatFileSize(receipt.size || 0)}</span>
+                                    <span> • </span>
+                                    <span class="status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
                                 </div>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-sm btn-outline process-btn" 
+                                <button class="btn btn-outline process-btn" 
                                         data-receipt-id="${receipt.id}"
                                         style="white-space: nowrap; padding: 6px 12px;">
                                     🔍 Process
                                 </button>
-                                <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                <button class="btn btn-danger delete-receipt-btn" 
                                         data-receipt-id="${receipt.id}"
                                         style="padding: 6px 12px;" 
                                         title="Delete receipt">
-                                    🗑️ Delete
+                                    🗑️
                                 </button>
                             </div>
                         </div>
@@ -3311,10 +2613,10 @@ setupEventListeners() {
     renderTransactionsList(transactions) {
         if (transactions.length === 0) {
             return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
                     <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
                     <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
+                    <div style="font-size: 14px; color: #6b7280;">Add your first transaction to get started</div>
                 </div>
             `;
         }
@@ -3329,16 +2631,16 @@ setupEventListeners() {
                     return `
                         <div class="transaction-item" data-id="${transaction.id}" 
                              style="display: flex; justify-content: space-between; align-items: center; 
-                                    padding: 16px; background: var(--glass-bg); border-radius: 8px; 
-                                    border: 1px solid var(--glass-border); cursor: pointer;"
-                             onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
+                                    padding: 16px; background: #f9fafb; border-radius: 8px; 
+                                    border: 1px solid #e5e7eb; cursor: pointer;"
+                             onclick="window.IncomeExpensesModule.editTransaction(${transaction.id})">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <span style="font-size: 24px;">${icon}</span>
                                 <div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
                                         ${transaction.description || 'No description'}
                                     </div>
-                                    <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                    <div style="display: flex; gap: 8px; font-size: 12px; color: #6b7280;">
                                         <span>${transaction.date || 'No date'}</span>
                                         <span>•</span>
                                         <span>${transaction.category || 'Uncategorized'}</span>
@@ -3348,11 +2650,11 @@ setupEventListeners() {
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div class="${amountClass}" style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
+                                <div class="${amountClass}" style="font-weight: bold; font-size: 16px;">
                                     ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
                                 </div>
                                 ${transaction.reference ? `
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
                                         Ref: ${transaction.reference}
                                     </div>
                                 ` : ''}
@@ -3382,7 +2684,7 @@ setupEventListeners() {
         return `
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                 <div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💰 Income</h4>
+                    <h4 style="color: #1f2937; margin-bottom: 16px; font-size: 16px;">💰 Income</h4>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         ${Object.entries(incomeByCategory).length > 0 ? 
                             Object.entries(incomeByCategory)
@@ -3392,20 +2694,20 @@ setupEventListeners() {
                                     return `
                                         <div style="margin-bottom: 8px;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                                <span style="font-size: 14px; color: var(--text-primary);">${category}</span>
+                                                <span style="font-size: 14px; color: #1f2937;">${category}</span>
                                                 <span style="font-weight: 600; font-size: 14px; color: #10b981;">${this.formatCurrency(amount)}</span>
                                             </div>
                                             <div style="height: 6px; background: #d1fae5; border-radius: 3px; overflow: hidden;">
                                                 <div style="height: 100%; width: ${percentage}%; background: #10b981; border-radius: 3px;"></div>
                                             </div>
-                                            <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                            <div style="text-align: right; font-size: 12px; color: #6b7280; margin-top: 2px;">
                                                 ${percentage}%
                                             </div>
                                         </div>
                                     `;
                                 }).join('')
                             : `
-                                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                <div style="text-align: center; color: #6b7280; padding: 20px;">
                                     No income recorded yet
                                 </div>
                             `
@@ -3414,7 +2716,7 @@ setupEventListeners() {
                 </div>
                 
                 <div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💸 Expenses</h4>
+                    <h4 style="color: #1f2937; margin-bottom: 16px; font-size: 16px;">💸 Expenses</h4>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         ${Object.entries(expensesByCategory).length > 0 ? 
                             Object.entries(expensesByCategory)
@@ -3424,20 +2726,20 @@ setupEventListeners() {
                                     return `
                                         <div style="margin-bottom: 8px;">
                                             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                                <span style="font-size: 14px; color: var(--text-primary);">${category}</span>
+                                                <span style="font-size: 14px; color: #1f2937;">${category}</span>
                                                 <span style="font-weight: 600; font-size: 14px; color: #ef4444;">${this.formatCurrency(amount)}</span>
                                             </div>
                                             <div style="height: 6px; background: #fee2e2; border-radius: 3px; overflow: hidden;">
                                                 <div style="height: 100%; width: ${percentage}%; background: #ef4444; border-radius: 3px;"></div>
                                             </div>
-                                            <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                            <div style="text-align: right; font-size: 12px; color: #6b7280; margin-top: 2px;">
                                                 ${percentage}%
                                             </div>
                                         </div>
                                     `;
                                 }).join('')
                             : `
-                                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                <div style="text-align: center; color: #6b7280; padding: 20px;">
                                     No expenses recorded yet
                                 </div>
                             `
@@ -3448,50 +2750,46 @@ setupEventListeners() {
         `;
     },
 
-    // ==================== FIXED: UPDATE RECEIPT QUEUE UI ====================
-updateReceiptQueueUI() {
-    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-    console.log('🔄 Updating receipt queue UI:', pendingReceipts.length, 'pending');
-    
-    // Update badge on upload button
-    const uploadBtn = document.getElementById('upload-receipt-btn');
-    if (uploadBtn) {
-        let badge = document.getElementById('receipt-count-badge');
+    // ==================== UI UPDATES ====================
+    updateReceiptQueueUI() {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        const badge = document.getElementById('receipt-count-badge');
+        
         if (pendingReceipts.length > 0) {
             if (!badge) {
-                badge = document.createElement('span');
-                badge.className = 'receipt-queue-badge';
-                badge.id = 'receipt-count-badge';
-                uploadBtn.appendChild(badge);
+                const uploadBtn = document.getElementById('upload-receipt-btn');
+                if (uploadBtn) {
+                    const span = document.createElement('span');
+                    span.className = 'receipt-queue-badge';
+                    span.id = 'receipt-count-badge';
+                    span.textContent = pendingReceipts.length;
+                    uploadBtn.appendChild(span);
+                }
+            } else {
+                badge.textContent = pendingReceipts.length;
             }
-            badge.textContent = pendingReceipts.length;
-        } else if (badge) {
-            badge.remove();
-        }
-    }
-    
-    // Update pending section if exists
-    const pendingSection = document.getElementById('pending-receipts-section');
-    if (pendingSection) {
-        if (pendingReceipts.length > 0) {
-            const list = document.getElementById('pending-receipts-list');
-            if (list) {
-                list.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+            
+            const pendingList = document.getElementById('pending-receipts-list');
+            if (pendingList) {
+                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
             }
         } else {
-            pendingSection.innerHTML = `
-                <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                    <div style="font-size: 14px;">Upload receipts to get started</div>
-                </div>
-            `;
+            if (badge) badge.remove();
+            
+            const pendingSection = document.getElementById('pending-receipts-section');
+            if (pendingSection) {
+                pendingSection.innerHTML = `
+                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                        <div style="font-size: 14px; color: #6b7280;">Upload receipts to get started</div>
+                    </div>
+                `;
+            }
         }
-    }
-    
-    // Update process button in modal
-    this.updateProcessReceiptsButton();
-},
+        
+        this.updateProcessReceiptsButton();
+    },
 
     updateModalReceiptsList() {
         const recentList = document.getElementById('recent-receipts-list');
@@ -3502,9 +2800,7 @@ updateReceiptQueueUI() {
         const pendingList = document.getElementById('pending-receipts-list');
         if (pendingList) {
             const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-            if (pendingReceipts.length > 0) {
-                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
-            }
+            pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
         }
         
         this.updateProcessReceiptsButton();
@@ -3522,11 +2818,9 @@ updateReceiptQueueUI() {
         if (pendingCount > 0) {
             processBtn.style.display = 'flex';
             processCount.textContent = pendingCount;
-            processCount.style.display = 'flex';
             processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
         } else {
             processBtn.style.display = 'none';
-            processCount.style.display = 'none';
         }
     },
 
@@ -3578,7 +2872,10 @@ updateReceiptQueueUI() {
     },
 
     getRecentTransactions(limit = 10) {
-        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+        return this.transactions
+            .slice()
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, limit);
     },
 
     filterTransactions(filterType) {
@@ -3598,12 +2895,10 @@ updateReceiptQueueUI() {
         const maxSize = 10 * 1024 * 1024;
         
         if (!file || !validTypes.includes(file.type)) {
-            console.warn('Invalid file type:', file?.type);
             return false;
         }
         
         if (file.size > maxSize) {
-            console.warn('File too large:', file.size);
             return false;
         }
         
@@ -3628,8 +2923,7 @@ updateReceiptQueueUI() {
     formatFirebaseTimestamp(timestamp) {
         if (!timestamp) return 'Unknown date';
         
-        const date = typeof timestamp === 'string' ? new Date(timestamp) : 
-                    timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(timestamp);
         
         return date.toLocaleDateString('en-US', {
             month: 'short',
@@ -3666,8 +2960,6 @@ updateReceiptQueueUI() {
 
     // ==================== EXPORT & REPORT ====================
     exportTransactions() {
-        console.log('Exporting transactions...');
-        
         const data = {
             transactions: this.transactions,
             stats: this.calculateStats(),
@@ -3690,34 +2982,32 @@ updateReceiptQueueUI() {
     },
 
     generateFinancialReport() {
-        console.log('Generating financial report...');
-        
         const stats = this.calculateStats();
         const recentTransactions = this.getRecentTransactions(20);
         
         const report = `
-            Farm Financial Report
-            Generated: ${new Date().toLocaleDateString()}
-            
-            ======================
-            SUMMARY
-            ======================
-            Total Income: ${this.formatCurrency(stats.totalIncome)}
-            Total Expenses: ${this.formatCurrency(stats.totalExpenses)}
-            Net Income: ${this.formatCurrency(stats.netIncome)}
-            Total Transactions: ${stats.transactionCount}
-            
-            ======================
-            RECENT TRANSACTIONS (Last 20)
-            ======================
-            ${recentTransactions.map(t => 
-                `${t.date} | ${t.type.toUpperCase()} | ${t.category} | ${this.formatCurrency(t.amount)} | ${t.description}`
-            ).join('\n')}
-            
-            ======================
-            CATEGORY BREAKDOWN
-            ======================
-            ${this.renderTextCategoryBreakdown()}
+Farm Financial Report
+Generated: ${new Date().toLocaleDateString()}
+
+======================
+SUMMARY
+======================
+Total Income: ${this.formatCurrency(stats.totalIncome)}
+Total Expenses: ${this.formatCurrency(stats.totalExpenses)}
+Net Income: ${this.formatCurrency(stats.netIncome)}
+Total Transactions: ${stats.transactionCount}
+
+======================
+RECENT TRANSACTIONS (Last 20)
+======================
+${recentTransactions.map(t => 
+    `${t.date} | ${t.type.toUpperCase()} | ${t.category} | ${this.formatCurrency(t.amount)} | ${t.description}`
+).join('\n')}
+
+======================
+CATEGORY BREAKDOWN
+======================
+${this.renderTextCategoryBreakdown()}
         `;
         
         const blob = new Blob([report], { type: 'text/plain' });
@@ -3760,81 +3050,7 @@ updateReceiptQueueUI() {
     },
 
     generateCategoryAnalysis() {
-        const modalContent = `
-            <div class="popout-modal-content" style="max-width: 800px;">
-                <div class="popout-modal-header">
-                    <h3 class="popout-modal-title">📊 Category Analysis</h3>
-                    <button class="popout-modal-close" id="close-category-analysis">&times;</button>
-                </div>
-                <div class="popout-modal-body">
-                    ${this.renderCategoryBreakdown()}
-                </div>
-                <div class="popout-modal-footer">
-                    <button class="btn-outline" id="export-category-analysis">Export as CSV</button>
-                    <button class="btn-primary" id="close-category-btn">Close</button>
-                </div>
-            </div>
-        `;
-        
-        this.showModal('Category Analysis', modalContent);
-        
-        setTimeout(() => {
-            const closeBtn = document.getElementById('close-category-btn');
-            const closeModalBtn = document.getElementById('close-category-analysis');
-            const exportBtn = document.getElementById('export-category-analysis');
-            
-            if (closeBtn) closeBtn.addEventListener('click', () => this.hideAllModals());
-            if (closeModalBtn) closeModalBtn.addEventListener('click', () => this.hideAllModals());
-            if (exportBtn) exportBtn.addEventListener('click', () => this.exportCategoryAnalysis());
-        }, 100);
-    },
-
-    exportCategoryAnalysis() {
-        const incomeByCategory = {};
-        const expensesByCategory = {};
-        
-        this.transactions.forEach(transaction => {
-            if (transaction.type === 'income') {
-                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
-            } else {
-                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
-            }
-        });
-        
-        let csv = 'Category,Type,Amount\n';
-        
-        Object.entries(incomeByCategory).forEach(([category, amount]) => {
-            csv += `"${category}",income,${amount}\n`;
-        });
-        
-        Object.entries(expensesByCategory).forEach(([category, amount]) => {
-            csv += `"${category}",expense,${amount}\n`;
-        });
-        
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `category-analysis-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        this.showNotification('Category analysis exported as CSV', 'success');
-    },
-
-    showModal(title, content) {
-        this.hideAllModals();
-        
-        const modal = document.createElement('div');
-        modal.className = 'popout-modal';
-        modal.id = 'custom-modal';
-        modal.innerHTML = content;
-        
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.remove('hidden'), 10);
+        this.showNotification('Category analysis feature coming soon!', 'info');
     }
 };
 
@@ -3844,14 +3060,5 @@ if (window.FarmModules) {
     console.log('✅ Income & Expenses module registered');
 }
 
-// Universal registration
-(function() {
-    console.log(`📦 Registering income-expenses module...`);
-    
-    if (window.FarmModules) {
-        window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
-        console.log(`✅ income-expenses module registered successfully!`);
-    } else {
-        console.error('❌ FarmModules framework not found');
-    }
-})();
+// Make module globally available
+window.IncomeExpensesModule = IncomeExpensesModule;
