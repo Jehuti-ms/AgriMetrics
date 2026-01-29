@@ -876,23 +876,23 @@ setupVideoPlayback(video, status, resolve, reject) {
         }, 10000);
     },
 
-    stopCamera() {
-        console.log('🛑 Stopping camera...');
-        
-        if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => track.stop());
-            this.cameraStream = null;
-        }
-        
-        const video = document.getElementById('camera-preview');
-        if (video) {
-            video.srcObject = null;
-            video.pause();
-        }
-        
-        console.log('✅ Camera stopped');
-    },
-
+   stopCamera() {
+    console.log('🛑 Stopping camera...');
+    
+    if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => track.stop());
+        this.cameraStream = null;
+    }
+    
+    const video = document.getElementById('camera-preview');
+    if (video) {
+        video.srcObject = null;
+        video.pause();
+    }
+    
+    console.log('✅ Camera stopped');
+},
+    
     switchCamera() {
         console.log('🔄 Switching camera...');
         
@@ -1271,7 +1271,7 @@ async saveReceiptToFirebase(receipt) {
         }, 100);
     },
 
-  showCameraInterface() {
+ showCameraInterface() {
     console.log('📷 Showing camera interface...');
     
     const cameraSection = document.getElementById('camera-section');
@@ -1283,22 +1283,9 @@ async saveReceiptToFirebase(receipt) {
     if (quickActionsSection) quickActionsSection.style.display = 'none';
     if (cameraSection) {
         cameraSection.style.display = 'block';
-        // Give DOM more time to update and ensure video element is ready
+        // SIMPLIFIED: Initialize camera immediately
         setTimeout(() => {
-            const video = document.getElementById('camera-preview');
-            if (video) {
-                // Reset video attributes
-                video.srcObject = null;
-                video.pause();
-                video.load();
-            }
-            
-            setTimeout(() => {
-                this.initializeCamera().catch(error => {
-                    console.log('Camera initialization failed:', error.message);
-                    this.showUploadInterface();
-                });
-            }, 300);
+            this.initializeCamera();
         }, 100);
     }
     if (recentSection) recentSection.style.display = 'block';
