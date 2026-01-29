@@ -1,4 +1,4 @@
-// modules/income-expenses.js - COMPLETE FIXED VERSION
+ // modules/income-expenses.js - COMPLETE FIXED VERSION
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
@@ -2614,30 +2614,30 @@ async saveReceiptToFirebase(receipt) {
                 </div>
                 
                 <!-- CAMERA SECTION -->
-            <div class="camera-section" id="camera-section" style="display: none;">
-                <div class="glass-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0; color: #1f2937; font-size: 18px;">📷 Camera</h3>
-                        <div id="camera-status" style="color: #6b7280; font-size: 14px;">Ready</div>
-                    </div>
-                    <div class="camera-preview">
-                        <!-- FIX: Add muted attribute to prevent audio permission issues -->
-                        <video id="camera-preview" autoplay playsinline muted></video>
-                        <canvas id="camera-canvas" style="display: none;"></canvas>
-                    </div>
-                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
-                        <button class="btn btn-outline" id="switch-camera">
-                            🔄 Switch Camera
-                        </button>
-                        <button class="btn btn-primary" id="capture-photo">
-                            📸 Capture
-                        </button>
-                        <button class="btn btn-outline" id="cancel-camera">
-                            ✖️ Back to Upload
-                        </button>
+                   <div class="camera-section" id="camera-section" style="display: none;">
+                    <div class="glass-card" style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #1f2937; font-size: 18px;">📷 Camera</h3>
+                            <div id="camera-status" style="color: #6b7280; font-size: 14px;">Ready</div>
+                        </div>
+                        <div class="camera-preview">
+                            <!-- SIMPLIFIED: No muted attribute, let browser handle it -->
+                            <video id="camera-preview" autoplay playsinline></video>
+                            <canvas id="camera-canvas" style="display: none;"></canvas>
+                        </div>
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                            <button class="btn btn-outline" id="switch-camera">
+                                🔄 Switch Camera
+                            </button>
+                            <button class="btn btn-primary" id="capture-photo">
+                                📸 Capture
+                            </button>
+                            <button class="btn btn-outline" id="cancel-camera">
+                                ✖️ Back to Upload
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
                 
                 <!-- RECENT SECTION -->
                 <div class="recent-section" id="recent-section" style="display: block;">
