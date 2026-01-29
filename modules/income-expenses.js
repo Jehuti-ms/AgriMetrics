@@ -334,83 +334,94 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
-    initializeCamera() {
-        console.log('📷 Initializing camera...');
+   // ==================== FIXED: CAMERA PREVIEW ====================
+initializeCamera() {
+    console.log('📷 Initializing camera...');
+    
+    try {
+        const video = document.getElementById('camera-preview');
+        const status = document.getElementById('camera-status');
         
-        try {
-            const video = document.getElementById('camera-preview');
-            const status = document.getElementById('camera-status');
-            
-            if (!video) {
-                console.error('❌ Camera preview element not found');
-                this.showNotification('Camera preview element missing', 'error');
-                this.showUploadInterface();
-                return;
-            }
-            
-            video.srcObject = null;
-            video.pause();
-            
-            if (this.cameraStream) {
-                this.cameraStream.getTracks().forEach(track => track.stop());
-                this.cameraStream = null;
-            }
-            
-            if (status) status.textContent = 'Requesting camera access...';
-            
-            const constraints = {
-                video: {
-                    facingMode: this.cameraFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            };
-            
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(stream => {
-                    console.log('✅ Camera access granted');
-                    this.cameraStream = stream;
-                    video.srcObject = stream;
-                    
-                    video.play()
-                        .then(() => {
-                            console.log('📹 Video is playing successfully');
-                            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                            if (status) status.textContent = `${cameraType} Camera - Ready`;
-                            
-                            const switchBtn = document.getElementById('switch-camera');
-                            if (switchBtn) {
-                                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                                switchBtn.innerHTML = `
-                                    <span class="btn-icon">🔄</span>
-                                    <span class="btn-text">Switch to ${nextMode}</span>
-                                `;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('❌ Video play error:', error);
-                            this.showNotification('Failed to start camera playback', 'error');
-                        });
-                })
-                .catch(error => {
-                    console.error('❌ Camera error:', error);
-                    let errorMessage = 'Camera access denied.';
-                    if (error.name === 'NotFoundError') {
-                        errorMessage = 'No camera found on this device.';
-                    } else if (error.name === 'NotAllowedError') {
-                        errorMessage = 'Camera permission denied.';
-                    }
-                    this.showNotification(errorMessage, 'error');
-                    this.showUploadInterface();
-                });
-                
-        } catch (error) {
-            console.error('🚨 Camera initialization error:', error);
-            this.showNotification('Camera initialization failed', 'error');
+        if (!video) {
+            console.error('❌ Camera preview element not found');
+            this.showNotification('Camera preview element missing', 'error');
             this.showUploadInterface();
+            return;
         }
-    },
+        
+        // Clear any existing stream
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        
+        if (status) status.textContent = 'Requesting camera access...';
+        
+        // Ensure camera section is visible
+        const cameraSection = document.getElementById('camera-section');
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            cameraSection.style.opacity = '1';
+            cameraSection.style.visibility = 'visible';
+        }
+        
+        const constraints = {
+            video: {
+                facingMode: this.cameraFacingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+        
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                console.log('✅ Camera access granted');
+                this.cameraStream = stream;
+                video.srcObject = stream;
+                
+                // Force video to play
+                video.muted = true;
+                video.play()
+                    .then(() => {
+                        console.log('📹 Video is playing successfully');
+                        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                        if (status) status.textContent = `${cameraType} Camera - Ready`;
+                        
+                        // Update switch button
+                        const switchBtn = document.getElementById('switch-camera');
+                        if (switchBtn) {
+                            const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                            switchBtn.innerHTML = `
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Switch to ${nextMode}</span>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Video play error:', error);
+                        this.showNotification('Failed to start camera playback', 'error');
+                        this.showUploadInterface();
+                    });
+            })
+            .catch(error => {
+                console.error('❌ Camera error:', error);
+                let errorMessage = 'Camera access denied.';
+                if (error.name === 'NotFoundError') {
+                    errorMessage = 'No camera found on this device.';
+                } else if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Camera permission denied.';
+                }
+                this.showNotification(errorMessage, 'error');
+                this.showUploadInterface();
+            });
+            
+    } catch (error) {
+        console.error('🚨 Camera initialization error:', error);
+        this.showNotification('Camera initialization failed', 'error');
+        this.showUploadInterface();
+    }
+},
 
     capturePhoto() {
         console.log('📸 Capturing photo...');
@@ -853,165 +864,205 @@ const IncomeExpensesModule = {
     },
 
     // ==================== FILE UPLOAD ====================
-    handleFileUpload(files) {
-        console.log('🎯 ========== handleFileUpload START ==========');
-        console.log('📁 Number of files:', files.length);
-        
-        if (!files || files.length === 0) {
-            console.log('❌ No files');
-            return;
-        }
-        
-        const file = files[0];
-        console.log('📄 Processing file:', file.name);
-        
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            console.log('✅ FileReader loaded successfully');
-            
-            try {
-                const dataURL = e.target.result;
-                const receiptId = 'upload_' + Date.now();
-                
-                const receipt = {
-                    id: receiptId,
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    dataURL: dataURL,
-                    status: 'pending',
-                    uploadedAt: new Date().toISOString(),
-                    source: 'upload'
-                };
-                
-                console.log('📦 Receipt created:', receipt);
-                
-                console.log('💾 Calling saveReceiptLocally...');
-                if (this.saveReceiptLocally) {
-                    this.saveReceiptLocally(receipt);
-                    console.log('✅ Called saveReceiptLocally');
-                } else {
-                    console.error('❌ saveReceiptLocally not found!');
-                }
-                
-                console.log('🔍 Checking receiptQueue after save:', {
-                    length: this.receiptQueue.length,
-                    containsReceipt: this.receiptQueue.some(r => r.id === receiptId),
-                    lastReceipt: this.receiptQueue[0]
-                });
-                
-                console.log('🔄 Updating UI...');
-                this.updateReceiptQueueUI();
-                this.updateModalReceiptsList();
-                
-                console.log('🔔 Showing notification...');
-                this.showNotification(`Uploaded: ${file.name}`, 'success');
-                
-                console.log('🪟 Showing success modal...');
-                this.showSimpleSuccessModal([receipt]);
-                
-                console.log('✅ ========== handleFileUpload SUCCESS ==========');
-                
-            } catch (error) {
-                console.error('❌ Error in handleFileUpload:', error);
-                this.showNotification('Upload failed: ' + error.message, 'error');
-            }
-        };
-        
-        reader.onerror = (error) => {
-            console.error('❌ FileReader error:', error);
-            this.showNotification('Failed to read file', 'error');
-        };
-        
-        reader.onabort = () => {
-            console.error('❌ FileReader aborted');
-            this.showNotification('File reading cancelled', 'error');
-        };
-        
-        console.log('📖 Starting FileReader readAsDataURL...');
-        reader.readAsDataURL(file);
-    },
+   // ==================== FIXED: FILE UPLOAD SIMPLIFIED ====================
+handleFileUpload(files) {
+    console.log('📤 handleFileUpload called with', files.length, 'files');
     
-    showSimpleSuccessModal(receipts) {
-        console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
-        
-        const modalId = 'upload-success-modal-' + Date.now();
-        
-        const modalHTML = `
-            <div id="${modalId}" style="
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                border-radius: 10px;
-                padding: 20px;
-                width: 90%;
-                max-width: 400px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                z-index: 99999;
-                border: 2px solid #4CAF50;
-            ">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="font-size: 40px;">✅</div>
-                    <h3 style="margin: 10px 0; color: #333;">Upload Complete!</h3>
-                    <p style="color: #666; margin: 0;">
-                        Successfully uploaded: <strong>${receipts[0].name}</strong>
-                    </p>
+    if (!files || files.length === 0) {
+        this.showNotification('No files selected', 'error');
+        return;
+    }
+    
+    const file = files[0]; // Process first file
+    
+    console.log('📄 Processing file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+    });
+    
+    // Create receipt object
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        try {
+            const dataURL = e.target.result;
+            const receiptId = 'upload_' + Date.now();
+            
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                dataURL: dataURL,
+                size: file.size,
+                type: file.type,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                source: 'upload'
+            };
+            
+            // Add to receipt queue
+            this.addReceiptToQueue(receipt);
+            
+            // Update UI
+            this.updateReceiptQueueUI();
+            this.updateModalReceiptsList();
+            
+            // Show success
+            this.showNotification(`✅ "${file.name}" uploaded successfully!`, 'success');
+            
+            // Show success modal
+            this.showSimpleSuccessModal([receipt]);
+            
+        } catch (error) {
+            console.error('❌ Error processing file:', error);
+            this.showNotification('Failed to process file: ' + error.message, 'error');
+        }
+    };
+    
+    reader.onerror = () => {
+        this.showNotification('Failed to read file', 'error');
+    };
+    
+    reader.readAsDataURL(file);
+},
+
+    // ==================== FIXED: ADD RECEIPT TO QUEUE ====================
+addReceiptToQueue(receipt) {
+    console.log('➕ Adding receipt to queue:', receipt.name);
+    
+    // Add to memory queue
+    this.receiptQueue.unshift(receipt);
+    
+    // Save to localStorage
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    localReceipts.unshift(receipt);
+    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+    
+    console.log('✅ Receipt added. Queue length:', this.receiptQueue.length);
+},
+
+    // ==================== FIXED: SHOW SIMPLE SUCCESS MODAL ====================
+showSimpleSuccessModal(receipts) {
+    console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
+    
+    // Remove any existing modal
+    const existingModal = document.getElementById('simple-success-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modalId = 'simple-success-modal-' + Date.now();
+    const receipt = receipts[0];
+    
+    const modalHTML = `
+        <div id="${modalId}" style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 999999;
+            border: 2px solid #10b981;
+        ">
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                <h3 style="margin: 0 0 8px 0; color: #1f2937;">Upload Successful!</h3>
+                <p style="color: #6b7280; margin: 0 0 20px 0;">
+                    "${receipt.name}" has been uploaded.
+                </p>
+                
+                ${receipt.type?.startsWith('image/') ? `
+                    <div style="margin: 16px 0; border-radius: 8px; overflow: hidden; max-height: 200px;">
+                        <img src="${receipt.dataURL}" 
+                             alt="Preview" 
+                             style="width: 100%; max-height: 200px; object-fit: contain;">
+                    </div>
+                ` : ''}
+                
+                <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 16px 0; text-align: left;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #6b7280;">File:</span>
+                        <span style="font-weight: 600;">${receipt.name}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #6b7280;">Size:</span>
+                        <span>${this.formatFileSize(receipt.size)}</span>
+                    </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px;">
-                    <button id="${modalId}-ok-btn" style="
+                <div style="display: flex; gap: 12px;">
+                    <button id="${modalId}-process" style="
                         flex: 1;
-                        background: #4CAF50;
+                        background: #3b82f6;
                         color: white;
                         border: none;
                         padding: 12px;
-                        border-radius: 5px;
-                        font-weight: bold;
+                        border-radius: 8px;
+                        font-weight: 600;
                         cursor: pointer;
                     ">
-                        OK
+                        🔍 Process Now
+                    </button>
+                    <button id="${modalId}-close" style="
+                        flex: 1;
+                        background: #f1f5f9;
+                        color: #374151;
+                        border: none;
+                        padding: 12px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">
+                        Done
                     </button>
                 </div>
             </div>
-            
-            <div id="${modalId}-overlay" style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                z-index: 99998;
-            "></div>
-        `;
+        </div>
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999998;
+        " id="${modalId}-overlay"></div>
+    `;
+    
+    // Add to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add event listeners
+    setTimeout(() => {
+        const modal = document.getElementById(modalId);
+        const overlay = document.getElementById(modalId + '-overlay');
         
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        console.log('✅ Modal shown!');
+        // Process button
+        document.getElementById(modalId + '-process')?.addEventListener('click', () => {
+            modal?.remove();
+            overlay?.remove();
+            this.processSingleReceipt(receipt.id);
+        });
         
-        setTimeout(() => {
-            const modal = document.getElementById(modalId);
-            const overlay = document.getElementById(modalId + '-overlay');
-            const okButton = document.getElementById(modalId + '-ok-btn');
-            
-            if (okButton) {
-                okButton.addEventListener('click', () => {
-                    if (modal) modal.remove();
-                    if (overlay) overlay.remove();
-                });
-            }
-            
-            if (overlay) {
-                overlay.addEventListener('click', () => {
-                    if (modal) modal.remove();
-                    if (overlay) overlay.remove();
-                });
-            }
-        }, 10);
-    },
-
+        // Close button
+        document.getElementById(modalId + '-close')?.addEventListener('click', () => {
+            modal?.remove();
+            overlay?.remove();
+        });
+        
+        // Overlay click
+        overlay?.addEventListener('click', () => {
+            modal?.remove();
+            overlay?.remove();
+        });
+    }, 10);
+},
+    
     showUploadSuccessModal(receipts) {
         console.log('🪟 CREATING SUCCESS MODAL for', receipts.length, 'receipts');
         
@@ -1327,84 +1378,105 @@ const IncomeExpensesModule = {
     },
 
     // ==================== MODAL MANAGEMENT ====================
-    showImportReceiptsModal() {
-        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
-        
-        this.stopCamera();
-        
-        const modal = document.getElementById('import-receipts-modal');
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.classList.remove('hidden');
-            modal.style.zIndex = '10000';
-            console.log('✅ Modal shown with display: flex');
-        } else {
-            console.error('❌ Modal element not found');
-            return;
-        }
-        
-        const importReceiptsContent = document.getElementById('import-receipts-content');
-        if (importReceiptsContent) {
-            importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
-        }
-        
-        setTimeout(() => {
-            console.log('🔄 Setting up handlers...');
-            this.setupImportReceiptsHandlers();
-            this.setupFileInput();
-            this.showQuickActionsView();
-            console.log('✅ Modal fully initialized');
-        }, 100);
-    },
+    // ==================== FIXED: MODAL SHOW/HIDE METHODS ====================
+showImportReceiptsModal() {
+    console.log('🎯 SHOWING IMPORT RECEIPTS MODAL');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Show the modal
+    const modal = document.getElementById('import-receipts-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        console.log('✅ Modal shown with display: flex');
+    }
+    
+    // Set the modal content
+    const importReceiptsContent = document.getElementById('import-receipts-content');
+    if (importReceiptsContent) {
+        importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
+    }
+    
+    // Setup handlers
+    setTimeout(() => {
+        this.setupImportReceiptsHandlers();
+        this.showQuickActionsView();
+    }, 100);
+},
 
     hideImportReceiptsModal() {
-        console.log('❌ Closing import receipts modal');
-        
-        this.stopCamera();
-        
-        const modal = document.getElementById('import-receipts-modal');
-        if (modal) {
-            modal.style.display = 'none';
-            modal.classList.add('hidden');
-            console.log('✅ Modal hidden');
-        }
-        
-        const fileInput = document.getElementById('receipt-upload-input');
-        if (fileInput) {
-            fileInput.value = '';
-        }
-    },
+    console.log('❌ Hiding import receipts modal');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Hide the modal
+    const modal = document.getElementById('import-receipts-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
+},
 
-    showTransactionModal(transactionId = null) {
-        this.hideAllModals();
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.remove('hidden');
-        this.currentEditingId = transactionId;
-        
-        const form = document.getElementById('transaction-form');
-        if (form) {
-            form.reset();
-            const dateInput = document.getElementById('transaction-date');
-            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-            const deleteBtn = document.getElementById('delete-transaction');
-            if (deleteBtn) deleteBtn.style.display = 'none';
-            const title = document.getElementById('transaction-modal-title');
-            if (title) title.textContent = 'Add Transaction';
-            this.clearReceiptPreview();
-            
-            if (transactionId) {
-                setTimeout(() => this.editTransaction(transactionId), 50);
-            }
+  // ==================== FIXED: TRANSACTION MODAL METHODS ====================
+showTransactionModal(transactionId = null) {
+    console.log('📝 Showing transaction modal');
+    
+    this.hideAllModals();
+    this.currentEditingId = transactionId;
+    
+    const modal = document.getElementById('transaction-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+    }
+    
+    // Reset form
+    const form = document.getElementById('transaction-form');
+    if (form) {
+        form.reset();
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
         }
-    },
+        
+        // Hide delete button for new transactions
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) {
+            deleteBtn.style.display = 'none';
+        }
+        
+        // Set title
+        const title = document.getElementById('transaction-modal-title');
+        if (title) {
+            title.textContent = transactionId ? 'Edit Transaction' : 'Add Transaction';
+        }
+        
+        // Clear receipt preview
+        this.clearReceiptPreview();
+        
+        // Load transaction data if editing
+        if (transactionId) {
+            setTimeout(() => this.editTransaction(transactionId), 50);
+        }
+    }
+},
 
     hideTransactionModal() {
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.add('hidden');
-        this.currentEditingId = null;
-        this.receiptPreview = null;
-        this.clearReceiptPreview();
-    },
+    console.log('❌ Hiding transaction modal');
+    
+    const modal = document.getElementById('transaction-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+    }
+    
+    this.currentEditingId = null;
+    this.receiptPreview = null;
+    this.clearReceiptPreview();
+},
 
     showAddIncome() {
         this.showTransactionModal();
@@ -1430,22 +1502,41 @@ const IncomeExpensesModule = {
         this.stopCamera();
     },
 
-    // ==================== VIEW MANAGEMENT ====================
-    showQuickActionsView() {
-        console.log('🏠 Showing quick actions view...');
-        
-        this.stopCamera();
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        if (cameraSection) cameraSection.style.display = 'none';
-        if (uploadSection) uploadSection.style.display = 'none';
-        if (quickActionsSection) quickActionsSection.style.display = 'block';
-        if (recentSection) recentSection.style.display = 'block';
-    },
+    // ==================== FIXED: SHOW QUICK ACTIONS ====================
+showQuickActionsView() {
+    console.log('🏠 Showing quick actions view...');
+    
+    // Stop camera if running
+    this.stopCamera();
+    
+    // Get all sections
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    // Hide camera and upload sections
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+    }
+    
+    if (uploadSection) {
+        uploadSection.style.display = 'none';
+    }
+    
+    // Show quick actions section
+    if (quickActionsSection) {
+        quickActionsSection.style.display = 'block';
+    }
+    
+    // Always show recent section
+    if (recentSection) {
+        recentSection.style.display = 'block';
+    }
+    
+    console.log('✅ Quick actions view shown');
+},
+
 
     showUploadInterface() {
         console.log('📁 Showing upload interface...');
@@ -1660,87 +1751,122 @@ const IncomeExpensesModule = {
         console.log('✅ File input setup complete');
     },
 
-    setupEventListeners() {
-        console.log('Setting up event listeners (event delegation)...');
+   // ==================== FIXED: SIMPLIFIED EVENT LISTENERS ====================
+setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Remove all old listeners first
+    const buttons = [
+        'add-transaction',
+        'upload-receipt-btn',
+        'add-income-btn',
+        'add-expense-btn',
+        'financial-report-btn',
+        'category-analysis-btn',
+        'save-transaction',
+        'delete-transaction',
+        'cancel-transaction',
+        'close-transaction-modal',
+        'close-import-receipts',
+        'cancel-import-receipts',
+        'refresh-receipts-btn',
+        'process-all-receipts',
+        'export-transactions'
+    ];
+    
+    buttons.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.onclick = null;
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+        }
+    });
+    
+    // Setup specific listeners
+    setTimeout(() => {
+        // Main module buttons
+        document.getElementById('add-transaction')?.addEventListener('click', () => {
+            this.showTransactionModal();
+        });
         
-        if (this._globalClickHandler) {
-            document.removeEventListener('click', this._globalClickHandler);
-            document.removeEventListener('change', this._globalChangeHandler);
+        document.getElementById('upload-receipt-btn')?.addEventListener('click', () => {
+            this.showImportReceiptsModal();
+        });
+        
+        document.getElementById('add-income-btn')?.addEventListener('click', () => {
+            this.showAddIncome();
+        });
+        
+        document.getElementById('add-expense-btn')?.addEventListener('click', () => {
+            this.showAddExpense();
+        });
+        
+        document.getElementById('financial-report-btn')?.addEventListener('click', () => {
+            this.generateFinancialReport();
+        });
+        
+        document.getElementById('category-analysis-btn')?.addEventListener('click', () => {
+            this.generateCategoryAnalysis();
+        });
+        
+        // Transaction modal buttons
+        document.getElementById('save-transaction')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.saveTransaction();
+        });
+        
+        document.getElementById('delete-transaction')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.deleteTransaction();
+        });
+        
+        document.getElementById('cancel-transaction')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.hideTransactionModal();
+        });
+        
+        document.getElementById('close-transaction-modal')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.hideTransactionModal();
+        });
+        
+        // Import receipts modal buttons
+        document.getElementById('close-import-receipts')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.hideImportReceiptsModal();
+        });
+        
+        document.getElementById('cancel-import-receipts')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.hideImportReceiptsModal();
+        });
+        
+        // Other buttons
+        document.getElementById('refresh-receipts-btn')?.addEventListener('click', () => {
+            this.loadReceiptsFromFirebase();
+            this.showNotification('Receipts refreshed', 'success');
+        });
+        
+        document.getElementById('process-all-receipts')?.addEventListener('click', () => {
+            this.processPendingReceipts();
+        });
+        
+        document.getElementById('export-transactions')?.addEventListener('click', () => {
+            this.exportTransactions();
+        });
+        
+        // Transaction filter
+        const filter = document.getElementById('transaction-filter');
+        if (filter) {
+            filter.onchange = null;
+            filter.addEventListener('change', (e) => {
+                this.filterTransactions(e.target.value);
+            });
         }
         
-        this._globalClickHandler = (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            
-            const buttonId = button.id;
-            if (!buttonId) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log(`Button clicked: ${buttonId}`);
-            
-            switch(buttonId) {
-                case 'add-transaction':
-                    this.showTransactionModal();
-                    break;
-                case 'upload-receipt-btn':
-                    this.showImportReceiptsModal();
-                    break;
-                case 'add-income-btn':
-                    this.showAddIncome();
-                    break;
-                case 'add-expense-btn':
-                    this.showAddExpense();
-                    break;
-                case 'financial-report-btn':
-                    this.generateFinancialReport();
-                    break;
-                case 'category-analysis-btn':
-                    this.generateCategoryAnalysis();
-                    break;
-                case 'save-transaction':
-                    this.saveTransaction();
-                    break;
-                case 'delete-transaction':
-                    this.deleteTransaction();
-                    break;
-                case 'cancel-transaction':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-transaction-modal':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'cancel-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'refresh-receipts-btn':
-                    this.loadReceiptsFromFirebase();
-                    this.showNotification('Receipts refreshed', 'success');
-                    break;
-                case 'process-all-receipts':
-                    this.processPendingReceipts();
-                    break;
-                case 'export-transactions':
-                    this.exportTransactions();
-                    break;
-            }
-        };
-        
-        this._globalChangeHandler = (e) => {
-            if (e.target.id === 'transaction-filter') {
-                this.filterTransactions(e.target.value);
-            }
-        };
-        
-        document.addEventListener('click', this._globalClickHandler);
-        document.addEventListener('change', this._globalChangeHandler);
-        
-        console.log('✅ Event delegation setup complete');
-    },
+    }, 100);
+},
 
     setupReceiptFormHandlers() {
         const uploadArea = document.getElementById('receipt-upload-area');
@@ -3322,42 +3448,50 @@ const IncomeExpensesModule = {
         `;
     },
 
-    // ==================== UI UPDATES ====================
-    updateReceiptQueueUI() {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        const badge = document.getElementById('receipt-count-badge');
-        
+    // ==================== FIXED: UPDATE RECEIPT QUEUE UI ====================
+updateReceiptQueueUI() {
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    console.log('🔄 Updating receipt queue UI:', pendingReceipts.length, 'pending');
+    
+    // Update badge on upload button
+    const uploadBtn = document.getElementById('upload-receipt-btn');
+    if (uploadBtn) {
+        let badge = document.getElementById('receipt-count-badge');
         if (pendingReceipts.length > 0) {
             if (!badge) {
-                const uploadBtn = document.getElementById('upload-receipt-btn');
-                if (uploadBtn) {
-                    uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>`;
-                }
-            } else {
-                badge.textContent = pendingReceipts.length;
+                badge = document.createElement('span');
+                badge.className = 'receipt-queue-badge';
+                badge.id = 'receipt-count-badge';
+                uploadBtn.appendChild(badge);
             }
-            
-            const pendingList = document.getElementById('pending-receipts-list');
-            if (pendingList) {
-                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+            badge.textContent = pendingReceipts.length;
+        } else if (badge) {
+            badge.remove();
+        }
+    }
+    
+    // Update pending section if exists
+    const pendingSection = document.getElementById('pending-receipts-section');
+    if (pendingSection) {
+        if (pendingReceipts.length > 0) {
+            const list = document.getElementById('pending-receipts-list');
+            if (list) {
+                list.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
             }
         } else {
-            if (badge) badge.remove();
-            
-            const pendingSection = document.getElementById('pending-receipts-section');
-            if (pendingSection) {
-                pendingSection.innerHTML = `
-                    <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
-                    </div>
-                `;
-            }
+            pendingSection.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                    <div style="font-size: 14px;">Upload receipts to get started</div>
+                </div>
+            `;
         }
-        
-        this.updateProcessReceiptsButton();
-    },
+    }
+    
+    // Update process button in modal
+    this.updateProcessReceiptsButton();
+},
 
     updateModalReceiptsList() {
         const recentList = document.getElementById('recent-receipts-list');
