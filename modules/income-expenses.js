@@ -352,7 +352,7 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
-    initializeCamera() {
+   initializeCamera() {
     console.log('📷 Initializing camera...');
     
     return new Promise((resolve, reject) => {
@@ -373,77 +373,8 @@ const IncomeExpensesModule = {
             
             if (status) status.textContent = 'Requesting camera access...';
             
-            const constraints = {
-                video: {
-                    facingMode: this.cameraFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            };
-            
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(stream => {
-                    console.log('✅ Camera access granted');
-                    this.cameraStream = stream;
-                    video.srcObject = stream;
-                    
-                    // Wait for video metadata to load
-                    video.onloadedmetadata = () => {
-                        video.play()
-                            .then(() => {
-                                console.log('📹 Video is playing successfully');
-                                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                                if (status) status.textContent = `${cameraType} Camera - Ready`;
-                                
-                                const switchBtn = document.getElementById('switch-camera');
-                                if (switchBtn) {
-                                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                                    switchBtn.innerHTML = `
-                                        <span class="btn-icon">🔄</span>
-                                        <span class="btn-text">Switch to ${nextMode}</span>
-                                    `;
-                                }
-                                
-                                resolve(true);
-                            })
-                            .catch(error => {
-                                console.error('❌ Video play error:', error);
-                                this.showNotification('Failed to start camera playback', 'error');
-                                reject(error);
-                            });
-                    };
-                    
-                    // Fallback if onloadedmetadata doesn't fire
-                    setTimeout(() => {
-                        if (video.paused) {
-                            video.play()
-                                .then(() => {
-                                    console.log('📹 Video playing after timeout');
-                                    if (status) status.textContent = 'Camera Ready';
-                                    resolve(true);
-                                })
-                                .catch(error => {
-                                    console.error('❌ Video play error (timeout):', error);
-                                    reject(error);
-                                });
-                        }
-                    }, 1000);
-                })
-                .catch(error => {
-                    console.error('❌ Camera error:', error);
-                    let errorMessage = 'Camera access denied.';
-                    if (error.name === 'NotFoundError') {
-                        errorMessage = 'No camera found on this device.';
-                    } else if (error.name === 'NotAllowedError') {
-                        errorMessage = 'Camera permission denied.';
-                    } else if (error.name === 'NotReadableError') {
-                        errorMessage = 'Camera is already in use by another application.';
-                    }
-                    this.showNotification(errorMessage, 'error');
-                    this.showUploadInterface();
-                    reject(error);
-                });
+            // First try: specific constraints
+            this.attemptCameraAccess(video, status, resolve, reject);
                 
         } catch (error) {
             console.error('🚨 Camera initialization error:', error);
@@ -453,6 +384,120 @@ const IncomeExpensesModule = {
         }
     });
 },
+
+attemptCameraAccess(video, status, resolve, reject, isRetry = false) {
+    const constraints = isRetry ? {
+        video: true,  // Simple constraints for retry
+        audio: false
+    } : {
+        video: {
+            facingMode: this.cameraFacingMode,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        },
+        audio: false
+    };
+    
+    console.log(isRetry ? '🔄 Retrying with simple constraints...' : '📷 Trying camera access...');
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            console.log('✅ Camera access granted' + (isRetry ? ' with simple constraints' : ''));
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            
+            // Set up video play
+            this.setupVideoPlayback(video, status, resolve, reject);
+        })
+        .catch(error => {
+            console.error('❌ Camera error:', error);
+            
+            if (!isRetry && error.name === 'NotReadableError') {
+                // First try failed with NotReadableError, retry with simpler constraints
+                console.log('🔄 Camera in use, retrying with simpler constraints...');
+                setTimeout(() => {
+                    this.attemptCameraAccess(video, status, resolve, reject, true);
+                }, 500);
+                return;
+            }
+            
+            // Show appropriate error message
+            let errorMessage = 'Camera access denied.';
+            if (error.name === 'NotFoundError') {
+                errorMessage = 'No camera found on this device.';
+            } else if (error.name === 'NotAllowedError') {
+                errorMessage = 'Camera permission denied. Please allow camera access.';
+            } else if (error.name === 'NotReadableError') {
+                errorMessage = 'Camera is already in use by another application. Please close other apps using the camera.';
+            } else if (error.name === 'OverconstrainedError') {
+                errorMessage = 'Camera constraints cannot be satisfied.';
+            }
+            
+            this.showNotification(errorMessage, 'error');
+            this.showUploadInterface();
+            reject(error);
+        });
+},
+
+setupVideoPlayback(video, status, resolve, reject) {
+    // Try multiple methods to play the video
+    const playVideo = () => {
+        video.play()
+            .then(() => {
+                console.log('📹 Video is playing successfully');
+                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                if (status) status.textContent = `${cameraType} Camera - Ready`;
+                
+                const switchBtn = document.getElementById('switch-camera');
+                if (switchBtn) {
+                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                    switchBtn.innerHTML = `
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Switch to ${nextMode}</span>
+                    `;
+                }
+                
+                resolve(true);
+            })
+            .catch(playError => {
+                console.error('❌ Video play error:', playError);
+                
+                // Try playing with a timeout
+                setTimeout(() => {
+                    video.play()
+                        .then(() => {
+                            console.log('📹 Video playing after retry');
+                            if (status) status.textContent = 'Camera Ready';
+                            resolve(true);
+                        })
+                        .catch(retryError => {
+                            console.error('❌ Video play retry failed:', retryError);
+                            this.showNotification('Failed to start camera', 'error');
+                            reject(retryError);
+                        });
+                }, 300);
+            });
+    };
+    
+    // Try to play when metadata loads
+    video.onloadedmetadata = playVideo;
+    
+    // Fallback if metadata doesn't load quickly
+    setTimeout(() => {
+        if (video.paused && video.readyState >= 2) {
+            playVideo();
+        }
+    }, 1000);
+    
+    // Another fallback for slow devices
+    setTimeout(() => {
+        if (video.paused) {
+            console.log('⏱️ Forcing video play after timeout');
+            video.play().catch(() => {});
+        }
+    }, 2000);
+},
+    
 
     capturePhoto() {
         console.log('📸 Capturing photo...');
@@ -1226,7 +1271,7 @@ async saveReceiptToFirebase(receipt) {
         }, 100);
     },
 
-   showCameraInterface() {
+  showCameraInterface() {
     console.log('📷 Showing camera interface...');
     
     const cameraSection = document.getElementById('camera-section');
@@ -1238,12 +1283,22 @@ async saveReceiptToFirebase(receipt) {
     if (quickActionsSection) quickActionsSection.style.display = 'none';
     if (cameraSection) {
         cameraSection.style.display = 'block';
-        // Give DOM time to update before initializing camera
+        // Give DOM more time to update and ensure video element is ready
         setTimeout(() => {
-            this.initializeCamera().catch(error => {
-                console.log('Camera initialization failed, showing upload interface');
-                this.showUploadInterface();
-            });
+            const video = document.getElementById('camera-preview');
+            if (video) {
+                // Reset video attributes
+                video.srcObject = null;
+                video.pause();
+                video.load();
+            }
+            
+            setTimeout(() => {
+                this.initializeCamera().catch(error => {
+                    console.log('Camera initialization failed:', error.message);
+                    this.showUploadInterface();
+                });
+            }, 300);
         }, 100);
     }
     if (recentSection) recentSection.style.display = 'block';
@@ -1889,13 +1944,13 @@ async saveReceiptToFirebase(receipt) {
 
     // ==================== UI RENDERING ====================
     renderModule() {
-        if (!this.element) return;
+    if (!this.element) return;
 
-        const stats = this.calculateStats();
-        const recentTransactions = this.getRecentTransactions(10);
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const stats = this.calculateStats();
+    const recentTransactions = this.getRecentTransactions(10);
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
-        this.element.innerHTML = `
+    this.element.innerHTML = `
             <style>
                 /* ==================== CRITICAL MODAL FIXES ==================== */
                 #import-receipts-modal {
@@ -2510,6 +2565,7 @@ async saveReceiptToFirebase(receipt) {
         this.setupEventListeners();
         this.setupReceiptFormHandlers();
         this.setupReceiptActionListeners();
+        this.setupTransactionClickHandlers(); 
     },
 
     renderImportReceiptsModal() {
@@ -2709,61 +2765,89 @@ async saveReceiptToFirebase(receipt) {
     },
 
     renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
-                    <div style="font-size: 14px; color: #6b7280;">Add your first transaction to get started</div>
-                </div>
-            `;
-        }
-
+    if (transactions.length === 0) {
         return `
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const amountClass = isIncome ? 'amount-income' : 'amount-expense';
-                    const icon = isIncome ? '💰' : '💸';
-                    
-                    return `
-                        <div class="transaction-item" data-id="${transaction.id}" 
-                             style="display: flex; justify-content: space-between; align-items: center; 
-                                    padding: 16px; background: #f9fafb; border-radius: 8px; 
-                                    border: 1px solid #e5e7eb; cursor: pointer;"
-                             onclick="window.IncomeExpensesModule.editTransaction(${transaction.id})">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 24px;">${icon}</span>
-                                <div>
-                                    <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
-                                        ${transaction.description || 'No description'}
-                                    </div>
-                                    <div style="display: flex; gap: 8px; font-size: 12px; color: #6b7280;">
-                                        <span>${transaction.date || 'No date'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.category || 'Uncategorized'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.paymentMethod || 'Cash'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="${amountClass}" style="font-weight: bold; font-size: 16px;">
-                                    ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                </div>
-                                ${transaction.reference ? `
-                                    <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
-                                        Ref: ${transaction.reference}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
+                <div style="font-size: 14px; color: #6b7280;">Add your first transaction to get started</div>
             </div>
         `;
-    },
+    }
 
+    // Generate unique IDs for each transaction row
+    const transactionRows = transactions.map(transaction => {
+        const rowId = `transaction-row-${transaction.id}`;
+        const isIncome = transaction.type === 'income';
+        const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+        const icon = isIncome ? '💰' : '💸';
+        
+        return `
+            <div id="${rowId}" class="transaction-item" data-id="${transaction.id}" 
+                 style="display: flex; justify-content: space-between; align-items: center; 
+                        padding: 16px; background: #f9fafb; border-radius: 8px; 
+                        border: 1px solid #e5e7eb; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 24px;">${icon}</span>
+                    <div>
+                        <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                            ${transaction.description || 'No description'}
+                        </div>
+                        <div style="display: flex; gap: 8px; font-size: 12px; color: #6b7280;">
+                            <span>${transaction.date || 'No date'}</span>
+                            <span>•</span>
+                            <span>${transaction.category || 'Uncategorized'}</span>
+                            <span>•</span>
+                            <span>${transaction.paymentMethod || 'Cash'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="${amountClass}" style="font-weight: bold; font-size: 16px;">
+                        ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                    </div>
+                    ${transaction.reference ? `
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            Ref: ${transaction.reference}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Store transaction IDs for later event attachment
+    this.transactionIds = transactions.map(t => t.id);
+    
+    return `
+        <div style="display: flex; flex-direction: column; gap: 8px;" id="transactions-container">
+            ${transactionRows}
+        </div>
+    `;
+},
+
+    setupTransactionClickHandlers() {
+    // Clear existing handlers first
+    if (this.transactionClickHandler) {
+        document.removeEventListener('click', this.transactionClickHandler);
+    }
+    
+    // Use event delegation for transaction items
+    this.transactionClickHandler = (e) => {
+        const transactionItem = e.target.closest('.transaction-item');
+        if (transactionItem) {
+            const transactionId = transactionItem.dataset.id;
+            if (transactionId) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editTransaction(transactionId);
+            }
+        }
+    };
+    
+    document.addEventListener('click', this.transactionClickHandler);
+},
+    
     renderCategoryBreakdown() {
         const incomeByCategory = {};
         const expensesByCategory = {};
