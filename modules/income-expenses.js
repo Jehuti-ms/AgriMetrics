@@ -3040,291 +3040,57 @@ showCameraInterface() {
                 z-index: 100 !important;
             }
 
-            /* ==================== SPECIFIC FIXES FOR IMPORT RECEIPTS MODAL ==================== */
-#import-receipts-modal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(0, 0, 0, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    z-index: 99999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 40px 20px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-}
-
-#import-receipts-modal:not(.hidden) {
-    display: flex !important;
-}
-
-#import-receipts-modal .popout-modal-content {
-    background: white !important;
-    border-radius: 16px !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-    width: 90% !important;
-    max-width: 800px !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    min-height: 500px !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    position: relative !important;
-    margin: 0 !important;
-    top: 0 !important;
-}
-
-/* HEADER FIX - Reduce height */
-#import-receipts-modal .popout-modal-header {
-    padding: 16px 24px !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-    min-height: 60px !important;
-    max-height: 60px !important;
-    box-sizing: border-box !important;
-    background: white !important;
-}
-
-#import-receipts-modal .popout-modal-title {
-    margin: 0 !important;
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    color: #1f2937 !important;
-    line-height: 1.2 !important;
-}
-
-#import-receipts-modal .popout-modal-close {
-    background: none !important;
-    border: none !important;
-    font-size: 28px !important;
-    cursor: pointer !important;
-    color: #6b7280 !important;
-    padding: 0 !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 4px !important;
-}
-
-/* BODY FIX - Make it taller and scrollable */
-#import-receipts-modal .popout-modal-body {
-    padding: 0 !important;
-    overflow-y: auto !important;
-    flex: 1 !important;
-    min-height: 400px !important;
-    max-height: calc(85vh - 140px) !important;
-    box-sizing: border-box !important;
-}
-
-#import-receipts-modal .import-receipts-container {
-    padding: 20px !important;
-    height: 100% !important;
-    overflow-y: auto !important;
-    box-sizing: border-box !important;
-}
-
-/* FOOTER FIX - Ensure buttons are always visible */
+          /* ==================== IMPORT RECEIPTS MODAL FOOTER FIX ==================== */
+/* Force override inline styles with !important */
 #import-receipts-modal .popout-modal-footer {
-    padding: 16px 24px !important;
+    position: relative !important;
+    z-index: 1000 !important;
+    background: white !important;
     border-top: 1px solid #e5e7eb !important;
+    padding: 16px 24px !important;
     display: flex !important;
     gap: 12px !important;
-    justify-content: space-between !important;
+    justify-content: flex-end !important;
     align-items: center !important;
-    flex-shrink: 0 !important;
-    background: white !important;
-    position: sticky !important;
-    bottom: 0 !important;
-    min-height: 70px !important;
+    min-height: 72px !important;
     box-sizing: border-box !important;
-    flex-wrap: nowrap !important;
     width: 100% !important;
+    flex-wrap: nowrap !important;
+    margin-top: auto !important; /* Push footer to bottom */
 }
 
-/* FOOTER BUTTON FIXES - Make them fit properly */
-#import-receipts-modal .popout-modal-footer .btn {
-    min-width: 120px !important;
-    height: 42px !important;
+/* Override inline styles on the process button */
+#import-receipts-modal #process-receipts-btn {
+    display: inline-flex !important; /* Override inline display: flex */
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 160px !important;
+    max-width: 250px !important;
+    height: 44px !important;
     padding: 10px 20px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Process button with counter */
-#import-receipts-modal #process-receipts-btn {
-    min-width: 160px !important;
-    padding: 10px 24px !important;
-}
-
-#import-receipts-modal #process-receipts-count {
-    margin-left: 8px !important;
-    background: #ef4444 !important;
-    color: white !important;
-    border-radius: 12px !important;
-    padding: 2px 8px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    min-width: 24px !important;
-    height: 24px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    margin-left: auto !important; /* Push to right */
 }
 
 /* Cancel button */
-#import-receipts-modal .popout-modal-footer .btn-outline {
+#import-receipts-modal #cancel-import-receipts {
     min-width: 120px !important;
-}
-
-/* ==================== IMPORT RECEIPTS MODAL FIX ==================== */
-#import-receipts-modal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    z-index: 99999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 40px 20px !important;
-    box-sizing: border-box !important;
-    overflow: auto !important;
-}
-
-#import-receipts-modal.hidden {
-    display: none !important;
-}
-
-#import-receipts-modal .popout-modal-content {
-    background: white !important;
-    border-radius: 20px !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-    width: 100% !important;
-    max-width: 800px !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    min-height: 500px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    position: relative !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-}
-
-/* HEADER FIX - Make it compact */
-#import-receipts-modal .popout-modal-header {
-    padding: 16px 24px !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-    min-height: 56px !important;
-    box-sizing: border-box !important;
-    background: white !important;
-    position: relative !important;
-}
-
-#import-receipts-modal .popout-modal-title {
-    margin: 0 !important;
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    color: #1f2937 !important;
-    line-height: 1.2 !important;
-}
-
-#import-receipts-modal .popout-modal-close {
-    background: none !important;
-    border: none !important;
-    font-size: 28px !important;
-    line-height: 1 !important;
-    cursor: pointer !important;
-    color: #6b7280 !important;
-    padding: 0 !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 4px !important;
-}
-
-/* BODY FIX - Make it fill available space */
-#import-receipts-modal .popout-modal-body {
-    padding: 0 !important;
-    overflow-y: auto !important;
-    flex: 1 !important;
-    min-height: 400px !important;
-    max-height: calc(85vh - 130px) !important;
-    box-sizing: border-box !important;
-}
-
-/* Content inside body */
-#import-receipts-content {
-    padding: 24px !important;
-    height: 100% !important;
-    box-sizing: border-box !important;
-}
-
-/* FOOTER FIX - Critical for button visibility */
-#import-receipts-modal .popout-modal-footer {
-    padding: 16px 24px !important;
-    border-top: 1px solid #e5e7eb !important;
-    display: flex !important;
-    gap: 12px !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-    background: white !important;
-    position: relative !important;
-    min-height: 72px !important;
-    box-sizing: border-box !important;
-    flex-wrap: nowrap !important;
-}
-
-/* FOOTER BUTTONS - Ensure they stay visible */
-#import-receipts-modal .popout-modal-footer .btn {
-    min-width: 140px !important;
     height: 44px !important;
-    padding: 10px 24px !important;
+    padding: 10px 20px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     white-space: nowrap !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
 }
 
-/* Process button with counter */
-#import-receipts-modal #process-receipts-btn {
-    min-width: 180px !important;
-}
-
+/* Process count badge */
 #import-receipts-modal #process-receipts-count {
     margin-left: 8px !important;
     background: #ef4444 !important;
@@ -3334,122 +3100,50 @@ showCameraInterface() {
     font-size: 12px !important;
     font-weight: 700 !important;
     min-width: 24px !important;
-    height: 24px !important;
+    height: 20px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
 }
 
-/* Cancel button */
-#import-receipts-modal .popout-modal-footer .btn-outline {
-    min-width: 120px !important;
-}
-
-/* ==================== RESPONSIVE FIXES ==================== */
-
-/* Large screens - Ensure it's above navbar */
-@media (min-width: 1200px) {
-    #import-receipts-modal {
-        padding: 60px 40px !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        max-height: 80vh !important;
-    }
-    
-    #import-receipts-modal .popout-modal-body {
-        max-height: calc(80vh - 130px) !important;
-    }
-}
-
-/* MEDIUM SCREENS (768px - 1199px) - CRITICAL FIX */
+/* ==================== CRITICAL MEDIUM SCREEN FIX ==================== */
 @media (min-width: 768px) and (max-width: 1199px) {
-    #import-receipts-modal {
-        padding: 30px 15px !important;
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        width: 95% !important;
-        max-width: 750px !important;
-        max-height: 90vh !important;
-    }
-    
-    /* Header compact */
-    #import-receipts-modal .popout-modal-header {
-        padding: 14px 20px !important;
-        min-height: 52px !important;
-    }
-    
-    /* Body height */
-    #import-receipts-modal .popout-modal-body {
-        max-height: calc(90vh - 124px) !important;
-    }
-    
-    /* FOOTER FIX FOR MEDIUM SCREENS */
     #import-receipts-modal .popout-modal-footer {
         flex-wrap: wrap !important;
-        justify-content: center !important;
+        justify-content: space-between !important;
         gap: 10px !important;
         padding: 14px 20px !important;
-        min-height: auto !important;
     }
     
-    #import-receipts-modal .popout-modal-footer .btn {
-        min-width: 130px !important;
-        max-width: 200px !important;
-        flex: 1 !important;
-        height: 42px !important;
-        padding: 10px 20px !important;
+    /* Button container */
+    .modal-footer-buttons {
+        display: flex !important;
+        width: 100% !important;
+        gap: 10px !important;
+        justify-content: flex-end !important;
     }
     
-    /* Arrange buttons for medium screens */
+    /* Make buttons responsive but not too wide */
+    #import-receipts-modal #cancel-import-receipts,
     #import-receipts-modal #process-receipts-btn {
-        order: 1 !important;
         flex: 1 !important;
-        min-width: 150px !important;
-        max-width: 250px !important;
+        min-width: 140px !important;
+        max-width: 200px !important;
+        height: 42px !important;
+        padding: 10px 16px !important;
+        font-size: 13px !important;
     }
     
-    #import-receipts-modal .btn-outline {
-        order: 2 !important;
-        flex: 1 !important;
-        min-width: 120px !important;
-        max-width: 150px !important;
+    /* Ensure process button fits */
+    #import-receipts-modal #process-receipts-btn {
+        flex: 2 !important;
+        max-width: 220px !important;
     }
 }
 
-/* SMALL SCREENS (mobile) */
+/* ==================== SMALL SCREEN FIX ==================== */
 @media (max-width: 767px) {
-    #import-receipts-modal {
-        padding: 20px 10px !important;
-        padding-top: 60px !important; /* Space for navbar */
-    }
-    
-    #import-receipts-modal .popout-modal-content {
-        max-height: 90vh !important;
-        border-radius: 16px !important;
-    }
-    
-    /* Compact header */
-    #import-receipts-modal .popout-modal-header {
-        padding: 12px 16px !important;
-        min-height: 48px !important;
-    }
-    
-    #import-receipts-modal .popout-modal-title {
-        font-size: 16px !important;
-    }
-    
-    /* Body */
-    #import-receipts-modal .popout-modal-body {
-        max-height: calc(90vh - 116px) !important;
-    }
-    
-    #import-receipts-content {
-        padding: 16px !important;
-    }
-    
-    /* FOOTER - Stack buttons vertically */
     #import-receipts-modal .popout-modal-footer {
         flex-direction: column !important;
         gap: 8px !important;
@@ -3457,55 +3151,56 @@ showCameraInterface() {
         min-height: auto !important;
     }
     
-    #import-receipts-modal .popout-modal-footer .btn {
+    /* Stack buttons vertically */
+    #import-receipts-modal #cancel-import-receipts,
+    #import-receipts-modal #process-receipts-btn {
         width: 100% !important;
-        min-width: 0 !important;
         max-width: 100% !important;
         height: 44px !important;
         margin: 0 !important;
     }
-}
-
-/* VERY SMALL SCREENS */
-@media (max-width: 480px) {
-    #import-receipts-modal {
-        padding: 10px !important;
-        padding-top: 50px !important;
-    }
     
-    #import-receipts-modal .popout-modal-content {
-        max-height: 95vh !important;
-        border-radius: 12px !important;
-    }
-    
-    #import-receipts-modal .popout-modal-header {
-        padding: 10px 12px !important;
-        min-height: 44px !important;
-    }
-    
-    #import-receipts-modal .popout-modal-body {
-        max-height: calc(95vh - 106px) !important;
-    }
-    
-    #import-receipts-content {
-        padding: 12px !important;
+    /* Adjust process button text */
+    #import-receipts-modal #process-receipts-btn {
+        display: flex !important;
+        justify-content: space-between !important;
+        padding: 10px 16px !important;
     }
 }
 
-/* ==================== Z-INDEX FIX ==================== */
-/* Ensure navbar doesn't cover modal */
-.navbar {
-    z-index: 1000 !important;
-    position: relative !important;
+/* ==================== LARGE SCREEN FIX ==================== */
+@media (min-width: 1200px) {
+    #import-receipts-modal .popout-modal-footer {
+        justify-content: flex-end !important;
+        padding: 20px 24px !important;
+    }
+    
+    #import-receipts-modal #process-receipts-btn {
+        min-width: 180px !important;
+        padding: 12px 24px !important;
+    }
+    
+    #import-receipts-modal #cancel-import-receipts {
+        min-width: 140px !important;
+        padding: 12px 24px !important;
+    }
 }
 
-#import-receipts-modal {
-    z-index: 99999 !important;
-}
-
+/* ==================== MODAL CONTENT FIX ==================== */
+/* Ensure modal content doesn't overflow */
 #import-receipts-modal .popout-modal-content {
-    z-index: 100000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 90vh !important;
+    overflow: hidden !important;
 }
+
+#import-receipts-modal .popout-modal-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    max-height: calc(90vh - 140px) !important;
+}
+
             </style>
 
             <div class="module-container">
