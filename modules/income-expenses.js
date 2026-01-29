@@ -2502,54 +2502,208 @@ showCameraInterface() {
                 background: #000 !important;
             }
             
-            /* Responsive button containers */
+             /* ==================== FIXED MODAL POSITIONING ==================== */
+            .popout-modal {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: rgba(0, 0, 0, 0.8) !important;
+                backdrop-filter: blur(10px) !important;
+                z-index: 999999 !important; /* Increased to be above navbar */
+                display: flex !important;
+                align-items: flex-start !important; /* Changed from center to flex-start */
+                justify-content: center !important;
+                padding-top: 70px !important; /* Add space for navbar */
+                box-sizing: border-box !important;
+                overflow-y: auto !important;
+            }
+            
+            .popout-modal.hidden {
+                display: none !important;
+            }
+            
+            .popout-modal-content {
+                background: white !important;
+                border-radius: 20px !important;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+                max-width: 600px !important;
+                width: 90% !important;
+                max-height: calc(100vh - 100px) !important; /* Account for navbar padding */
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                margin: 0 auto !important;
+                position: relative !important;
+                z-index: 1000000 !important;
+            }
+            
+            /* Import receipts modal specific - taller */
+            #import-receipts-modal .popout-modal-content {
+                max-width: 800px !important;
+                max-height: calc(90vh - 70px) !important;
+            }
+            
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+                .popout-modal {
+                    padding-top: 60px !important;
+                    align-items: flex-start !important;
+                    padding-left: 10px !important;
+                    padding-right: 10px !important;
+                }
+                
+                .popout-modal-content {
+                    width: 95% !important;
+                    max-height: calc(100vh - 80px) !important;
+                    margin-top: 0 !important;
+                }
+                
+                #import-receipts-modal .popout-modal-content {
+                    max-height: calc(90vh - 70px) !important;
+                }
+            }
+            
+            /* Medium screens (tablets) - where camera fails */
+            @media (min-width: 600px) and (max-width: 1024px) {
+                .popout-modal {
+                    padding-top: 80px !important; /* Extra space for medium screens */
+                }
+                
+                .popout-modal-content {
+                    max-height: calc(100vh - 120px) !important;
+                }
+                
+                #import-receipts-modal .popout-modal-content {
+                    max-height: calc(85vh - 80px) !important;
+                }
+                
+                /* Ensure buttons don't overflow in camera section */
+                #camera-section .btn {
+                    min-width: 120px !important;
+                    padding: 12px 16px !important;
+                    font-size: 14px !important;
+                }
+            }
+            
+            /* Small mobile devices */
+            @media (max-width: 480px) {
+                .popout-modal {
+                    padding-top: 50px !important;
+                }
+                
+                .popout-modal-content {
+                    max-height: calc(100vh - 70px) !important;
+                    border-radius: 16px !important;
+                }
+            }
+            
+            /* ==================== BUTTON OVERFLOW FIXES ==================== */
+            
+            /* Header actions - prevent button overflow */
             .header-actions {
                 display: flex;
                 gap: 12px;
-                flex-wrap: wrap; /* KEY: Allows buttons to wrap on small screens */
+                flex-wrap: wrap;
+                align-items: center;
             }
             
-            /* Responsive stats grid */
-            .stats-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
-                margin-bottom: 30px;
+            /* Make buttons responsive */
+            .btn {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                min-width: 120px;
+                box-sizing: border-box;
             }
             
-            /* Responsive quick actions */
-            .quick-action-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
-                margin-bottom: 30px;
+            /* Camera control buttons */
+            .camera-controls {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+                flex-wrap: wrap;
             }
             
-            /* Mobile-specific fixes */
-            @media (max-width: 768px) {
-                /* Stack header buttons vertically */
+            .camera-controls .btn {
+                flex: 1;
+                min-width: 0;
+                max-width: 200px;
+            }
+            
+            /* Receipt action buttons */
+            .receipt-actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            
+            .receipt-actions .btn {
+                padding: 6px 10px;
+                font-size: 12px;
+                min-width: 80px;
+            }
+            
+            /* Transaction form buttons */
+            .popout-modal-footer {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+            
+            .popout-modal-footer .btn {
+                flex: 1;
+                min-width: 100px;
+                max-width: 200px;
+            }
+            
+            /* Medium screen specific button fixes */
+            @media (min-width: 600px) and (max-width: 1024px) {
+                .btn {
+                    padding: 10px 16px;
+                    font-size: 14px;
+                }
+                
+                .header-actions .btn {
+                    flex: 1;
+                    min-width: 140px;
+                }
+                
+                /* Camera section specific */
+                #camera-section .camera-controls {
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                }
+                
+                #camera-section .camera-controls .btn {
+                    flex: 1;
+                    min-width: 0;
+                }
+            }
+            
+            /* Small screen button adjustments */
+            @media (max-width: 600px) {
                 .header-actions {
+                    flex-direction: column;
+                    width: 100%;
+                }
+                
+                .header-actions .btn {
+                    width: 100%;
+                    min-width: 0;
+                }
+                
+                .camera-controls {
                     flex-direction: column;
                 }
                 
-                /* Make buttons full width on mobile */
-                .btn {
+                .camera-controls .btn {
                     width: 100%;
-                    justify-content: center;
+                    min-width: 0;
                 }
                 
-                /* Adjust camera preview height */
-                .camera-preview {
-                    height: 300px;
-                }
-                
-                /* Make modal content scrollable */
-                .popout-modal-body {
-                    max-height: 60vh;
-                    overflow-y: auto;
-                }
-                
-                /* Stack receipt actions vertically */
                 .receipt-actions {
                     flex-direction: column;
                     width: 100%;
@@ -2557,131 +2711,7 @@ showCameraInterface() {
                 
                 .receipt-actions .btn {
                     width: 100%;
-                    margin-bottom: 8px;
-                }
-            }
-            
-            /* Small mobile devices */
-            @media (max-width: 480px) {
-                .camera-preview {
-                    height: 250px;
-                }
-                
-                .stats-grid,
-                .quick-action-grid {
-                    grid-template-columns: 1fr;
-                    gap: 12px;
-                }
-                
-                /* Reduce padding for small screens */
-                .glass-card,
-                .stat-card {
-                    padding: 16px;
-                }
-                
-                /* Smaller text on mobile */
-                .module-title {
-                    font-size: 24px;
-                }
-                
-                .module-subtitle {
-                    font-size: 14px;
-                }
-            }
-            
-            /* Medium screen specific fixes (768px - 1024px) */
-            @media (min-width: 769px) and (max-width: 1024px) {
-                /* KEY: This was missing - medium screen specific fixes */
-                .camera-preview {
-                    height: 350px;
-                }
-                
-                /* Ensure buttons don't overflow */
-                .header-actions {
-                    gap: 8px;
-                }
-                
-                /* Make modal slightly smaller on medium screens */
-                .popout-modal-content {
-                    width: 85% !important;
-                }
-                
-                /* Adjust transaction items for medium screens */
-                .transaction-item {
-                    padding: 12px !important;
-                }
-            }
-            
-            /* Fix for receipt actions on different screen sizes */
-            @media (min-width: 769px) {
-                .pending-receipt-item {
-                    position: relative;
-                    padding-right: 200px !important;
-                }
-                
-                .receipt-actions {
-                    position: absolute !important;
-                    right: 16px !important;
-                    top: 50% !important;
-                    transform: translateY(-50%) !important;
-                    display: flex !important;
-                    gap: 8px !important;
-                }
-            }
-            
-            @media (max-width: 768px) {
-                .pending-receipt-item {
-                    flex-direction: column;
-                    align-items: stretch;
-                    gap: 12px;
-                }
-                
-                .receipt-actions {
-                    display: flex !important;
-                    justify-content: flex-end;
-                    gap: 8px;
-                    margin-top: 12px;
-                }
-            }
-            
-            /* Ensure receipt cards don't overflow */
-            .receipt-card, .pending-receipt-item {
-                overflow: hidden;
-                word-wrap: break-word;
-                word-break: break-word;
-            }
-            
-            /* Truncate long receipt names */
-            .receipt-name {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 200px;
-            }
-            
-            @media (max-width: 768px) {
-                .receipt-name {
-                    max-width: 150px;
-                }
-            }
-            
-            @media (max-width: 480px) {
-                .receipt-name {
-                    max-width: 100px;
-                }
-            }
-            
-            /* Scrollable modal content for all screens */
-            .popout-modal-body {
-                max-height: 70vh;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
-            }
-            
-            /* Fix for iOS Safari modal scrolling */
-            @supports (-webkit-touch-callout: none) {
-                .popout-modal-body {
-                    max-height: 80vh;
+                    min-width: 0;
                 }
             }
             </style>
