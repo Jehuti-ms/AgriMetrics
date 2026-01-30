@@ -2794,6 +2794,268 @@ showCameraInterface() {
     #process-receipts-btn {
         min-width: 180px;
     }
+
+    /* ==================== MODAL STRUCTURE FIX ==================== */
+/* Ensure modal has proper height constraints */
+.popout-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
+
+.popout-modal.hidden {
+    display: none !important;
+}
+
+/* Modal content - MUST have fixed height for footer to work */
+.popout-modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 800px;
+    height: 80vh; /* FIXED HEIGHT - critical for footer positioning */
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Import receipts modal specific - taller */
+#import-receipts-modal .popout-modal-content {
+    max-width: 850px;
+    height: 85vh; /* Taller for import receipts */
+    max-height: 85vh;
+}
+
+/* Header - fixed at top */
+.popout-modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 60px;
+    background: white;
+    position: relative;
+    top: 0;
+    z-index: 100;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    margin: 0 !important;
+}
+
+/* Body - takes remaining space */
+.popout-modal-body {
+    padding: 0;
+    overflow-y: auto;
+    flex: 1; /* Takes all available space between header and footer */
+    min-height: 200px;
+    position: relative;
+}
+
+/* Footer - FIXED: Always at bottom */
+.popout-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0; /* Never shrink */
+    background: white;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 72px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    /* Force to bottom */
+    margin-top: 0 !important;
+    position: relative;
+    bottom: 0;
+}
+
+/* Import receipts footer - space buttons */
+#import-receipts-modal .popout-modal-footer {
+    justify-content: space-between;
+}
+
+/* Modal footer buttons container - prevent floating */
+.modal-footer-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* Ensure buttons don't float */
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 120px;
+    height: 44px;
+    font-size: 14px;
+    box-sizing: border-box;
+    position: relative; /* Reset any absolute positioning */
+    float: none !important;
+}
+
+/* Override any inline styles that might cause floating */
+#process-receipts-btn,
+#cancel-import-receipts,
+#cancel-transaction,
+#save-transaction,
+#delete-transaction {
+    position: relative !important;
+    float: none !important;
+    display: inline-flex !important;
+}
+
+/* Process button */
+#process-receipts-btn {
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 160px;
+}
+
+#process-receipts-count {
+    margin-left: 8px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 24px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==================== DEBUG STYLES ==================== */
+/* Add these temporarily to see what's happening */
+/*
+.popout-modal-footer {
+    background: rgba(255, 0, 0, 0.2) !important;
+    border: 2px solid red !important;
+}
+
+.popout-modal-content {
+    border: 2px solid blue !important;
+}
+
+.popout-modal-body {
+    border: 2px solid green !important;
+    background: rgba(0, 255, 0, 0.1) !important;
+}
+*/
+
+/* ==================== RESPONSIVE FIXES ==================== */
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .popout-modal {
+        padding: 30px !important;
+    }
+    
+    .popout-modal-content {
+        width: 95%;
+        max-width: 750px;
+        height: 85vh;
+        max-height: 85vh;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        height: 90vh;
+        max-height: 90vh;
+    }
+    
+    .modal-footer-buttons {
+        justify-content: space-between;
+    }
+    
+    .btn {
+        min-width: 140px;
+    }
+}
+
+/* Small screens */
+@media (max-width: 767px) {
+    .popout-modal {
+        padding: 20px !important;
+        align-items: flex-start !important;
+        padding-top: 60px !important;
+    }
+    
+    .popout-modal-content {
+        max-height: 85vh;
+        width: 95%;
+        height: auto; /* Allow to grow on mobile */
+        min-height: 300px;
+    }
+    
+    .popout-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    
+    .modal-footer-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .popout-modal {
+        padding: 40px !important;
+    }
+    
+    .popout-modal-content {
+        width: 80%;
+        max-width: 900px;
+    }
+    
+    .btn {
+        min-width: 140px;
+        padding: 12px 24px;
+    }
+    
+    #process-receipts-btn {
+        min-width: 180px;
+    }
+}
 }
             </style>
 
