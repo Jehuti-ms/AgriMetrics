@@ -2618,7 +2618,19 @@ showCameraInterface() {
     .camera-preview-container {
         height: 250px;
     }
-    
+    .popout-modal-footer {
+  display: flex;
+  justify-content: space-between; /* spreads content across footer */
+  align-items: center;
+}
+
+.modal-footer-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end; /* keeps buttons grouped on the right */
+  flex: 1; /* ensures they stay inside the footer width */
+}
+
              </style>
 
             <div class="module-container">
