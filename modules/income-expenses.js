@@ -3074,6 +3074,97 @@ showCameraInterface() {
     position: static !important;
     float: none !important;
 }
+  /* ==================== CAMERA SECTION BUTTON FIXES ==================== */
+/* Reset positioning for camera section buttons */
+#camera-section .btn,
+.camera-controls .btn,
+#switch-camera,
+#cancel-camera,
+#capture-photo {
+    position: static !important; /* Reset to default */
+    float: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+}
+
+/* Specifically for camera control buttons */
+.camera-controls {
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+.camera-controls .btn {
+    flex: 1 !important;
+    min-width: 120px !important;
+    max-width: 200px !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+}
+
+/* Camera section container */
+#camera-section {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+/* Camera preview container */
+.camera-preview-container {
+    width: 100% !important;
+    height: 400px !important;
+    background: #000 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    margin-bottom: 20px !important;
+    position: relative !important;
+}
+
+/* ==================== UPDATE THE GENERAL BUTTON FIX ==================== */
+/* Only apply positioning to modal footer buttons, not all buttons */
+.popout-modal-footer .btn {
+    position: relative !important; /* Only for modal footer */
+    float: none !important;
+}
+
+/* Reset ALL other buttons */
+.btn:not(.popout-modal-footer .btn) {
+    position: static !important; /* Default for non-modal-footer buttons */
+    float: none !important;
+}
+
+/* ==================== RESPONSIVE FIXES FOR CAMERA ==================== */
+@media (max-width: 768px) {
+    .camera-preview-container {
+        height: 300px !important;
+    }
+    
+    .camera-controls {
+        flex-direction: column !important;
+    }
+    
+    .camera-controls .btn {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .camera-preview-container {
+        height: 250px !important;
+    }
+    
+    .camera-controls .btn {
+        padding: 10px 12px !important;
+        font-size: 13px !important;
+    }
+}
             </style>
 
             <div class="module-container">
