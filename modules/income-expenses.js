@@ -2631,6 +2631,45 @@ showCameraInterface() {
   flex: 1; /* ensures they stay inside the footer width */
 }
 
+.receipt-preview-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.receipt-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.receipt-filename {
+  font-weight: 600;
+  color: #374151;
+}
+
+.receipt-size {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.receipt-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.receipt-actions .btn-small {
+  min-width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+  height: auto;
+}
+
              </style>
 
             <div class="module-container">
