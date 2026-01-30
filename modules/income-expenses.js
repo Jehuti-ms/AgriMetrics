@@ -2579,6 +2579,10 @@ showCameraInterface() {
     min-height: 200px;
 }
 
+.popout-modal-footer .btn {
+    position: relative;
+}
+
 /* ==================== FOOTER FIX - NO FLOATING ==================== */
 .popout-modal-footer {
     padding: 16px 24px;
