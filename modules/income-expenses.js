@@ -2478,133 +2478,7 @@ showCameraInterface() {
                     min-width: 120px;
                     max-width: 200px;
                 }
-
-                /* ==================== MODAL FIXES ==================== */
-                /* Fix modal positioning - center it properly */
-                .popout-modal {
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    background: rgba(0, 0, 0, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    z-index: 99999 !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    padding: 0 !important; /* REMOVED padding from modal */
-                    box-sizing: border-box !important;
-                    overflow: auto !important;
-                }
-                
-                .popout-modal.hidden {
-                    display: none !important;
-                }
-                
-                /* Modal content - fixed height and positioning */
-                .popout-modal-content {
-                    background: white;
-                    border-radius: 16px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                    width: 100%;
-                    max-width: 800px;
-                    max-height: 85vh;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    position: relative;
-                    margin: 20px; /* Add margin instead of padding on parent */
-                }
-                
-                /* Import receipts modal specific */
-                #import-receipts-modal .popout-modal-content {
-                    max-width: 850px;
-                    max-height: 80vh;
-                }
-                
-                /* Header - FIXED: Remove top space */
-                .popout-modal-header {
-                    padding: 16px 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    flex-shrink: 0;
-                    min-height: 60px;
-                    background: white;
-                    /* REMOVE sticky positioning that creates gap */
-                    position: relative !important;
-                    top: 0 !important;
-                    z-index: 100;
-                    /* Ensure no margin or border-radius at top */
-                    border-top-left-radius: 16px;
-                    border-top-right-radius: 16px;
-                    margin: 0 !important;
-                }
-                
-                .popout-modal-title {
-                    margin: 0;
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                }
-                
-                .popout-modal-close {
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    cursor: pointer;
-                    color: var(--text-secondary);
-                    width: 32px;
-                    height: 32px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 4px;
-                }
-                
-                .popout-modal-close:hover {
-                    background: #f3f4f6;
-                }
-                
-                /* Body - proper scroll area */
-                .popout-modal-body {
-                    padding: 0;
-                    overflow-y: auto;
-                    flex: 1;
-                    max-height: calc(80vh - 120px);
-                }
-                
-                #import-receipts-modal .popout-modal-body {
-                    max-height: calc(80vh - 120px);
-                }
-                
-                /* Footer - fixed at bottom */
-                .popout-modal-footer {
-                    padding: 16px 24px;
-                    border-top: 1px solid var(--glass-border);
-                    display: flex;
-                    gap: 12px;
-                    justify-content: flex-end;
-                    align-items: center;
-                    flex-shrink: 0;
-                    background: white;
-                    position: relative; /* Changed from sticky to relative */
-                    bottom: 0;
-                    z-index: 100;
-                    min-height: 72px;
-                    /* Ensure no margin at bottom */
-                    margin: 0 !important;
-                    border-bottom-left-radius: 16px;
-                    border-bottom-right-radius: 16px;
-                }
-                
-                /* Import receipts footer */
-                #import-receipts-modal .popout-modal-footer {
-                    justify-content: space-between;
-                }
-                
+              
                 /* Other styles */
                 .status-pending { color: var(--warning-color); }
                 .status-processed { color: var(--success-color); }
@@ -2759,6 +2633,8 @@ showCameraInterface() {
     font-size: 14px;
     box-sizing: border-box;
     flex-shrink: 0;
+    position: static !important; /* ADD THIS */
+    float: none !important; /* ADD THIS */
     /* CRITICAL: No position:relative here */
 }
 
