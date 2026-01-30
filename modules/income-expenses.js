@@ -1261,6 +1261,20 @@ async saveReceiptToFirebase(receipt) {
         }
     },
 
+   // Update this function that sets the process button
+function updateProcessButton(count) {
+    const processBtn = document.getElementById('process-receipts-btn');
+    const countBadge = document.getElementById('process-receipts-count');
+    
+    if (count > 0) {
+        processBtn.style.display = 'inline-flex';
+        countBadge.textContent = count;
+        processBtn.title = `Process ${count} pending receipt${count > 1 ? 's' : ''}`;
+    } else {
+        processBtn.style.display = 'none';
+    }
+},
+ 
     // ==================== MODAL MANAGEMENT ====================
     showImportReceiptsModal() {
         console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
@@ -3040,165 +3054,387 @@ showCameraInterface() {
                 z-index: 100 !important;
             }
 
-          /* ==================== IMPORT RECEIPTS MODAL FOOTER FIX ==================== */
-/* Force override inline styles with !important */
-#import-receipts-modal .popout-modal-footer {
-    position: relative !important;
-    z-index: 1000 !important;
-    background: white !important;
-    border-top: 1px solid #e5e7eb !important;
-    padding: 16px 24px !important;
-    display: flex !important;
-    gap: 12px !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    min-height: 72px !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-    flex-wrap: nowrap !important;
-    margin-top: auto !important; /* Push footer to bottom */
+           /* ==================== IMPORT RECEIPTS MODAL FIXES ==================== */
+#import-receipts-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    box-sizing: border-box;
 }
 
-/* Override inline styles on the process button */
-#import-receipts-modal #process-receipts-btn {
-    display: inline-flex !important; /* Override inline display: flex */
-    align-items: center !important;
-    justify-content: center !important;
-    min-width: 160px !important;
-    max-width: 250px !important;
-    height: 44px !important;
-    padding: 10px 20px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    box-sizing: border-box !important;
-    flex-shrink: 0 !important;
-    margin-left: auto !important; /* Push to right */
+#import-receipts-modal.hidden {
+    display: none;
 }
 
-/* Cancel button */
-#import-receipts-modal #cancel-import-receipts {
-    min-width: 120px !important;
-    height: 44px !important;
-    padding: 10px 20px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    white-space: nowrap !important;
-    box-sizing: border-box !important;
-    flex-shrink: 0 !important;
+/* Modal content container */
+.import-receipts-modal-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header */
+#import-receipts-modal .popout-modal-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+}
+
+#import-receipts-modal .popout-modal-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+#import-receipts-modal .popout-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #6b7280;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+#import-receipts-modal .popout-modal-close:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Body */
+.import-receipts-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    min-height: 400px;
+    max-height: calc(85vh - 140px);
+}
+
+#import-receipts-content {
+    padding: 24px;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* Footer */
+.import-receipts-modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    background: white;
+}
+
+.modal-footer-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+}
+
+/* Buttons */
+.modal-cancel-btn {
+    min-width: 120px;
+    height: 44px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #d1d5db;
+    background: transparent;
+    color: #374151;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.modal-cancel-btn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.modal-process-btn {
+    min-width: 160px;
+    height: 44px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    gap: 8px;
+}
+
+.modal-process-btn:hover {
+    background: #2563eb;
 }
 
 /* Process count badge */
-#import-receipts-modal #process-receipts-count {
-    margin-left: 8px !important;
-    background: #ef4444 !important;
-    color: white !important;
-    border-radius: 12px !important;
-    padding: 3px 8px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    min-width: 24px !important;
-    height: 20px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-shrink: 0 !important;
+.process-count-badge {
+    background: #ef4444;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 22px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-/* ==================== CRITICAL MEDIUM SCREEN FIX ==================== */
-@media (min-width: 768px) and (max-width: 1199px) {
-    #import-receipts-modal .popout-modal-footer {
-        flex-wrap: wrap !important;
-        justify-content: space-between !important;
-        gap: 10px !important;
-        padding: 14px 20px !important;
-    }
-    
-    /* Button container */
-    .modal-footer-buttons {
-        display: flex !important;
-        width: 100% !important;
-        gap: 10px !important;
-        justify-content: flex-end !important;
-    }
-    
-    /* Make buttons responsive but not too wide */
-    #import-receipts-modal #cancel-import-receipts,
-    #import-receipts-modal #process-receipts-btn {
-        flex: 1 !important;
-        min-width: 140px !important;
-        max-width: 200px !important;
-        height: 42px !important;
-        padding: 10px 16px !important;
-        font-size: 13px !important;
-    }
-    
-    /* Ensure process button fits */
-    #import-receipts-modal #process-receipts-btn {
-        flex: 2 !important;
-        max-width: 220px !important;
-    }
-}
+/* ==================== RESPONSIVE FIXES ==================== */
 
-/* ==================== SMALL SCREEN FIX ==================== */
-@media (max-width: 767px) {
-    #import-receipts-modal .popout-modal-footer {
-        flex-direction: column !important;
-        gap: 8px !important;
-        padding: 12px 16px !important;
-        min-height: auto !important;
-    }
-    
-    /* Stack buttons vertically */
-    #import-receipts-modal #cancel-import-receipts,
-    #import-receipts-modal #process-receipts-btn {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: 44px !important;
-        margin: 0 !important;
-    }
-    
-    /* Adjust process button text */
-    #import-receipts-modal #process-receipts-btn {
-        display: flex !important;
-        justify-content: space-between !important;
-        padding: 10px 16px !important;
-    }
-}
-
-/* ==================== LARGE SCREEN FIX ==================== */
+/* Large screens */
 @media (min-width: 1200px) {
-    #import-receipts-modal .popout-modal-footer {
-        justify-content: flex-end !important;
-        padding: 20px 24px !important;
+    #import-receipts-modal {
+        padding: 60px 40px;
     }
     
-    #import-receipts-modal #process-receipts-btn {
-        min-width: 180px !important;
-        padding: 12px 24px !important;
+    .import-receipts-modal-content {
+        max-height: 80vh;
     }
     
-    #import-receipts-modal #cancel-import-receipts {
-        min-width: 140px !important;
-        padding: 12px 24px !important;
+    .import-receipts-modal-body {
+        max-height: calc(80vh - 140px);
+    }
+    
+    .modal-process-btn {
+        min-width: 180px;
+        padding: 12px 28px;
+    }
+    
+    .modal-cancel-btn {
+        min-width: 140px;
+        padding: 12px 28px;
     }
 }
 
-/* ==================== MODAL CONTENT FIX ==================== */
-/* Ensure modal content doesn't overflow */
-#import-receipts-modal .popout-modal-content {
-    display: flex !important;
-    flex-direction: column !important;
-    max-height: 90vh !important;
-    overflow: hidden !important;
+/* MEDIUM SCREENS (768px - 1199px) - FIX BUTTON OVERFLOW */
+@media (min-width: 768px) and (max-width: 1199px) {
+    #import-receipts-modal {
+        padding: 30px 15px;
+    }
+    
+    .import-receipts-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .import-receipts-modal-body {
+        max-height: calc(90vh - 140px);
+    }
+    
+    .import-receipts-modal-footer {
+        padding: 18px 20px;
+    }
+    
+    .modal-footer-buttons {
+        flex-wrap: nowrap;
+        gap: 12px;
+    }
+    
+    .modal-cancel-btn,
+    .modal-process-btn {
+        flex: 1;
+        min-width: 0;
+        max-width: 200px;
+        height: 42px;
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+    
+    .modal-process-btn {
+        flex: 1.2;
+        max-width: 220px;
+    }
 }
 
-#import-receipts-modal .popout-modal-body {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    max-height: calc(90vh - 140px) !important;
+/* SMALL SCREENS (mobile) */
+@media (max-width: 767px) {
+    #import-receipts-modal {
+        padding: 20px 10px;
+        padding-top: 60px; /* Space for navbar */
+    }
+    
+    .import-receipts-modal-content {
+        max-height: 90vh;
+        border-radius: 16px;
+    }
+    
+    #import-receipts-modal .popout-modal-header {
+        padding: 14px 16px;
+        min-height: 56px;
+    }
+    
+    #import-receipts-modal .popout-modal-title {
+        font-size: 18px;
+    }
+    
+    .import-receipts-modal-body {
+        max-height: calc(90vh - 136px);
+    }
+    
+    #import-receipts-content {
+        padding: 16px;
+    }
+    
+    .import-receipts-modal-footer {
+        padding: 16px;
+    }
+    
+    .modal-footer-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-cancel-btn,
+    .modal-process-btn {
+        width: 100%;
+        max-width: 100%;
+        height: 44px;
+        margin: 0;
+    }
+}
+
+/* VERY SMALL SCREENS */
+@media (max-width: 480px) {
+    #import-receipts-modal {
+        padding: 10px;
+        padding-top: 50px;
+    }
+    
+    .import-receipts-modal-content {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+    
+    #import-receipts-modal .popout-modal-header {
+        padding: 12px;
+        min-height: 52px;
+    }
+    
+    .import-receipts-modal-body {
+        max-height: calc(95vh - 124px);
+    }
+    
+    #import-receipts-content {
+        padding: 12px;
+    }
+    
+    .import-receipts-modal-footer {
+        padding: 12px;
+    }
+}
+
+/* ==================== CAMERA SECTION INSIDE MODAL ==================== */
+/* Ensure camera section fits properly */
+.camera-section {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.camera-preview-container {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#camera-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.camera-controls .btn {
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 12px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .camera-preview-container {
+        height: 300px;
+    }
+    
+    .camera-controls {
+        flex-direction: column;
+    }
+    
+    .camera-controls .btn {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* ==================== Z-INDEX FIXES ==================== */
+/* Ensure modal is above navbar */
+.navbar {
+    z-index: 1000;
+    position: relative;
+}
+
+#import-receipts-modal {
+    z-index: 99999;
+}
+
+.import-receipts-modal-content {
+    z-index: 100000;
 }
 
             </style>
@@ -3315,26 +3551,28 @@ showCameraInterface() {
             </div>
 
             <!-- ==================== MODALS ==================== -->
-            <!-- Import Receipts Modal -->
+           <!-- Import Receipts Modal -->
             <div id="import-receipts-modal" class="popout-modal hidden">
-                <div class="popout-modal-content">
+                <div class="popout-modal-content import-receipts-modal-content">
                     <div class="popout-modal-header">
                         <h3 class="popout-modal-title">📥 Import Receipts</h3>
                         <button class="popout-modal-close" id="close-import-receipts">&times;</button>
                     </div>
-                    <div class="popout-modal-body">
+                    
+                    <div class="popout-modal-body import-receipts-modal-body">
                         <div id="import-receipts-content">
-                            <!-- Content loaded dynamically -->
+                            <!-- Content will be loaded here -->
                         </div>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
-                            ⚡ Process Receipts
-                            <span id="process-receipts-count" style="background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; margin-left: 8px;">
-                                0
-                            </span>
-                        </button>
+                    
+                    <div class="popout-modal-footer import-receipts-modal-footer">
+                        <div class="modal-footer-buttons">
+                            <button class="btn btn-outline modal-cancel-btn" id="cancel-import-receipts">Cancel</button>
+                            <button class="btn btn-primary modal-process-btn" id="process-receipts-btn" title="Process pending receipts">
+                                ⚡ Process Receipts
+                                <span class="process-count-badge" id="process-receipts-count">0</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
