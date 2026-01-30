@@ -2631,53 +2631,19 @@ showCameraInterface() {
   flex: 1; /* ensures they stay inside the footer width */
 }
 
-.receipt-preview-card {
+#receipt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.receipt-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #f9fafb;
   padding: 12px;
   border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.receipt-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.receipt-filename {
-  font-weight: 600;
-  color: #374151;
-}
-
-.receipt-size {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.receipt-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.receipt-actions .btn-small {
-  min-width: auto;
-  padding: 6px 12px;
-  font-size: 13px;
-  height: auto;
-}
-
-.receipt-preview-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
   border: 1px solid var(--glass-border);
 }
 
@@ -2932,24 +2898,25 @@ showCameraInterface() {
                                 <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
                             </div>
 
-                           <!-- Receipt Preview -->
-                            <div id="receipt-preview-container" class="hidden">
-                              <div class="receipt-preview-card">
-                                <!-- Left side: file info -->
+                          <!-- Recent Receipts List -->
+                            <div id="receipt-list">
+                              <!-- Single receipt row -->
+                              <div class="receipt-row">
                                 <div class="receipt-info">
                                   <div class="receipt-icon">📄</div>
                                   <div>
-                                    <div id="receipt-filename" class="receipt-filename">receipt.jpg</div>
-                                    <div id="receipt-size" class="receipt-size">2.5 MB • pending</div>
+                                    <div class="receipt-filename">Feed_Report_2026-01-19.pdf</div>
+                                    <div class="receipt-size">7.86 KB • pending</div>
                                   </div>
                                 </div>
-                            
-                                <!-- Right side: actions -->
                                 <div class="receipt-actions">
-                                  <button type="button" id="process-receipt" class="btn btn-outline btn-small">🔍 Process</button>
-                                  <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️ Delete</button>
+                                  <button type="button" class="btn btn-outline btn-small">🔍 Process</button>
+                                  <button type="button" class="btn btn-outline btn-small">🗑️ Delete</button>
                                 </div>
                               </div>
+                            
+                              <!-- Add more rows here for each uploaded receipt -->
+                            </div>
                             
                               <!-- Image Preview -->
                               <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
