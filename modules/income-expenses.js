@@ -3055,7 +3055,271 @@ showCameraInterface() {
     #process-receipts-btn {
         min-width: 180px;
     }
+
+/* ==================== MODAL CENTERING FIX ==================== */
+/* Modal overlay - center everything */
+.popout-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important; /* Center vertically */
+    justify-content: center !important; /* Center horizontally */
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow: auto !important;
 }
+
+.popout-modal.hidden {
+    display: none !important;
+}
+
+/* Modal content - centered with proper sizing */
+.popout-modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    width: auto !important; /* Let content determine width */
+    max-width: 800px !important;
+    min-width: 400px !important; /* Minimum width */
+    height: auto !important; /* Let content determine height */
+    max-height: 85vh !important; /* Maximum height */
+    min-height: 300px !important; /* Minimum height */
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    position: relative !important;
+    margin: 0 !important; /* Remove any margin */
+}
+
+/* Import receipts modal specific */
+#import-receipts-modal .popout-modal-content {
+    max-width: 850px !important;
+    max-height: 90vh !important;
+    width: 90vw !important; /* Responsive width */
+}
+
+/* Transaction modal */
+#transaction-modal .popout-modal-content {
+    max-width: 600px !important;
+    width: 90vw !important;
+}
+
+/* Header - fixed at top */
+.popout-modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 60px;
+    background: white;
+    position: relative;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    margin: 0 !important;
+}
+
+/* Body - takes available space */
+.popout-modal-body {
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 200px;
+    position: relative;
+}
+
+/* Footer - fixed at bottom */
+.popout-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+    background: white;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 72px;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    position: relative;
+    margin: 0 !important;
+}
+
+/* Import receipts footer */
+#import-receipts-modal .popout-modal-footer {
+    justify-content: space-between;
+}
+
+/* Buttons */
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 120px;
+    height: 44px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* Modal footer buttons container */
+.modal-footer-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+/* Process button */
+#process-receipts-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 160px;
+}
+
+#process-receipts-count {
+    margin-left: 8px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 24px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==================== RESPONSIVE FIXES ==================== */
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .popout-modal {
+        padding: 20px !important;
+    }
+    
+    .popout-modal-content {
+        width: 95% !important;
+        max-width: 750px !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        width: 95% !important;
+        max-width: 800px !important;
+    }
+    
+    .modal-footer-buttons {
+        justify-content: space-between;
+    }
+    
+    .btn {
+        min-width: 140px;
+    }
+}
+
+/* Small screens */
+@media (max-width: 767px) {
+    .popout-modal {
+        padding: 10px !important;
+        align-items: center !important; /* Still center on mobile */
+        padding-top: 60px !important; /* Space for navbar */
+    }
+    
+    .popout-modal-content {
+        width: 95% !important;
+        max-height: 90vh !important;
+        min-width: 0 !important; /* Allow to shrink on mobile */
+        border-radius: 12px !important;
+    }
+    
+    .popout-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    
+    .modal-footer-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .popout-modal {
+        padding: 40px !important;
+    }
+    
+    .popout-modal-content {
+        width: auto !important;
+        max-width: 900px !important;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        max-width: 900px !important;
+        width: 85vw !important;
+    }
+    
+    .btn {
+        min-width: 140px;
+        padding: 12px 24px;
+    }
+    
+    #process-receipts-btn {
+        min-width: 180px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .popout-modal {
+        padding: 5px !important;
+        padding-top: 50px !important;
+    }
+    
+    .popout-modal-content {
+        width: 100% !important;
+        max-height: 95vh !important;
+        border-radius: 10px !important;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        min-height: 56px;
+    }
+    
+    .popout-modal-footer {
+        padding: 10px 12px;
+        min-height: 68px;
+    }
 }
             </style>
 
