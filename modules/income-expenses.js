@@ -2102,42 +2102,11 @@ showCameraInterface() {
                 
                 /* ==================== MODAL FIXES ==================== */
                 /* Fix modal positioning - center it properly */
-                .popout-modal {
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    background: rgba(0, 0, 0, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    z-index: 99999 !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    padding: 20px !important;
-                    box-sizing: border-box !important;
-                    overflow: auto !important;
-                }
-                
+                               
                 .popout-modal.hidden {
                     display: none !important;
                 }
-                
-                /* Modal content - fixed height and positioning */
-                .popout-modal-content {
-                    background: white;
-                    border-radius: 16px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                    width: 100%;
-                    max-width: 800px;
-                    max-height: 85vh;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    position: relative;
-                    margin: auto;
-                }
-                
+                               
                 /* Import receipts modal specific */
                 #import-receipts-modal .popout-modal-content {
                     max-width: 850px;
@@ -2145,19 +2114,7 @@ showCameraInterface() {
                 }
                 
                 /* Header - proper positioning */
-                .popout-modal-header {
-                    padding: 16px 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    flex-shrink: 0;
-                    min-height: 60px;
-                    background: white;
-                    position: sticky;
-                    top: 0;
-                    z-index: 100;
-                }
+                
                 
                 .popout-modal-title {
                     margin: 0;
@@ -2196,45 +2153,13 @@ showCameraInterface() {
                     max-height: calc(80vh - 120px);
                 }
                 
-                /* Footer - fixed at bottom */
-                .popout-modal-footer {
-                    padding: 16px 24px;
-                    border-top: 1px solid var(--glass-border);
-                    display: flex;
-                    gap: 12px;
-                    justify-content: flex-end;
-                    align-items: center;
-                    flex-shrink: 0;
-                    background: white;
-                    position: sticky;
-                    bottom: 0;
-                    z-index: 100;
-                    min-height: 72px;
-                }
-                
+                               
                 /* Import receipts footer */
                 #import-receipts-modal .popout-modal-footer {
                     justify-content: space-between;
                 }
                 
-                /* Buttons */
-                .btn {
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    border: none;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s;
-                    white-space: nowrap;
-                    min-width: 120px;
-                    height: 44px;
-                    font-size: 14px;
-                    box-sizing: border-box;
-                }
-                
+                              
                 .btn-primary {
                     background: var(--primary-color);
                     color: white;
@@ -2303,94 +2228,7 @@ showCameraInterface() {
                     height: 100%;
                     overflow-y: auto;
                 }
-                
-                /* ==================== RESPONSIVE FIXES ==================== */
-                
-                /* Medium and large screens - fix positioning */
-                @media (min-width: 768px) {
-                    .popout-modal {
-                        padding: 40px !important;
-                        align-items: center !important;
-                    }
-                    
-                    .popout-modal-content {
-                        max-height: 80vh;
-                    }
-                    
-                    /* Ensure modal stays below navbar */
-                    .popout-modal-header {
-                        top: 0;
-                    }
-                }
-                
-                /* Medium screens - fix button positioning */
-                @media (min-width: 768px) and (max-width: 1199px) {
-                    .popout-modal-content {
-                        width: 95%;
-                        max-width: 750px;
-                    }
-                    
-                    .modal-footer-buttons {
-                        justify-content: space-between;
-                    }
-                    
-                    .btn {
-                        min-width: 140px;
-                    }
-                }
-                
-                /* Small screens */
-                @media (max-width: 767px) {
-                    .popout-modal {
-                        padding: 20px !important;
-                        align-items: flex-start !important;
-                        padding-top: 60px !important;
-                    }
-                    
-                    .popout-modal-content {
-                        max-height: 85vh;
-                        width: 95%;
-                    }
-                    
-                    .popout-modal-footer {
-                        flex-direction: column;
-                    }
-                    
-                    .btn {
-                        width: 100%;
-                        min-width: 0;
-                    }
-                    
-                    .modal-footer-buttons {
-                        flex-direction: column;
-                    }
-                }
-                
-                /* Very small screens */
-                @media (max-width: 480px) {
-                    .popout-modal {
-                        padding: 10px !important;
-                        padding-top: 50px !important;
-                    }
-                    
-                    .popout-modal-content {
-                        max-height: 90vh;
-                        border-radius: 12px;
-                    }
-                    
-                    .popout-modal-header {
-                        padding: 12px 16px;
-                    }
-                    
-                    .import-receipts-content-wrapper {
-                        padding: 16px;
-                    }
-                    
-                    .popout-modal-footer {
-                        padding: 12px 16px;
-                    }
-                }
-                
+                               
                 /* ==================== BASE STYLES ==================== */
                 .module-container { padding: 20px; }
                 .module-header { margin-bottom: 30px; }
@@ -2427,7 +2265,14 @@ showCameraInterface() {
                     font-size: 14px;
                     box-sizing: border-box;
                 }
-                
+
+                .form-grid-2col {
+                 display: grid;
+                 grid-template-columns: 1fr 1fr;
+                 gap: 16px;
+                 margin-bottom: 16px;
+               }
+
                 .form-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-light); }
                 .form-label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); font-size: 14px; }
                 
@@ -2441,7 +2286,11 @@ showCameraInterface() {
                     cursor: pointer;
                     transition: all 0.2s;
                 }
-                
+
+                .upload-dropzone-margin {
+                 margin-bottom: 12px;
+               }
+
                 .upload-dropzone:hover { border-color: var(--primary-color); background: #f0f1ff; }
                 .dropzone-icon { font-size: 48px; color: #9ca3af; margin-bottom: 16px; }
                 .dropzone-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
@@ -2619,6 +2468,23 @@ showCameraInterface() {
     justify-content: space-between;
 }
 
+.receipt-image-preview {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.receipt-preview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
 /* ==================== BUTTON FIXES - NO FLOATING ==================== */
 /* Base button styles - NO position: relative here */
 .btn {
@@ -2641,6 +2507,13 @@ showCameraInterface() {
     float: none !important; /* ADD THIS */
     /* CRITICAL: No position:relative here */
 }
+
+ .btn-small {
+   padding: 6px 12px;
+   font-size: 13px;
+   height: auto;
+ }
+
 
 /* Camera section buttons - ensure they don't float */
 #camera-section .btn,
@@ -2985,7 +2858,7 @@ showCameraInterface() {
             <!-- ==================== MODALS ==================== -->
            <!-- Import Receipts Modal -->
             <div id="import-receipts-modal" class="popout-modal hidden">
-                <div class="popout-modal-content">
+                <div class="popout-modal-content transaction-modal-content">
                     <div class="popout-modal-header">
                         <h3 class="popout-modal-title">📥 Import Receipts</h3>
                         <button class="popout-modal-close" id="close-import-receipts">&times;</button>
@@ -3011,7 +2884,7 @@ showCameraInterface() {
             
             <!-- Transaction Modal -->
             <div id="transaction-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 600px;">
+                <div class="popout-modal-content">
                     <div class="popout-modal-header">
                         <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
                         <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
@@ -3020,7 +2893,7 @@ showCameraInterface() {
                         <form id="transaction-form">
                             <input type="hidden" id="transaction-id" value="">
                             
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div class="form-grid-2col">
                                 <div>
                                     <label class="form-label">Date *</label>
                                     <input type="date" id="transaction-date" class="form-input" required>
@@ -3094,7 +2967,7 @@ showCameraInterface() {
                             <!-- Receipt Section -->
                             <div style="margin-bottom: 16px;">
                                 <label class="form-label">Receipt (Optional)</label>
-                                <div id="receipt-upload-area" class="upload-dropzone" style="margin-bottom: 12px;">
+                                <div id="receipt-upload-area" class="upload-dropzone upload-dropzone-margin">
                                     <div class="dropzone-icon">📄</div>
                                     <h4 class="dropzone-title">Attach Receipt</h4>
                                     <p class="dropzone-subtitle">Click to upload or drag & drop</p>
@@ -3108,7 +2981,7 @@ showCameraInterface() {
                                 
                                 <!-- Receipt Preview -->
                                 <div id="receipt-preview-container" class="hidden">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <div class="receipt-preview-card">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <div style="font-size: 24px;">📄</div>
                                             <div>
@@ -3116,12 +2989,12 @@ showCameraInterface() {
                                                 <div style="font-size: 12px; color: #6b7280;" id="receipt-size">2.5 MB</div>
                                             </div>
                                         </div>
-                                        <button type="button" id="remove-receipt" class="btn btn-outline" style="padding: 6px 12px;">🗑️</button>
+                                        <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️</button>
                                     </div>
                                     
                                     <!-- Image Preview -->
                                     <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                       <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
                                     </div>
                                 </div>
                             </div>
