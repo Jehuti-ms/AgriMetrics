@@ -2670,6 +2670,50 @@ showCameraInterface() {
   height: auto;
 }
 
+.receipt-preview-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--glass-border);
+}
+
+.receipt-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.receipt-icon {
+  font-size: 24px;
+}
+
+.receipt-filename {
+  font-weight: 600;
+  color: #374151;
+}
+
+.receipt-size {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.receipt-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.receipt-actions .btn-small {
+  min-width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+  height: auto;
+}
+
              </style>
 
             <div class="module-container">
@@ -2888,27 +2932,30 @@ showCameraInterface() {
                                 <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
                             </div>
 
-                            <!-- Receipt Section -->
+                           <!-- Receipt Preview -->
                             <div id="receipt-preview-container" class="hidden">
-                             <div class="receipt-preview-card">
-                               <div class="receipt-info">
-                                 <div style="font-size: 24px;">📄</div>
-                                 <div>
-                                   <div id="receipt-filename" class="receipt-filename">receipt.jpg</div>
-                                   <div id="receipt-size" class="receipt-size">2.5 MB</div>
-                                 </div>
-                               </div>
-                               <div class="receipt-actions">
-                                 <button type="button" id="process-receipt" class="btn btn-outline btn-small">🔍 Process</button>
-                                 <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️ Delete</button>
-                               </div>
-                             </div>
-                           
-                             <!-- Image Preview -->
-                             <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                               <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
-                             </div>
-                           </div>
+                              <div class="receipt-preview-card">
+                                <!-- Left side: file info -->
+                                <div class="receipt-info">
+                                  <div class="receipt-icon">📄</div>
+                                  <div>
+                                    <div id="receipt-filename" class="receipt-filename">receipt.jpg</div>
+                                    <div id="receipt-size" class="receipt-size">2.5 MB • pending</div>
+                                  </div>
+                                </div>
+                            
+                                <!-- Right side: actions -->
+                                <div class="receipt-actions">
+                                  <button type="button" id="process-receipt" class="btn btn-outline btn-small">🔍 Process</button>
+                                  <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️ Delete</button>
+                                </div>
+                              </div>
+                            
+                              <!-- Image Preview -->
+                              <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                                <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
+                              </div>
+                            </div>
 
                     <div class="popout-modal-footer">
                         <button type="button" class="btn btn-outline" id="cancel-transaction">Cancel</button>
