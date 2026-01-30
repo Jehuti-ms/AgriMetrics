@@ -3075,6 +3075,24 @@ showCameraInterface() {
     float: none !important;
 }
  
+/* MINIMAL FIX FOR FLOATING BUTTONS */
+.camera-controls .btn {
+    position: static !important;
+    float: none !important;
+}
+
+#switch-camera, #cancel-camera, #capture-photo {
+    position: static !important;
+}
+
+/* Ensure camera displays properly */
+.camera-preview-container {
+    display: block !important;
+}
+
+#camera-preview {
+    display: block !important;
+}
 
             </style>
 
