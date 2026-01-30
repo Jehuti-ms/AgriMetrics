@@ -2680,6 +2680,7 @@ showCameraInterface() {
   height: auto;
 }
 
+
              </style>
 
             <div class="module-container">
@@ -2899,25 +2900,26 @@ showCameraInterface() {
                             </div>
 
                           <!-- Recent Receipts List -->
-                            <div id="receipt-list">
-                              <!-- Single receipt row -->
-                              <div class="receipt-row">
-                                <div class="receipt-info">
-                                  <div class="receipt-icon">📄</div>
-                                  <div>
-                                    <div class="receipt-filename">Feed_Report_2026-01-19.pdf</div>
-                                    <div class="receipt-size">7.86 KB • pending</div>
-                                  </div>
-                                </div>
-                                <div class="receipt-actions">
-                                  <button type="button" class="btn btn-outline btn-small">🔍 Process</button>
-                                  <button type="button" class="btn btn-outline btn-small">🗑️ Delete</button>
-                                </div>
-                              </div>
-                            
-                              <!-- Add more rows here for each uploaded receipt -->
-                            </div>
-                            
+                           <!-- Receipt List -->
+                             <div id="receipt-list">
+                               <!-- Single receipt row -->
+                               <div class="receipt-row">
+                                 <div class="receipt-info">
+                                   <div class="receipt-icon">📄</div>
+                                   <div>
+                                     <div class="receipt-filename">Feed_Report_2026-01-19.pdf</div>
+                                     <div class="receipt-size">7.86 KB • Pending • Jan 29, 2026</div>
+                                   </div>
+                                 </div>
+                                 <div class="receipt-actions">
+                                   <button type="button" class="btn btn-outline btn-small">🔍 Process</button>
+                                   <button type="button" class="btn btn-outline btn-small">🗑️ Delete</button>
+                                 </div>
+                               </div>
+                             
+                               <!-- Add more .receipt-row blocks for each uploaded file -->
+                             </div>
+
                               <!-- Image Preview -->
                               <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
                                 <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
