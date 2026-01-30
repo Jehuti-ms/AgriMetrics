@@ -2571,14 +2571,24 @@ showCameraInterface() {
 }
 
 @media (min-width: 1200px) {
+  /* Keep footer buttons large */
+  .btn {
+    min-width: 140px;
+    padding: 12px 24px;
+  }
+
+  #process-receipts-btn {
+    min-width: 180px;
+  }
+
+  /* Force inline receipt action buttons to stay small */
   .receipt-actions .btn-small {
     min-width: auto !important;
     padding: 6px 12px !important;
     font-size: 13px !important;
     height: auto !important;
   }
-}
-    
+  
     .popout-modal-content {
         width: 80%;
         max-width: 900px;
@@ -2593,11 +2603,6 @@ showCameraInterface() {
         padding: 12px 24px;
     }
     
-    #process-receipts-btn {
-        min-width: 180px;
-    }
-}
-
 @media (max-width: 480px) {
     .popout-modal {
         padding: 10px !important;
