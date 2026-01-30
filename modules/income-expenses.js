@@ -3007,6 +3007,73 @@ showCameraInterface() {
 .popout-modal {
     z-index: 99999 !important;
 }
+
+/* ==================== RECEIPT LIST DELETE BUTTON FIX ==================== */
+/* Target only the delete buttons inside receipt lists */
+.delete-receipt-btn,
+.process-btn {
+    position: static !important; /* Reset to default */
+    float: none !important;
+    display: inline-flex !important;
+    padding: 6px 12px !important;
+    min-width: auto !important; /* Remove min-width constraint */
+    height: auto !important; /* Remove height constraint */
+    margin: 0 !important;
+}
+
+/* Specifically for the trash icon delete buttons */
+.delete-receipt-btn[title="Delete receipt"] {
+    width: auto !important;
+    min-width: 40px !important; /* Just enough for the icon */
+    padding: 6px !important;
+}
+
+/* For process buttons next to delete buttons */
+.process-btn {
+    min-width: 80px !important;
+}
+
+/* Container for receipt actions */
+.receipt-item-actions {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+/* Receipt item container */
+.receipt-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    margin-bottom: 12px !important;
+    position: relative !important;
+}
+
+/* Override any floating behavior */
+[data-receipt-id] {
+    position: relative !important;
+    float: none !important;
+}
+
+/* ==================== ALSO UPDATE THE MAIN BUTTON FIXES ==================== */
+/* Main modal footer buttons should still have positioning */
+.popout-modal-footer .btn {
+    position: relative !important; /* Keep for modal footer buttons */
+    float: none !important;
+}
+
+/* But remove from receipt list buttons */
+#pending-receipts-list .btn,
+#recent-receipts-list .btn,
+.receipts-list .btn {
+    position: static !important;
+    float: none !important;
+}
             </style>
 
             <div class="module-container">
