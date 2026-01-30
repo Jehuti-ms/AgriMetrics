@@ -2248,6 +2248,14 @@ showCameraInterface() {
     max-height: 90vh;
 }
 
+#import-receipts-modal .modal-footer-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: space-between; /* spreads Cancel left, Process right */
+  align-items: center;
+}
+
 #transaction-modal .popout-modal-content {
     max-width: 600px;
     max-height: 85vh;
@@ -2610,10 +2618,8 @@ showCameraInterface() {
     .camera-preview-container {
         height: 250px;
     }
-}
-
-
-            </style>
+    
+             </style>
 
             <div class="module-container">
                 <!-- Module Header -->
@@ -2738,14 +2744,14 @@ showCameraInterface() {
                     </div>
                     
                     <div class="popout-modal-footer">
-                        <div class="modal-footer-buttons">
-                            <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                            <button class="btn btn-primary" id="process-receipts-btn">
-                                ⚡ Process Receipts
-                                <span id="process-receipts-count">0</span>
-                            </button>
-                        </div>
-                    </div>
+                     <div class="modal-footer-buttons">
+                       <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                       <button class="btn btn-primary" id="process-receipts-btn">
+                         ⚡ Process Receipts
+                         <span id="process-receipts-count">0</span>
+                       </button>
+                     </div>
+                   </div>
                 </div>
             </div>
             
