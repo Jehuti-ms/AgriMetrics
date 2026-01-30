@@ -3139,32 +3139,75 @@ showCameraInterface() {
     float: none !important;
 }
 
-/* ==================== RESPONSIVE FIXES FOR CAMERA ==================== */
-@media (max-width: 768px) {
-    .camera-preview-container {
-        height: 300px !important;
-    }
-    
-    .camera-controls {
-        flex-direction: column !important;
-    }
-    
-    .camera-controls .btn {
-        width: 100% !important;
-        max-width: 100% !important;
-    }
+/* ==================== FIX ONLY THE FLOATING BUTTONS ==================== */
+/* Remove the problematic position:relative from ALL buttons */
+.btn {
+    /* REMOVE THIS LINE: position: relative !important; */
+    float: none !important;
+    display: inline-flex !important;
 }
 
-@media (max-width: 480px) {
-    .camera-preview-container {
-        height: 250px !important;
-    }
-    
-    .camera-controls .btn {
-        padding: 10px 12px !important;
-        font-size: 13px !important;
-    }
+/* Only fix floating for modal footer buttons specifically */
+.popout-modal-footer .btn {
+    position: relative; /* Only for modal footer, not !important */
+    margin: 0;
 }
+
+/* Camera section buttons - ensure they work normally */
+#camera-section .btn {
+    position: static; /* Default positioning */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Camera controls layout */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.camera-controls .btn {
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+/* Camera preview fix */
+.camera-preview-container {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#camera-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    display: block; /* Ensure it displays */
+}
+
+/* Ensure camera section shows up */
+#camera-section {
+    display: none; /* Hidden by default */
+    width: 100%;
+}
+
+#camera-section:not([style*="display: none"]) {
+    display: block !important;
+}
+
             </style>
 
             <div class="module-container">
