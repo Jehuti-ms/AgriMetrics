@@ -2084,6 +2084,62 @@ showCameraInterface() {
 
     this.element.innerHTML = `
             <style>
+
+            /* Firebase Receipt Styles */
+                .import-receipts-container { padding: 20px; }
+                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
+                .card-button:disabled:hover { transform: none; border-color: var(--glass-border); background: var(--glass-bg); }
+                .card-icon { font-size: 32px; margin-bottom: 4px; }
+                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
+                
+                .camera-section .glass-card { margin-bottom: 24px; }
+                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+                .camera-controls { display: flex; gap: 12px; justify-content: center; }
+                
+                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
+                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
+                .upload-icon { font-size: 48px; margin-bottom: 16px; }
+                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
+                
+                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
+                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+                
+                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
+                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
+                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+                .receipt-info { flex: 1; }
+                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+                .receipt-status { font-weight: 600; }
+                .status-pending { color: #f59e0b; }
+                .status-processed { color: #10b981; }
+                .status-error { color: #ef4444; }
+                
+                .empty-state { text-align: center; padding: 40px 20px; }
+                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+                .header-flex { display: flex; justify-content: space-between; align-items: center; }
+                
+                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
+                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
+                
+                /* Spinner Animation */
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                
+                /* Make button children not interfere with clicks */
+                #upload-receipt-btn * { pointer-events: none; }
+                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
+               
                 /* ==================== CRITICAL MODAL FIXES ==================== */
                 #import-receipts-modal {
                     display: none !important;
