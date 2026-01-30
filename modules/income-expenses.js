@@ -3139,72 +3139,22 @@ showCameraInterface() {
     float: none !important;
 }
 
-/* ==================== FIX ONLY THE FLOATING BUTTONS ==================== */
-/* Remove the problematic position:relative from ALL buttons */
-.btn {
-    /* REMOVE THIS LINE: position: relative !important; */
-    float: none !important;
-    display: inline-flex !important;
-}
-
-/* Only fix floating for modal footer buttons specifically */
-.popout-modal-footer .btn {
-    position: relative; /* Only for modal footer, not !important */
-    margin: 0;
-}
-
-/* Camera section buttons - ensure they work normally */
-#camera-section .btn {
-    position: static; /* Default positioning */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Camera controls layout */
-.camera-controls {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 20px;
-}
-
+/* MINIMAL FIX FOR FLOATING BUTTONS */
 .camera-controls .btn {
-    flex: 1;
-    min-width: 120px;
-    max-width: 200px;
-    padding: 12px 16px;
-    font-size: 14px;
+    position: static !important;
+    float: none !important;
 }
 
-/* Camera preview fix */
+#switch-camera, #cancel-camera, #capture-photo {
+    position: static !important;
+}
+
+/* Ensure camera displays properly */
 .camera-preview-container {
-    width: 100%;
-    height: 400px;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    position: relative;
+    display: block !important;
 }
 
 #camera-preview {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
-    display: block; /* Ensure it displays */
-}
-
-/* Ensure camera section shows up */
-#camera-section {
-    display: none; /* Hidden by default */
-    width: 100%;
-}
-
-#camera-section:not([style*="display: none"]) {
     display: block !important;
 }
 
