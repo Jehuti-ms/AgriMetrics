@@ -2612,7 +2612,7 @@ showCameraInterface() {
                 .receipt-queue-badge { background: var(--danger-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
                 .hidden { display: none !important; }
 
-              /* ==================== MODAL FIXES ==================== */
+            /* ==================== COMPLETE MODAL FIX ==================== */
 .popout-modal {
     position: fixed !important;
     top: 0 !important;
@@ -2625,7 +2625,7 @@ showCameraInterface() {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 20px !important;
+    padding: 0 !important; /* REMOVE padding - causes space at top */
     box-sizing: border-box !important;
     overflow: auto !important;
 }
@@ -2645,6 +2645,7 @@ showCameraInterface() {
     overflow: hidden;
     position: relative;
     width: 90%;
+    margin: 20px; /* Add margin instead of padding on parent */
 }
 
 #import-receipts-modal .popout-modal-content {
@@ -2669,6 +2670,9 @@ showCameraInterface() {
     position: relative;
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
+    /* Remove any top margin/padding */
+    margin-top: 0 !important;
+    padding-top: 16px !important;
 }
 
 .popout-modal-title {
@@ -2703,6 +2707,7 @@ showCameraInterface() {
     min-height: 200px;
 }
 
+/* ==================== FOOTER FIX - NO FLOATING BUTTONS ==================== */
 .popout-modal-footer {
     padding: 16px 24px;
     border-top: 1px solid #e5e7eb;
@@ -2718,8 +2723,11 @@ showCameraInterface() {
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
     position: relative;
+    /* FIX: Ensure footer stays at bottom */
+    margin-top: auto !important;
 }
 
+/* IMPORT RECEIPTS FOOTER - Cancel (left) and Process (right) */
 #import-receipts-modal .popout-modal-footer {
     justify-content: space-between !important;
 }
@@ -2733,15 +2741,25 @@ showCameraInterface() {
     flex-wrap: nowrap;
 }
 
+/* TRANSACTION FOOTER - Delete (left), Cancel (middle), Save (right) */
 #transaction-modal .popout-modal-footer {
-    justify-content: flex-end !important;
+    justify-content: space-between !important; /* Changed from flex-end */
 }
 
 #transaction-modal .popout-modal-footer .btn-danger {
-    margin-right: auto;
-    display: none;
+    margin-right: auto; /* Push Delete to left */
+    display: none; /* Hidden by default */
 }
 
+#transaction-modal .popout-modal-footer .btn-outline {
+    margin: 0 auto; /* Center Cancel button */
+}
+
+#transaction-modal .popout-modal-footer .btn-primary {
+    margin-left: auto; /* Push Save to right */
+}
+
+/* Buttons - prevent floating */
 .btn {
     padding: 10px 20px;
     border-radius: 8px;
@@ -2758,6 +2776,9 @@ showCameraInterface() {
     font-size: 14px;
     box-sizing: border-box;
     flex-shrink: 0;
+    /* Prevent floating */
+    position: relative !important;
+    float: none !important;
 }
 
 .btn-primary {
@@ -2813,20 +2834,25 @@ showCameraInterface() {
     justify-content: center;
 }
 
+/* ==================== RESPONSIVE FIXES ==================== */
+
+/* Medium screens */
 @media (min-width: 768px) and (max-width: 1199px) {
     .popout-modal {
-        padding: 30px !important;
+        padding: 0 !important; /* No padding */
     }
     
     .popout-modal-content {
         width: 95%;
         max-height: 85vh;
+        margin: 15px;
     }
     
     #import-receipts-modal .popout-modal-content {
         max-height: 90vh;
     }
     
+    /* Stack buttons vertically on medium if needed */
     #import-receipts-modal .modal-footer-buttons {
         flex-wrap: wrap;
         justify-content: center;
@@ -2851,23 +2877,28 @@ showCameraInterface() {
         max-width: 200px;
     }
     
-    #transaction-modal .btn-danger {
-        margin-right: 0;
-        order: 1;
+    /* Reset special positioning on medium screens */
+    #transaction-modal .popout-modal-footer .btn-danger,
+    #transaction-modal .popout-modal-footer .btn-outline,
+    #transaction-modal .popout-modal-footer .btn-primary {
+        margin: 0 !important;
+        order: initial;
     }
 }
 
+/* Small screens - FIX CENTERING */
 @media (max-width: 767px) {
     .popout-modal {
-        padding: 20px !important;
-        padding-top: 60px !important;
-        align-items: flex-start !important;
+        padding: 0 !important;
+        align-items: center !important; /* Center on mobile */
+        padding-top: 0 !important; /* NO extra top padding */
     }
     
     .popout-modal-content {
         width: 95%;
         max-height: 90vh;
         border-radius: 12px;
+        margin: 10px; /* Smaller margin on mobile */
     }
     
     .popout-modal-header {
@@ -2879,6 +2910,7 @@ showCameraInterface() {
         font-size: 16px;
     }
     
+    /* Stack all buttons vertically on mobile */
     .popout-modal-footer {
         flex-direction: column;
         gap: 8px;
@@ -2893,25 +2925,32 @@ showCameraInterface() {
         margin: 0 !important;
     }
     
+    /* Reset special positioning on mobile */
     #import-receipts-modal .modal-footer-buttons,
     #transaction-modal .popout-modal-footer {
         flex-direction: column;
         width: 100%;
     }
     
-    #transaction-modal .btn-danger {
-        order: 2;
+    #transaction-modal .popout-modal-footer .btn-danger,
+    #transaction-modal .popout-modal-footer .btn-outline,
+    #transaction-modal .popout-modal-footer .btn-primary {
+        margin: 0 !important;
+        order: initial;
+        width: 100%;
     }
 }
 
+/* Large screens */
 @media (min-width: 1200px) {
     .popout-modal {
-        padding: 40px !important;
+        padding: 0 !important; /* No padding */
     }
     
     .popout-modal-content {
         width: 80%;
         max-width: 900px;
+        margin: 30px; /* More margin on large screens */
     }
     
     #import-receipts-modal .popout-modal-content {
@@ -2928,16 +2967,18 @@ showCameraInterface() {
     }
 }
 
+/* Very small screens */
 @media (max-width: 480px) {
     .popout-modal {
-        padding: 10px !important;
-        padding-top: 50px !important;
+        padding: 0 !important;
+        align-items: center !important;
     }
     
     .popout-modal-content {
         width: 100%;
         max-height: 95vh;
         border-radius: 10px;
+        margin: 5px; /* Minimal margin */
     }
     
     .popout-modal-header {
@@ -2949,7 +2990,22 @@ showCameraInterface() {
         padding: 10px 12px;
     }
 }
-  
+
+/* ==================== NAVBAR SPACE FIX ==================== */
+/* Ensure navbar doesn't create space above modal */
+.navbar {
+    z-index: 1000 !important;
+    position: relative !important;
+}
+
+/* If navbar is fixed, add this */
+.navbar.fixed-top {
+    z-index: 1000 !important;
+}
+
+/* Modal should be above navbar */
+.popout-modal {
+    z-index: 99999 !important;
 }
             </style>
 
