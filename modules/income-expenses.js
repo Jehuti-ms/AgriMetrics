@@ -2083,14 +2083,6 @@ showCameraInterface() {
     const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
     this.element.innerHTML = `
-renderModule() {
-    if (!this.element) return;
-
-    const stats = this.calculateStats();
-    const recentTransactions = this.getRecentTransactions(10);
-    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-
-    this.element.innerHTML = `
             <style>
                 /* ==================== CSS VARIABLES ==================== */
                 :root {
