@@ -3060,39 +3060,6 @@ showCameraInterface() {
     float: none !important;
 }
 
-/* ==================== ALSO UPDATE THE MAIN BUTTON FIXES ==================== */
-/* Main modal footer buttons should still have positioning */
-.popout-modal-footer .btn {
-    position: relative !important; /* Keep for modal footer buttons */
-    float: none !important;
-}
-
-/* But remove from receipt list buttons */
-#pending-receipts-list .btn,
-#recent-receipts-list .btn,
-.receipts-list .btn {
-    position: static !important;
-    float: none !important;
-}
- 
-/* MINIMAL FIX FOR FLOATING BUTTONS */
-.camera-controls .btn {
-    position: static !important;
-    float: none !important;
-}
-
-#switch-camera, #cancel-camera, #capture-photo {
-    position: static !important;
-}
-
-/* Ensure camera displays properly */
-.camera-preview-container {
-    display: block !important;
-}
-
-#camera-preview {
-    display: block !important;
-}
 
             </style>
 
