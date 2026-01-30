@@ -1261,20 +1261,6 @@ async saveReceiptToFirebase(receipt) {
         }
     },
 
-   // Update this function that sets the process button
-function updateProcessButton(count) {
-    const processBtn = document.getElementById('process-receipts-btn');
-    const countBadge = document.getElementById('process-receipts-count');
-    
-    if (count > 0) {
-        processBtn.style.display = 'inline-flex';
-        countBadge.textContent = count;
-        processBtn.title = `Process ${count} pending receipt${count > 1 ? 's' : ''}`;
-    } else {
-        processBtn.style.display = 'none';
-    }
-},
- 
     // ==================== MODAL MANAGEMENT ====================
     showImportReceiptsModal() {
         console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
