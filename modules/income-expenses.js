@@ -2083,6 +2083,14 @@ showCameraInterface() {
     const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
     this.element.innerHTML = `
+renderModule() {
+    if (!this.element) return;
+
+    const stats = this.calculateStats();
+    const recentTransactions = this.getRecentTransactions(10);
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+
+    this.element.innerHTML = `
             <style>
                 /* ==================== CSS VARIABLES ==================== */
                 :root {
@@ -2100,91 +2108,303 @@ showCameraInterface() {
                     --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
                 }
                 
-                /* Firebase Receipt Styles */
-                .import-receipts-container { padding: 20px; }
-                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
-                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color-light); }
-                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
-                .card-button:disabled:hover { transform: none; border-color: var(--glass-border); background: var(--glass-bg); }
-                .card-icon { font-size: 32px; margin-bottom: 4px; }
-                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
+                /* ==================== MODAL FIXES ==================== */
+                /* Fix modal positioning - center it properly */
+                .popout-modal {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: rgba(0, 0, 0, 0.85) !important;
+                    backdrop-filter: blur(10px) !important;
+                    z-index: 99999 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    padding: 20px !important;
+                    box-sizing: border-box !important;
+                    overflow: auto !important;
+                }
                 
-                .camera-section .glass-card { margin-bottom: 24px; }
-                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
-                .camera-controls { display: flex; gap: 12px; justify-content: center; }
+                .popout-modal.hidden {
+                    display: none !important;
+                }
                 
-                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
-                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color-light); }
-                .upload-icon { font-size: 48px; margin-bottom: 16px; }
-                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
+                /* Modal content - fixed height and positioning */
+                .popout-modal-content {
+                    background: white;
+                    border-radius: 16px;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                    width: 100%;
+                    max-width: 800px;
+                    max-height: 85vh;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                    position: relative;
+                    margin: auto;
+                }
                 
-                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
-                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
-                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+                /* Import receipts modal specific */
+                #import-receipts-modal .popout-modal-content {
+                    max-width: 850px;
+                    max-height: 80vh;
+                }
                 
-                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
-                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
-                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-                .receipt-info { flex: 1; }
-                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-                .receipt-status { font-weight: 600; }
-                .status-pending { color: var(--warning-color); }
-                .status-processed { color: var(--success-color); }
-                .status-error { color: var(--danger-color); }
+                /* Header - proper positioning */
+                .popout-modal-header {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid var(--glass-border);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex-shrink: 0;
+                    min-height: 60px;
+                    background: white;
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                }
                 
-                .empty-state { text-align: center; padding: 40px 20px; }
-                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-                .header-flex { display: flex; justify-content: space-between; align-items: center; }
+                .popout-modal-title {
+                    margin: 0;
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                }
                 
-                .receipt-queue-badge { background: var(--danger-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
-                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
+                .popout-modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: var(--text-secondary);
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                }
                 
-                /* Spinner Animation */
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                .popout-modal-close:hover {
+                    background: #f3f4f6;
+                }
                 
-                /* Make button children not interfere with clicks */
-                #upload-receipt-btn * { pointer-events: none; }
-                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
-               
-                /* ==================== BASE STYLES ==================== */
-                .module-container { padding: 20px; }
-                .module-header { margin-bottom: 30px; }
-                .module-title { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0; }
-                .module-subtitle { color: var(--text-secondary); margin: 0 0 20px 0; }
-                .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+                /* Body - proper scroll area */
+                .popout-modal-body {
+                    padding: 0;
+                    overflow-y: auto;
+                    flex: 1;
+                    max-height: calc(80vh - 120px);
+                }
                 
+                #import-receipts-modal .popout-modal-body {
+                    max-height: calc(80vh - 120px);
+                }
+                
+                /* Footer - fixed at bottom */
+                .popout-modal-footer {
+                    padding: 16px 24px;
+                    border-top: 1px solid var(--glass-border);
+                    display: flex;
+                    gap: 12px;
+                    justify-content: flex-end;
+                    align-items: center;
+                    flex-shrink: 0;
+                    background: white;
+                    position: sticky;
+                    bottom: 0;
+                    z-index: 100;
+                    min-height: 72px;
+                }
+                
+                /* Import receipts footer */
+                #import-receipts-modal .popout-modal-footer {
+                    justify-content: space-between;
+                }
+                
+                /* Buttons */
                 .btn {
-                    padding: 12px 24px;
+                    padding: 10px 20px;
                     border-radius: 8px;
                     font-weight: 600;
                     cursor: pointer;
                     border: none;
                     display: inline-flex;
                     align-items: center;
-                    gap: 8px;
+                    justify-content: center;
                     transition: all 0.2s;
                     white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
                     min-width: 120px;
+                    height: 44px;
+                    font-size: 14px;
                     box-sizing: border-box;
                 }
                 
-                .btn-primary { background: var(--primary-color); color: white; }
-                .btn-primary:hover { background: #2563eb; }
-                .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--glass-border); }
-                .btn-outline:hover { background: #f9fafb; border-color: #9ca3af; }
-                .btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-                .btn-danger:hover { background: #fecaca; }
+                .btn-primary {
+                    background: var(--primary-color);
+                    color: white;
+                }
+                
+                .btn-primary:hover {
+                    background: #2563eb;
+                }
+                
+                .btn-outline {
+                    background: transparent;
+                    color: var(--text-primary);
+                    border: 1px solid var(--glass-border);
+                }
+                
+                .btn-outline:hover {
+                    background: #f9fafb;
+                    border-color: #9ca3af;
+                }
+                
+                .btn-danger {
+                    background: #fee2e2;
+                    color: #dc2626;
+                    border: 1px solid #fecaca;
+                }
+                
+                .btn-danger:hover {
+                    background: #fecaca;
+                }
+                
+                /* Process button */
+                #process-receipts-btn {
+                    display: inline-flex !important;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    min-width: 160px;
+                }
+                
+                #process-receipts-count {
+                    margin-left: 8px;
+                    background: var(--danger-color);
+                    color: white;
+                    border-radius: 12px;
+                    padding: 2px 8px;
+                    font-size: 12px;
+                    font-weight: 700;
+                    min-width: 24px;
+                    height: 20px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                /* Modal footer buttons container */
+                .modal-footer-buttons {
+                    display: flex;
+                    gap: 12px;
+                    width: 100%;
+                    justify-content: flex-end;
+                }
+                
+                /* Import receipts content */
+                .import-receipts-content-wrapper {
+                    padding: 24px;
+                    height: 100%;
+                    overflow-y: auto;
+                }
+                
+                /* ==================== RESPONSIVE FIXES ==================== */
+                
+                /* Medium and large screens - fix positioning */
+                @media (min-width: 768px) {
+                    .popout-modal {
+                        padding: 40px !important;
+                        align-items: center !important;
+                    }
+                    
+                    .popout-modal-content {
+                        max-height: 80vh;
+                    }
+                    
+                    /* Ensure modal stays below navbar */
+                    .popout-modal-header {
+                        top: 0;
+                    }
+                }
+                
+                /* Medium screens - fix button positioning */
+                @media (min-width: 768px) and (max-width: 1199px) {
+                    .popout-modal-content {
+                        width: 95%;
+                        max-width: 750px;
+                    }
+                    
+                    .modal-footer-buttons {
+                        justify-content: space-between;
+                    }
+                    
+                    .btn {
+                        min-width: 140px;
+                    }
+                }
+                
+                /* Small screens */
+                @media (max-width: 767px) {
+                    .popout-modal {
+                        padding: 20px !important;
+                        align-items: flex-start !important;
+                        padding-top: 60px !important;
+                    }
+                    
+                    .popout-modal-content {
+                        max-height: 85vh;
+                        width: 95%;
+                    }
+                    
+                    .popout-modal-footer {
+                        flex-direction: column;
+                    }
+                    
+                    .btn {
+                        width: 100%;
+                        min-width: 0;
+                    }
+                    
+                    .modal-footer-buttons {
+                        flex-direction: column;
+                    }
+                }
+                
+                /* Very small screens */
+                @media (max-width: 480px) {
+                    .popout-modal {
+                        padding: 10px !important;
+                        padding-top: 50px !important;
+                    }
+                    
+                    .popout-modal-content {
+                        max-height: 90vh;
+                        border-radius: 12px;
+                    }
+                    
+                    .popout-modal-header {
+                        padding: 12px 16px;
+                    }
+                    
+                    .import-receipts-content-wrapper {
+                        padding: 16px;
+                    }
+                    
+                    .popout-modal-footer {
+                        padding: 12px 16px;
+                    }
+                }
+                
+                /* ==================== BASE STYLES ==================== */
+                .module-container { padding: 20px; }
+                .module-header { margin-bottom: 30px; }
+                .module-title { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0; }
+                .module-subtitle { color: var(--text-secondary); margin: 0 0 20px 0; }
+                .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
                 
                 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
                 .stat-card { background: white; border-radius: 12px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--glass-border); text-align: center; }
@@ -2236,164 +2456,6 @@ showCameraInterface() {
                 .dropzone-subtitle { color: var(--text-secondary); margin-bottom: 20px; }
                 .file-type-badge { background: var(--glass-border); color: var(--text-primary); padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 0 2px; }
                 
-                .amount-income { color: var(--success-color); }
-                .amount-expense { color: var(--danger-color); }
-                
-                /* ==================== IMPORT RECEIPTS MODAL FIXES ==================== */
-                .popout-modal {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.85);
-                    backdrop-filter: blur(10px);
-                    z-index: 99999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 40px 20px;
-                    box-sizing: border-box;
-                    overflow: hidden;
-                }
-                
-                .popout-modal.hidden { display: none; }
-                
-                .popout-modal-content {
-                    background: white;
-                    border-radius: 20px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                    width: 100%;
-                    max-width: 800px;
-                    max-height: 90vh;
-                    min-height: 600px;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                }
-                
-                /* Import receipts modal specific - taller */
-                #import-receipts-modal .popout-modal-content {
-                    max-width: 850px;
-                    max-height: 85vh;
-                    min-height: 650px;
-                }
-                
-                .popout-modal-header {
-                    padding: 16px 24px;
-                    border-bottom: 1px solid var(--glass-border);
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    flex-shrink: 0;
-                    min-height: 60px;
-                    box-sizing: border-box;
-                    background: white;
-                    position: relative;
-                }
-                
-                .popout-modal-title {
-                    margin: 0;
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: var(--text-primary);
-                    line-height: 1.2;
-                }
-                
-                .popout-modal-close {
-                    background: none;
-                    border: none;
-                    font-size: 28px;
-                    cursor: pointer;
-                    color: var(--text-secondary);
-                    padding: 0;
-                    width: 32px;
-                    height: 32px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 4px;
-                    transition: all 0.2s;
-                }
-                
-                .popout-modal-close:hover {
-                    background: #f3f4f6;
-                    color: var(--text-primary);
-                }
-                
-                .popout-modal-body {
-                    padding: 0;
-                    overflow-y: auto;
-                    flex: 1;
-                    min-height: 500px;
-                    max-height: calc(85vh - 140px);
-                    box-sizing: border-box;
-                }
-                
-                #import-receipts-modal .popout-modal-body {
-                    padding: 0;
-                }
-                
-                .popout-modal-footer {
-                    padding: 16px 24px;
-                    border-top: 1px solid var(--glass-border);
-                    display: flex;
-                    gap: 12px;
-                    justify-content: flex-end;
-                    align-items: center;
-                    flex-shrink: 0;
-                    background: white;
-                    position: relative;
-                    min-height: 72px;
-                    box-sizing: border-box;
-                    flex-wrap: wrap;
-                }
-                
-                /* Footer buttons */
-                .popout-modal-footer .btn {
-                    min-width: 120px;
-                    height: 44px;
-                    padding: 10px 20px;
-                    font-size: 14px;
-                    font-weight: 600;
-                    white-space: nowrap;
-                    overflow: visible;
-                    text-overflow: clip;
-                    box-sizing: border-box;
-                    flex-shrink: 0;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                
-                /* Import receipts footer specific */
-                #import-receipts-modal .popout-modal-footer {
-                    justify-content: space-between;
-                }
-                
-                #process-receipts-btn {
-                    display: inline-flex !important;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    min-width: 160px;
-                }
-                
-                #process-receipts-count {
-                    margin-left: 8px;
-                    background: var(--danger-color);
-                    color: white;
-                    border-radius: 12px;
-                    padding: 2px 8px;
-                    font-size: 12px;
-                    font-weight: 700;
-                    min-width: 24px;
-                    height: 24px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                
                 /* Camera section */
                 .camera-preview-container {
                     position: relative;
@@ -2425,175 +2487,12 @@ showCameraInterface() {
                     max-width: 200px;
                 }
                 
-                /* ==================== RESPONSIVE FIXES ==================== */
-                @media (max-width: 768px) {
-                    .popout-modal-content {
-                        width: 95%;
-                        max-height: 85vh;
-                    }
-                    
-                    .header-actions {
-                        flex-direction: column;
-                    }
-                    
-                    .btn {
-                        width: 100%;
-                        justify-content: center;
-                    }
-                    
-                    .camera-preview-container {
-                        height: 300px;
-                    }
-                    
-                    .popout-modal {
-                        padding: 20px 10px;
-                        padding-top: 60px;
-                        align-items: flex-start;
-                    }
-                    
-                    .popout-modal-content {
-                        max-height: calc(100vh - 80px);
-                    }
-                    
-                    #import-receipts-modal .popout-modal-content {
-                        max-height: calc(90vh - 70px);
-                    }
-                }
-                
-                @media (min-width: 600px) and (max-width: 1024px) {
-                    .popout-modal {
-                        padding-top: 80px;
-                    }
-                    
-                    .popout-modal-content {
-                        max-height: calc(100vh - 120px);
-                    }
-                    
-                    #import-receipts-modal .popout-modal-content {
-                        max-height: calc(85vh - 80px);
-                    }
-                    
-                    .popout-modal-footer {
-                        flex-wrap: wrap;
-                        justify-content: center;
-                    }
-                    
-                    .popout-modal-footer .btn {
-                        flex: 1;
-                        min-width: 140px;
-                        max-width: 200px;
-                    }
-                }
-                
-                @media (max-width: 480px) {
-                    .popout-modal {
-                        padding-top: 50px;
-                    }
-                    
-                    .popout-modal-content {
-                        max-height: calc(100vh - 70px);
-                        border-radius: 16px;
-                    }
-                    
-                    .camera-preview-container {
-                        height: 250px;
-                    }
-                    
-                    .popout-modal-footer {
-                        flex-direction: column;
-                    }
-                    
-                    .popout-modal-footer .btn {
-                        width: 100%;
-                        max-width: 100%;
-                    }
-                }
-                
-                @media (min-width: 1025px) {
-                    .popout-modal {
-                        padding: 40px;
-                    }
-                    
-                    .popout-modal-content {
-                        width: 80%;
-                        max-width: 900px;
-                    }
-                    
-                    .popout-modal-footer .btn {
-                        min-width: 140px;
-                        padding: 12px 24px;
-                    }
-                }
-                
-                /* Custom classes for import receipts modal */
-                .import-receipts-modal-body {
-                    flex: 1;
-                    overflow-y: auto;
-                }
-                
-                .import-receipts-content-wrapper {
-                    padding: 24px;
-                    height: 100%;
-                    display: flex;
-                    flex-direction: column;
-                }
-                
-                .modal-footer-buttons {
-                    display: flex;
-                    gap: 16px;
-                    justify-content: flex-end;
-                    width: 100%;
-                }
-                
-                .modal-cancel-btn {
-                    min-width: 120px;
-                }
-                
-                .modal-process-btn {
-                    min-width: 160px;
-                }
-                
-                .process-count-badge {
-                    margin-left: 8px;
-                }
-                
-                /* Receipt item styles */
-                .receipt-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 12px;
-                    background: #f9fafb;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 8px;
-                    margin-bottom: 12px;
-                }
-                
-                .receipt-item-icon {
-                    font-size: 24px;
-                }
-                
-                .receipt-item-info {
-                    flex: 1;
-                }
-                
-                .receipt-item-name {
-                    font-weight: 600;
-                    color: #374151;
-                    margin-bottom: 4px;
-                }
-                
-                .receipt-item-meta {
-                    font-size: 12px;
-                    color: #6b7280;
-                    display: flex;
-                    gap: 8px;
-                }
-                
-                .receipt-item-actions {
-                    display: flex;
-                    gap: 8px;
-                }
+                /* Other styles */
+                .status-pending { color: var(--warning-color); }
+                .status-processed { color: var(--success-color); }
+                .status-error { color: var(--danger-color); }
+                .receipt-queue-badge { background: var(--danger-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
+                .hidden { display: none !important; }
             </style>
 
             <div class="module-container">
@@ -2615,9 +2514,9 @@ showCameraInterface() {
                 <!-- Pending Receipts Section -->
                 ${pendingReceipts.length > 0 ? `
                     <div class="glass-card" id="pending-receipts-section">
-                        <div class="header-flex">
-                            <h3 class="section-title">📋 Pending Receipts (${pendingReceipts.length})</h3>
-                            <div class="receipt-actions">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: #1f2937; font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
+                            <div style="display: flex; gap: 12px;">
                                 <button class="btn btn-outline" id="refresh-receipts-btn">🔄 Refresh</button>
                                 <button class="btn btn-primary" id="process-all-receipts">⚡ Process All</button>
                             </div>
@@ -2631,57 +2530,57 @@ showCameraInterface() {
                 <!-- Financial Overview -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="card-icon">💰</div>
-                        <div class="stat-value" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                        <div class="stat-label">Total Income</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Total Income</div>
                     </div>
                     <div class="stat-card">
-                        <div class="card-icon">📊</div>
-                        <div class="stat-value" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                        <div class="stat-label">Total Expenses</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Total Expenses</div>
                     </div>
                     <div class="stat-card">
-                        <div class="card-icon">📈</div>
-                        <div class="stat-value" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
-                        <div class="stat-label">Net Income</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Net Income</div>
                     </div>
                     <div class="stat-card">
-                        <div class="card-icon">💳</div>
-                        <div class="stat-value">${stats.transactionCount}</div>
-                        <div class="stat-label">Transactions</div>
+                        <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #1f2937; margin-bottom: 4px;">${stats.transactionCount}</div>
+                        <div style="font-size: 14px; color: #6b7280;">Transactions</div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-income-btn">
-                        <div class="card-icon">💰</div>
-                        <span class="card-title">Add Income</span>
-                        <span class="card-subtitle">Record farm income</span>
+                        <div style="font-size: 32px;">💰</div>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Add Income</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Record farm income</span>
                     </button>
                     <button class="quick-action-btn" id="add-expense-btn">
-                        <div class="card-icon">💸</div>
-                        <span class="card-title">Add Expense</span>
-                        <span class="card-subtitle">Record farm expenses</span>
+                        <div style="font-size: 32px;">💸</div>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Add Expense</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Record farm expenses</span>
                     </button>
                     <button class="quick-action-btn" id="financial-report-btn">
-                        <div class="card-icon">📊</div>
-                        <span class="card-title">Financial Report</span>
-                        <span class="card-subtitle">View financial summary</span>
+                        <div style="font-size: 32px;">📊</div>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Financial Report</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">View financial summary</span>
                     </button>
                     <button class="quick-action-btn" id="category-analysis-btn">
-                        <div class="card-icon">📋</div>
-                        <span class="card-title">Category Analysis</span>
-                        <span class="card-subtitle">Breakdown by category</span>
+                        <div style="font-size: 32px;">📋</div>
+                        <span style="font-size: 14px; font-weight: 600; color: #1f2937;">Category Analysis</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Breakdown by category</span>
                     </button>
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="glass-card">
-                    <div class="header-flex">
-                        <h3 class="section-title">📋 Recent Transactions</h3>
-                        <div class="transaction-filters">
-                            <select id="transaction-filter" class="form-input">
+                <div class="glass-card" style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: #1f2937; font-size: 20px;">📋 Recent Transactions</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <select id="transaction-filter" class="form-input" style="width: auto;">
                                 <option value="all">All Transactions</option>
                                 <option value="income">Income Only</option>
                                 <option value="expense">Expenses Only</option>
@@ -2696,7 +2595,7 @@ showCameraInterface() {
 
                 <!-- Category Breakdown -->
                 <div class="glass-card">
-                    <h3 class="section-title">📊 Category Breakdown</h3>
+                    <h3 style="color: #1f2937; margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
                     <div id="category-breakdown">
                         ${this.renderCategoryBreakdown()}
                     </div>
@@ -2706,24 +2605,24 @@ showCameraInterface() {
             <!-- ==================== MODALS ==================== -->
            <!-- Import Receipts Modal -->
             <div id="import-receipts-modal" class="popout-modal hidden">
-                <div class="popout-modal-content import-receipts-modal-content">
+                <div class="popout-modal-content">
                     <div class="popout-modal-header">
                         <h3 class="popout-modal-title">📥 Import Receipts</h3>
                         <button class="popout-modal-close" id="close-import-receipts">&times;</button>
                     </div>
                     
-                    <div class="popout-modal-body import-receipts-modal-body">
+                    <div class="popout-modal-body">
                         <div class="import-receipts-content-wrapper" id="import-receipts-content">
                             <!-- Content will be loaded here -->
                         </div>
                     </div>
                     
-                    <div class="popout-modal-footer import-receipts-modal-footer">
+                    <div class="popout-modal-footer">
                         <div class="modal-footer-buttons">
-                            <button class="btn btn-outline modal-cancel-btn" id="cancel-import-receipts">Cancel</button>
-                            <button class="btn btn-primary modal-process-btn" id="process-receipts-btn">
+                            <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                            <button class="btn btn-primary" id="process-receipts-btn">
                                 ⚡ Process Receipts
-                                <span class="process-count-badge" id="process-receipts-count">0</span>
+                                <span id="process-receipts-count">0</span>
                             </button>
                         </div>
                     </div>
@@ -2732,7 +2631,7 @@ showCameraInterface() {
             
             <!-- Transaction Modal -->
             <div id="transaction-modal" class="popout-modal hidden">
-                <div class="popout-modal-content transaction-modal-content">
+                <div class="popout-modal-content" style="max-width: 600px;">
                     <div class="popout-modal-header">
                         <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
                         <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
@@ -2741,12 +2640,12 @@ showCameraInterface() {
                         <form id="transaction-form">
                             <input type="hidden" id="transaction-id" value="">
                             
-                            <div class="form-row">
-                                <div class="form-group">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
                                     <label class="form-label">Date *</label>
                                     <input type="date" id="transaction-date" class="form-input" required>
                                 </div>
-                                <div class="form-group">
+                                <div>
                                     <label class="form-label">Type *</label>
                                     <select id="transaction-type" class="form-input" required>
                                         <option value="income">💰 Income</option>
@@ -2755,8 +2654,8 @@ showCameraInterface() {
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
                                     <label class="form-label">Category *</label>
                                     <select id="transaction-category" class="form-input" required>
                                         <option value="">Select Category</option>
@@ -2779,19 +2678,19 @@ showCameraInterface() {
                                         </optgroup>
                                     </select>
                                 </div>
-                                <div class="form-group">
+                                <div>
                                     <label class="form-label">Amount ($) *</label>
                                     <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div style="margin-bottom: 16px;">
                                 <label class="form-label">Description *</label>
                                 <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
                                     <label class="form-label">Payment Method</label>
                                     <select id="transaction-payment" class="form-input">
                                         <option value="cash">Cash</option>
@@ -2801,50 +2700,48 @@ showCameraInterface() {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
+                                <div>
                                     <label class="form-label">Reference Number</label>
                                     <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div style="margin-bottom: 16px;">
                                 <label class="form-label">Notes (Optional)</label>
                                 <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
                             </div>
 
                             <!-- Receipt Section -->
-                            <div class="form-group">
+                            <div style="margin-bottom: 16px;">
                                 <label class="form-label">Receipt (Optional)</label>
-                                <div id="receipt-upload-area" class="upload-dropzone">
+                                <div id="receipt-upload-area" class="upload-dropzone" style="margin-bottom: 12px;">
                                     <div class="dropzone-icon">📄</div>
                                     <h4 class="dropzone-title">Attach Receipt</h4>
                                     <p class="dropzone-subtitle">Click to upload or drag & drop</p>
-                                    <div class="file-type-list">
+                                    <div style="display: flex; gap: 4px; justify-content: center;">
                                         <span class="file-type-badge">JPG</span>
                                         <span class="file-type-badge">PNG</span>
                                         <span class="file-type-badge">PDF</span>
                                     </div>
-                                    <input type="file" id="receipt-upload" accept="image/*,.pdf" class="hidden">
+                                    <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
                                 </div>
                                 
                                 <!-- Receipt Preview -->
                                 <div id="receipt-preview-container" class="hidden">
-                                    <div class="receipt-item">
-                                        <div class="receipt-item-icon">📄</div>
-                                        <div class="receipt-item-info">
-                                            <div class="receipt-item-name" id="receipt-filename">receipt.jpg</div>
-                                            <div class="receipt-item-meta">
-                                                <span id="receipt-size">2.5 MB</span>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #f9fafb; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="font-size: 24px;">📄</div>
+                                            <div>
+                                                <div style="font-weight: 600; color: #374151;" id="receipt-filename">receipt.jpg</div>
+                                                <div style="font-size: 12px; color: #6b7280;" id="receipt-size">2.5 MB</div>
                                             </div>
                                         </div>
-                                        <div class="receipt-item-actions">
-                                            <button type="button" id="remove-receipt" class="btn btn-outline">🗑️</button>
-                                        </div>
+                                        <button type="button" id="remove-receipt" class="btn btn-outline" style="padding: 6px 12px;">🗑️</button>
                                     </div>
                                     
                                     <!-- Image Preview -->
-                                    <div id="image-preview" class="hidden">
-                                        <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-preview-image">
+                                    <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #e5e7eb;">
                                     </div>
                                 </div>
                             </div>
@@ -2852,30 +2749,12 @@ showCameraInterface() {
                     </div>
                     <div class="popout-modal-footer">
                         <button type="button" class="btn btn-outline" id="cancel-transaction">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="delete-transaction">Delete</button>
+                        <button type="button" class="btn btn-danger" id="delete-transaction" style="display: none;">Delete</button>
                         <button type="button" class="btn btn-primary" id="save-transaction">Save Transaction</button>
                     </div>
                 </div>
             </div>
         `;
-
-        // Add extra CSS for the new classes
-        const style = document.createElement('style');
-        style.textContent = `
-            .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-            .form-group { margin-bottom: 16px; }
-            .transaction-filters { display: flex; gap: 12px; align-items: center; }
-            .stat-value { font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px; }
-            .stat-label { font-size: 14px; color: var(--text-secondary); }
-            .receipt-preview-image { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border); }
-            .file-type-list { display: flex; gap: 4px; justify-content: center; }
-            .hidden { display: none !important; }
-            .transaction-modal-content { max-width: 600px; }
-            
-            /* Hide delete button by default */
-            #delete-transaction { display: none; }
-        `;
-        this.element.appendChild(style);
 
         this.setupEventListeners();
         this.setupReceiptFormHandlers();
