@@ -2611,7 +2611,20 @@ showCameraInterface() {
                 .status-error { color: var(--danger-color); }
                 .receipt-queue-badge { background: var(--danger-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
                 .hidden { display: none !important; }
-                
+
+                /* Debug: Add colored borders to see layout */
+.popout-modal-header {
+    border: 2px solid red !important;
+    background: rgba(255, 0, 0, 0.1) !important;
+}
+
+.popout-modal-content {
+    border: 2px solid blue !important;
+}
+
+.popout-modal {
+    border: 2px solid green !important;
+}
             </style>
 
             <div class="module-container">
