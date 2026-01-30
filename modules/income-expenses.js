@@ -2850,41 +2850,27 @@ showCameraInterface() {
                             </div>
 
                             <!-- Receipt Section -->
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Receipt (Optional)</label>
-                                <div id="receipt-upload-area" class="upload-dropzone upload-dropzone-margin">
-                                    <div class="dropzone-icon">📄</div>
-                                    <h4 class="dropzone-title">Attach Receipt</h4>
-                                    <p class="dropzone-subtitle">Click to upload or drag & drop</p>
-                                    <div style="display: flex; gap: 4px; justify-content: center;">
-                                        <span class="file-type-badge">JPG</span>
-                                        <span class="file-type-badge">PNG</span>
-                                        <span class="file-type-badge">PDF</span>
-                                    </div>
-                                    <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
-                                </div>
-                                
-                                <!-- Receipt Preview -->
-                                <div id="receipt-preview-container" class="hidden">
-                                    <div class="receipt-preview-card">
-                                        <div style="display: flex; align-items: center; gap: 8px;">
-                                            <div style="font-size: 24px;">📄</div>
-                                            <div>
-                                                <div style="font-weight: 600; color: #374151;" id="receipt-filename">receipt.jpg</div>
-                                                <div style="font-size: 12px; color: #6b7280;" id="receipt-size">2.5 MB</div>
-                                            </div>
-                                        </div>
-                                        <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️</button>
-                                    </div>
-                                    
-                                    <!-- Image Preview -->
-                                    <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                                       <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                            <div id="receipt-preview-container" class="hidden">
+                             <div class="receipt-preview-card">
+                               <div class="receipt-info">
+                                 <div style="font-size: 24px;">📄</div>
+                                 <div>
+                                   <div id="receipt-filename" class="receipt-filename">receipt.jpg</div>
+                                   <div id="receipt-size" class="receipt-size">2.5 MB</div>
+                                 </div>
+                               </div>
+                               <div class="receipt-actions">
+                                 <button type="button" id="process-receipt" class="btn btn-outline btn-small">🔍 Process</button>
+                                 <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️ Delete</button>
+                               </div>
+                             </div>
+                           
+                             <!-- Image Preview -->
+                             <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                               <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
+                             </div>
+                           </div>
+
                     <div class="popout-modal-footer">
                         <button type="button" class="btn btn-outline" id="cancel-transaction">Cancel</button>
                         <button type="button" class="btn btn-danger" id="delete-transaction" style="display: none;">Delete</button>
