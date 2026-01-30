@@ -2612,7 +2612,9 @@ showCameraInterface() {
                 .receipt-queue-badge { background: var(--danger-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
                 .hidden { display: none !important; }
 
-            /* ==================== COMPLETE MODAL FIX ==================== */
+          /* ==================== COMPLETE FIX - REPLACE ALL MODAL CSS ==================== */
+/* Only use this block - delete everything else related to modals */
+
 .popout-modal {
     position: fixed !important;
     top: 0 !important;
@@ -2625,7 +2627,7 @@ showCameraInterface() {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 0 !important; /* REMOVE padding - causes space at top */
+    padding: 20px !important;
     box-sizing: border-box !important;
     overflow: auto !important;
 }
@@ -2645,7 +2647,6 @@ showCameraInterface() {
     overflow: hidden;
     position: relative;
     width: 90%;
-    margin: 20px; /* Add margin instead of padding on parent */
 }
 
 #import-receipts-modal .popout-modal-content {
@@ -2670,9 +2671,6 @@ showCameraInterface() {
     position: relative;
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
-    /* Remove any top margin/padding */
-    margin-top: 0 !important;
-    padding-top: 16px !important;
 }
 
 .popout-modal-title {
@@ -2707,7 +2705,7 @@ showCameraInterface() {
     min-height: 200px;
 }
 
-/* ==================== FOOTER FIX - NO FLOATING BUTTONS ==================== */
+/* ==================== FOOTER FIX - NO FLOATING ==================== */
 .popout-modal-footer {
     padding: 16px 24px;
     border-top: 1px solid #e5e7eb;
@@ -2723,13 +2721,11 @@ showCameraInterface() {
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
     position: relative;
-    /* FIX: Ensure footer stays at bottom */
-    margin-top: auto !important;
 }
 
-/* IMPORT RECEIPTS FOOTER - Cancel (left) and Process (right) */
+/* IMPORT RECEIPTS FOOTER */
 #import-receipts-modal .popout-modal-footer {
-    justify-content: space-between !important;
+    justify-content: space-between;
 }
 
 #import-receipts-modal .modal-footer-buttons {
@@ -2738,28 +2734,15 @@ showCameraInterface() {
     width: 100%;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: nowrap;
 }
 
-/* TRANSACTION FOOTER - Delete (left), Cancel (middle), Save (right) */
+/* TRANSACTION FOOTER */
 #transaction-modal .popout-modal-footer {
-    justify-content: space-between !important; /* Changed from flex-end */
+    justify-content: space-between;
 }
 
-#transaction-modal .popout-modal-footer .btn-danger {
-    margin-right: auto; /* Push Delete to left */
-    display: none; /* Hidden by default */
-}
-
-#transaction-modal .popout-modal-footer .btn-outline {
-    margin: 0 auto; /* Center Cancel button */
-}
-
-#transaction-modal .popout-modal-footer .btn-primary {
-    margin-left: auto; /* Push Save to right */
-}
-
-/* Buttons - prevent floating */
+/* ==================== BUTTON FIXES - NO FLOATING ==================== */
+/* Base button styles - NO position: relative here */
 .btn {
     padding: 10px 20px;
     border-radius: 8px;
@@ -2776,11 +2759,61 @@ showCameraInterface() {
     font-size: 14px;
     box-sizing: border-box;
     flex-shrink: 0;
-    /* Prevent floating */
-    position: relative !important;
-    float: none !important;
+    /* CRITICAL: No position:relative here */
 }
 
+/* Camera section buttons - ensure they don't float */
+#camera-section .btn,
+.camera-controls .btn,
+#switch-camera,
+#cancel-camera,
+#capture-photo {
+    position: static; /* Default positioning */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+    margin: 0;
+}
+
+/* Camera controls */
+.camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    width: 100%;
+}
+
+/* Camera preview */
+.camera-preview-container {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#camera-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    display: block;
+}
+
+/* Ensure camera section works */
+#camera-section {
+    width: 100%;
+}
+
+/* Button colors */
 .btn-primary {
     background: #3b82f6;
     color: white;
@@ -2836,69 +2869,40 @@ showCameraInterface() {
 
 /* ==================== RESPONSIVE FIXES ==================== */
 
-/* Medium screens */
 @media (min-width: 768px) and (max-width: 1199px) {
     .popout-modal {
-        padding: 0 !important; /* No padding */
+        padding: 30px !important;
     }
     
     .popout-modal-content {
         width: 95%;
         max-height: 85vh;
-        margin: 15px;
     }
     
     #import-receipts-modal .popout-modal-content {
         max-height: 90vh;
     }
     
-    /* Stack buttons vertically on medium if needed */
-    #import-receipts-modal .modal-footer-buttons {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
+    .camera-preview-container {
+        height: 350px;
     }
     
-    #import-receipts-modal .btn {
-        flex: 1;
+    .camera-controls .btn {
         min-width: 140px;
-        max-width: 200px;
-    }
-    
-    #transaction-modal .popout-modal-footer {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 10px;
-    }
-    
-    #transaction-modal .btn {
-        flex: 1;
-        min-width: 140px;
-        max-width: 200px;
-    }
-    
-    /* Reset special positioning on medium screens */
-    #transaction-modal .popout-modal-footer .btn-danger,
-    #transaction-modal .popout-modal-footer .btn-outline,
-    #transaction-modal .popout-modal-footer .btn-primary {
-        margin: 0 !important;
-        order: initial;
     }
 }
 
-/* Small screens - FIX CENTERING */
 @media (max-width: 767px) {
     .popout-modal {
-        padding: 0 !important;
-        align-items: center !important; /* Center on mobile */
-        padding-top: 0 !important; /* NO extra top padding */
+        padding: 20px !important;
+        align-items: flex-start !important;
+        padding-top: 60px !important;
     }
     
     .popout-modal-content {
         width: 95%;
         max-height: 90vh;
         border-radius: 12px;
-        margin: 10px; /* Smaller margin on mobile */
     }
     
     .popout-modal-header {
@@ -2910,7 +2914,6 @@ showCameraInterface() {
         font-size: 16px;
     }
     
-    /* Stack all buttons vertically on mobile */
     .popout-modal-footer {
         flex-direction: column;
         gap: 8px;
@@ -2925,32 +2928,28 @@ showCameraInterface() {
         margin: 0 !important;
     }
     
-    /* Reset special positioning on mobile */
-    #import-receipts-modal .modal-footer-buttons,
-    #transaction-modal .popout-modal-footer {
-        flex-direction: column;
-        width: 100%;
+    .camera-preview-container {
+        height: 300px;
     }
     
-    #transaction-modal .popout-modal-footer .btn-danger,
-    #transaction-modal .popout-modal-footer .btn-outline,
-    #transaction-modal .popout-modal-footer .btn-primary {
-        margin: 0 !important;
-        order: initial;
+    .camera-controls {
+        flex-direction: column;
+    }
+    
+    .camera-controls .btn {
         width: 100%;
+        max-width: 100%;
     }
 }
 
-/* Large screens */
 @media (min-width: 1200px) {
     .popout-modal {
-        padding: 0 !important; /* No padding */
+        padding: 40px !important;
     }
     
     .popout-modal-content {
         width: 80%;
         max-width: 900px;
-        margin: 30px; /* More margin on large screens */
     }
     
     #import-receipts-modal .popout-modal-content {
@@ -2967,18 +2966,16 @@ showCameraInterface() {
     }
 }
 
-/* Very small screens */
 @media (max-width: 480px) {
     .popout-modal {
-        padding: 0 !important;
-        align-items: center !important;
+        padding: 10px !important;
+        padding-top: 50px !important;
     }
     
     .popout-modal-content {
         width: 100%;
         max-height: 95vh;
         border-radius: 10px;
-        margin: 5px; /* Minimal margin */
     }
     
     .popout-modal-header {
@@ -2989,75 +2986,10 @@ showCameraInterface() {
     .popout-modal-footer {
         padding: 10px 12px;
     }
-}
-
-/* ==================== NAVBAR SPACE FIX ==================== */
-/* Ensure navbar doesn't create space above modal */
-.navbar {
-    z-index: 1000 !important;
-    position: relative !important;
-}
-
-/* If navbar is fixed, add this */
-.navbar.fixed-top {
-    z-index: 1000 !important;
-}
-
-/* Modal should be above navbar */
-.popout-modal {
-    z-index: 99999 !important;
-}
-
-/* ==================== RECEIPT LIST DELETE BUTTON FIX ==================== */
-/* Target only the delete buttons inside receipt lists */
-.delete-receipt-btn,
-.process-btn {
-    position: static !important; /* Reset to default */
-    float: none !important;
-    display: inline-flex !important;
-    padding: 6px 12px !important;
-    min-width: auto !important; /* Remove min-width constraint */
-    height: auto !important; /* Remove height constraint */
-    margin: 0 !important;
-}
-
-/* Specifically for the trash icon delete buttons */
-.delete-receipt-btn[title="Delete receipt"] {
-    width: auto !important;
-    min-width: 40px !important; /* Just enough for the icon */
-    padding: 6px !important;
-}
-
-/* For process buttons next to delete buttons */
-.process-btn {
-    min-width: 80px !important;
-}
-
-/* Container for receipt actions */
-.receipt-item-actions {
-    display: flex !important;
-    gap: 8px !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-}
-
-/* Receipt item container */
-.receipt-item {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    padding: 12px !important;
-    background: #f9fafb !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 8px !important;
-    margin-bottom: 12px !important;
-    position: relative !important;
-}
-
-/* Override any floating behavior */
-[data-receipt-id] {
-    position: relative !important;
-    float: none !important;
+    
+    .camera-preview-container {
+        height: 250px;
+    }
 }
 
 
