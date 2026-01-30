@@ -2571,9 +2571,13 @@ showCameraInterface() {
 }
 
 @media (min-width: 1200px) {
-    .popout-modal {
-        padding: 40px !important;
-    }
+  .receipt-actions .btn-small {
+    min-width: auto !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: auto !important;
+  }
+}
     
     .popout-modal-content {
         width: 80%;
