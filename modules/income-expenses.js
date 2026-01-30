@@ -2612,18 +2612,188 @@ showCameraInterface() {
                 .receipt-queue-badge { background: var(--danger-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
                 .hidden { display: none !important; }
 
-                /* Debug: Add colored borders to see layout */
-.popout-modal-header {
-    border: 2px solid red !important;
-    background: rgba(255, 0, 0, 0.1) !important;
+               /* ==================== MODAL FOOTER FIXES ==================== */
+/* Footer - fixed at bottom with proper positioning */
+.popout-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+    background: white;
+    /* Fixed positioning to bottom of modal */
+    margin-top: auto !important; /* Push footer to bottom */
+    width: 100%;
+    box-sizing: border-box;
+    /* Remove sticky/relative positioning */
+    position: static !important;
+    min-height: 72px;
+    /* Ensure rounded corners at bottom */
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
 }
 
+/* Import receipts footer */
+#import-receipts-modal .popout-modal-footer {
+    justify-content: space-between;
+}
+
+/* Ensure modal content has proper flex layout */
 .popout-modal-content {
-    border: 2px solid blue !important;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    margin: 20px;
 }
 
-.popout-modal {
-    border: 2px solid green !important;
+/* Body should take available space */
+.popout-modal-body {
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 200px; /* Ensure minimum height */
+    max-height: calc(85vh - 136px); /* Account for header and footer */
+}
+
+/* Import receipts modal specific */
+#import-receipts-modal .popout-modal-content {
+    max-width: 850px;
+    max-height: 80vh;
+}
+
+#import-receipts-modal .popout-modal-body {
+    max-height: calc(80vh - 136px);
+}
+
+/* Modal footer buttons container - ensure proper layout */
+.modal-footer-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+/* Buttons - ensure they stay on same line */
+.btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 120px;
+    height: 44px;
+    font-size: 14px;
+    box-sizing: border-box;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* Process button */
+#process-receipts-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 160px;
+}
+
+#process-receipts-count {
+    margin-left: 8px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 24px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ==================== RESPONSIVE FIXES ==================== */
+
+/* Medium screens - prevent button overflow */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .popout-modal-content {
+        width: 95%;
+        max-width: 750px;
+    }
+    
+    .modal-footer-buttons {
+        justify-content: space-between;
+        flex-wrap: wrap; /* Allow wrapping on medium screens */
+    }
+    
+    .btn {
+        min-width: 140px;
+        flex: 1; /* Allow buttons to grow */
+        max-width: 200px; /* But not too wide */
+    }
+    
+    #process-receipts-btn {
+        order: 1;
+        flex: 1.2;
+        max-width: 220px;
+    }
+    
+    .btn-outline {
+        order: 2;
+    }
+}
+
+/* Small screens */
+@media (max-width: 767px) {
+    .popout-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+    
+    .modal-footer-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0;
+    }
+}
+
+/* Large screens - ensure buttons stay together */
+@media (min-width: 1200px) {
+    .modal-footer-buttons {
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+    }
+    
+    .btn {
+        min-width: 140px;
+    }
+    
+    #process-receipts-btn {
+        min-width: 180px;
+    }
 }
             </style>
 
