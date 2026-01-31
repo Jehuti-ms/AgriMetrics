@@ -2526,7 +2526,7 @@ showCameraInterface() {
     aspect-ratio: 3 / 2;
     max-height: 400px;
   }
-}
+
 
 /* Very small screens */
 @media (max-width: 480px) {
@@ -2535,6 +2535,18 @@ showCameraInterface() {
   }
 }
 
+.camera-preview-container {
+  position: relative;
+  width: 100%;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+
+  /* ✅ Prevent collapse */
+  min-height: 200px;
+  aspect-ratio: 4 / 3; /* modern browsers */
+}
 
              </style>
 
