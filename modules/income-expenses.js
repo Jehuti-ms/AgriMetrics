@@ -2499,34 +2499,8 @@ showCameraInterface() {
 
 /* Tablets and medium screens */
 @media (min-width: 768px) and (max-width: 1199px) {
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-  }
-}
-
-/* Desktops and large screens */
-@media (min-width: 1200px) {
-  .btn {
-    min-width: 140px;
-    padding: 12px 24px;
-  }
-
-  #process-receipts-btn {
-    min-width: 180px;
-  }
-
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
+  .popout-modal {
+    padding: 30px !important;
   }
 
   .popout-modal-content {
@@ -2538,6 +2512,7 @@ showCameraInterface() {
     max-height: 90vh;
   }
 
+  /* ✅ Camera restored */
   .camera-preview-container {
     height: 350px;
   }
@@ -2546,12 +2521,14 @@ showCameraInterface() {
     min-width: 140px;
   }
 
-  /* 🔑 Keep inline receipt buttons compact */
+  /* ✅ Receipt fix */
   .receipt-actions button.btn.btn-small {
     min-width: auto !important;
     padding: 6px 12px !important;
     font-size: 13px !important;
     height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
   }
 }
 
@@ -2592,6 +2569,7 @@ showCameraInterface() {
     margin: 0 !important;
   }
 
+  /* ✅ Camera restored */
   .camera-preview-container {
     height: 300px;
   }
@@ -2606,40 +2584,14 @@ showCameraInterface() {
   }
 }
 
-/* Desktops and large screens */
-@media (min-width: 1200px) {
-  .popout-modal {
-    padding: 40px !important;
+/* Very small phones */
+@media (max-width: 480px) {
+  /* ✅ Camera restored */
+  .camera-preview-container {
+    height: 250px;
   }
-
-  .popout-modal-content {
-    width: 80%;
-    max-width: 900px;
-  }
-
-  #import-receipts-modal .popout-modal-content {
-    max-width: 900px;
-  }
-
-  /* Global large buttons */
-  .btn {
-    min-width: 140px;
-    padding: 12px 24px;
-  }
-
-  #process-receipts-btn {
-    min-width: 180px;
-  }
-
-  /* 🔑 Keep inline receipt buttons compact */
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-  }
-  
 }
+
 
              </style>
 
