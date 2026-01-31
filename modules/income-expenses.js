@@ -354,70 +354,128 @@ const IncomeExpensesModule = {
      // ==================== CAMERA METHODS ====================
 async initializeCamera() {
   console.log('📷 Initializing camera...');
-  console.log('Video offsetHeight:', video.offsetHeight);
+  console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
 
   const video = document.getElementById('camera-preview');
   const status = document.getElementById('camera-status');
 
   if (!video) {
+    console.error('❌ Camera preview element not found');
     this.showNotification('Camera preview element missing', 'error');
     this.showUploadInterface();
     return;
   }
 
-  // Stop existing stream
+  // Stop existing stream first
   if (this.cameraStream) {
     this.cameraStream.getTracks().forEach(track => track.stop());
     this.cameraStream = null;
   }
 
+  // Reset video element
   video.srcObject = null;
+  video.pause();
+  video.load();
 
-  if (status) status.textContent = 'Requesting camera access...';
+  if (status) {
+    status.textContent = 'Requesting camera access...';
+  }
 
-  // Build constraints
+  // Detect screen size and adjust constraints
   const screenWidth = window.innerWidth;
-  let constraints = {
-    video: {
-      facingMode: this.cameraFacingMode,
-      width: { ideal: screenWidth >= 768 ? 640 : 1280 },
-      height: { ideal: screenWidth >= 768 ? 480 : 720 }
-    },
-    audio: false
-  };
+  let constraints;
+
+  if (screenWidth >= 768 && screenWidth <= 1024) {
+    console.log('📱 Medium screen detected, using basic constraints');
+    constraints = {
+      video: {
+        facingMode: this.cameraFacingMode,
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      },
+      audio: false
+    };
+  } else {
+    constraints = {
+      video: {
+        facingMode: this.cameraFacingMode,
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    };
+  }
+
+  console.log('Using constraints:', constraints);
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    console.log('✅ Camera access granted');
+
     this.cameraStream = stream;
     video.srcObject = stream;
-    await video.play();
-    if (status) status.textContent = 'Camera Ready';
+
+    // Force video dimensions to match stream
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
+    console.log('Camera settings:', settings);
+
+    if (settings.width && settings.height) {
+      video.style.width = '100%';
+      video.style.height = '100%';
+      console.log(`Video dimensions set to: ${settings.width}x${settings.height}`);
+    }
+
+    // Play video
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        console.log('📹 Video is playing successfully');
+        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+        if (status) {
+          status.textContent = `${cameraType} Camera - Ready`;
+        }
+
+        const switchBtn = document.getElementById('switch-camera');
+        if (switchBtn) {
+          const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+          switchBtn.innerHTML = `
+            <span class="btn-icon">🔄</span>
+            <span class="btn-text">Switch to ${nextMode}</span>
+          `;
+        }
+      }).catch(error => {
+        console.error('Video play error:', error);
+        setTimeout(() => {
+          video.play().catch(e => {
+            console.error('Video play retry failed:', e);
+            this.showNotification('Camera preview failed', 'error');
+          });
+        }, 100);
+      });
+    }
   } catch (error) {
     console.error('❌ Camera error:', error);
 
-    if (error.name === 'NotReadableError' || error.name === 'OverconstrainedError') {
-      console.warn('Retrying with minimal constraints...');
-      try {
-        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        this.cameraStream = fallbackStream;
-        video.srcObject = fallbackStream;
-        await video.play();
-        if (status) status.textContent = 'Camera Ready (Fallback)';
-        return;
-      } catch (fallbackErr) {
-        console.error('❌ Fallback camera failed:', fallbackErr);
-      }
-    }
-
     let errorMessage = 'Camera access denied.';
-    if (error.name === 'NotFoundError') errorMessage = 'No camera found on this device.';
-    if (error.name === 'NotAllowedError') errorMessage = 'Camera permission denied.';
+    if (error.name === 'NotFoundError') {
+      errorMessage = 'No camera found on this device.';
+    } else if (error.name === 'NotAllowedError') {
+      errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
+    } else if (error.name === 'NotReadableError') {
+      errorMessage = 'Camera is already in use by another application. Please close other camera apps.';
+      this.tryMinimalCameraSetup();
+      return;
+    } else if (error.name === 'OverconstrainedError') {
+      errorMessage = 'Camera constraints cannot be satisfied. Trying simpler settings...';
+      this.tryMinimalCameraSetup();
+      return;
+    }
 
     this.showNotification(errorMessage, 'error');
     this.showUploadInterface();
   }
 },
-
 
 // Add a fallback method for minimal camera setup:
 async tryMinimalCameraSetup() {
@@ -1344,39 +1402,55 @@ async saveReceiptToFirebase(receipt) {
     },
 
 showCameraInterface() {
-    console.log('📷 Showing camera interface...');
+  console.log('📷 Showing camera interface...');
+  
+  // Get DOM elements
+  const cameraSection = document.getElementById('camera-section');
+  const uploadSection = document.getElementById('upload-section');
+  const recentSection = document.getElementById('recent-section');
+  const quickActionsSection = document.querySelector('.quick-actions-section');
+  
+  // Hide unnecessary sections
+  if (uploadSection) {
+    uploadSection.style.display = 'none';
+  }
+  
+  if (quickActionsSection) {
+    quickActionsSection.style.display = 'none';
+  }
+  
+  // Show camera section
+  if (cameraSection) {
+    cameraSection.style.display = 'block';
     
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
+    // Force reflow to ensure DOM is ready
+    void cameraSection.offsetHeight;
     
-    if (uploadSection) uploadSection.style.display = 'none';
-    if (quickActionsSection) quickActionsSection.style.display = 'none';
-    if (cameraSection) {
-        cameraSection.style.display = 'block';
-        
-        // Force reflow to ensure DOM is ready
-        void cameraSection.offsetHeight;
-        
-        // Initialize camera with a delay to ensure video element is ready
-        setTimeout(() => {
-            const video = document.getElementById('camera-preview');
-            if (video) {
-                // Reset video element
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.objectFit = 'cover';
-            }
-            
-            setTimeout(() => {
-                this.initializeCamera();
-            }, 50);
-        }, 100);
-    }
-    if (recentSection) recentSection.style.display = 'block';
-    
-    console.log('✅ Camera interface shown');
+    // Initialize camera with a delay to ensure video element is ready
+    setTimeout(() => {
+      const video = document.getElementById('camera-preview');
+      
+      if (video) {
+        // Reset video element styling
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+      }
+      
+      // Additional delay before initializing camera
+      setTimeout(() => {
+        this.initializeCamera();
+      }, 50);
+      
+    }, 100);
+  }
+  
+  // Show recent section
+  if (recentSection) {
+    recentSection.style.display = 'block';
+  }
+  
+  console.log('✅ Camera interface shown');
 },
  
     // ==================== EVENT HANDLERS ====================
