@@ -560,7 +560,7 @@ const IncomeExpensesModule = {
             }, 1500);
         }
     }
-},
+}
         
         // Wait for video to load and play
         video.onloadedmetadata = () => {
