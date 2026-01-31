@@ -2125,6 +2125,34 @@ setupDirectButtonHandlers() {
         this.updateModalReceiptsList();
     },
 
+ // ================= DEBUG =========================
+
+ // Add this method to test the modal
+debugModalVisibility() {
+    console.log('=== MODAL DEBUG INFO ===');
+    
+    const modal = document.getElementById('transaction-modal');
+    console.log('1. Modal element exists:', !!modal);
+    
+    if (modal) {
+        console.log('2. Has "hidden" class:', modal.classList.contains('hidden'));
+        console.log('3. Computed display:', window.getComputedStyle(modal).display);
+        console.log('4. Computed visibility:', window.getComputedStyle(modal).visibility);
+        console.log('5. Computed opacity:', window.getComputedStyle(modal).opacity);
+        console.log('6. Computed z-index:', window.getComputedStyle(modal).zIndex);
+        console.log('7. Parent element:', modal.parentElement?.tagName);
+        console.log('8. Modal position in DOM (first 500 chars):', modal.outerHTML.substring(0, 500));
+        
+        // Force show it for testing
+        console.log('9. Removing "hidden" class...');
+        modal.classList.remove('hidden');
+        console.log('10. Now has "hidden" class:', modal.classList.contains('hidden'));
+        console.log('11. Now computed display:', window.getComputedStyle(modal).display);
+    }
+    
+    console.log('=== END DEBUG ===');
+},
+ 
     // ==================== SYNC METHODS ====================
     async syncLocalTransactionsToFirebase() {
         if (!this.isOnline || !this.isFirebaseAvailable || !window.db) {
