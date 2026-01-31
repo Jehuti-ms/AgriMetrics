@@ -2218,195 +2218,176 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <style>
-           /* ==================== CRITICAL MODAL FIXES ==================== */
-                #import-receipts-modal {
-                    display: none !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
-                    height: 100vh !important; /* FIXED: Use viewport height */
-                    background: rgba(0, 0, 0, 0.8) !important;
-                    backdrop-filter: blur(10px) !important;
-                    z-index: 9999 !important;
-                    overflow-y: auto !important;
-                    padding: 80px !important;
-                    box-sizing: border-box !important;
-                    margin: 0 !important;
-                }
-                
-                #import-receipts-modal:not(.hidden) {
-                    display: flex !important;
-                }
-                
-                /* Center all modals */
-                .popout-modal {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100% !important;
-                    height: 100vh !important; /* FIXED: Use viewport height */
-                    background: rgba(0, 0, 0, 0.8) !important;
-                    backdrop-filter: blur(10px) !important;
-                    z-index: 9999 !important;
-                    padding: 20px !important;
-                    box-sizing: border-box !important;
-                    margin: 0 !important;
-                }
-                
-               /* .popout-modal.hidden {
-                    display: none !important;
-                } */
+          /* ==================== CRITICAL MODAL FIXES ==================== */
+#import-receipts-modal {
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 9999 !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+}
 
-                .popout-modal:not(.hidden) {
-                    display: flex !important;
-                    align-items: flex-start !important; /* ← CHANGED: flex-start to align from top */
-                    justify-content: center !important;
-                }
-                
-                .popout-modal-content {
-                    background: var(--background-color) !important;
-                    border-radius: 20px !important;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-                    max-width: 600px !important;
-                    width: 90% !important;
-                   /* max-height: calc(90vh - 40px) !important; /* FIXED: Account for padding */
-                    max-height: calc(100vh - 100px) !important; /* ← Account for padding */
-                    overflow: hidden !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                   /* margin: auto !important; */
-                    margin: 0 auto !important; 
-                    position: relative !important;
-                    border-top: 4px solid;
-                    border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1;
-                }
-                
-                @media (max-width: 768px) {
-                    .popout-modal-content {
-                        width: 95% !important;
-                        max-height: calc(85vh - 20px) !important;
-                        margin: auto !important;
-                    }
-                    
-                    #import-receipts-modal,
-                    .popout-modal {
-                        padding: 10px !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                    }
-                }
-                
-                    @media (max-height: 700px) {
-                    .popout-modal-content {
-                        max-height: calc(95vh - 40px) !important;
-                    } 
-               
-                /* Drag & drop styles */
-                #receipt-upload-area.drag-over {
-                    border-color: #3b82f6 !important;
-                    background: rgba(59, 130, 246, 0.1) !important;
-                    border-style: solid !important;
-                }
-                
-                #drop-area.drag-over {
-                    border-color: #3b82f6 !important;
-                    background: rgba(59, 130, 246, 0.1) !important;
-                }
-                
-                /* GREEN GRADIENT HEADER */
-                   .popout-modal-header {
-                    position: sticky !important;
-                    top: 0 !important;
-                    background: var(--glass-bg) !important;
-                    z-index: 100 !important;
-                    border-radius: 20px 20px 0 0 !important;
-                    overflow: hidden !important;
-                    padding-top: 4px !important;
-                }  
+#import-receipts-modal:not(.hidden) {
+    display: flex !important;
+}
 
-                    .popout-modal-header {
-                    position: sticky !important;
-                    top: 0 !important;
-                    background: var(--glass-bg) !important;
-                    z-index: 100 !important;
-                    padding: 16px 24px !important;
-                    border-radius: 20px 20px 0 0 !important;
-                }
-                
-                .popout-modal-header::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 4px;
-                    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-                    z-index: 101 !important;
-                }
-                
-                /* EVEN FOOTER BUTTONS */
-                .popout-modal-footer {
-                    display: flex !important;
-                    gap: 12px !important;
-                    padding: 16px 24px !important;
-                    border-top: 1px solid var(--glass-border) !important;
-                    background: var(--glass-bg) !important;
-                }
-                
-                .popout-modal-footer .btn {
-                    flex: 1 !important;
-                    min-width: 0 !important;
-                    padding: 12px !important;
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
-                    border-radius: 10px !important;
-                    border: 2px solid transparent !important;
-                    cursor: pointer !important;
-                    transition: all 0.2s ease !important;
-                    text-align: center !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    gap: 8px !important;
-                }
-                
-                .popout-modal-footer .btn-primary {
-                    background: #10b981 !important;
-                    color: white !important;
-                    border-color: #10b981 !important;
-                }
-                
-                .popout-modal-footer .btn-outline {
-                    background: transparent !important;
-                    color: var(--text-primary) !important;
-                    border-color: var(--glass-border) !important;
-                }
-                
-                .popout-modal-footer .btn-danger {
-                    background: #fef2f2 !important;
-                    color: #dc2626 !important;
-                    border-color: #fecaca !important;
-                }
-                
-                .popout-modal-footer .btn:hover {
-                    transform: translateY(-2px) !important;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-                }
-                
-                .popout-modal-footer .btn-primary:hover {
-                    background: #0da271 !important;
-                    border-color: #0da271 !important;
-                }
-                
-                .popout-modal-footer .btn:active {
-                    transform: translateY(0) !important;
-                }
+/* Center all modals */
+.popout-modal {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 9999 !important;
+    padding: 20px !important;
+}
+
+.popout-modal.hidden {
+    display: none !important;
+}
+
+.popout-modal-content {
+    background: var(--background-color) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    max-width: 600px !important;
+    width: 90% !important;
+    max-height: 90vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: auto !important;
+    position: relative !important;
+    border-top: 4px solid;
+    border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1;
+}
+
+@media (max-width: 768px) {
+    .popout-modal-content {
+        width: 95% !important;
+        max-height: 85vh !important;
+        margin: 10px auto !important;
+    }
+    
+    #import-receipts-modal,
+    .popout-modal {
+        padding: 10px !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+@media (max-height: 700px) {
+    .popout-modal-content {
+        max-height: 95vh !important;
+    }
+}
+
+/* Drag & drop styles */
+#receipt-upload-area.drag-over {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-style: solid !important;
+}
+
+#drop-area.drag-over {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* GREEN GRADIENT HEADER - FIXED */
+.popout-modal-header {
+    position: sticky !important;
+    top: 0 !important;
+    background: var(--glass-bg) !important;
+    z-index: 100 !important;
+    border-radius: 20px 20px 0 0 !important;
+    overflow: hidden !important;
+    padding-top: 4px !important; /* Make space for gradient */
+}
+
+.popout-modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+    z-index: 101 !important;
+}
+
+/* EVEN FOOTER BUTTONS - GREEN THEME */
+.popout-modal-footer {
+    display: flex !important;
+    gap: 12px !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--glass-border) !important;
+    background: var(--glass-bg) !important;
+}
+
+.popout-modal-footer .btn {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 12px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    border: 2px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+/* GREEN BUTTONS (matching your farm theme) */
+.popout-modal-footer .btn-primary {
+    background: #10b981 !important;
+    color: white !important;
+    border-color: #10b981 !important;
+}
+
+.popout-modal-footer .btn-outline {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-color: var(--glass-border) !important;
+}
+
+.popout-modal-footer .btn-danger {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border-color: #fecaca !important;
+}
+
+.popout-modal-footer .btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.popout-modal-footer .btn-primary:hover {
+    background: #0da271 !important;
+    border-color: #0da271 !important;
+}
+
+.popout-modal-footer .btn:active {
+    transform: translateY(0) !important;
+}
 
                 
                 
