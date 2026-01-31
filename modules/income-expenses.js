@@ -2777,9 +2777,9 @@ const IncomeExpensesModule = {
                             <!-- Content loaded dynamically -->
                         </div>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; min-width: 0;">Cancel</button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none; flex: 1; min-width: 0; position: relative;">
+                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                        <button class="btn btn-primary" id="process-receipts-btn" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none; position: relative;">
                             <span class="btn-icon">⚡</span>
                             <span class="btn-text">Process Receipts</span>
                             <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
@@ -2920,13 +2920,11 @@ const IncomeExpensesModule = {
                             </div>
                         </form>
                     </div>
-                    <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
-                    </div>
+                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                    <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
+                    <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
                 </div>
-            </div>
         `;
 
         this.setupEventListeners();
@@ -2939,6 +2937,34 @@ const IncomeExpensesModule = {
 
     renderImportReceiptsModal() {
         return `
+        <div class="import-receipts-container">
+            <!-- GREEN GRADIENT HEADER -->
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                border-radius: 20px 20px 0 0;
+                z-index: 10;
+            "></div>
+            
+            <div class="quick-actions-section" style="padding-top: 8px;">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                </div>
+            </div>
             <div class="import-receipts-container">
                 <div class="quick-actions-section">
                     <h2 class="section-title">Upload Method</h2>
