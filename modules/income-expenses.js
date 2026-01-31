@@ -2232,7 +2232,7 @@ const IncomeExpensesModule = {
                     backdrop-filter: blur(10px) !important;
                     z-index: 9999 !important;
                     overflow-y: auto !important;
-                    padding: 20px !important;
+                    padding: 80px !important;
                     box-sizing: border-box !important;
                     margin: 0 !important;
                 }
@@ -2259,8 +2259,14 @@ const IncomeExpensesModule = {
                     margin: 0 !important;
                 }
                 
-                .popout-modal.hidden {
+               /* .popout-modal.hidden {
                     display: none !important;
+                } */
+
+                .popout-modal:not(.hidden) {
+                    display: flex !important;
+                    align-items: flex-start !important; /* ← CHANGED: flex-start to align from top */
+                    justify-content: center !important;
                 }
                 
                 .popout-modal-content {
@@ -2269,11 +2275,13 @@ const IncomeExpensesModule = {
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
                     max-width: 600px !important;
                     width: 90% !important;
-                    max-height: calc(90vh - 40px) !important; /* FIXED: Account for padding */
+                   /* max-height: calc(90vh - 40px) !important; /* FIXED: Account for padding */
+                    max-height: calc(100vh - 100px) !important; /* ← Account for padding */
                     overflow: hidden !important;
                     display: flex !important;
                     flex-direction: column !important;
-                    margin: auto !important;
+                   /* margin: auto !important; */
+                    margin: 0 auto !important; 
                     position: relative !important;
                     border-top: 4px solid;
                     border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1;
@@ -2294,9 +2302,15 @@ const IncomeExpensesModule = {
                     }
                 }
                 
-                @media (max-height: 700px) {
+                    /* @media (max-height: 700px) {
                     .popout-modal-content {
                         max-height: calc(95vh - 40px) !important;
+                    } */
+
+                    @media (max-width: 768px) {
+                    .popout-modal {
+                        padding: 10px !important;
+                        padding-top: 70px !important; /* Adjust for mobile */
                     }
                 }
                 
@@ -2313,7 +2327,7 @@ const IncomeExpensesModule = {
                 }
                 
                 /* GREEN GRADIENT HEADER */
-                .popout-modal-header {
+               /* .popout-modal-header {
                     position: sticky !important;
                     top: 0 !important;
                     background: var(--glass-bg) !important;
@@ -2321,6 +2335,15 @@ const IncomeExpensesModule = {
                     border-radius: 20px 20px 0 0 !important;
                     overflow: hidden !important;
                     padding-top: 4px !important;
+                }  */
+
+                    .popout-modal-header {
+                    position: sticky !important;
+                    top: 0 !important;
+                    background: var(--glass-bg) !important;
+                    z-index: 100 !important;
+                    padding: 16px 24px !important;
+                    border-radius: 20px 20px 0 0 !important;
                 }
                 
                 .popout-modal-header::before {
