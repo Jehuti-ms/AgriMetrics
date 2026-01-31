@@ -561,6 +561,55 @@ const IncomeExpensesModule = {
         }
     }
 },
+        
+        // Wait for video to load and play
+        video.onloadedmetadata = () => {
+            console.log('📹 Video metadata loaded');
+            playVideo();
+        };
+        
+        // Fallback if metadata doesn't load quickly
+        setTimeout(() => {
+            if (video.paused && video.readyState >= 2) {
+                console.log('⏱️ Forcing video play after timeout');
+                playVideo();
+            }
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Camera initialization failed:', error);
+        
+        let errorMessage = 'Camera access denied.';
+        let showUpload = true;
+        
+        if (error.name === 'NotFoundError') {
+            errorMessage = 'No camera found on this device.';
+        } else if (error.name === 'NotAllowedError') {
+            errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
+        } else if (error.name === 'NotReadableError') {
+            errorMessage = 'Camera is currently in use by another application. Please close any other apps using the camera and try again.';
+        } else if (error.name === 'OverconstrainedError') {
+            errorMessage = 'Camera constraints cannot be satisfied. Please try again or use file upload instead.';
+        } else {
+            errorMessage = `Camera error: ${error.message}`;
+        }
+        
+        this.showNotification(errorMessage, 'error');
+        
+        // Try to show a helpful suggestion
+        if (error.name === 'NotReadableError') {
+            setTimeout(() => {
+                this.showNotification('Tip: Try refreshing the page or using a different browser', 'info');
+            }, 1000);
+        }
+        
+        if (showUpload) {
+            setTimeout(() => {
+                this.showUploadInterface();
+            }, 1500);
+        }
+    }
+},
 
 // Add a fallback method for minimal camera setup:
 async tryMinimalCameraSetup() {
@@ -1108,24 +1157,31 @@ setupVideoPlayback(video, status, resolve, reject) {
     console.log('✅ Camera stopped');
 },
     
-    switchCamera() {
-        console.log('🔄 Switching camera...');
-        
-        const now = Date.now();
-        if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
-            console.log('⏳ Please wait before switching camera again');
-            return;
-        }
-        this.lastSwitchClick = now;
-        
-        this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
-        
-        this.stopCamera();
-        
-        setTimeout(() => {
-            this.initializeCamera();
-        }, 300);
-    },
+   switchCamera() {
+    console.log('🔄 Switching camera...');
+    
+    const now = Date.now();
+    if (this.lastSwitchClick && (now - this.lastSwitchClick) < 2000) {
+        console.log('⏳ Please wait before switching camera again');
+        return;
+    }
+    this.lastSwitchClick = now;
+    
+    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+    
+    console.log(`🔄 Switching to ${this.cameraFacingMode === 'user' ? 'front' : 'rear'} camera`);
+    
+    this.stopCamera();
+    
+    // Show loading status
+    const status = document.getElementById('camera-status');
+    if (status) status.textContent = 'Switching camera...';
+    
+    // Wait a bit before initializing new camera
+    setTimeout(() => {
+        this.initializeCamera();
+    }, 500);
+},
 
     // ==================== FILE UPLOAD ====================
     
