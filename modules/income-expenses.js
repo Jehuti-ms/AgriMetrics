@@ -1601,6 +1601,11 @@ setupEventListeners() {
         
         const buttonId = button.id;
         if (!buttonId) return;
+     
+       // ← ADD THIS CHECK
+    if (['add-transaction', 'upload-receipt-btn', 'add-income-btn', 'add-expense-btn'].includes(buttonId)) {
+        return; // Let direct handlers handle these
+    }
         
         e.preventDefault();
         e.stopPropagation();
