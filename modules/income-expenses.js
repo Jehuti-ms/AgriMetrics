@@ -2302,18 +2302,11 @@ const IncomeExpensesModule = {
                     }
                 }
                 
-                    /* @media (max-height: 700px) {
+                    @media (max-height: 700px) {
                     .popout-modal-content {
                         max-height: calc(95vh - 40px) !important;
-                    } */
-
-                    @media (max-width: 768px) {
-                    .popout-modal {
-                        padding: 10px !important;
-                        padding-top: 70px !important; /* Adjust for mobile */
-                    }
-                }
-                
+                    } 
+               
                 /* Drag & drop styles */
                 #receipt-upload-area.drag-over {
                     border-color: #3b82f6 !important;
@@ -2327,7 +2320,7 @@ const IncomeExpensesModule = {
                 }
                 
                 /* GREEN GRADIENT HEADER */
-               /* .popout-modal-header {
+                   .popout-modal-header {
                     position: sticky !important;
                     top: 0 !important;
                     background: var(--glass-bg) !important;
@@ -2335,7 +2328,7 @@ const IncomeExpensesModule = {
                     border-radius: 20px 20px 0 0 !important;
                     overflow: hidden !important;
                     padding-top: 4px !important;
-                }  */
+                }  
 
                     .popout-modal-header {
                     position: sticky !important;
