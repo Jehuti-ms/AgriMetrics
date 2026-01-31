@@ -1403,53 +1403,34 @@ async saveReceiptToFirebase(receipt) {
 
 showCameraInterface() {
   console.log('📷 Showing camera interface...');
-  
-  // Get DOM elements
+
   const cameraSection = document.getElementById('camera-section');
   const uploadSection = document.getElementById('upload-section');
   const recentSection = document.getElementById('recent-section');
   const quickActionsSection = document.querySelector('.quick-actions-section');
-  
-  // Hide unnecessary sections
-  if (uploadSection) {
-    uploadSection.style.display = 'none';
-  }
-  
-  if (quickActionsSection) {
-    quickActionsSection.style.display = 'none';
-  }
-  
-  // Show camera section
+
+  if (uploadSection) uploadSection.style.display = 'none';
+  if (quickActionsSection) quickActionsSection.style.display = 'none';
   if (cameraSection) {
     cameraSection.style.display = 'block';
-    
-    // Force reflow to ensure DOM is ready
+
+    // Force reflow
     void cameraSection.offsetHeight;
-    
-    // Initialize camera with a delay to ensure video element is ready
+
+    // ✅ Delay init so <video> exists and has height
     setTimeout(() => {
       const video = document.getElementById('camera-preview');
-      
-      if (video) {
-        // Reset video element styling
-        video.style.width = '100%';
-        video.style.height = '100%';
-        video.style.objectFit = 'cover';
-      }
-      
-      // Additional delay before initializing camera
-      setTimeout(() => {
+      if (!video || video.offsetHeight === 0) {
+        console.warn('Video not ready, retrying...');
+        setTimeout(() => this.initializeCamera(), 200);
+      } else {
         this.initializeCamera();
-      }, 50);
-      
-    }, 100);
+      }
+    }, 300);
   }
-  
-  // Show recent section
-  if (recentSection) {
-    recentSection.style.display = 'block';
-  }
-  
+
+  if (recentSection) recentSection.style.display = 'block';
+
   console.log('✅ Camera interface shown');
 },
  
