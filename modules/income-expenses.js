@@ -2502,20 +2502,24 @@ showCameraInterface() {
   .popout-modal {
     padding: 30px !important;
   }
+
   .popout-modal-content {
     width: 95%;
     max-height: 85vh;
   }
+
   #import-receipts-modal .popout-modal-content {
     max-height: 90vh;
   }
 
-  /* ✅ Camera restored */
+  /* ✅ Camera stays aspect-ratio based */
   .camera-preview-container {
-    height: 350px;
+    padding-bottom: 66.67%; /* 3:2 aspect ratio */
+    max-height: 400px;
   }
-  .camera-controls .btn {
-    min-width: 140px;
+  .camera-section .glass-card {
+    margin: 0 auto;
+    max-width: 600px;
   }
 
   /* ✅ Receipt fix */
@@ -2536,24 +2540,29 @@ showCameraInterface() {
     align-items: flex-start !important;
     padding-top: 60px !important;
   }
+
   .popout-modal-content {
     width: 95%;
     max-height: 90vh;
     border-radius: 12px;
   }
+
   .popout-modal-header {
     padding: 12px 16px;
     min-height: 56px;
   }
+
   .popout-modal-title {
     font-size: 16px;
   }
+
   .popout-modal-footer {
     flex-direction: column;
     gap: 8px;
     padding: 12px 16px;
     min-height: auto;
   }
+
   .btn {
     width: 100%;
     min-width: 0;
@@ -2561,13 +2570,15 @@ showCameraInterface() {
     margin: 0 !important;
   }
 
-  /* ✅ Camera restored */
+  /* ✅ Camera stays aspect-ratio based */
   .camera-preview-container {
-    height: 300px;
+    padding-bottom: 75%; /* 4:3 aspect ratio */
   }
+
   .camera-controls {
     flex-direction: column;
   }
+
   .camera-controls .btn {
     width: 100%;
     max-width: 100%;
@@ -2576,9 +2587,9 @@ showCameraInterface() {
 
 /* Very small phones */
 @media (max-width: 480px) {
-  /* ✅ Camera restored */
+  /* ✅ Camera stays aspect-ratio based */
   .camera-preview-container {
-    height: 250px;
+    padding-bottom: 100%; /* square aspect ratio */
   }
 }
 
@@ -2587,10 +2598,12 @@ showCameraInterface() {
   .popout-modal {
     padding: 40px !important;
   }
+
   .popout-modal-content {
     width: 80%;
     max-width: 900px;
   }
+
   #import-receipts-modal .popout-modal-content {
     max-width: 900px;
   }
@@ -2600,6 +2613,7 @@ showCameraInterface() {
     min-width: 140px;
     padding: 12px 24px;
   }
+
   #process-receipts-btn {
     min-width: 180px;
   }
@@ -2613,8 +2627,7 @@ showCameraInterface() {
     display: inline-flex !important;
     align-items: center !important;
   }
-
-
+}
 
 
              </style>
