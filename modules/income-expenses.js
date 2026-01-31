@@ -371,7 +371,11 @@ const IncomeExpensesModule = {
         
         // Stop existing stream first
         if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => track.stop());
+            console.log('🛑 Stopping existing camera stream...');
+            this.cameraStream.getTracks().forEach(track => {
+                track.stop();
+                console.log(`Stopped track: ${track.kind}`);
+            });
             this.cameraStream = null;
         }
         
@@ -382,21 +386,96 @@ const IncomeExpensesModule = {
         
         if (status) status.textContent = 'Requesting camera access...';
         
-        // Simple constraints that work on most devices
-        const constraints = {
-            video: {
-                facingMode: this.cameraFacingMode,
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+        // First, try to get available devices to see what cameras we have
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            console.log(`📹 Available cameras: ${videoDevices.length}`);
+            videoDevices.forEach((device, i) => {
+                console.log(`  Camera ${i}: ${device.label || 'Unlabeled camera'} (${device.deviceId})`);
+            });
+        } catch (deviceError) {
+            console.warn('Could not enumerate devices:', deviceError);
+        }
+        
+        // Try different constraints in order of preference
+        const constraintsOptions = [
+            // Option 1: Basic constraints with facing mode
+            {
+                video: {
+                    facingMode: this.cameraFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
             },
-            audio: false
-        };
+            // Option 2: Simple constraints without facing mode
+            {
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            },
+            // Option 3: Minimal constraints (should work on most devices)
+            {
+                video: true,
+                audio: false
+            },
+            // Option 4: Fallback with deviceId if we can get it
+            async () => {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                    if (videoDevices.length > 0) {
+                        return {
+                            video: {
+                                deviceId: { exact: videoDevices[0].deviceId }
+                            },
+                            audio: false
+                        };
+                    }
+                } catch (e) {
+                    console.warn('Could not get device IDs:', e);
+                }
+                return { video: true, audio: false };
+            }
+        ];
         
-        console.log('Using constraints:', constraints);
+        let stream = null;
+        let lastError = null;
         
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Try each constraint option until one works
+        for (let i = 0; i < constraintsOptions.length; i++) {
+            try {
+                console.log(`🔄 Trying camera constraints option ${i + 1}`);
+                
+                let constraints = constraintsOptions[i];
+                if (typeof constraints === 'function') {
+                    constraints = await constraints();
+                }
+                
+                console.log('Using constraints:', JSON.stringify(constraints));
+                
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log(`✅ Camera access granted with option ${i + 1}`);
+                break;
+                
+            } catch (error) {
+                console.warn(`❌ Camera option ${i + 1} failed:`, error.name, error.message);
+                lastError = error;
+                
+                // If we're on the last option, throw the error
+                if (i === constraintsOptions.length - 1) {
+                    throw error;
+                }
+            }
+        }
         
-        console.log('✅ Camera access granted');
+        if (!stream) {
+            throw lastError || new Error('Failed to get camera stream');
+        }
+        
         this.cameraStream = stream;
         video.srcObject = stream;
         
@@ -404,62 +483,82 @@ const IncomeExpensesModule = {
         const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
         if (status) status.textContent = `${cameraType} Camera - Ready`;
         
-        // Play video with retry
-        const playVideo = () => {
-            video.play()
-                .then(() => {
-                    console.log('📹 Video is playing successfully');
-                })
-                .catch(error => {
-                    console.warn('Video play warning:', error);
-                    // Try again after a delay
+        // Setup video play with retry logic
+        const playVideo = async (retryCount = 0) => {
+            try {
+                await video.play();
+                console.log('📹 Video is playing successfully');
+                
+                // Update switch camera button text
+                const switchBtn = document.getElementById('switch-camera');
+                if (switchBtn) {
+                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                    switchBtn.innerHTML = `
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Switch to ${nextMode}</span>
+                    `;
+                }
+                
+            } catch (playError) {
+                console.warn(`❌ Video play failed (attempt ${retryCount + 1}):`, playError);
+                
+                if (retryCount < 3) {
+                    // Wait and retry
                     setTimeout(() => {
-                        video.play().catch(e => {
-                            console.error('Video play failed:', e);
-                        });
-                    }, 100);
-                });
+                        playVideo(retryCount + 1);
+                    }, 300 * (retryCount + 1));
+                } else {
+                    console.error('Max retries reached for video play');
+                }
+            }
         };
         
-        // Wait for video to be ready
-        video.onloadedmetadata = playVideo;
+        // Wait for video to load and play
+        video.onloadedmetadata = () => {
+            console.log('📹 Video metadata loaded');
+            playVideo();
+        };
         
-        // Fallback if metadata doesn't load
+        // Fallback if metadata doesn't load quickly
         setTimeout(() => {
             if (video.paused && video.readyState >= 2) {
+                console.log('⏱️ Forcing video play after timeout');
                 playVideo();
             }
-        }, 500);
+        }, 1000);
         
     } catch (error) {
-        console.error('❌ Camera error:', error);
+        console.error('❌ Camera initialization failed:', error);
+        
         let errorMessage = 'Camera access denied.';
+        let showUpload = true;
         
         if (error.name === 'NotFoundError') {
             errorMessage = 'No camera found on this device.';
         } else if (error.name === 'NotAllowedError') {
             errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
         } else if (error.name === 'NotReadableError') {
-            errorMessage = 'Camera is already in use.';
+            errorMessage = 'Camera is currently in use by another application. Please close any other apps using the camera and try again.';
         } else if (error.name === 'OverconstrainedError') {
-            errorMessage = 'Camera constraints cannot be satisfied. Trying simpler settings...';
-            // Try with minimal constraints
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: false
-                });
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                video.play();
-                return;
-            } catch (simpleError) {
-                console.error('Simple constraints also failed:', simpleError);
-            }
+            errorMessage = 'Camera constraints cannot be satisfied. Please try again or use file upload instead.';
+        } else {
+            errorMessage = `Camera error: ${error.message}`;
         }
         
         this.showNotification(errorMessage, 'error');
-        this.showUploadInterface();
+        
+        // Try to show a helpful suggestion
+        if (error.name === 'NotReadableError') {
+            setTimeout(() => {
+                this.showNotification('Tip: Try refreshing the page or using a different browser', 'info');
+            }, 1000);
+        }
+        
+        if (showUpload) {
+            setTimeout(() => {
+                this.showUploadInterface();
+            }, 1500);
+        }
     }
 },
 
