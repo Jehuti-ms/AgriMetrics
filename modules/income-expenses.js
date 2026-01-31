@@ -2218,10 +2218,10 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <style>
-                /* ==================== CRITICAL MODAL FIXES ==================== */
+            /* ==================== CRITICAL MODAL FIXES ==================== */
                 #import-receipts-modal {
                     display: none !important;
-                    align-items: flex-start !important;
+                    align-items: center !important;
                     justify-content: center !important;
                     position: fixed !important;
                     top: 0 !important;
@@ -2232,11 +2232,31 @@ const IncomeExpensesModule = {
                     backdrop-filter: blur(10px) !important;
                     z-index: 9999 !important;
                     overflow-y: auto !important;
-                    padding: 20px 0 !important;
+                    padding: 20px !important;
                 }
                 
                 #import-receipts-modal:not(.hidden) {
                     display: flex !important;
+                }
+                
+                /* Center all modals */
+                .popout-modal {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    background: rgba(0, 0, 0, 0.8) !important;
+                    backdrop-filter: blur(10px) !important;
+                    z-index: 9999 !important;
+                    padding: 20px !important;
+                }
+                
+                .popout-modal.hidden {
+                    display: none !important;
                 }
                 
                 .popout-modal-content {
@@ -2260,9 +2280,11 @@ const IncomeExpensesModule = {
                         margin: 10px auto !important;
                     }
                     
-                    #import-receipts-modal {
+                    #import-receipts-modal,
+                    .popout-modal {
                         padding: 10px !important;
-                        align-items: flex-start !important;
+                        align-items: center !important;
+                        justify-content: center !important;
                     }
                 }
                 
@@ -2289,6 +2311,71 @@ const IncomeExpensesModule = {
                     top: 0 !important;
                     background: var(--glass-bg) !important;
                     z-index: 100 !important;
+                }
+                
+                /* ADD: Green gradient header for modals */
+                .popout-modal-header::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                    border-radius: 20px 20px 0 0;
+                }
+                
+                /* ADD: Consistent footer button styling */
+                .popout-modal-footer {
+                    display: flex !important;
+                    gap: 12px !important;
+                    padding: 16px 24px !important;
+                    border-top: 1px solid var(--glass-border) !important;
+                    background: var(--glass-bg) !important;
+                }
+                
+                .popout-modal-footer .btn {
+                    flex: 1 !important;
+                    min-width: 0 !important;
+                    padding: 12px !important;
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                    border-radius: 10px !important;
+                    border: 2px solid transparent !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s ease !important;
+                    text-align: center !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 8px !important;
+                }
+                
+                .popout-modal-footer .btn-primary {
+                    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+                    color: white !important;
+                    border-color: transparent !important;
+                }
+                
+                .popout-modal-footer .btn-outline {
+                    background: transparent !important;
+                    color: var(--text-primary) !important;
+                    border-color: var(--glass-border) !important;
+                }
+                
+                .popout-modal-footer .btn-danger {
+                    background: #fef2f2 !important;
+                    color: #dc2626 !important;
+                    border-color: #fecaca !important;
+                }
+                
+                .popout-modal-footer .btn:hover {
+                    transform: translateY(-2px) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+                }
+                
+                .popout-modal-footer .btn:active {
+                    transform: translateY(0) !important;
                 }
                 
                 /* ==================== BASE STYLES ==================== */
