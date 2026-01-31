@@ -2570,6 +2570,38 @@ showCameraInterface() {
     }
 }
 
+@media (min-width: 768px) and (max-width: 1199px) {
+  /* Keep modal sizing for tablets */
+  .popout-modal {
+    padding: 30px !important;
+  }
+
+  .popout-modal-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  #import-receipts-modal .popout-modal-content {
+    max-height: 90vh;
+  }
+
+  .camera-preview-container {
+    height: 350px;
+  }
+
+  .camera-controls .btn {
+    min-width: 140px;
+  }
+
+  /* 🔑 Fix inline receipt buttons */
+  .receipt-actions .btn.btn-small {
+    min-width: auto !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: auto !important;
+  }
+}
+
 @media (min-width: 1200px) {
   /* Keep footer buttons large */
   .btn {
