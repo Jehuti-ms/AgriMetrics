@@ -2271,6 +2271,8 @@ const IncomeExpensesModule = {
                     flex-direction: column !important;
                     margin: auto !important;
                     position: relative !important;
+                    border-top: 4px solid transparent !important; /* Reserve space for gradient */
+                    border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1 !important;
                 }
                 
                 @media (max-width: 768px) {
@@ -2311,9 +2313,10 @@ const IncomeExpensesModule = {
                     top: 0 !important;
                     background: var(--glass-bg) !important;
                     z-index: 100 !important;
+                    border-radius: 20px 20px 0 0 !important;
+                    overflow: hidden !important; /* This is important */
                 }
                 
-                /* ADD: Green gradient header for modals */
                 .popout-modal-header::before {
                     content: '';
                     position: absolute;
@@ -2322,7 +2325,7 @@ const IncomeExpensesModule = {
                     right: 0;
                     height: 4px;
                     background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-                    border-radius: 20px 20px 0 0;
+                    z-index: 101 !important;
                 }
                 
                 /* ADD: Consistent footer button styling */
@@ -2351,8 +2354,8 @@ const IncomeExpensesModule = {
                     gap: 8px !important;
                 }
                 
-                .popout-modal-footer .btn-primary {
-                    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+               .popout-modal-footer .btn-primary {
+                    background: linear-gradient(135deg, #10b981, #34d399) !important; /* GREEN gradient */
                     color: white !important;
                     border-color: transparent !important;
                 }
