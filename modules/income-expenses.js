@@ -352,84 +352,48 @@ const IncomeExpensesModule = {
     },
 
      // ==================== CAMERA METHODS ====================
-async initializeCamera() {
+initializeCamera() {
   console.log('📷 Initializing camera...');
-  console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
-
-  const video = document.getElementById('camera-preview');
-  const status = document.getElementById('camera-status');
-
-  if (!video) {
-    console.error('❌ Camera preview element not found');
-    this.showNotification('Camera preview element missing', 'error');
-    this.showUploadInterface();
-    return;
-  }
-
-  // Stop existing stream first
-  if (this.cameraStream) {
-    this.cameraStream.getTracks().forEach(track => track.stop());
-    this.cameraStream = null;
-  }
-
-  // Reset video element
-  video.srcObject = null;
-  video.pause();
-  video.load();
-
-  if (status) {
-    status.textContent = 'Requesting camera access...';
-  }
-
-  // Detect screen size and adjust constraints
-  const screenWidth = window.innerWidth;
-  let constraints;
-
-  if (screenWidth >= 768 && screenWidth <= 1024) {
-    console.log('📱 Medium screen detected, using basic constraints');
-    constraints = {
-      video: {
-        facingMode: this.cameraFacingMode,
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      },
-      audio: false
-    };
-  } else {
-    constraints = {
-      video: {
-        facingMode: this.cameraFacingMode,
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    };
-  }
-
-  console.log('Using constraints:', constraints);
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    console.log('✅ Camera access granted');
+    const video = document.getElementById('camera-preview');
+    const status = document.getElementById('camera-status');
 
-    this.cameraStream = stream;
-    video.srcObject = stream;
-
-    // Force video dimensions to match stream
-    const track = stream.getVideoTracks()[0];
-    const settings = track.getSettings();
-    console.log('Camera settings:', settings);
-
-    if (settings.width && settings.height) {
-      video.style.width = '100%';
-      video.style.height = '100%';
-      console.log(`Video dimensions set to: ${settings.width}x${settings.height}`);
+    if (!video) {
+      console.error('❌ Camera preview element not found');
+      this.showNotification('Camera preview element missing', 'error');
+      this.showUploadInterface();
+      return;
     }
 
-    // Play video
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
+    // Stop any existing stream
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(track => track.stop());
+      this.cameraStream = null;
+    }
+
+    // Clear video
+    video.srcObject = null;
+    video.pause();
+
+    if (status) {
+      status.textContent = 'Requesting camera access...';
+    }
+
+    const constraints = {
+      video: { facingMode: this.cameraFacingMode },
+      audio: false
+    };
+
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(stream => {
+        console.log('✅ Camera access granted');
+        this.cameraStream = stream;
+        video.srcObject = stream;
+
+        return video.play();
+      })
+      .then(() => {
         console.log('📹 Video is playing successfully');
         const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
         if (status) {
@@ -444,35 +408,26 @@ async initializeCamera() {
             <span class="btn-text">Switch to ${nextMode}</span>
           `;
         }
-      }).catch(error => {
-        console.error('Video play error:', error);
-        setTimeout(() => {
-          video.play().catch(e => {
-            console.error('Video play retry failed:', e);
-            this.showNotification('Camera preview failed', 'error');
-          });
-        }, 100);
+      })
+      .catch(error => {
+        console.error('❌ Video play error:', error);
+        this.showNotification('Failed to start camera playback', 'error');
+      })
+      .catch(error => {
+        console.error('❌ Camera error:', error);
+        let errorMessage = 'Camera access denied.';
+        if (error.name === 'NotFoundError') {
+          errorMessage = 'No camera found on this device.';
+        } else if (error.name === 'NotAllowedError') {
+          errorMessage = 'Camera permission denied.';
+        }
+        this.showNotification(errorMessage, 'error');
+        this.showUploadInterface();
       });
-    }
+
   } catch (error) {
-    console.error('❌ Camera error:', error);
-
-    let errorMessage = 'Camera access denied.';
-    if (error.name === 'NotFoundError') {
-      errorMessage = 'No camera found on this device.';
-    } else if (error.name === 'NotAllowedError') {
-      errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
-    } else if (error.name === 'NotReadableError') {
-      errorMessage = 'Camera is already in use by another application. Please close other camera apps.';
-      this.tryMinimalCameraSetup();
-      return;
-    } else if (error.name === 'OverconstrainedError') {
-      errorMessage = 'Camera constraints cannot be satisfied. Trying simpler settings...';
-      this.tryMinimalCameraSetup();
-      return;
-    }
-
-    this.showNotification(errorMessage, 'error');
+    console.error('🚨 Camera initialization error:', error);
+    this.showNotification('Camera initialization failed', 'error');
     this.showUploadInterface();
   }
 },
