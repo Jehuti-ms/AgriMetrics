@@ -2497,135 +2497,31 @@ showCameraInterface() {
 
 /* ==================== RESPONSIVE FIXES ==================== */
 
-/* Tablets and medium screens */
 @media (min-width: 768px) and (max-width: 1199px) {
-  .popout-modal {
-    padding: 30px !important;
-  }
-
-  .popout-modal-content {
-    width: 95%;
-    max-height: 85vh;
-  }
-
-  #import-receipts-modal .popout-modal-content {
-    max-height: 90vh;
-  }
-
-  /* ✅ Camera stays aspect-ratio based */
   .camera-preview-container {
-    padding-bottom: 66.67%; /* 3:2 aspect ratio */
-    max-height: 400px;
+    height: 350px;
   }
-  .camera-section .glass-card {
-    margin: 0 auto;
-    max-width: 600px;
-  }
-
-  /* ✅ Receipt fix */
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
+  .camera-controls .btn {
+    min-width: 140px;
   }
 }
 
-/* Phones */
 @media (max-width: 767px) {
-  .popout-modal {
-    padding: 20px !important;
-    align-items: flex-start !important;
-    padding-top: 60px !important;
-  }
-
-  .popout-modal-content {
-    width: 95%;
-    max-height: 90vh;
-    border-radius: 12px;
-  }
-
-  .popout-modal-header {
-    padding: 12px 16px;
-    min-height: 56px;
-  }
-
-  .popout-modal-title {
-    font-size: 16px;
-  }
-
-  .popout-modal-footer {
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 16px;
-    min-height: auto;
-  }
-
-  .btn {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    margin: 0 !important;
-  }
-
-  /* ✅ Camera stays aspect-ratio based */
   .camera-preview-container {
-    padding-bottom: 75%; /* 4:3 aspect ratio */
+    height: 300px;
   }
-
   .camera-controls {
     flex-direction: column;
   }
-
   .camera-controls .btn {
     width: 100%;
     max-width: 100%;
   }
 }
 
-/* Very small phones */
 @media (max-width: 480px) {
-  /* ✅ Camera stays aspect-ratio based */
   .camera-preview-container {
-    padding-bottom: 100%; /* square aspect ratio */
-  }
-}
-
-/* Desktops and large screens */
-@media (min-width: 1200px) {
-  .popout-modal {
-    padding: 40px !important;
-  }
-
-  .popout-modal-content {
-    width: 80%;
-    max-width: 900px;
-  }
-
-  #import-receipts-modal .popout-modal-content {
-    max-width: 900px;
-  }
-
-  /* Global large buttons */
-  .btn {
-    min-width: 140px;
-    padding: 12px 24px;
-  }
-
-  #process-receipts-btn {
-    min-width: 180px;
-  }
-
-  /* ✅ Receipt fix */
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
+    height: 250px;
   }
 }
 
