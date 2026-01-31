@@ -1730,6 +1730,54 @@ setupDirectButtonHandlers() {
         }
     });
 },
+
+ setupReceiptFormHandlers() {
+    console.log('🔧 Setting up receipt form handlers...');
+    
+    const uploadArea = document.getElementById('receipt-upload-area');
+    const fileInput = document.getElementById('receipt-upload');
+    
+    if (uploadArea && fileInput) {
+        // Remove existing listeners first
+        const newUploadArea = uploadArea.cloneNode(true);
+        uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
+        
+        const newFileInput = fileInput.cloneNode(true);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+        
+        // Setup new listeners
+        newUploadArea.addEventListener('click', () => newFileInput.click());
+        
+        newFileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                this.handleTransactionReceiptUpload(e.target.files[0]);
+            }
+        });
+        
+        console.log('✅ Upload area and file input handlers attached');
+    }
+    
+    const removeBtn = document.getElementById('remove-receipt');
+    if (removeBtn) {
+        // Remove existing listener first
+        const newRemoveBtn = removeBtn.cloneNode(true);
+        removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+        
+        newRemoveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.receiptPreview = null;
+            this.clearReceiptPreview();
+            const fileInput = document.getElementById('receipt-upload');
+            if (fileInput) fileInput.value = '';
+        });
+        
+        console.log('✅ Remove receipt button handler attached');
+    }
+    
+    console.log('✅ Receipt form handlers setup complete');
+},
+ 
     // ==================== TRANSACTION METHODS ====================
     editTransaction(transactionId) {
         console.log('Editing transaction:', transactionId);
