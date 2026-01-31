@@ -2581,13 +2581,13 @@ showCameraInterface() {
     min-width: 180px;
   }
 
-  /* Force inline receipt action buttons to stay small */
-  .receipt-actions .btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-  }
+  /* Stronger override for inline receipt buttons */ 
+  .receipt-actions button.btn.btn-small { 
+        min-width: auto !important; 
+        padding: 6px 12px !important; 
+        font-size: 13px !important; 
+        height: auto !important; 
+    }
   
     .popout-modal-content {
         width: 80%;
