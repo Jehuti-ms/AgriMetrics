@@ -1358,34 +1358,31 @@ async saveReceiptToFirebase(receipt) {
 
 showCameraInterface() {
   console.log('📷 Showing camera interface...');
-
+  
   const cameraSection = document.getElementById('camera-section');
   const uploadSection = document.getElementById('upload-section');
   const recentSection = document.getElementById('recent-section');
   const quickActionsSection = document.querySelector('.quick-actions-section');
-
+  
+  // Hide other sections
   if (uploadSection) uploadSection.style.display = 'none';
   if (quickActionsSection) quickActionsSection.style.display = 'none';
+  
+  // Show camera section
   if (cameraSection) {
     cameraSection.style.display = 'block';
-
-    // Force reflow
-    void cameraSection.offsetHeight;
-
-    // ✅ Delay init so <video> exists and has height
+    
+    // Start camera immediately
     setTimeout(() => {
-      const video = document.getElementById('camera-preview');
-      if (!video || video.offsetHeight === 0) {
-        console.warn('Video not ready, retrying...');
-        setTimeout(() => this.initializeCamera(), 200);
-      } else {
-        this.initializeCamera();
-      }
-    }, 300);
+      this.initializeCamera();
+    }, 100);
   }
-
-  if (recentSection) recentSection.style.display = 'block';
-
+  
+  // Show recent section
+  if (recentSection) {
+    recentSection.style.display = 'block';
+  }
+  
   console.log('✅ Camera interface shown');
 },
  
