@@ -1582,114 +1582,154 @@ showCameraInterface() {
         };
     },
 
-    setupEventListeners() {
-        console.log('Setting up event listeners...');
+setupEventListeners() {
+    console.log('Setting up event listeners...');
+    
+    // Remove existing handlers to avoid duplicates
+    if (this._globalClickHandler) {
+        document.removeEventListener('click', this._globalClickHandler);
+        document.removeEventListener('change', this._globalChangeHandler);
+    }
+    
+    // Setup DIRECT button handlers for critical buttons
+    this.setupDirectButtonHandlers();
+    
+    // Global click handler for dynamic elements
+    this._globalClickHandler = (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
         
-        // Remove existing handlers
-        if (this._globalClickHandler) {
-            document.removeEventListener('click', this._globalClickHandler);
-            document.removeEventListener('change', this._globalChangeHandler);
+        const buttonId = button.id;
+        if (!buttonId) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log(`Button clicked: ${buttonId}`);
+        
+        // Handle transaction modal buttons
+        switch(buttonId) {
+            case 'save-transaction':
+                this.saveTransaction();
+                break;
+            case 'delete-transaction':
+                this.deleteTransaction();
+                break;
+            case 'cancel-transaction':
+                this.hideTransactionModal();
+                break;
+            case 'close-transaction-modal':
+                this.hideTransactionModal();
+                break;
+            case 'close-import-receipts':
+                this.hideImportReceiptsModal();
+                break;
+            case 'cancel-import-receipts':
+                this.hideImportReceiptsModal();
+                break;
+            case 'refresh-receipts-btn':
+                this.loadReceiptsFromFirebase();
+                this.showNotification('Receipts refreshed', 'success');
+                break;
+            case 'process-all-receipts':
+                this.processPendingReceipts();
+                break;
+            case 'export-transactions':
+                this.exportTransactions();
+                break;
+            case 'financial-report-btn':
+                this.generateFinancialReport();
+                break;
+            case 'category-analysis-btn':
+                this.generateCategoryAnalysis();
+                break;
         }
-        
-        // Global click handler
-        this._globalClickHandler = (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            
-            const buttonId = button.id;
-            if (!buttonId) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log(`Button clicked: ${buttonId}`);
-            
-            switch(buttonId) {
-                case 'add-transaction':
-                    this.showTransactionModal();
-                    break;
-                case 'upload-receipt-btn':
-                    this.showImportReceiptsModal();
-                    break;
-                case 'add-income-btn':
-                    this.showAddIncome();
-                    break;
-                case 'add-expense-btn':
-                    this.showAddExpense();
-                    break;
-                case 'financial-report-btn':
-                    this.generateFinancialReport();
-                    break;
-                case 'category-analysis-btn':
-                    this.generateCategoryAnalysis();
-                    break;
-                case 'save-transaction':
-                    this.saveTransaction();
-                    break;
-                case 'delete-transaction':
-                    this.deleteTransaction();
-                    break;
-                case 'cancel-transaction':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-transaction-modal':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'cancel-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'refresh-receipts-btn':
-                    this.loadReceiptsFromFirebase();
-                    this.showNotification('Receipts refreshed', 'success');
-                    break;
-                case 'process-all-receipts':
-                    this.processPendingReceipts();
-                    break;
-                case 'export-transactions':
-                    this.exportTransactions();
-                    break;
-            }
-        };
-        
-        // Global change handler
-        this._globalChangeHandler = (e) => {
-            if (e.target.id === 'transaction-filter') {
-                this.filterTransactions(e.target.value);
-            }
-        };
-        
-        document.addEventListener('click', this._globalClickHandler);
-        document.addEventListener('change', this._globalChangeHandler);
-    },
+    };
+    
+    // Global change handler
+    this._globalChangeHandler = (e) => {
+        if (e.target.id === 'transaction-filter') {
+            this.filterTransactions(e.target.value);
+        }
+    };
+    
+    document.addEventListener('click', this._globalClickHandler);
+    document.addEventListener('change', this._globalChangeHandler);
+    
+    // Setup transaction click handlers
+    this.setupTransactionClickHandlers();
+    
+    console.log('✅ Event listeners setup complete');
+},
 
-    setupReceiptFormHandlers() {
-        const uploadArea = document.getElementById('receipt-upload-area');
-        const fileInput = document.getElementById('receipt-upload');
-        
-        if (uploadArea && fileInput) {
-            uploadArea.addEventListener('click', () => fileInput.click());
+setupDirectButtonHandlers() {
+    console.log('🔧 Setting up direct button handlers...');
+    
+    // Helper to setup a direct button handler
+    const setupDirectButton = (id, handler) => {
+        const button = document.getElementById(id);
+        if (button) {
+            // Clone to remove existing listeners
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
             
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    this.handleTransactionReceiptUpload(e.target.files[0]);
+            newButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log(`Direct button click: ${id}`);
+                handler.call(this, e);
+            });
+            
+            console.log(`✅ Direct handler attached to: ${id}`);
+        } else {
+            console.log(`⚠️ Button not found: ${id}`);
+        }
+    };
+    
+    // Setup CRITICAL buttons with direct handlers
+    setupDirectButton('add-transaction', () => {
+        console.log('➕ Add Transaction clicked');
+        this.showTransactionModal();
+    });
+    
+    setupDirectButton('upload-receipt-btn', () => {
+        console.log('📄 Import Receipts clicked');
+        this.showImportReceiptsModal();
+    });
+    
+    setupDirectButton('add-income-btn', () => {
+        console.log('💰 Add Income clicked');
+        this.showAddIncome();
+    });
+    
+    setupDirectButton('add-expense-btn', () => {
+        console.log('💸 Add Expense clicked');
+        this.showAddExpense();
+    });
+    
+    // Also setup modal close buttons directly
+    const modalCloseButtons = [
+        'close-transaction-modal',
+        'cancel-transaction',
+        'close-import-receipts', 
+        'cancel-import-receipts'
+    ];
+    
+    modalCloseButtons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (buttonId.includes('transaction')) {
+                    this.hideTransactionModal();
+                } else {
+                    this.hideImportReceiptsModal();
                 }
             });
         }
-        
-        const removeBtn = document.getElementById('remove-receipt');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                this.receiptPreview = null;
-                this.clearReceiptPreview();
-                const fileInput = document.getElementById('receipt-upload');
-                if (fileInput) fileInput.value = '';
-            });
-        }
-    },
-
+    });
+},
     // ==================== TRANSACTION METHODS ====================
     editTransaction(transactionId) {
         console.log('Editing transaction:', transactionId);
