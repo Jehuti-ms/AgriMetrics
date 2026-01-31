@@ -2497,31 +2497,41 @@ showCameraInterface() {
 
 /* ==================== RESPONSIVE FIXES ==================== */
 
-@media (min-width: 768px) and (max-width: 1199px) {
+.camera-preview-container {
+  position: relative;
+  width: 100%;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+
+  /* ✅ Ensure container is always visible */
+  min-height: 200px; /* fallback */
+  height: auto;
+  aspect-ratio: 4 / 3; /* modern browsers */
+}
+
+.camera-preview-container video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* Medium screens */
+@media (min-width: 768px) and (max-width: 1024px) {
   .camera-preview-container {
-    height: 350px;
-  }
-  .camera-controls .btn {
-    min-width: 140px;
+    aspect-ratio: 3 / 2;
+    max-height: 400px;
   }
 }
 
-@media (max-width: 767px) {
-  .camera-preview-container {
-    height: 300px;
-  }
-  .camera-controls {
-    flex-direction: column;
-  }
-  .camera-controls .btn {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
+/* Very small screens */
 @media (max-width: 480px) {
   .camera-preview-container {
-    height: 250px;
+    aspect-ratio: 1 / 1; /* square */
   }
 }
 
