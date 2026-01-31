@@ -399,7 +399,7 @@ showReceiptPreviewInTransactionModal(receipt) {
     },
 
     // ==================== CAMERA METHODS ====================
-   initializeCamera()  {
+    initializeCamera() {
         console.log('📷 Initializing camera...');
         
         try {
@@ -2461,8 +2461,75 @@ deleteReceiptFromAllSources: async function(receiptId) {
         max-height: 85vh !important;
         padding: 10px !important;
     }
+
+/* ==================== FIX: BUTTON VISIBILITY ON LARGE SCREENS ==================== */
+
+/* Ensure process and delete buttons are always visible */
+.process-receipt-btn,
+.delete-receipt-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10 !important;
 }
+
+/* Fix for receipt cards on large screens */
+@media (min-width: 769px) {
+    .pending-receipt-item {
+        position: relative;
+        padding-right: 200px !important; /* Make room for buttons */
+    }
     
+    .receipt-actions {
+        position: absolute !important;
+        right: 16px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        display: flex !important;
+        gap: 8px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 100 !important;
+    }
+    
+    /* Ensure buttons have proper sizing */
+    .receipt-actions .btn {
+        min-width: 80px !important;
+        height: 36px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* For smaller screens - buttons are already visible */
+@media (max-width: 768px) {
+    .pending-receipt-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .receipt-actions {
+        display: flex !important;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+    }
+}
+
+/* Ensure buttons are not hidden by parent containers */
+.receipt-card .receipt-actions,
+.pending-receipt-item .receipt-actions {
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    height: auto !important;
+    width: auto !important;
+}
+    }
             </style>
 
             <div class="module-container">
@@ -2578,29 +2645,30 @@ deleteReceiptFromAllSources: async function(receiptId) {
             </div>
 
             <!-- ==================== MODALS ==================== -->
-            `<!-- Import Receipts Modal -->
-                <div id="import-receipts-modal" class="popout-modal hidden">
-                    <div class="popout-modal-content">
-                        <div class="popout-modal-header">
-                            <h3 class="popout-modal-title">📥 Import Receipts</h3>
-                            <button class="popout-modal-close" id="close-import-receipts">&times;</button>
-                        </div>
-                        
-                        <div class="popout-modal-body" id="import-receipts-body">
-                            <!-- Content will be loaded here dynamically -->
-                        </div>
-                        
-                        <div class="popout-modal-footer">
-                            <div class="modal-footer-buttons">
-                                <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                                <button class="btn btn-primary" id="process-receipts-btn" style="display: none;">
-                                    ⚡ Process Receipts
-                                    <span id="process-receipts-count">0</span>
-                                </button>
-                            </div>
+            <!-- Import Receipts Modal -->
+            <div id="import-receipts-modal" class="popout-modal hidden">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">📥 Import Receipts</h3>
+                        <button class="popout-modal-close" id="close-import-receipts">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="import-receipts-content">
+                            <!-- Content loaded dynamically -->
                         </div>
                     </div>
-                </div>`
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; min-width: 0;">Cancel</button>
+                        <button class="btn btn-primary" id="process-receipts-btn" style="display: none; flex: 1; min-width: 0; position: relative;">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-text">Process Receipts</span>
+                            <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
+                                0
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
             
             <!-- Transaction Modal -->
             <div id="transaction-modal" class="popout-modal hidden">
@@ -2941,74 +3009,94 @@ deleteReceiptFromAllSources: async function(receiptId) {
     },
 
     // ==================== EVENT LISTENERS ====================
-    setupEventListeners() {
-        console.log('Setting up event listeners...');
+  setupEventListeners() {
+    console.log('Setting up event listeners (event delegation)...');
+    
+    // Remove old global listeners first
+    if (this._globalClickHandler) {
+        document.removeEventListener('click', this._globalClickHandler);
+        document.removeEventListener('change', this._globalChangeHandler);
+    }
+    
+    // Global click handler for ALL buttons
+    this._globalClickHandler = (e) => {
+        // Find the closest button
+        const button = e.target.closest('button');
+        if (!button) return;
         
-        // Setup button helper
-        const setupButton = (id, handler) => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handler.call(this, e);
-                });
-            }
-        };
+        const buttonId = button.id;
+        if (!buttonId) return;
         
-        // Main buttons
-        setupButton('add-transaction', () => this.showTransactionModal());
-        setupButton('upload-receipt-btn', () => this.showImportReceiptsModal());
-               
-        // Quick actions
-        setupButton('add-income-btn', () => this.showAddIncome());
-        setupButton('add-expense-btn', () => this.showAddExpense());
-        setupButton('financial-report-btn', () => this.generateFinancialReport());
-        setupButton('category-analysis-btn', () => this.generateCategoryAnalysis());
+        e.preventDefault();
+        e.stopPropagation();
         
-        // Transaction modal
-        setupButton('save-transaction', () => this.saveTransaction());
-        setupButton('delete-transaction', () => this.deleteTransaction());
-        setupButton('cancel-transaction', () => this.hideTransactionModal());
-        setupButton('close-transaction-modal', () => this.hideTransactionModal());
+        console.log(`Button clicked: ${buttonId}`);
         
-        // Import receipts modal
-        setupButton('close-import-receipts', () => this.hideImportReceiptsModal());
-        setupButton('cancel-import-receipts', () => this.hideImportReceiptsModal());
-        
-        // Refresh receipts
-        setupButton('refresh-receipts-btn', () => {
-            this.loadReceiptsFromFirebase();
-            this.showNotification('Receipts refreshed', 'success');
-        });
-        setupButton('process-all-receipts', () => this.processPendingReceipts());
-        
-        // Other buttons
-        setupButton('export-transactions', () => this.exportTransactions());
-
-        // Import Receipts button
-        document.getElementById('upload-receipt-btn')?.addEventListener('click', () => {
-            this.showImportReceiptsModal();
-        });
-        
-        // Close modal buttons
-        document.getElementById('close-import-receipts')?.addEventListener('click', () => {
-            document.getElementById('import-receipts-modal').classList.add('hidden');
-        });
-        
-        document.getElementById('cancel-import-receipts')?.addEventListener('click', () => {
-            document.getElementById('import-receipts-modal').classList.add('hidden');
-        });
-        
-        // Filter
-        const transactionFilter = document.getElementById('transaction-filter');
-        if (transactionFilter) {
-            transactionFilter.addEventListener('change', (e) => {
-                this.filterTransactions(e.target.value);
-            });
+        // Handle each button type
+        switch(buttonId) {
+            case 'add-transaction':
+                this.showTransactionModal();
+                break;
+            case 'upload-receipt-btn':
+                this.showImportReceiptsModal();
+                break;
+            case 'add-income-btn':
+                this.showAddIncome();
+                break;
+            case 'add-expense-btn':
+                this.showAddExpense();
+                break;
+            case 'financial-report-btn':
+                this.generateFinancialReport();
+                break;
+            case 'category-analysis-btn':
+                this.generateCategoryAnalysis();
+                break;
+            case 'save-transaction':
+                this.saveTransaction();
+                break;
+            case 'delete-transaction':
+                this.deleteTransaction();
+                break;
+            case 'cancel-transaction':
+                this.hideTransactionModal();
+                break;
+            case 'close-transaction-modal':
+                this.hideTransactionModal();
+                break;
+            case 'close-import-receipts':
+                this.hideImportReceiptsModal();
+                break;
+            case 'cancel-import-receipts':
+                this.hideImportReceiptsModal();
+                break;
+            case 'refresh-receipts-btn':
+                this.loadReceiptsFromFirebase();
+                this.showNotification('Receipts refreshed', 'success');
+                break;
+            case 'process-all-receipts':
+                this.processPendingReceipts();
+                break;
+            case 'export-transactions':
+                this.exportTransactions();
+                break;
         }
-    },
-
+    };
+    
+    // Global change handler for filter
+    this._globalChangeHandler = (e) => {
+        if (e.target.id === 'transaction-filter') {
+            this.filterTransactions(e.target.value);
+        }
+    };
+    
+    // Add the listeners
+    document.addEventListener('click', this._globalClickHandler);
+    document.addEventListener('change', this._globalChangeHandler);
+    
+    console.log('✅ Event delegation setup complete');
+},
+    
     testFirebaseConnection() {
         console.log('🔧 Testing Firebase connection...');
         
@@ -3595,91 +3683,91 @@ deleteReceiptFromAllSources: async function(receiptId) {
         `;
     },
 
-   setupImportReceiptsContentHandlers() {
-    console.log('Setting up import receipt CONTENT handlers');
-    
-    const cameraOptionBtn = document.getElementById('camera-option');
-    if (cameraOptionBtn) {
-        cameraOptionBtn.addEventListener('click', () => {
-            console.log('🎯 Camera button clicked');
-            
-            const cameraSection = document.getElementById('camera-section');
-            const uploadSection = document.getElementById('upload-section');
-            const recentSection = document.getElementById('recent-section');
-            
-            if (uploadSection) uploadSection.style.display = 'none';
-            if (recentSection) recentSection.style.display = 'none';
-            
-            if (cameraSection) {
-                cameraSection.style.display = 'block';
+    setupImportReceiptsHandlers() {
+        console.log('Setting up import receipt handlers');
+        
+        const cameraOptionBtn = document.getElementById('camera-option');
+        if (cameraOptionBtn) {
+            cameraOptionBtn.addEventListener('click', () => {
+                console.log('🎯 Camera button clicked');
                 
-                setTimeout(() => {
-                    console.log('🔄 Initializing camera...');
-                    this.initializeCamera();
-                }, 100);
-            }
-        });
-    }
-    
-    const uploadOptionBtn = document.getElementById('upload-option');
-    if (uploadOptionBtn) {
-        uploadOptionBtn.addEventListener('click', () => {
-            console.log('📁 Upload button clicked');
-            this.showUploadInterface();
-        });
-    }
-    
-    const setupButton = (id, handler) => {
-        const button = document.getElementById(id);
-        if (button) {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handler.call(this, e);
+                const cameraSection = document.getElementById('camera-section');
+                const uploadSection = document.getElementById('upload-section');
+                const recentSection = document.getElementById('recent-section');
+                
+                if (uploadSection) uploadSection.style.display = 'none';
+                if (recentSection) recentSection.style.display = 'none';
+                
+                if (cameraSection) {
+                    cameraSection.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        console.log('🔄 Initializing camera...');
+                        this.initializeCamera();
+                    }, 100);
+                }
             });
         }
-    };
-    
-    setupButton('capture-photo', () => this.capturePhoto());
-    setupButton('switch-camera', () => this.switchCamera());
-    setupButton('cancel-camera', () => {
-        console.log('❌ Cancel camera clicked');
-        this.showUploadInterface();
-    });
-    
-    setupButton('refresh-receipts', () => {
-        console.log('🔄 Refresh receipts clicked');
-        const recentList = document.getElementById('recent-receipts-list');
-        if (recentList) {
-            recentList.innerHTML = this.renderRecentReceiptsList();
-        }
-        this.showNotification('Receipts list refreshed', 'success');
-    });
-    
-    setupButton('process-receipts-btn', () => {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
         
-        if (pendingReceipts.length === 0) {
-            this.showNotification('No pending receipts to process', 'info');
-            return;
+        const uploadOptionBtn = document.getElementById('upload-option');
+        if (uploadOptionBtn) {
+            uploadOptionBtn.addEventListener('click', () => {
+                console.log('📁 Upload button clicked');
+                this.showUploadInterface();
+            });
         }
         
-        if (pendingReceipts.length === 1) {
-            this.processSingleReceipt(pendingReceipts[0].id);
-        } else {
-            if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
-                pendingReceipts.forEach((receipt, index) => {
-                    setTimeout(() => {
-                        this.processSingleReceipt(receipt.id);
-                    }, index * 500);
+        const setupButton = (id, handler) => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handler.call(this, e);
                 });
             }
-        }
-    });
-    
-    this.setupUploadHandlers();
-},
-    
+        };
+        
+        setupButton('capture-photo', () => this.capturePhoto());
+        setupButton('switch-camera', () => this.switchCamera());
+        setupButton('cancel-camera', () => {
+            console.log('❌ Cancel camera clicked');
+            this.showUploadInterface();
+        });
+        
+        setupButton('refresh-receipts', () => {
+            console.log('🔄 Refresh receipts clicked');
+            const recentList = document.getElementById('recent-receipts-list');
+            if (recentList) {
+                recentList.innerHTML = this.renderRecentReceiptsList();
+            }
+            this.showNotification('Receipts list refreshed', 'success');
+        });
+        
+        setupButton('process-receipts-btn', () => {
+            const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+            
+            if (pendingReceipts.length === 0) {
+                this.showNotification('No pending receipts to process', 'info');
+                return;
+            }
+            
+            if (pendingReceipts.length === 1) {
+                this.processSingleReceipt(pendingReceipts[0].id);
+            } else {
+                if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+                    pendingReceipts.forEach((receipt, index) => {
+                        setTimeout(() => {
+                            this.processSingleReceipt(receipt.id);
+                        }, index * 500);
+                    });
+                }
+            }
+        });
+        
+        this.setupUploadHandlers();
+    },
+
     setupUploadHandlers() {
         console.log('🔧 Setting up upload handlers...');
         
