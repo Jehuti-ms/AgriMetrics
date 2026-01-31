@@ -23,54 +23,52 @@ const IncomeExpensesModule = {
     
     // ==================== INITIALIZATION ====================
     initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-
-      // Ensure receiptQueue is always an array
-         this.receiptQueue = this.receiptQueue || [];
+    console.log('💰 Initializing Income & Expenses...');
     
-    // Load receipts from localStorage
-         this.loadReceiptsFromLocalStorage();
-             this.element = document.getElementById('content-area');
-             if (!this.element) {
-                 console.error('Content area element not found');
-                 return false;
-             }
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
 
-        // Check if Firebase services are available
-        this.isFirebaseAvailable = !!(window.firebase && window.db);
-        console.log('Firebase available:', this.isFirebaseAvailable);
+    // Check if Firebase services are available
+    this.isFirebaseAvailable = !!(window.firebase && window.db);
+    console.log('Firebase available:', this.isFirebaseAvailable);
 
-        // Setup network detection
-        this.setupNetworkDetection();
-        
-        // Load transactions
-        this.loadData();
-        
-        // Load receipts from Firebase
-        if (this.isFirebaseAvailable) {
-            this.loadReceiptsFromFirebase();
-        }
+    // Setup network detection
+    this.setupNetworkDetection();
+    
+    // Ensure receiptQueue is initialized
+    this.receiptQueue = this.receiptQueue || [];
+    
+    // Load receipts from localStorage - FIXED METHOD NAME
+    this.loadFromLocalStorage();
+    
+    // Load transactions
+    this.loadData();
+    
+    // Load receipts from Firebase
+    if (this.isFirebaseAvailable) {
+        this.loadReceiptsFromFirebase();
+    }
 
-        // Setup global click handler for receipts
-        this.setupReceiptActionListeners();
-        
-        // Process any pending syncs
-        if (this.isFirebaseAvailable) {
-            setTimeout(() => {
-                this.syncLocalTransactionsToFirebase();
-            }, 3000);
-        }
-
-        // Make sure receiptQueue is initialized
-        this.receiptQueue = this.receiptQueue || [];
+    // Setup global click handler for receipts
+    this.setupReceiptActionListeners();
+    
+    // Process any pending syncs
+    if (this.isFirebaseAvailable) {
+        setTimeout(() => {
+            this.syncLocalTransactionsToFirebase();
+        }, 3000);
+    }
                 
-        this.renderModule();
-        this.initialized = true;
-        
-        console.log('✅ Income & Expenses initialized');
-        return true;
-    },
-
+    this.renderModule();
+    this.initialized = true;
+    
+    console.log('✅ Income & Expenses initialized');
+    return true;
+},
+ 
     onThemeChange(theme) {
         console.log(`Income & Expenses updating for theme: ${theme}`);
     },
