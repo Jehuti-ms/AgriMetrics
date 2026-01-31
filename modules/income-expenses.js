@@ -355,7 +355,7 @@ const IncomeExpensesModule = {
     },
 
      // ==================== CAMERA METHODS ====================
-  async initializeCamera() {
+async initializeCamera() {
     console.log('📷 Initializing camera...');
     
     try {
@@ -386,13 +386,15 @@ const IncomeExpensesModule = {
         
         if (status) status.textContent = 'Requesting camera access...';
         
-        // SIMPLE CONSTRAINTS - most likely to work
+        // FIXED: Use cameraFacingMode in constraints
         const constraints = {
-            video: true,  // Let browser choose the best camera
+            video: {
+                facingMode: this.cameraFacingMode // 'user' for front, 'environment' for rear
+            },
             audio: false
         };
         
-        console.log('Using simple constraints:', constraints);
+        console.log('Using constraints for', this.cameraFacingMode === 'user' ? 'front camera' : 'rear camera', ':', constraints);
         
         // Add a timeout for camera access
         const cameraPromise = navigator.mediaDevices.getUserMedia(constraints);
@@ -403,11 +405,26 @@ const IncomeExpensesModule = {
         const stream = await Promise.race([cameraPromise, timeoutPromise]);
         
         console.log('✅ Camera access granted');
+
+        // Update switch camera button text
+        const switchBtn = document.getElementById('switch-camera');
+        if (switchBtn) {
+            const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+            switchBtn.innerHTML = `
+                <span class="btn-icon">🔄</span>
+                <span class="btn-text">Switch to ${nextMode}</span>
+            `;
+            // Ensure the button is clickable
+            switchBtn.disabled = false;
+            switchBtn.style.opacity = '1';
+        }
+        
         this.cameraStream = stream;
         video.srcObject = stream;
         
-        // Set camera status
-        if (status) status.textContent = 'Camera Ready';
+        // Set camera status with facing mode
+        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+        if (status) status.textContent = `${cameraType} Camera - Ready`;
         
         // Simple video play with auto-retry
         const playVideo = () => {
@@ -1009,9 +1026,10 @@ setupVideoPlayback(video, status, resolve, reject) {
     console.log('✅ Camera stopped');
 },
     
-   switchCamera() {
+  switchCamera() {
     console.log('🔄 Switching camera...');
     
+    // Prevent rapid clicking
     const now = Date.now();
     if (this.lastSwitchClick && (now - this.lastSwitchClick) < 2000) {
         console.log('⏳ Please wait before switching camera again');
@@ -1019,22 +1037,33 @@ setupVideoPlayback(video, status, resolve, reject) {
     }
     this.lastSwitchClick = now;
     
+    // Toggle between front and rear camera
     this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
-    
     console.log(`🔄 Switching to ${this.cameraFacingMode === 'user' ? 'front' : 'rear'} camera`);
     
-    this.stopCamera();
+    // Update button text immediately for better UX
+    const switchBtn = document.getElementById('switch-camera');
+    if (switchBtn) {
+        const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+        switchBtn.innerHTML = `
+            <span class="btn-icon">🔄</span>
+            <span class="btn-text">Switch to ${nextMode}</span>
+        `;
+    }
     
     // Show loading status
     const status = document.getElementById('camera-status');
     if (status) status.textContent = 'Switching camera...';
     
-    // Wait a bit before initializing new camera
+    // Stop current camera
+    this.stopCamera();
+    
+    // Wait a moment then initialize new camera
     setTimeout(() => {
         this.initializeCamera();
     }, 500);
 },
-
+ 
     // ==================== FILE UPLOAD ====================
     
 handleFileUpload(files) {
