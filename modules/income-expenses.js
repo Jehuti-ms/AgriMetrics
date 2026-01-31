@@ -2497,148 +2497,138 @@ showCameraInterface() {
 
 /* ==================== RESPONSIVE FIXES ==================== */
 
-/* Tablets and medium screens */
 @media (min-width: 768px) and (max-width: 1199px) {
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-  }
+    .popout-modal {
+        padding: 30px !important;
+    }
+    
+    .popout-modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        max-height: 90vh;
+    }
+    
+    .camera-preview-container {
+        height: 350px;
+    }
+    
+    .camera-controls .btn {
+        min-width: 140px;
+    }
 }
 
-/* Desktops and large screens */
-@media (min-width: 1200px) {
-  .btn {
-    min-width: 140px;
-    padding: 12px 24px;
-  }
-
-  #process-receipts-btn {
-    min-width: 180px;
-  }
-
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-  }
-
-  .popout-modal-content {
-    width: 95%;
-    max-height: 85vh;
-  }
-
-  #import-receipts-modal .popout-modal-content {
-    max-height: 90vh;
-  }
-
-  .camera-preview-container {
-    height: 350px;
-  }
-
-  .camera-controls .btn {
-    min-width: 140px;
-  }
-
-  /* 🔑 Keep inline receipt buttons compact */
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-  }
-}
-
-/* Phones */
 @media (max-width: 767px) {
-  .popout-modal {
-    padding: 20px !important;
-    align-items: flex-start !important;
-    padding-top: 60px !important;
-  }
-
-  .popout-modal-content {
-    width: 95%;
-    max-height: 90vh;
-    border-radius: 12px;
-  }
-
-  .popout-modal-header {
-    padding: 12px 16px;
-    min-height: 56px;
-  }
-
-  .popout-modal-title {
-    font-size: 16px;
-  }
-
-  .popout-modal-footer {
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 16px;
-    min-height: auto;
-  }
-
-  .btn {
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    margin: 0 !important;
-  }
-
-  .camera-preview-container {
-    height: 300px;
-  }
-
-  .camera-controls {
-    flex-direction: column;
-  }
-
-  .camera-controls .btn {
-    width: 100%;
-    max-width: 100%;
-  }
+    .popout-modal {
+        padding: 20px !important;
+        align-items: flex-start !important;
+        padding-top: 60px !important;
+    }
+    
+    .popout-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 12px;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px;
+        min-height: 56px;
+    }
+    
+    .popout-modal-title {
+        font-size: 16px;
+    }
+    
+    .popout-modal-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 16px;
+        min-height: auto;
+    }
+    
+    .btn {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin: 0 !important;
+    }
+    
+    .camera-preview-container {
+        height: 300px;
+    }
+    
+    .camera-controls {
+        flex-direction: column;
+    }
+    
+    .camera-controls .btn {
+        width: 100%;
+        max-width: 100%;
+    }
 }
 
-/* Desktops and large screens */
 @media (min-width: 1200px) {
-  .popout-modal {
-    padding: 40px !important;
-  }
+    .popout-modal {
+        padding: 40px !important;
+    }
+    
+    .popout-modal-content {
+        width: 80%;
+        max-width: 900px;
+    }
+    
+    #import-receipts-modal .popout-modal-content {
+        max-width: 900px;
+    }
+    
+    .btn {
+        min-width: 140px;
+        padding: 12px 24px;
+    }
+    
+    #process-receipts-btn {
+        min-width: 180px;
+    }
+}
 
-  .popout-modal-content {
-    width: 80%;
-    max-width: 900px;
-  }
+@media (max-width: 480px) {
+    .popout-modal {
+        padding: 10px !important;
+        padding-top: 50px !important;
+    }
+    
+    .popout-modal-content {
+        width: 100%;
+        max-height: 95vh;
+        border-radius: 10px;
+    }
+    
+    .popout-modal-header {
+        padding: 10px 12px;
+        min-height: 52px;
+    }
+    
+    .popout-modal-footer {
+        padding: 10px 12px;
+    }
+    
+    .camera-preview-container {
+        height: 250px;
+    }
+    .popout-modal-footer {
+  display: flex;
+  justify-content: space-between; /* spreads content across footer */
+  align-items: center;
+}
 
-  #import-receipts-modal .popout-modal-content {
-    max-width: 900px;
-  }
-
-  /* Global large buttons */
-  .btn {
-    min-width: 140px;
-    padding: 12px 24px;
-  }
-
-  #process-receipts-btn {
-    min-width: 180px;
-  }
-
-  /* 🔑 Keep inline receipt buttons compact */
-  .receipt-actions button.btn.btn-small {
-    min-width: auto !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
-    height: auto !important;
-  }
-  
+.modal-footer-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end; /* keeps buttons grouped on the right */
+  flex: 1; /* ensures they stay inside the footer width */
 }
 
              </style>
@@ -2859,33 +2849,42 @@ showCameraInterface() {
                                 <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
                             </div>
 
-                          <!-- Recent Receipts List -->
-                           <!-- Receipt List -->
-                             <div id="receipt-list">
-                               <!-- Single receipt row -->
-                               <div class="receipt-row">
-                                 <div class="receipt-info">
-                                   <div class="receipt-icon">📄</div>
-                                   <div>
-                                     <div class="receipt-filename">Feed_Report_2026-01-19.pdf</div>
-                                     <div class="receipt-size">7.86 KB • Pending • Jan 29, 2026</div>
-                                   </div>
-                                 </div>
-                                 <div class="receipt-actions">
-                                   <button type="button" class="btn btn-outline btn-small">🔍 Process</button>
-                                   <button type="button" class="btn btn-outline btn-small">🗑️ Delete</button>
-                                 </div>
-                               </div>
-                             
-                               <!-- Add more .receipt-row blocks for each uploaded file -->
-                             </div>
-
-                              <!-- Image Preview -->
-                              <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
-                                <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
-                              </div>
+                            <!-- Receipt Section -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Receipt (Optional)</label>
+                                <div id="receipt-upload-area" class="upload-dropzone upload-dropzone-margin">
+                                    <div class="dropzone-icon">📄</div>
+                                    <h4 class="dropzone-title">Attach Receipt</h4>
+                                    <p class="dropzone-subtitle">Click to upload or drag & drop</p>
+                                    <div style="display: flex; gap: 4px; justify-content: center;">
+                                        <span class="file-type-badge">JPG</span>
+                                        <span class="file-type-badge">PNG</span>
+                                        <span class="file-type-badge">PDF</span>
+                                    </div>
+                                    <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
+                                </div>
+                                
+                                <!-- Receipt Preview -->
+                                <div id="receipt-preview-container" class="hidden">
+                                    <div class="receipt-preview-card">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="font-size: 24px;">📄</div>
+                                            <div>
+                                                <div style="font-weight: 600; color: #374151;" id="receipt-filename">receipt.jpg</div>
+                                                <div style="font-size: 12px; color: #6b7280;" id="receipt-size">2.5 MB</div>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="remove-receipt" class="btn btn-outline btn-small">🗑️</button>
+                                    </div>
+                                    
+                                    <!-- Image Preview -->
+                                    <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                                       <img id="receipt-image-preview" src="" alt="Receipt preview" class="receipt-image-preview">
+                                    </div>
+                                </div>
                             </div>
-
+                        </form>
+                    </div>
                     <div class="popout-modal-footer">
                         <button type="button" class="btn btn-outline" id="cancel-transaction">Cancel</button>
                         <button type="button" class="btn btn-danger" id="delete-transaction" style="display: none;">Delete</button>
