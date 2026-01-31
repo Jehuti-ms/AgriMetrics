@@ -2499,8 +2499,34 @@ showCameraInterface() {
 
 /* Tablets and medium screens */
 @media (min-width: 768px) and (max-width: 1199px) {
-  .popout-modal {
-    padding: 30px !important;
+  .receipt-actions button.btn.btn-small {
+    min-width: auto !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+}
+
+/* Desktops and large screens */
+@media (min-width: 1200px) {
+  .btn {
+    min-width: 140px;
+    padding: 12px 24px;
+  }
+
+  #process-receipts-btn {
+    min-width: 180px;
+  }
+
+  .receipt-actions button.btn.btn-small {
+    min-width: auto !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
   }
 
   .popout-modal-content {
@@ -2612,6 +2638,7 @@ showCameraInterface() {
     font-size: 13px !important;
     height: auto !important;
   }
+  
 }
 
              </style>
