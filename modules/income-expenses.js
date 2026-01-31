@@ -24,12 +24,17 @@ const IncomeExpensesModule = {
     // ==================== INITIALIZATION ====================
     initialize() {
         console.log('💰 Initializing Income & Expenses...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+
+      // Ensure receiptQueue is always an array
+         this.receiptQueue = this.receiptQueue || [];
+    
+    // Load receipts from localStorage
+         this.loadReceiptsFromLocalStorage();
+             this.element = document.getElementById('content-area');
+             if (!this.element) {
+                 console.error('Content area element not found');
+                 return false;
+             }
 
         // Check if Firebase services are available
         this.isFirebaseAvailable = !!(window.firebase && window.db);
@@ -354,7 +359,6 @@ const IncomeExpensesModule = {
      // ==================== CAMERA METHODS ====================
    async initializeCamera() {
     console.log('📷 Initializing camera...');
-    console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
     
     try {
         const video = document.getElementById('camera-preview');
@@ -380,32 +384,15 @@ const IncomeExpensesModule = {
         
         if (status) status.textContent = 'Requesting camera access...';
         
-        // Detect screen size and adjust constraints
-        const screenWidth = window.innerWidth;
-        let constraints;
-        
-        if (screenWidth >= 768 && screenWidth <= 1024) {
-            // Medium screens: use more compatible settings
-            console.log('📱 Medium screen detected, using basic constraints');
-            constraints = {
-                video: {
-                    facingMode: this.cameraFacingMode,
-                    width: { ideal: 640 },  // Lower resolution for compatibility
-                    height: { ideal: 480 }
-                },
-                audio: false
-            };
-        } else {
-            // Other screens: normal constraints
-            constraints = {
-                video: {
-                    facingMode: this.cameraFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            };
-        }
+        // Simple constraints that work on most devices
+        const constraints = {
+            video: {
+                facingMode: this.cameraFacingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
         
         console.log('Using constraints:', constraints);
         
@@ -415,64 +402,64 @@ const IncomeExpensesModule = {
         this.cameraStream = stream;
         video.srcObject = stream;
         
-        // Force video dimensions to match stream
-        const track = stream.getVideoTracks()[0];
-        const settings = track.getSettings();
-        console.log('Camera settings:', settings);
+        // Set camera type status
+        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+        if (status) status.textContent = `${cameraType} Camera - Ready`;
         
-        // Set video dimensions
-        if (settings.width && settings.height) {
-            video.style.width = '100%';
-            video.style.height = '100%';
-            console.log(`Video dimensions set to: ${settings.width}x${settings.height}`);
-        }
+        // Play video with retry
+        const playVideo = () => {
+            video.play()
+                .then(() => {
+                    console.log('📹 Video is playing successfully');
+                })
+                .catch(error => {
+                    console.warn('Video play warning:', error);
+                    // Try again after a delay
+                    setTimeout(() => {
+                        video.play().catch(e => {
+                            console.error('Video play failed:', e);
+                        });
+                    }, 100);
+                });
+        };
         
-        // Play video
-        const playPromise = video.play();
+        // Wait for video to be ready
+        video.onloadedmetadata = playVideo;
         
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                console.log('📹 Video is playing successfully');
-                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                if (status) status.textContent = `${cameraType} Camera - Ready`;
-                
-                const switchBtn = document.getElementById('switch-camera');
-                if (switchBtn) {
-                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                    switchBtn.innerHTML = `
-                        <span class="btn-icon">🔄</span>
-                        <span class="btn-text">Switch to ${nextMode}</span>
-                    `;
-                }
-            }).catch(error => {
-                console.error('Video play error:', error);
-                // Try again without waiting for promise
-                setTimeout(() => {
-                    video.play().catch(e => {
-                        console.error('Video play retry failed:', e);
-                        this.showNotification('Camera preview failed', 'error');
-                    });
-                }, 100);
-            });
-        }
+        // Fallback if metadata doesn't load
+        setTimeout(() => {
+            if (video.paused && video.readyState >= 2) {
+                playVideo();
+            }
+        }, 500);
         
     } catch (error) {
         console.error('❌ Camera error:', error);
         let errorMessage = 'Camera access denied.';
+        
         if (error.name === 'NotFoundError') {
             errorMessage = 'No camera found on this device.';
         } else if (error.name === 'NotAllowedError') {
             errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
         } else if (error.name === 'NotReadableError') {
-            errorMessage = 'Camera is already in use by another application. Please close other camera apps.';
-            // Try fallback with minimal constraints
-            this.tryMinimalCameraSetup();
-            return;
+            errorMessage = 'Camera is already in use.';
         } else if (error.name === 'OverconstrainedError') {
             errorMessage = 'Camera constraints cannot be satisfied. Trying simpler settings...';
-            this.tryMinimalCameraSetup();
-            return;
+            // Try with minimal constraints
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+                this.cameraStream = stream;
+                video.srcObject = stream;
+                video.play();
+                return;
+            } catch (simpleError) {
+                console.error('Simple constraints also failed:', simpleError);
+            }
         }
+        
         this.showNotification(errorMessage, 'error');
         this.showUploadInterface();
     }
@@ -1415,23 +1402,18 @@ showCameraInterface() {
     if (cameraSection) {
         cameraSection.style.display = 'block';
         
-        // Force reflow to ensure DOM is ready
-        void cameraSection.offsetHeight;
-        
-        // Initialize camera with a delay to ensure video element is ready
+        // Small delay to ensure DOM is ready
         setTimeout(() => {
             const video = document.getElementById('camera-preview');
             if (video) {
-                // Reset video element
                 video.style.width = '100%';
                 video.style.height = '100%';
                 video.style.objectFit = 'cover';
             }
             
-            setTimeout(() => {
-                this.initializeCamera();
-            }, 50);
-        }, 100);
+            // Initialize camera
+            this.initializeCamera();
+        }, 50);
     }
     if (recentSection) recentSection.style.display = 'block';
     
@@ -2661,16 +2643,14 @@ showCameraInterface() {
                     </div>
                     
                     <div class="popout-modal-footer">
-                     <div class="modal-footer-buttons">
-                       <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                       <button class="btn btn-primary" id="process-receipts-btn">
-                         ⚡ Process Receipts
-                         <span id="process-receipts-count">0</span>
-                       </button>
+                     <div style="display: flex; justify-content: space-between; width: 100%;">
+                         <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                         <button class="btn btn-primary" id="process-receipts-btn">
+                             ⚡ Process Receipts
+                             <span id="process-receipts-count" style="margin-left: 8px; background: #ef4444; color: white; border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: 700;">0</span>
+                         </button>
                      </div>
-                   </div>
-                </div>
-            </div>
+                 </div>
             
             <!-- Transaction Modal -->
             <div id="transaction-modal" class="popout-modal hidden">
@@ -3205,46 +3185,64 @@ showCameraInterface() {
     },
 
     // ==================== UI UPDATES ====================
-    updateReceiptQueueUI() {
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        const badge = document.getElementById('receipt-count-badge');
+   updateReceiptQueueUI() {
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    console.log(`📊 Updating UI: ${pendingReceipts.length} pending receipts`);
+    
+    // Update upload button badge
+    const uploadBtn = document.getElementById('upload-receipt-btn');
+    if (uploadBtn) {
+        // Remove existing badge if any
+        const existingBadge = uploadBtn.querySelector('.receipt-queue-badge');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
         
+        // Add new badge if there are pending receipts
         if (pendingReceipts.length > 0) {
-            if (!badge) {
-                const uploadBtn = document.getElementById('upload-receipt-btn');
-                if (uploadBtn) {
-                    const span = document.createElement('span');
-                    span.className = 'receipt-queue-badge';
-                    span.id = 'receipt-count-badge';
-                    span.textContent = pendingReceipts.length;
-                    uploadBtn.appendChild(span);
-                }
-            } else {
-                badge.textContent = pendingReceipts.length;
-            }
-            
+            const badge = document.createElement('span');
+            badge.className = 'receipt-queue-badge';
+            badge.textContent = pendingReceipts.length;
+            badge.style.cssText = `
+                background: #ef4444;
+                color: white;
+                border-radius: 10px;
+                padding: 2px 8px;
+                font-size: 12px;
+                margin-left: 8px;
+                font-weight: 700;
+                min-width: 20px;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+            `;
+            uploadBtn.appendChild(badge);
+        }
+    }
+    
+    // Update pending receipts section if it exists
+    const pendingSection = document.getElementById('pending-receipts-section');
+    if (pendingSection) {
+        if (pendingReceipts.length > 0) {
             const pendingList = document.getElementById('pending-receipts-list');
             if (pendingList) {
                 pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
             }
         } else {
-            if (badge) badge.remove();
-            
-            const pendingSection = document.getElementById('pending-receipts-section');
-            if (pendingSection) {
-                pendingSection.innerHTML = `
-                    <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                        <div style="font-size: 14px; color: #6b7280;">Upload receipts to get started</div>
-                    </div>
-                `;
-            }
+            pendingSection.innerHTML = `
+                <div style="text-align: center; color: #6b7280; padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                    <div style="font-size: 14px; color: #6b7280;">Upload receipts to get started</div>
+                </div>
+            `;
         }
-        
-        this.updateProcessReceiptsButton();
-    },
-
+    }
+    
+    // Update process receipts button
+    this.updateProcessReceiptsButton();
+},
+ 
     updateModalReceiptsList() {
         const recentList = document.getElementById('recent-receipts-list');
         if (recentList) {
@@ -3260,23 +3258,23 @@ showCameraInterface() {
         this.updateProcessReceiptsButton();
     },
 
-    updateProcessReceiptsButton() {
-        const processBtn = document.getElementById('process-receipts-btn');
-        const processCount = document.getElementById('process-receipts-count');
-        
-        if (!processBtn || !processCount) return;
-        
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        const pendingCount = pendingReceipts.length;
-        
-        if (pendingCount > 0) {
-            processBtn.style.display = 'flex';
-            processCount.textContent = pendingCount;
-            processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
-        } else {
-            processBtn.style.display = 'none';
-        }
-    },
+   updateProcessReceiptsButton() {
+    const processBtn = document.getElementById('process-receipts-btn');
+    const processCount = document.getElementById('process-receipts-count');
+    
+    if (!processBtn || !processCount) return;
+    
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const pendingCount = pendingReceipts.length;
+    
+    if (pendingCount > 0) {
+        processBtn.style.display = 'flex';
+        processCount.textContent = pendingCount;
+    } else {
+        processBtn.style.display = 'none';
+        processCount.textContent = '0';
+    }
+},
 
     updateStats() {
         const stats = this.calculateStats();
