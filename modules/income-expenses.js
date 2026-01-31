@@ -354,99 +354,49 @@ const IncomeExpensesModule = {
      // ==================== CAMERA METHODS ====================
 async initializeCamera() {
   console.log('📷 Initializing camera...');
-  console.log('Screen size:', window.innerWidth, 'x', window.innerHeight);
-
   const video = document.getElementById('camera-preview');
   const status = document.getElementById('camera-status');
 
   if (!video) {
-    console.error('❌ Camera preview element not found');
     this.showNotification('Camera preview element missing', 'error');
     this.showUploadInterface();
     return;
   }
 
-  // Stop any existing stream
+  // Stop existing stream
   if (this.cameraStream) {
     this.cameraStream.getTracks().forEach(track => track.stop());
     this.cameraStream = null;
   }
 
-  // Reset video element
   video.srcObject = null;
-  video.pause();
-  video.load();
 
   if (status) status.textContent = 'Requesting camera access...';
 
-  // Build constraints based on screen size
+  // Build constraints
   const screenWidth = window.innerWidth;
-  let constraints;
-  if (screenWidth >= 768 && screenWidth <= 1024) {
-    console.log('📱 Medium screen detected, using basic constraints');
-    constraints = {
-      video: {
-        facingMode: this.cameraFacingMode,
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      },
-      audio: false
-    };
-  } else {
-    constraints = {
-      video: {
-        facingMode: this.cameraFacingMode,
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
-      audio: false
-    };
-  }
-
-  console.log('Using constraints:', constraints);
+  let constraints = {
+    video: {
+      facingMode: this.cameraFacingMode,
+      width: { ideal: screenWidth >= 768 ? 640 : 1280 },
+      height: { ideal: screenWidth >= 768 ? 480 : 720 }
+    },
+    audio: false
+  };
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    console.log('✅ Camera access granted');
     this.cameraStream = stream;
     video.srcObject = stream;
-
-    const track = stream.getVideoTracks()[0];
-    const settings = track.getSettings();
-    console.log('Camera settings:', settings);
-
-    video.style.width = '100%';
-    video.style.height = '100%';
-
     await video.play();
-    console.log('📹 Video is playing successfully');
-
-    const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-    if (status) status.textContent = `${cameraType} Camera - Ready`;
-
-    const switchBtn = document.getElementById('switch-camera');
-    if (switchBtn) {
-      const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-      switchBtn.innerHTML = `
-        <span class="btn-icon">🔄</span>
-        <span class="btn-text">Switch to ${nextMode}</span>
-      `;
-    }
+    if (status) status.textContent = 'Camera Ready';
   } catch (error) {
     console.error('❌ Camera error:', error);
-    let errorMessage = 'Camera access denied.';
 
-    if (error.name === 'NotFoundError') {
-      errorMessage = 'No camera found on this device.';
-    } else if (error.name === 'NotAllowedError') {
-      errorMessage = 'Camera permission denied. Please allow camera access in your browser settings.';
-    } else if (error.name === 'NotReadableError' || error.name === 'OverconstrainedError') {
-      errorMessage = 'Camera could not start with current settings. Retrying with minimal setup...';
-      console.warn(errorMessage);
-
+    if (error.name === 'NotReadableError' || error.name === 'OverconstrainedError') {
+      console.warn('Retrying with minimal constraints...');
       try {
         const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        console.log('✅ Fallback camera access granted');
         this.cameraStream = fallbackStream;
         video.srcObject = fallbackStream;
         await video.play();
@@ -454,11 +404,12 @@ async initializeCamera() {
         return;
       } catch (fallbackErr) {
         console.error('❌ Fallback camera failed:', fallbackErr);
-        this.showNotification('Camera preview failed', 'error');
-        this.showUploadInterface();
-        return;
       }
     }
+
+    let errorMessage = 'Camera access denied.';
+    if (error.name === 'NotFoundError') errorMessage = 'No camera found on this device.';
+    if (error.name === 'NotAllowedError') errorMessage = 'Camera permission denied.';
 
     this.showNotification(errorMessage, 'error');
     this.showUploadInterface();
@@ -2532,7 +2483,7 @@ showCameraInterface() {
   margin-bottom: 20px;
 
   /* ✅ Prevent collapse */
-  min-height: 200px;
+  min-height: 240px;
   aspect-ratio: 4 / 3; /* modern browsers */
 }
 
