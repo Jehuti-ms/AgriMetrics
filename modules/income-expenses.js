@@ -3047,7 +3047,7 @@ const IncomeExpensesModule = {
                         height: 4px;
                         background: linear-gradient(90deg, #10b981, #34d399, #10b981);
                         border-radius: 20px 20px 0 0;
-                        z-index: 1000;
+                        z-index: 1000 !important;
                     "></div>
                     
                     <div class="quick-actions-section" style="padding-top: 8px;">  <!-- ONLY KEEP THIS ONE -->
