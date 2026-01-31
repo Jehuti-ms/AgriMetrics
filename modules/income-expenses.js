@@ -2502,12 +2502,10 @@ showCameraInterface() {
   .popout-modal {
     padding: 30px !important;
   }
-
   .popout-modal-content {
     width: 95%;
     max-height: 85vh;
   }
-
   #import-receipts-modal .popout-modal-content {
     max-height: 90vh;
   }
@@ -2516,7 +2514,6 @@ showCameraInterface() {
   .camera-preview-container {
     height: 350px;
   }
-
   .camera-controls .btn {
     min-width: 140px;
   }
@@ -2539,29 +2536,24 @@ showCameraInterface() {
     align-items: flex-start !important;
     padding-top: 60px !important;
   }
-
   .popout-modal-content {
     width: 95%;
     max-height: 90vh;
     border-radius: 12px;
   }
-
   .popout-modal-header {
     padding: 12px 16px;
     min-height: 56px;
   }
-
   .popout-modal-title {
     font-size: 16px;
   }
-
   .popout-modal-footer {
     flex-direction: column;
     gap: 8px;
     padding: 12px 16px;
     min-height: auto;
   }
-
   .btn {
     width: 100%;
     min-width: 0;
@@ -2573,11 +2565,9 @@ showCameraInterface() {
   .camera-preview-container {
     height: 300px;
   }
-
   .camera-controls {
     flex-direction: column;
   }
-
   .camera-controls .btn {
     width: 100%;
     max-width: 100%;
@@ -2591,6 +2581,40 @@ showCameraInterface() {
     height: 250px;
   }
 }
+
+/* Desktops and large screens */
+@media (min-width: 1200px) {
+  .popout-modal {
+    padding: 40px !important;
+  }
+  .popout-modal-content {
+    width: 80%;
+    max-width: 900px;
+  }
+  #import-receipts-modal .popout-modal-content {
+    max-width: 900px;
+  }
+
+  /* Global large buttons */
+  .btn {
+    min-width: 140px;
+    padding: 12px 24px;
+  }
+  #process-receipts-btn {
+    min-width: 180px;
+  }
+
+  /* ✅ Receipt fix */
+  .receipt-actions button.btn.btn-small {
+    min-width: auto !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    height: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+
 
 
              </style>
