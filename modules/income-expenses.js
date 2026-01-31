@@ -3040,38 +3040,34 @@ const IncomeExpensesModule = {
 
     renderImportReceiptsModal() {
         return `
-        <div class="import-receipts-container">
-            <!-- GREEN GRADIENT HEADER -->
-            <div style="
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-                border-radius: 20px 20px 0 0;
-                z-index: 10;
-            "></div>
-            
-            <div class="quick-actions-section" style="padding-top: 8px;">
-                <h2 class="section-title">Upload Method</h2>
-            </div>
-            <div class="import-receipts-container">
-                <div class="quick-actions-section">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option">
-                            <div class="card-icon">📷</div>
-                            <span class="card-title">Take Photo</span>
-                            <span class="card-subtitle">Use camera</span>
-                        </button>
-                        <button class="card-button" id="upload-option">
-                            <div class="card-icon">📁</div>
-                            <span class="card-title">Upload Files</span>
-                            <span class="card-subtitle">From device</span>
-                        </button>
+               <div class="import-receipts-container">
+                    <!-- GREEN GRADIENT HEADER -->
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 4px;
+                        background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                        border-radius: 20px 20px 0 0;
+                        z-index: 10;
+                    "></div>
+                    
+                    <div class="quick-actions-section" style="padding-top: 8px;">  <!-- ONLY KEEP THIS ONE -->
+                        <h2 class="section-title">Upload Method</h2>
+                        <div class="card-grid">
+                            <button class="card-button" id="camera-option">
+                                <div class="card-icon">📷</div>
+                                <span class="card-title">Take Photo</span>
+                                <span class="card-subtitle">Use camera</span>
+                            </button>
+                            <button class="card-button" id="upload-option">
+                                <div class="card-icon">📁</div>
+                                <span class="card-title">Upload Files</span>
+                                <span class="card-subtitle">From device</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
                 
                 <!-- UPLOAD SECTION -->
                 <div id="upload-section" style="display: none;">
