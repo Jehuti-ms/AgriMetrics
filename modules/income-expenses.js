@@ -354,6 +354,8 @@ const IncomeExpensesModule = {
      // ==================== CAMERA METHODS ====================
 async initializeCamera() {
   console.log('📷 Initializing camera...');
+  console.log('Video offsetHeight:', video.offsetHeight);
+
   const video = document.getElementById('camera-preview');
   const status = document.getElementById('camera-status');
 
