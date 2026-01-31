@@ -2218,7 +2218,7 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <style>
-            /* ==================== CRITICAL MODAL FIXES ==================== */
+           /* ==================== CRITICAL MODAL FIXES ==================== */
                 #import-receipts-modal {
                     display: none !important;
                     align-items: center !important;
@@ -2227,12 +2227,14 @@ const IncomeExpensesModule = {
                     top: 0 !important;
                     left: 0 !important;
                     width: 100% !important;
-                    height: 100% !important;
+                    height: 100vh !important; /* FIXED: Use viewport height */
                     background: rgba(0, 0, 0, 0.8) !important;
                     backdrop-filter: blur(10px) !important;
                     z-index: 9999 !important;
                     overflow-y: auto !important;
                     padding: 20px !important;
+                    box-sizing: border-box !important;
+                    margin: 0 !important;
                 }
                 
                 #import-receipts-modal:not(.hidden) {
@@ -2248,11 +2250,13 @@ const IncomeExpensesModule = {
                     top: 0 !important;
                     left: 0 !important;
                     width: 100% !important;
-                    height: 100% !important;
+                    height: 100vh !important; /* FIXED: Use viewport height */
                     background: rgba(0, 0, 0, 0.8) !important;
                     backdrop-filter: blur(10px) !important;
                     z-index: 9999 !important;
                     padding: 20px !important;
+                    box-sizing: border-box !important;
+                    margin: 0 !important;
                 }
                 
                 .popout-modal.hidden {
@@ -2265,21 +2269,21 @@ const IncomeExpensesModule = {
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
                     max-width: 600px !important;
                     width: 90% !important;
-                    max-height: 90vh !important;
+                    max-height: calc(90vh - 40px) !important; /* FIXED: Account for padding */
                     overflow: hidden !important;
                     display: flex !important;
                     flex-direction: column !important;
                     margin: auto !important;
                     position: relative !important;
-                    border-top: 4px solid transparent !important; /* Reserve space for gradient */
-                    border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1 !important;
+                    border-top: 4px solid;
+                    border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1;
                 }
                 
                 @media (max-width: 768px) {
                     .popout-modal-content {
                         width: 95% !important;
-                        max-height: 85vh !important;
-                        margin: 10px auto !important;
+                        max-height: calc(85vh - 20px) !important;
+                        margin: auto !important;
                     }
                     
                     #import-receipts-modal,
@@ -2292,7 +2296,7 @@ const IncomeExpensesModule = {
                 
                 @media (max-height: 700px) {
                     .popout-modal-content {
-                        max-height: 95vh !important;
+                        max-height: calc(95vh - 40px) !important;
                     }
                 }
                 
@@ -2308,13 +2312,15 @@ const IncomeExpensesModule = {
                     background: rgba(59, 130, 246, 0.1) !important;
                 }
                 
+                /* GREEN GRADIENT HEADER */
                 .popout-modal-header {
                     position: sticky !important;
                     top: 0 !important;
                     background: var(--glass-bg) !important;
                     z-index: 100 !important;
                     border-radius: 20px 20px 0 0 !important;
-                    overflow: hidden !important; /* This is important */
+                    overflow: hidden !important;
+                    padding-top: 4px !important;
                 }
                 
                 .popout-modal-header::before {
@@ -2328,7 +2334,7 @@ const IncomeExpensesModule = {
                     z-index: 101 !important;
                 }
                 
-                /* ADD: Consistent footer button styling */
+                /* EVEN FOOTER BUTTONS */
                 .popout-modal-footer {
                     display: flex !important;
                     gap: 12px !important;
@@ -2354,10 +2360,10 @@ const IncomeExpensesModule = {
                     gap: 8px !important;
                 }
                 
-               .popout-modal-footer .btn-primary {
-                    background: linear-gradient(135deg, #10b981, #34d399) !important; /* GREEN gradient */
+                .popout-modal-footer .btn-primary {
+                    background: #10b981 !important;
                     color: white !important;
-                    border-color: transparent !important;
+                    border-color: #10b981 !important;
                 }
                 
                 .popout-modal-footer .btn-outline {
@@ -2377,9 +2383,16 @@ const IncomeExpensesModule = {
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
                 }
                 
+                .popout-modal-footer .btn-primary:hover {
+                    background: #0da271 !important;
+                    border-color: #0da271 !important;
+                }
+                
                 .popout-modal-footer .btn:active {
                     transform: translateY(0) !important;
                 }
+
+                
                 
                 /* ==================== BASE STYLES ==================== */
                 .import-receipts-container { padding: 20px; }
@@ -3042,18 +3055,6 @@ const IncomeExpensesModule = {
             
             <div class="quick-actions-section" style="padding-top: 8px;">
                 <h2 class="section-title">Upload Method</h2>
-                <div class="card-grid">
-                    <button class="card-button" id="camera-option">
-                        <div class="card-icon">📷</div>
-                        <span class="card-title">Take Photo</span>
-                        <span class="card-subtitle">Use camera</span>
-                    </button>
-                    <button class="card-button" id="upload-option">
-                        <div class="card-icon">📁</div>
-                        <span class="card-title">Upload Files</span>
-                        <span class="card-subtitle">From device</span>
-                    </button>
-                </div>
             </div>
             <div class="import-receipts-container">
                 <div class="quick-actions-section">
