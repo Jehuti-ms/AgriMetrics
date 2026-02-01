@@ -2307,7 +2307,7 @@ const IncomeExpensesModule = {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 4px !important;
+    border-radius: 50% !important;
 }
 
 .popout-modal-close:hover {
@@ -2359,6 +2359,8 @@ const IncomeExpensesModule = {
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
+    height: auto !important;
+    line-height: normal !important;
 }
 
 /* 6. GREEN BUTTONS (Match header) */
@@ -2387,9 +2389,34 @@ const IncomeExpensesModule = {
 
 /* Process Receipts button */
 #process-receipts-btn {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    position: relative !important; /* For the badge positioning */
+    overflow: visible !important; /* Let badge show outside */
+}
+
+/* Process Receipts count badge */
+#process-receipts-count {
+    position: absolute !important;
+    top: -8px !important;
+    right: -8px !important;
+    background: #ef4444 !important;
     color: white !important;
-    border: none !important;
+    border-radius: 12px !important;
+    padding: 3px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    border: 2px solid white !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    display: flex !important; /* ← Remove this inline display */
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+}
+
+/* Add this for hiding the badge */
+#process-receipts-count.hidden {
+    display: none !important;
 }
 
 #process-receipts-btn:hover {
@@ -2398,10 +2425,9 @@ const IncomeExpensesModule = {
 
 /* ========== Responsive adjustments ========== */
 @media (max-width: 767px) {
-    .popout-modal {
-        align-items: flex-start !important;
-        padding-top: 60px !important;
-        padding-bottom: 20px !important;
+    .popout-modal-footer .btn {
+        padding: 14px 16px !important; /* Slightly taller on mobile */
+        font-size: 15px !important;
     }
     
     .popout-modal-content {
@@ -2454,6 +2480,9 @@ const IncomeExpensesModule = {
     background: rgba(59, 130, 246, 0.1) !important;
 }
 
+.hidden {
+    display: none !important;
+}
 
                 
                 
@@ -2944,13 +2973,11 @@ const IncomeExpensesModule = {
                         </div>
                     </div>
                     <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
-                        <button class="btn btn-outline" id="cancel-import-receipts" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
-                        <button class="btn btn-primary" id="process-receipts-btn" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none; position: relative;">
+                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                        <button class="btn btn-primary hidden" id="process-receipts-btn">
                             <span class="btn-icon">⚡</span>
                             <span class="btn-text">Process Receipts</span>
-                            <span id="process-receipts-count" style="position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); min-width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;">
-                                0
-                            </span>
+                            <span id="process-receipts-count">0</span>
                         </button>
                     </div>
                 </div>
@@ -3553,24 +3580,24 @@ const IncomeExpensesModule = {
     },
 
     updateProcessReceiptsButton() {
-        const processBtn = document.getElementById('process-receipts-btn');
-        const processCount = document.getElementById('process-receipts-count');
-        
-        if (!processBtn || !processCount) return;
-        
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-        const pendingCount = pendingReceipts.length;
-        
-        if (pendingCount > 0) {
-            processBtn.style.display = 'flex';
-            processCount.textContent = pendingCount;
-            processCount.style.display = 'flex';
-            processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
-        } else {
-            processBtn.style.display = 'none';
-            processCount.style.display = 'none';
-        }
-    },
+    const processBtn = document.getElementById('process-receipts-btn');
+    const processCount = document.getElementById('process-receipts-count');
+    
+    if (!processBtn || !processCount) return;
+    
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const pendingCount = pendingReceipts.length;
+    
+    if (pendingCount > 0) {
+        processBtn.classList.remove('hidden'); // ← Use class instead of style
+        processCount.textContent = pendingCount;
+        processCount.classList.remove('hidden'); // ← Use class for count too
+        processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
+    } else {
+        processBtn.classList.add('hidden'); // ← Use class instead of style
+        processCount.classList.add('hidden');
+    }
+},
 
     updateStats() {
         const stats = this.calculateStats();
