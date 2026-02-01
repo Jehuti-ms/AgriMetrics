@@ -2260,19 +2260,17 @@ const IncomeExpensesModule = {
 }
 
 .popout-modal-content {
-    background: var(--background-color) !important;
-    border-radius: 20px !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-    max-width: 600px !important;
-    width: 90% !important;
-    max-height: 90vh !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    margin: auto !important;
-    position: relative !important;
-    border-top: 4px solid;
-    border-image: linear-gradient(90deg, #10b981, #34d399, #10b981) 1;
+    background: white;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    width: 90%;
+    border-radius: 16px !important; /* Ensure consistent radius */
 }
 
 @media (max-width: 768px) {
@@ -2308,15 +2306,45 @@ const IncomeExpensesModule = {
     background: rgba(59, 130, 246, 0.1) !important;
 }
 
-/* GREEN GRADIENT HEADER - FIXED */
+/* ==================== GREEN GRADIENT HEADER (Match Sales Modal) ==================== */
 .popout-modal-header {
-    position: sticky !important;
-    top: 0 !important;
-    background: var(--glass-bg) !important;
-    z-index: 100 !important;
-    border-radius: 20px 20px 0 0 !important;
+    padding: 16px 24px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    min-height: 60px !important;
+    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
+    color: white !important;
+    position: relative !important;
+    border-radius: 16px 16px 0 0 !important;
     overflow: hidden !important;
-    padding-top: 4px !important; /* Make space for gradient */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.popout-modal-title {
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: white !important;
+}
+
+.popout-modal-close {
+    background: none !important;
+    border: none !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    color: white !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+}
+
+.popout-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
 }
 
 .popout-modal-header::before {
@@ -2356,38 +2384,44 @@ const IncomeExpensesModule = {
     gap: 8px !important;
 }
 
-/* GREEN BUTTONS (matching your farm theme) */
+/* ==================== GREEN FOOTER BUTTONS ==================== */
 .popout-modal-footer .btn-primary {
-    background: #10b981 !important;
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
     color: white !important;
-    border-color: #10b981 !important;
-}
-
-.popout-modal-footer .btn-outline {
-    background: transparent !important;
-    color: var(--text-primary) !important;
-    border-color: var(--glass-border) !important;
-}
-
-.popout-modal-footer .btn-danger {
-    background: #fef2f2 !important;
-    color: #dc2626 !important;
-    border-color: #fecaca !important;
-}
-
-.popout-modal-footer .btn:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+    font-weight: 600 !important;
 }
 
 .popout-modal-footer .btn-primary:hover {
-    background: #0da271 !important;
-    border-color: #0da271 !important;
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
 }
 
-.popout-modal-footer .btn:active {
-    transform: translateY(0) !important;
+/* For the "Process Receipts" button specifically */
+#process-receipts-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+    border: none !important;
 }
+
+#process-receipts-btn:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+}
+
+/* Make outline buttons match theme */
+.popout-modal-footer .btn-outline {
+    background: transparent !important;
+    color: #22c55e !important;
+    border: 2px solid #22c55e !important;
+}
+
+.popout-modal-footer .btn-outline:hover {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border-color: #16a34a !important;
+}
+
+
 
                 
                 
