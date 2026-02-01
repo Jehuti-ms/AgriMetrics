@@ -2314,9 +2314,6 @@ const IncomeExpensesModule = {
     background: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Remove the duplicate ::before gradient - header is already fully green */
-/* .popout-modal-header::before { ... } */
-
 /* 4. FOOTER WITH EVEN BUTTONS */
 .popout-modal-footer {
     padding: 16px 24px !important;
