@@ -2240,19 +2240,23 @@ const IncomeExpensesModule = {
 }
 
 /* Center all modals */
+/* ==================== MODAL CENTERING FIX ==================== */
 .popout-modal {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.8) !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important;
     backdrop-filter: blur(10px) !important;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important; /* ← Center vertically */
+    justify-content: center !important; /* ← Center horizontally */
     padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow: auto !important;
+    padding-top: 70px !important; /* ← ADD THIS: Push down below navbar */
 }
 
 .popout-modal.hidden {
@@ -2261,40 +2265,46 @@ const IncomeExpensesModule = {
 
 .popout-modal-content {
     background: white;
-    border-radius: 16px !important;
+    border-radius: 16px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     max-width: 800px;
-    max-height: 85vh;
+    max-height: calc(85vh - 70px) !important; /* ← Adjust for padding-top */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
     width: 90%;
-    border-radius: 16px !important; /* Ensure consistent radius */
+    margin: 0 auto !important; /* ← Center within modal */
 }
 
-@media (max-width: 768px) {
-    .popout-modal-content {
-        width: 95% !important;
-        max-height: 85vh !important;
-        margin: 10px auto !important;
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .popout-modal {
+        align-items: flex-start !important; /* ← Top on mobile */
+        padding-top: 60px !important; /* ← Adjust for mobile navbar */
+        padding-bottom: 20px !important;
     }
     
-    #import-receipts-modal,
-    .popout-modal {
-        padding: 10px !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-}
-
-@media (max-height: 700px) {
     .popout-modal-content {
-        max-height: 95vh !important;
+        max-height: calc(90vh - 80px) !important; /* ← Adjust for mobile */
+        margin-top: 0 !important;
     }
 }
 
-/* Drag & drop styles */
+@media (max-width: 480px) {
+    .popout-modal {
+        padding-top: 50px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    
+    .popout-modal-content {
+        max-height: calc(95vh - 60px) !important;
+        width: 100% !important;
+    }
+}
+
+/* =========== Drag & drop styles =========== */
 #receipt-upload-area.drag-over {
     border-color: #3b82f6 !important;
     background: rgba(59, 130, 246, 0.1) !important;
