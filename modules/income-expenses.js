@@ -2218,29 +2218,9 @@ const IncomeExpensesModule = {
 
         this.element.innerHTML = `
             <style>
-          /* ==================== CRITICAL MODAL FIXES ==================== */
-#import-receipts-modal {
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    z-index: 9999 !important;
-    overflow-y: auto !important;
-    padding: 20px !important;
-}
+         /* ==================== CRITICAL MODAL FIXES ==================== */
 
-#import-receipts-modal:not(.hidden) {
-    display: flex !important;
-}
-
-/* Center all modals */
-/* ==================== MODAL CENTERING FIX ==================== */
+/* 1. MODAL CONTAINER */
 .popout-modal {
     position: fixed !important;
     top: 0 !important;
@@ -2251,72 +2231,49 @@ const IncomeExpensesModule = {
     backdrop-filter: blur(10px) !important;
     z-index: 99999 !important;
     display: flex !important;
-    align-items: center !important; /* ← Center vertically */
-    justify-content: center !important; /* ← Center horizontally */
+    align-items: center !important;
+    justify-content: center !important;
     padding: 20px !important;
     box-sizing: border-box !important;
     overflow: auto !important;
-    padding-top: 70px !important; /* ← ADD THIS: Push down below navbar */
 }
 
 .popout-modal.hidden {
     display: none !important;
 }
 
+/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal */
+#import-receipts-modal {
+    /* All styles moved to .popout-modal above */
+}
+
+/* 2. MODAL CONTENT */
 .popout-modal-content {
     background: white;
     border-radius: 16px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     max-width: 800px;
-    max-height: calc(85vh - 70px) !important; /* ← Adjust for padding-top */
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
     width: 90%;
-    margin: 0 auto !important; /* ← Center within modal */
+    margin: auto !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 767px) {
-    .popout-modal {
-        align-items: flex-start !important; /* ← Top on mobile */
-        padding-top: 60px !important; /* ← Adjust for mobile navbar */
-        padding-bottom: 20px !important;
-    }
-    
-    .popout-modal-content {
-        max-height: calc(90vh - 80px) !important; /* ← Adjust for mobile */
-        margin-top: 0 !important;
-    }
+/* Specific modal sizes */
+#import-receipts-modal .popout-modal-content {
+    max-width: 850px;
+    max-height: 90vh;
 }
 
-@media (max-width: 480px) {
-    .popout-modal {
-        padding-top: 50px !important;
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-    }
-    
-    .popout-modal-content {
-        max-height: calc(95vh - 60px) !important;
-        width: 100% !important;
-    }
+#transaction-modal .popout-modal-content {
+    max-width: 600px;
+    max-height: 85vh;
 }
 
-/* =========== Drag & drop styles =========== */
-#receipt-upload-area.drag-over {
-    border-color: #3b82f6 !important;
-    background: rgba(59, 130, 246, 0.1) !important;
-    border-style: solid !important;
-}
-
-#drop-area.drag-over {
-    border-color: #3b82f6 !important;
-    background: rgba(59, 130, 246, 0.1) !important;
-}
-
-/* ==================== GREEN GRADIENT HEADER (Match Sales Modal) ==================== */
+/* 3. GREEN GRADIENT HEADER */
 .popout-modal-header {
     padding: 16px 24px !important;
     display: flex !important;
@@ -2357,30 +2314,40 @@ const IncomeExpensesModule = {
     background: rgba(255, 255, 255, 0.2) !important;
 }
 
-.popout-modal-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-    z-index: 101 !important;
-}
+/* Remove the duplicate ::before gradient - header is already fully green */
+/* .popout-modal-header::before { ... } */
 
-/* EVEN FOOTER BUTTONS - GREEN THEME */
+/* 4. FOOTER WITH EVEN BUTTONS */
 .popout-modal-footer {
+    padding: 16px 24px !important;
+    border-top: 1px solid #e5e7eb !important;
     display: flex !important;
     gap: 12px !important;
-    padding: 16px 24px !important;
-    border-top: 1px solid var(--glass-border) !important;
-    background: var(--glass-bg) !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 72px !important;
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
 }
 
+/* Specific modal footers */
+#import-receipts-modal .popout-modal-footer {
+    justify-content: space-between !important;
+}
+
+#transaction-modal .popout-modal-footer {
+    justify-content: space-between !important;
+}
+
+/* 5. EQUAL BUTTON WIDTHS */
 .popout-modal-footer .btn {
     flex: 1 !important;
     min-width: 0 !important;
-    padding: 12px !important;
+    padding: 12px 16px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     border-radius: 10px !important;
@@ -2394,12 +2361,11 @@ const IncomeExpensesModule = {
     gap: 8px !important;
 }
 
-/* ==================== GREEN FOOTER BUTTONS ==================== */
+/* 6. GREEN BUTTONS (Match header) */
 .popout-modal-footer .btn-primary {
     background: linear-gradient(135deg, #22c55e, #16a34a) !important;
     color: white !important;
-    border: none !important;
-    font-weight: 600 !important;
+    border-color: transparent !important;
 }
 
 .popout-modal-footer .btn-primary:hover {
@@ -2408,7 +2374,18 @@ const IncomeExpensesModule = {
     box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
 }
 
-/* For the "Process Receipts" button specifically */
+.popout-modal-footer .btn-outline {
+    background: transparent !important;
+    color: #22c55e !important;
+    border-color: #22c55e !important;
+}
+
+.popout-modal-footer .btn-outline:hover {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border-color: #16a34a !important;
+}
+
+/* Process Receipts button */
 #process-receipts-btn {
     background: linear-gradient(135deg, #22c55e, #16a34a) !important;
     color: white !important;
@@ -2419,18 +2396,63 @@ const IncomeExpensesModule = {
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
 }
 
-/* Make outline buttons match theme */
-.popout-modal-footer .btn-outline {
-    background: transparent !important;
-    color: #22c55e !important;
-    border: 2px solid #22c55e !important;
+/* ========== Responsive adjustments ========== */
+@media (max-width: 767px) {
+    .popout-modal {
+        align-items: flex-start !important;
+        padding-top: 60px !important;
+        padding-bottom: 20px !important;
+    }
+    
+    .popout-modal-content {
+        max-height: calc(90vh - 80px) !important;
+        margin-top: 0 !important;
+        width: 95% !important;
+    }
+    
+    .popout-modal-footer {
+        flex-direction: column;
+    }
+    
+    .popout-modal-footer .btn {
+        width: 100% !important;
+    }
 }
 
-.popout-modal-footer .btn-outline:hover {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-color: #16a34a !important;
+@media (max-width: 480px) {
+    .popout-modal {
+        padding-top: 50px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    
+    .popout-modal-content {
+        max-height: calc(95vh - 60px) !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px !important;
+        min-height: 56px !important;
+    }
+    
+    .popout-modal-title {
+        font-size: 16px !important;
+    }
 }
 
+/* =========== Drag & drop styles =========== */
+#receipt-upload-area.drag-over {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-style: solid !important;
+}
+
+#drop-area.drag-over {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
 
 
                 
