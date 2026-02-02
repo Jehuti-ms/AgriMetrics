@@ -2043,16 +2043,7 @@ attachDirectProductionButtonListeners() {
                 field.addEventListener('input', () => this.calculateSaleTotal());
             }
         });
-        
-        // Weight unit change
-        const weightUnit = document.getElementById('meat-weight-unit');
-        if (weightUnit) {
-            weightUnit.addEventListener('change', () => {
-                this.updateMeatLabels();
-                this.calculateSaleTotal();
-            });
-        }
-        
+               
         // Unit change
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect) {
