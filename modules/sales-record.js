@@ -927,7 +927,7 @@ const SalesRecordModule = {
         const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
 
         this.element.innerHTML = `
-            this.element.innerHTML = `
+           
         <style>
             /* ==================== SALE MODAL FOOTER STYLES ==================== */
 
