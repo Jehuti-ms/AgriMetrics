@@ -929,15 +929,40 @@ const SalesRecordModule = {
         this.element.innerHTML = `
            
 <style>
-/* ==================== SALE MODAL FOOTER - SIMPLE FIX ==================== */
-
-/* Reset the footer completely */
+/* ==================== SALE MODAL FOOTER EMERGENCY FIX ==================== */
 #sale-record-modal .popout-modal-footer {
-    display: flex !important;
-    padding: 16px 24px !important;
-    border-top: 1px solid var(--modal-input-border) !important;
-    background: var(--modal-footer-bg) !important;
-    gap: 12px !important;
+    justify-content: flex-end !important;
+}
+
+#sale-record-modal .popout-modal-footer .btn {
+    flex: 0 0 auto !important; /* STOP buttons from growing */
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    flex-basis: auto !important;
+    width: auto !important;
+    min-width: 120px !important;
+    max-width: 140px !important;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+    #sale-record-modal .popout-modal-footer {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    #sale-record-modal .popout-modal-footer .btn {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Desktop */
+@media (min-width: 768px) {
+    #sale-record-modal .popout-modal-footer {
+        flex-direction: row !important;
+    }
 }
 
 /* MOBILE: Stacked buttons */
