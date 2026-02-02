@@ -2369,19 +2369,32 @@ const IncomeExpensesModule = {
 
 .popout-modal-footer .btn-primary:hover {
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
-    /* transform: translateY(-2px) !important; */
     box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
 }
 
+/* CANCEL BUTTON - USING YOUR VARIABLES */
 .popout-modal-footer .btn-outline {
-    background: transparent !important;
-    color: #22c55e !important;
-    border-color: #22c55e !important;
+    /* Use your theme variables */
+    background-color: var(--modal-footer-bg) !important;
+    color: var(--modal-footer-text) !important;
+    border: 1px solid var(--modal-input-border) !important;
+    
+    /* Consistent styling */
+    border-radius: var(--radius-lg) !important;
+    font-weight: 600 !important;
+    padding: 12px 26px !important;
+    transition: var(--transition-normal) !important;
+    
+    /* Remove any transform that might cause flickering */
+    transform: none !important;
 }
 
 .popout-modal-footer .btn-outline:hover {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-color: #16a34a !important;
+    background-color: var(--modal-btn-text-hover) !important;
+    border-color: var(--text-secondary) !important;
+    color: var(--modal-footer-text) !important;
+    /* Optional: subtle shadow instead of transform */
+    box-shadow: var(--shadow-sm) !important;
 }
 
 /* Process Receipts button */
