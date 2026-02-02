@@ -2494,6 +2494,7 @@ const IncomeExpensesModule = {
     display: none !important;
 }
 
+
                 
                 
                 /* ==================== BASE STYLES ==================== */
