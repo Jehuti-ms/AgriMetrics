@@ -2301,7 +2301,7 @@ setQuickDefaultPrice(product) {
     
     this.calculateSaleTotal();
     this.setDefaultPrice(selectedValue);
-}
+},
 
 // Add this helper method
 updateAnimalCountVisibility() {
@@ -2315,7 +2315,7 @@ updateAnimalCountVisibility() {
             animalCountContainer.classList.add('hidden');
         }
     }
-}
+},
 
 // Update updateMeatLabels() to handle all three units properly
 updateMeatLabels() {
@@ -2372,7 +2372,7 @@ updateMeatLabels() {
             avgLabel.textContent = 'Average per Animal';
         }
     }
-}
+},
 
 // Update setupFormFieldListeners() to handle weight unit changes
 setupFormFieldListeners() {
