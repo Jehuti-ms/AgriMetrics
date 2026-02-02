@@ -1285,7 +1285,7 @@ const SalesRecordModule = {
                     </div>
                     <div class="popout-modal-footer">
                         <button type="button" class="btn-outline" id="cancel-sale">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-sale" style="display: none;">Delete</button>
+                        <button type="button" class="btn-danger hidden" id="delete-sale">Delete</button>
                         <button type="button" class="btn-primary" id="save-sale">Save Sale</button>
                     </div>
                 </div>
