@@ -928,40 +928,64 @@ const SalesRecordModule = {
 
         this.element.innerHTML = `
            
-        <style>
-/* ==================== SALE MODAL FOOTER STYLES ==================== */
+<style>
+/* ==================== SALE MODAL FOOTER - SIMPLE FIX ==================== */
 
-/* Sale modal specific footer */
+/* Reset the footer completely */
 #sale-record-modal .popout-modal-footer {
     display: flex !important;
-    justify-content: space-between !important;
+    padding: 16px 24px !important;
+    border-top: 1px solid var(--modal-input-border) !important;
+    background: var(--modal-footer-bg) !important;
     gap: 12px !important;
-    flex-wrap: wrap !important;
 }
 
-/* Base button styles */
+/* MOBILE: Stacked buttons */
+@media (max-width: 767px) {
+    #sale-record-modal .popout-modal-footer {
+        flex-direction: column !important;
+    }
+    
+    #sale-record-modal .popout-modal-footer .btn {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}
+
+/* DESKTOP: Side-by-side buttons */
+@media (min-width: 768px) {
+    #sale-record-modal .popout-modal-footer {
+        flex-direction: row !important;
+        justify-content: flex-end !important; /* Align to right */
+        flex-wrap: nowrap !important;
+    }
+    
+    /* Force all buttons to be same size on desktop */
+    #sale-record-modal .popout-modal-footer .btn {
+        min-width: 120px !important;
+        max-width: 140px !important;
+        flex: 0 0 auto !important; /* Don't grow or shrink */
+    }
+}
+
+/* BUTTON BASE STYLES (keep your existing button styles) */
 #sale-record-modal .popout-modal-footer .btn {
-    min-width: 0 !important;
-    padding: 12px 16px !important;
-    font-size: 16px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
     font-weight: 600 !important;
-    border-radius: var(--radius-lg) !important;
+    border-radius: 8px !important;
     border: 2px solid transparent !important;
     cursor: pointer !important;
-    transition: var(--transition-normal) !important;
+    transition: all 0.2s ease !important;
     text-align: center !important;
+    height: 40px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
-    height: 44px !important;
     box-sizing: border-box !important;
-    
-    /* Responsive width - CHANGED FROM flex: 1 */
-    flex: 0 1 auto !important;
 }
 
-/* Cancel button */
+/* Your existing button color styles */
 #sale-record-modal .popout-modal-footer .btn-outline {
     background-color: var(--modal-footer-bg) !important;
     color: var(--modal-footer-text) !important;
@@ -973,7 +997,6 @@ const SalesRecordModule = {
     border-color: var(--text-secondary) !important;
 }
 
-/* Delete button */
 #sale-record-modal .popout-modal-footer .btn-danger {
     background: var(--gradient-danger) !important;
     color: white !important;
@@ -985,7 +1008,6 @@ const SalesRecordModule = {
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
 
-/* Save button */
 #sale-record-modal .popout-modal-footer .btn-primary {
     background: var(--gradient-primary) !important;
     color: white !important;
@@ -997,7 +1019,6 @@ const SalesRecordModule = {
     box-shadow: var(--shadow-primary-hover) !important;
 }
 
-/* Hidden class */
 .hidden {
     display: none !important;
 }
