@@ -927,153 +927,6 @@ const SalesRecordModule = {
         const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
 
         this.element.innerHTML = `
-           
-<style>
-/* ==================== SALE MODAL FOOTER EMERGENCY FIX ==================== */
-#sale-record-modal .popout-modal-footer {
-    justify-content: flex-end !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn {
-    flex: 0 0 auto !important; /* STOP buttons from growing */
-    flex-grow: 0 !important;
-    flex-shrink: 0 !important;
-    flex-basis: auto !important;
-    width: auto !important;
-    min-width: 120px !important;
-    max-width: 140px !important;
-}
-
-/* Mobile */
-@media (max-width: 767px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: column !important;
-        align-items: stretch !important;
-    }
-    
-    #sale-record-modal .popout-modal-footer .btn {
-        width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-    }
-}
-
-/* Desktop */
-@media (min-width: 768px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: row !important;
-    }
-}
-
-/* MOBILE: Stacked buttons */
-@media (max-width: 767px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: column !important;
-    }
-    
-    #sale-record-modal .popout-modal-footer .btn {
-        width: 100% !important;
-        margin: 0 !important;
-    }
-}
-
-/* DESKTOP: Side-by-side buttons */
-@media (min-width: 768px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: row !important;
-        justify-content: flex-end !important; /* Align to right */
-        flex-wrap: nowrap !important;
-    }
-    
-    /* Force all buttons to be same size on desktop */
-    #sale-record-modal .popout-modal-footer .btn {
-        min-width: 120px !important;
-        max-width: 140px !important;
-        flex: 0 0 auto !important; /* Don't grow or shrink */
-    }
-}
-
-/* BUTTON BASE STYLES (keep your existing button styles) */
-#sale-record-modal .popout-modal-footer .btn {
-    padding: 10px 20px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    border: 2px solid transparent !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    text-align: center !important;
-    height: 40px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-}
-
-/* Your existing button color styles */
-#sale-record-modal .popout-modal-footer .btn-outline {
-    background-color: var(--modal-footer-bg) !important;
-    color: var(--modal-footer-text) !important;
-    border-color: var(--modal-input-border) !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-outline:hover {
-    background-color: var(--modal-btn-text-hover) !important;
-    border-color: var(--text-secondary) !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-danger {
-    background: var(--gradient-danger) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-danger:hover {
-    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-primary {
-    background: var(--gradient-primary) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-primary:hover {
-    background: var(--gradient-primary-hover) !important;
-    box-shadow: var(--shadow-primary-hover) !important;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* ==================== RESPONSIVE STYLES ==================== */
-
-/* Mobile (stacked) */
-@media (max-width: 767px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: column !important;
-    }
-    
-    #sale-record-modal .popout-modal-footer .btn {
-        width: 100% !important;
-    }
-}
-
-/* Tablet and Desktop (side-by-side) */
-@media (min-width: 768px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-    }
-    
-    #sale-record-modal .popout-modal-footer .btn {
-        width: auto !important;
-    }
-}
-</style>
-                         
             <div class="module-container">
                 <!-- Header -->
                 <div class="module-header">
@@ -1338,7 +1191,6 @@ const SalesRecordModule = {
                                                 <select id="meat-weight-unit" class="form-input" style="min-width: 100px;">
                                                     <option value="kg">kg</option>
                                                     <option value="lbs">lbs</option>
-                                                    <option value="bird">bird</option>
                                                 </select>
                                             </div>
                                             <div class="form-hint">Total weight of all animals</div>
@@ -1431,10 +1283,9 @@ const SalesRecordModule = {
                             </div>
                         </form>
                     </div>
-                    <div class="popout-modal-footer flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3">
-                        <!-- Cancel comes first in HTML but appears on left on desktop -->
-                        <button type="button" class="btn-outline mt-3 sm:mt-0" id="cancel-sale">Cancel</button>
-                        <button type="button" class="btn-danger hidden" id="delete-sale">Delete</button>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn-outline" id="cancel-sale">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-sale" style="display: none;">Delete</button>
                         <button type="button" class="btn-primary" id="save-sale">Save Sale</button>
                     </div>
                 </div>
@@ -2123,7 +1974,7 @@ setQuickDefaultPrice(product) {
     }
 },
 
-         handleProductChange() {
+    handleProductChange() {
         const productSelect = document.getElementById('sale-product');
         if (!productSelect) return;
         
@@ -2136,47 +1987,22 @@ setQuickDefaultPrice(product) {
         const meatSummary = document.getElementById('meat-summary');
         const standardSummary = document.getElementById('standard-summary');
         
-        // Products that are typically sold by bird
-        const birdProducts = ['broilers-dressed', 'chicken-parts'];
-        
-        if (selectedValue === '') {
-            // No product selected - hide both sections
-            console.log('No product selected, hiding both sections');
-            if (meatSection) meatSection.classList.add('hidden');
-            if (meatSummary) meatSummary.classList.add('hidden');
-            if (standardSection) standardSection.classList.add('hidden');
-            if (standardSummary) standardSummary.classList.add('hidden');
-        } else if (isMeatProduct) {
-            console.log('Meat product selected:', selectedValue);
-            // Show meat section, hide standard section
-            if (meatSection) meatSection.classList.remove('hidden');
-            if (meatSummary) meatSummary.classList.remove('hidden');
-            if (standardSection) standardSection.classList.add('hidden');
-            if (standardSummary) standardSummary.classList.add('hidden');
+        if (isMeatProduct) {
+            if (meatSection) meatSection.style.display = 'block';
+            if (meatSummary) meatSummary.style.display = 'block';
+            if (standardSection) standardSection.style.display = 'none';
+            if (standardSummary) standardSummary.style.display = 'none';
             
             const unitSelect = document.getElementById('sale-unit');
             if (unitSelect) unitSelect.value = 'animals';
             
             const weightUnit = document.getElementById('meat-weight-unit');
-            if (weightUnit) {
-                // Default to 'bird' for bird products, 'kg' for others
-                if (!weightUnit.value || weightUnit.value === '') {
-                    weightUnit.value = birdProducts.includes(selectedValue) ? 'bird' : 'kg';
-                }
-                
-                // Show/hide animal count based on unit
-                const animalCountContainer = document.getElementById('meat-animal-count-container');
-                if (animalCountContainer) {
-                    if (weightUnit.value === 'bird') {
-                        animalCountContainer.classList.remove('hidden');
-                    } else {
-                        animalCountContainer.classList.add('hidden');
-                    }
-                }
+            if (weightUnit && !weightUnit.value) {
+                weightUnit.value = 'kg';
             }
             
             const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
-                              selectedValue === 'broilers-dressed' ? 'Number of Birds' : 
+                              selectedValue.includes('broilers') ? 'Number of Birds' : 
                               selectedValue === 'pork' ? 'Number of Pigs' :
                               selectedValue === 'beef' ? 'Number of Cattle' :
                               selectedValue === 'goat' ? 'Number of Goats' :
@@ -2194,12 +2020,10 @@ setQuickDefaultPrice(product) {
             if (standardQuantity) standardQuantity.value = '';
             if (standardPrice) standardPrice.value = '';
         } else {
-            console.log('Standard product selected:', selectedValue);
-            // Show standard section, hide meat section
-            if (meatSection) meatSection.classList.add('hidden');
-            if (meatSummary) meatSummary.classList.add('hidden');
-            if (standardSection) standardSection.classList.remove('hidden');
-            if (standardSummary) standardSummary.classList.remove('hidden');
+            if (meatSection) meatSection.style.display = 'none';
+            if (meatSummary) meatSummary.style.display = 'none';
+            if (standardSection) standardSection.style.display = 'block';
+            if (standardSummary) standardSummary.style.display = 'block';
             
             const unitSelect = document.getElementById('sale-unit');
             if (unitSelect) {
@@ -2229,7 +2053,7 @@ setQuickDefaultPrice(product) {
         this.calculateSaleTotal();
         this.setDefaultPrice(selectedValue);
     },
-    
+
     updateStandardPriceLabel() {
         const unitSelect = document.getElementById('sale-unit');
         const productSelect = document.getElementById('sale-product');
@@ -2274,7 +2098,7 @@ setQuickDefaultPrice(product) {
         standardPriceUnitLabel.textContent = labelText;
     },
 
-      calculateSaleTotal() {
+    calculateSaleTotal() {
         const productSelect = document.getElementById('sale-product');
         if (!productSelect) return;
         
@@ -2294,66 +2118,26 @@ setQuickDefaultPrice(product) {
             const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
             const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : 0;
             
-            // Calculate total based on unit
-            if (weightUnit === 'bird') {
-                // When selling by bird, weight represents number of birds
-                total = weight * pricePerUnit;
-                
-                // Sync animal count with weight for bird units
-                if (animalCountInput && weight > 0 && animalCount === 0) {
-                    animalCountInput.value = weight;
-                }
-            } else {
-                // For kg/lbs, calculate normally
-                total = weight * pricePerUnit;
-            }
+            total = weight * pricePerUnit;
             
             const meatSummary = document.getElementById('meat-summary-info');
             const avgWeightElement = document.getElementById('meat-avg-weight');
             const avgValueElement = document.getElementById('meat-avg-value');
             
             if (meatSummary && avgWeightElement && avgValueElement) {
-                // Use animal count for bird units, otherwise use actual animal count
-                const effectiveAnimalCount = weightUnit === 'bird' ? weight : (animalCount > 0 ? animalCount : 1);
-                const effectiveWeight = weightUnit === 'bird' ? effectiveAnimalCount : weight;
-                
-                if (effectiveAnimalCount > 0 && effectiveWeight > 0) {
-                    let avgWeight = 0;
-                    let weightUnitText = '';
+                if (animalCount > 0 && weight > 0) {
+                    const avgWeight = weight / animalCount;
+                    const avgValue = total / animalCount;
+                    const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
                     
-                    if (weightUnit === 'bird') {
-                        // For bird units, we're selling by count, not weight
-                        avgWeight = 1; // Each "bird" is 1 unit
-                        weightUnitText = 'bird';
-                    } else {
-                        avgWeight = weight / effectiveAnimalCount;
-                        weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
-                    }
-                    
-                    const avgValue = total / effectiveAnimalCount;
-                    
-                    // Update summary text based on unit
-                    if (weightUnit === 'bird') {
-                        meatSummary.textContent = `${weight} bird${weight !== 1 ? 's' : ''} • ${this.formatCurrency(pricePerUnit)} per bird • ${this.formatCurrency(total)} total`;
-                        avgWeightElement.textContent = `${avgWeight.toFixed(0)} bird${avgWeight !== 1 ? 's' : ''}/sale`;
-                        avgValueElement.textContent = `${this.formatCurrency(avgValue)}/bird`;
-                    } else {
-                        meatSummary.textContent = `${effectiveAnimalCount} animal${effectiveAnimalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnitText} total • ${this.formatCurrency(avgValue)} per animal`;
-                        avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${weightUnitText}/animal`;
-                        avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
-                    }
+                    meatSummary.textContent = `${animalCount} animal${animalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnitText} total • ${this.formatCurrency(avgValue)} per animal`;
+                    avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${weightUnitText}/animal`;
+                    avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
                 } else {
-                    // No data case
-                    const weightUnitText = weightUnit === 'bird' ? 'birds' : (weightUnit === 'lbs' ? 'lbs' : 'kg');
+                    const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
                     meatSummary.textContent = `0 animals • 0 ${weightUnitText} total • $0.00 per animal`;
-                    
-                    if (weightUnit === 'bird') {
-                        avgWeightElement.textContent = `0 birds/sale`;
-                        avgValueElement.textContent = '$0.00/bird';
-                    } else {
-                        avgWeightElement.textContent = `0.00 ${weightUnitText}/animal`;
-                        avgValueElement.textContent = '$0.00/animal';
-                    }
+                    avgWeightElement.textContent = `0.00 ${weightUnitText}/animal`;
+                    avgValueElement.textContent = '$0.00/animal';
                 }
             }
         } else {
@@ -2503,7 +2287,7 @@ setQuickDefaultPrice(product) {
         }
     },
 
-          showSaleModal() {
+    showSaleModal() {
         this.hideAllModals();
         const modal = document.getElementById('sale-modal');
         if (modal) {
@@ -2524,10 +2308,10 @@ setQuickDefaultPrice(product) {
         if (saleModalTitle) saleModalTitle.textContent = 'Record Sale';
         
         const deleteSaleBtn = document.getElementById('delete-sale');
-        if (deleteSaleBtn) deleteSaleBtn.classList.add('hidden');
+        if (deleteSaleBtn) deleteSaleBtn.style.display = 'none';
         
         const productionSourceNotice = document.getElementById('production-source-notice');
-        if (productionSourceNotice) productionSourceNotice.classList.add('hidden');
+        if (productionSourceNotice) productionSourceNotice.style.display = 'none';
         
         const fieldsToClear = [
             'meat-animal-count',
@@ -2547,69 +2331,14 @@ setQuickDefaultPrice(product) {
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect) unitSelect.value = '';
         
-        // DEFAULT TO 'bird' FOR MEAT PRODUCTS (optional - you can keep as 'kg' if preferred)
         const weightUnit = document.getElementById('meat-weight-unit');
-        if (weightUnit) {
-            // If there's pending production sale for meat, default to 'bird'
-            if (this.pendingProductionSale && this.pendingProductionSale.type === 'meat') {
-                weightUnit.value = 'bird';
-            } else {
-                weightUnit.value = 'kg'; // or 'bird' depending on your preference
-            }
-        }
+        if (weightUnit) weightUnit.value = 'kg';
         
         const paymentMethod = document.getElementById('sale-payment');
         if (paymentMethod) paymentMethod.value = 'cash';
         
         const paymentStatus = document.getElementById('sale-status');
         if (paymentStatus) paymentStatus.value = 'paid';
-        
-        // FOOTER FIXES - Update calculation displays
-        const calculationDisplay = document.getElementById('sale-calculation-display');
-        if (calculationDisplay) {
-            calculationDisplay.textContent = 'Total: $0.00';
-            calculationDisplay.classList.remove('text-green-600', 'text-red-600');
-            calculationDisplay.classList.add('text-gray-600');
-        }
-        
-        // Reset footer totals and buttons
-        const saleSubtotal = document.getElementById('sale-subtotal');
-        const saleTax = document.getElementById('sale-tax');
-        const saleTotal = document.getElementById('sale-total');
-        
-        if (saleSubtotal) saleSubtotal.textContent = '$0.00';
-        if (saleTax) saleTax.textContent = '$0.00';
-        if (saleTotal) saleTotal.textContent = '$0.00';
-        
-        // Reset footer buttons state
-        const saveSaleBtn = document.getElementById('save-sale');
-        const cancelSaleBtn = document.getElementById('cancel-sale');
-        
-        if (saveSaleBtn) {
-            saveSaleBtn.textContent = 'Save Sale';
-            saveSaleBtn.disabled = false;
-            saveSaleBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-            saveSaleBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-        }
-        
-        if (cancelSaleBtn) {
-            cancelSaleBtn.textContent = 'Cancel';
-            cancelSaleBtn.onclick = () => this.hideModal('sale-modal');
-        }
-        
-        // Clear any previous sale ID for new sale
-        this.currentSaleId = null;
-        
-        // Hide discount fields if present
-        const discountSection = document.getElementById('sale-discount-section');
-        if (discountSection) {
-            discountSection.classList.add('hidden');
-        }
-        
-        const discountInput = document.getElementById('sale-discount');
-        if (discountInput) {
-            discountInput.value = '0';
-        }
         
         if (this.pendingProductionSale) {
             this.prefillFromProduction(this.pendingProductionSale);
@@ -2626,14 +2355,14 @@ setQuickDefaultPrice(product) {
         this.setupFormFieldListeners();
     },
 
-       showProductionSourceNotice() {
+    showProductionSourceNotice() {
         if (!this.pendingProductionSale) return;
         
         const noticeElement = document.getElementById('production-source-notice');
         const infoElement = document.getElementById('production-source-info');
         
         if (noticeElement && infoElement) {
-            noticeElement.classList.remove('hidden'); // FIXED: Using classList
+            noticeElement.style.display = 'block';
             infoElement.textContent = `${this.pendingProductionSale.type || this.pendingProductionSale.product} • ${this.pendingProductionSale.quantity || this.pendingProductionSale.count || 0} units`;
         }
     },
@@ -2745,7 +2474,7 @@ setQuickDefaultPrice(product) {
         this.showNotification('Sale recorded successfully!', 'success');
     },
 
-      saveSale() {
+    saveSale() {
         const saleIdInput = document.getElementById('sale-id');
         const dateInput = document.getElementById('sale-date');
         const customerInput = document.getElementById('sale-customer');
@@ -2791,18 +2520,7 @@ setQuickDefaultPrice(product) {
             let totalAmount;
             let priceUnit;
             
-            // Calculate based on weight unit
-            if (weightUnit === 'bird') {
-                // For bird units, weight = number of birds, price = price per bird
-                totalAmount = weight * unitPrice;
-                priceUnit = 'per-bird';
-                
-                // Ensure animal count matches weight for bird units
-                if (animalCountInput && weight > 0 && animalCount === 0) {
-                    // This should already be handled in calculateSaleTotal, but just in case
-                    animalCountInput.value = weight;
-                }
-            } else if (weightUnit === 'lbs') {
+            if (weightUnit === 'lbs') {
                 totalAmount = weight * unitPrice;
                 priceUnit = 'per-lb';
             } else {
@@ -2810,18 +2528,13 @@ setQuickDefaultPrice(product) {
                 priceUnit = 'per-kg';
             }
             
-            // Calculate effective animal count for averages
-            const effectiveAnimalCount = weightUnit === 'bird' ? weight : (animalCount > 0 ? animalCount : 1);
-            const avgWeightPerAnimal = weightUnit === 'bird' ? 1 : (effectiveAnimalCount > 0 ? weight / effectiveAnimalCount : 0);
-            const avgValuePerAnimal = effectiveAnimalCount > 0 ? totalAmount / effectiveAnimalCount : 0;
-            
             saleData = {
                 id: saleId || 'SALE-' + Date.now().toString().slice(-6),
                 date: date,
                 customer: customer || 'Walk-in',
                 product: product,
                 unit: unit,
-                quantity: effectiveAnimalCount, // Use effective animal count for quantity
+                quantity: animalCount,
                 unitPrice: unitPrice,
                 totalAmount: totalAmount,
                 paymentMethod: paymentMethod,
@@ -2829,11 +2542,10 @@ setQuickDefaultPrice(product) {
                 notes: notes,
                 weight: weight,
                 weightUnit: weightUnit,
-                animalCount: effectiveAnimalCount, // Store effective animal count
-                originalAnimalCount: animalCount, // Store the original input if different
+                animalCount: animalCount,
                 priceUnit: priceUnit,
-                avgWeightPerAnimal: avgWeightPerAnimal,
-                avgValuePerAnimal: avgValuePerAnimal
+                avgWeightPerAnimal: animalCount > 0 ? weight / animalCount : 0,
+                avgValuePerAnimal: animalCount > 0 ? totalAmount / animalCount : 0
             };
         } else {
             const quantityInput = document.getElementById('standard-quantity');
@@ -2965,7 +2677,7 @@ setQuickDefaultPrice(product) {
         this.showNotification('Sale deleted successfully!', 'success');
     },
 
-          editSale(saleId) {
+    editSale(saleId) {
         const sale = window.FarmModules.appData.sales.find(s => s.id === saleId);
         if (!sale) {
             this.showNotification('Sale not found', 'error');
@@ -2980,7 +2692,7 @@ setQuickDefaultPrice(product) {
         if (saleIdInput) saleIdInput.value = sale.id;
         
         const deleteSaleBtn = document.getElementById('delete-sale');
-        if (deleteSaleBtn) deleteSaleBtn.classList.remove('hidden');
+        if (deleteSaleBtn) deleteSaleBtn.style.display = 'inline-block';
         
         const dateInput = document.getElementById('sale-date');
         if (dateInput) dateInput.value = this.formatDateForInput(sale.date);
@@ -3008,38 +2720,16 @@ setQuickDefaultPrice(product) {
         
         if (isMeatProduct) {
             const animalCountInput = document.getElementById('meat-animal-count');
+            if (animalCountInput) animalCountInput.value = sale.animalCount || sale.quantity || '';
+            
             const weightInput = document.getElementById('meat-weight');
+            if (weightInput) weightInput.value = sale.weight || '';
+            
             const weightUnitSelect = document.getElementById('meat-weight-unit');
+            if (weightUnitSelect) weightUnitSelect.value = sale.weightUnit || 'kg';
+            
             const priceInput = document.getElementById('meat-price');
-            
-            // Set weight unit first (important for handling logic)
-            if (weightUnitSelect) {
-                weightUnitSelect.value = sale.weightUnit || 'kg';
-            }
-            
-            // Handle bird units differently
-            if (sale.weightUnit === 'bird') {
-                // For bird units, weight = number of birds
-                if (weightInput) {
-                    weightInput.value = sale.quantity || sale.weight || '';
-                }
-                if (animalCountInput) {
-                    // Use originalAnimalCount if available, otherwise use quantity
-                    animalCountInput.value = sale.originalAnimalCount || sale.quantity || sale.animalCount || '';
-                }
-            } else {
-                // For kg/lbs units
-                if (weightInput) {
-                    weightInput.value = sale.weight || '';
-                }
-                if (animalCountInput) {
-                    animalCountInput.value = sale.animalCount || sale.quantity || '';
-                }
-            }
-            
-            if (priceInput) {
-                priceInput.value = sale.unitPrice || '';
-            }
+            if (priceInput) priceInput.value = sale.unitPrice || '';
         } else {
             const quantityInput = document.getElementById('standard-quantity');
             if (quantityInput) quantityInput.value = sale.quantity || '';
@@ -3053,7 +2743,7 @@ setQuickDefaultPrice(product) {
             if (productionSourceIdInput) productionSourceIdInput.value = sale.productionSourceId;
             
             const productionSourceNotice = document.getElementById('production-source-notice');
-            if (productionSourceNotice) productionSourceNotice.classList.remove('hidden');
+            if (productionSourceNotice) productionSourceNotice.style.display = 'block';
             
             const productionSourceInfo = document.getElementById('production-source-info');
             if (productionSourceInfo) {
@@ -3061,7 +2751,7 @@ setQuickDefaultPrice(product) {
             }
         } else {
             const productionSourceNotice = document.getElementById('production-source-notice');
-            if (productionSourceNotice) productionSourceNotice.classList.add('hidden');
+            if (productionSourceNotice) productionSourceNotice.style.display = 'none';
         }
         
         this.handleProductChange();
