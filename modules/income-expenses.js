@@ -2369,7 +2369,7 @@ const IncomeExpensesModule = {
 
 .popout-modal-footer .btn-primary:hover {
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
-    transform: translateY(-2px) !important;
+    /* transform: translateY(-2px) !important; */
     box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
 }
 
