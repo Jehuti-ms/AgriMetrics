@@ -3812,8 +3812,242 @@ setupFormFieldListeners() {
     if (notificationStyles) {
         notificationStyles.remove();
     }
-}
-};
+},
+
+// ==================== MEAT SALES UI METHODS ====================
+
+setupMeatSalesUI() {
+    const productSelect = document.getElementById('sale-product');
+    if (!productSelect) return;
+    
+    // Initialize meat UI
+    this.updateMeatUI();
+    
+    // Add event listener for product change
+    productSelect.addEventListener('change', () => this.updateMeatUI());
+    
+    // Add event listeners for meat calculation fields
+    const meatFields = ['meat-animal-count', 'meat-weight', 'meat-price', 'meat-weight-unit'];
+    meatFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', () => this.updateMeatCalculations());
+        }
+    });
+},
+
+updateMeatUI() {
+    const productSelect = document.getElementById('sale-product');
+    const meatSection = document.getElementById('meat-section');
+    const standardSection = document.getElementById('standard-section');
+    
+    if (!productSelect || !meatSection || !standardSection) return;
+    
+    const selectedProduct = productSelect.value;
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    if (meatProducts.includes(selectedProduct)) {
+        // Show meat section, hide standard section
+        meatSection.style.display = 'block';
+        standardSection.style.display = 'none';
+        
+        // Update meat section labels
+        this.updateMeatSectionLabels(selectedProduct);
+        
+        // Update unit select
+        this.updateMeatUnitOptions(selectedProduct);
+        
+        // Add colored indicator
+        this.addProductIndicator(selectedProduct);
+    } else {
+        // Show standard section, hide meat section
+        meatSection.style.display = 'none';
+        standardSection.style.display = 'block';
+        
+        // Remove any existing indicator
+        this.removeProductIndicator();
+    }
+},
+
+updateMeatSectionLabels(product) {
+    const animalCountLabel = document.querySelector('#meat-animal-count-container .form-label');
+    const animalCountHint = document.querySelector('#meat-animal-count-container .form-hint');
+    
+    if (animalCountLabel && animalCountHint) {
+        if (product === 'broilers-dressed' || product === 'chicken-parts') {
+            animalCountLabel.textContent = 'Number of Birds *';
+            animalCountHint.textContent = 'Number of birds being sold';
+        } else if (product === 'pork') {
+            animalCountLabel.textContent = 'Number of Pigs *';
+            animalCountHint.textContent = 'Number of pigs being sold';
+        } else if (product === 'beef') {
+            animalCountLabel.textContent = 'Number of Cattle *';
+            animalCountHint.textContent = 'Number of cattle being sold';
+        } else if (product === 'goat') {
+            animalCountLabel.textContent = 'Number of Goats *';
+            animalCountHint.textContent = 'Number of goats being sold';
+        } else if (product === 'lamb') {
+            animalCountLabel.textContent = 'Number of Lambs *';
+            animalCountHint.textContent = 'Number of lambs being sold';
+        }
+    }
+},
+
+updateMeatUnitOptions(product) {
+    const weightUnitSelect = document.getElementById('meat-weight-unit');
+    if (!weightUnitSelect) return;
+    
+    // Clear existing options
+    weightUnitSelect.innerHTML = '';
+    
+    if (product === 'broilers-dressed' || product === 'chicken-parts') {
+        // For birds, offer bird, kg, lbs options
+        weightUnitSelect.innerHTML = `
+            <option value="bird">bird</option>
+            <option value="kg">kg</option>
+            <option value="lbs">lbs</option>
+        `;
+    } else {
+        // For other meat, only kg and lbs
+        weightUnitSelect.innerHTML = `
+            <option value="kg">kg</option>
+            <option value="lbs">lbs</option>
+        `;
+    }
+},
+
+addProductIndicator(product) {
+    // Remove existing indicator
+    this.removeProductIndicator();
+    
+    const productSelect = document.getElementById('sale-product');
+    if (!productSelect) return;
+    
+    // Create indicator
+    const indicator = document.createElement('div');
+    indicator.className = 'product-category-indicator';
+    indicator.style.cssText = `
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+    
+    // Set color based on product type
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const poultryProducts = ['broilers-live', 'layers', 'chicks'];
+    const dairyProducts = ['milk', 'cheese', 'yogurt', 'butter'];
+    const vegProducts = ['tomatoes', 'peppers', 'cucumbers', 'lettuce', 'carrots', 'potatoes'];
+    
+    let emoji = '📦';
+    let text = 'Product';
+    let color = '#6b7280';
+    let bgColor = '#f3f4f6';
+    
+    if (meatProducts.includes(product)) {
+        emoji = '🍖';
+        text = 'Meat Product';
+        color = '#dc2626';
+        bgColor = '#fef2f2';
+    } else if (poultryProducts.includes(product)) {
+        emoji = '🐔';
+        text = 'Poultry';
+        color = '#d97706';
+        bgColor = '#fffbeb';
+    } else if (dairyProducts.includes(product)) {
+        emoji = '🥛';
+        text = 'Dairy';
+        color = '#059669';
+        bgColor = '#ecfdf5';
+    } else if (vegProducts.includes(product)) {
+        emoji = '🥬';
+        text = 'Vegetables';
+        color = '#16a34a';
+        bgColor = '#f0fdf4';
+    } else if (product === 'eggs') {
+        emoji = '🥚';
+        text = 'Eggs';
+        color = '#7c3aed';
+        bgColor = '#f5f3ff';
+    } else if (product === 'honey') {
+        emoji = '🍯';
+        text = 'Honey';
+        color = '#92400e';
+        bgColor = '#fef3c7';
+    }
+    
+    indicator.innerHTML = `<span style="font-size: 16px;">${emoji}</span><span>${text}</span>`;
+    indicator.style.color = color;
+    indicator.style.backgroundColor = bgColor;
+    indicator.style.border = `1px solid ${color}20`;
+    
+    // Insert after product select
+    productSelect.parentNode.insertBefore(indicator, productSelect.nextSibling);
+},
+
+removeProductIndicator() {
+    const existingIndicator = document.querySelector('.product-category-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+},
+
+updateMeatCalculations() {
+    const animalCount = parseFloat(document.getElementById('meat-animal-count')?.value) || 0;
+    const totalWeight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+    const pricePerUnit = parseFloat(document.getElementById('meat-price')?.value) || 0;
+    const weightUnit = document.getElementById('meat-weight-unit')?.value || 'kg';
+    
+    // Update price unit label
+    const priceUnitLabel = document.getElementById('meat-price-unit-label');
+    if (priceUnitLabel) {
+        if (weightUnit === 'bird') {
+            priceUnitLabel.textContent = 'per bird';
+        } else if (weightUnit === 'kg') {
+            priceUnitLabel.textContent = 'per kg';
+        } else if (weightUnit === 'lbs') {
+            priceUnitLabel.textContent = 'per lb';
+        }
+    }
+    
+    // Calculate total
+    let totalAmount = 0;
+    if (weightUnit === 'bird') {
+        totalAmount = totalWeight * pricePerUnit; // totalWeight is actually number of birds
+    } else {
+        totalAmount = totalWeight * pricePerUnit;
+    }
+    
+    // Calculate average per animal
+    let avgWeight = 0;
+    let avgValue = 0;
+    
+    if (animalCount > 0 && totalWeight > 0) {
+        avgWeight = weightUnit === 'bird' ? 1 : totalWeight / animalCount;
+        avgValue = totalAmount / animalCount;
+    }
+    
+    // Update display
+    const avgWeightElement = document.getElementById('meat-avg-weight');
+    const avgValueElement = document.getElementById('meat-avg-value');
+    
+    if (avgWeightElement && avgValueElement) {
+        avgWeightElement.textContent = weightUnit === 'bird' ? 
+            `${animalCount} bird${animalCount !== 1 ? 's' : ''}` : 
+            `${avgWeight.toFixed(2)} ${weightUnit}`;
+        avgValueElement.textContent = `$${avgValue.toFixed(2)}/animal`;
+    }
+    
+    // Update sale total in the main form
+    const saleTotalElement = document.getElementById('sale-total-amount');
+    if (saleTotalElement) {
+        saleTotalElement.textContent = this.formatCurrency(totalAmount);
+    }
+},
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
