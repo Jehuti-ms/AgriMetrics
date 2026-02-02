@@ -2057,7 +2057,7 @@ setQuickDefaultPrice(product) {
     }
 },
 
-      handleProductChange() {
+         handleProductChange() {
         const productSelect = document.getElementById('sale-product');
         if (!productSelect) return;
         
@@ -2073,7 +2073,15 @@ setQuickDefaultPrice(product) {
         // Products that are typically sold by bird
         const birdProducts = ['broilers-dressed', 'chicken-parts'];
         
-        if (isMeatProduct) {
+        if (selectedValue === '') {
+            // No product selected - hide both sections
+            console.log('No product selected, hiding both sections');
+            if (meatSection) meatSection.classList.add('hidden');
+            if (meatSummary) meatSummary.classList.add('hidden');
+            if (standardSection) standardSection.classList.add('hidden');
+            if (standardSummary) standardSummary.classList.add('hidden');
+        } else if (isMeatProduct) {
+            console.log('Meat product selected:', selectedValue);
             // Show meat section, hide standard section
             if (meatSection) meatSection.classList.remove('hidden');
             if (meatSummary) meatSummary.classList.remove('hidden');
@@ -2120,6 +2128,7 @@ setQuickDefaultPrice(product) {
             if (standardQuantity) standardQuantity.value = '';
             if (standardPrice) standardPrice.value = '';
         } else {
+            console.log('Standard product selected:', selectedValue);
             // Show standard section, hide meat section
             if (meatSection) meatSection.classList.add('hidden');
             if (meatSummary) meatSummary.classList.add('hidden');
@@ -2154,7 +2163,7 @@ setQuickDefaultPrice(product) {
         this.calculateSaleTotal();
         this.setDefaultPrice(selectedValue);
     },
-
+    
     updateStandardPriceLabel() {
         const unitSelect = document.getElementById('sale-unit');
         const productSelect = document.getElementById('sale-product');
