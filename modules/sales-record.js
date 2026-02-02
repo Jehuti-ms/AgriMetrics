@@ -1008,6 +1008,8 @@ const SalesRecordModule = {
                     width: 100% !important;
                 }
             }
+
+             </style>
             
             <div class="module-container">
                 <!-- Header -->
