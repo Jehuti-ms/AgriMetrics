@@ -1407,11 +1407,10 @@ const SalesRecordModule = {
                             </div>
                         </form>
                     </div>
-                    <div class="popout-modal-footer flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3">
-                        <!-- Cancel comes first in HTML but appears on left on desktop -->
-                        <button type="button" class="btn-outline mt-3 sm:mt-0" id="cancel-sale">Cancel</button>
-                        <button type="button" class="btn-danger hidden" id="delete-sale">Delete</button>
-                        <button type="button" class="btn-primary" id="save-sale">Save Sale</button>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn btn-outline" id="cancel-sale">Cancel</button>
+                        <button type="button" class="btn btn-danger hidden" id="delete-sale">Delete</button>
+                        <button type="button" class="btn btn-primary" id="save-sale">Save Sale</button>
                     </div>
                 </div>
             </div>
