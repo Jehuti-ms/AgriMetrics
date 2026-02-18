@@ -929,22 +929,84 @@ const SalesRecordModule = {
         this.element.innerHTML = `
            
 <style>
-/* ==================== SALE MODAL FOOTER EMERGENCY FIX ==================== */
+/* ==================== SALE MODAL FOOTER FIX ==================== */
 #sale-record-modal .popout-modal-footer {
-    justify-content: flex-end !important;
+    display: flex !important;
+    gap: 12px !important;
+    padding: 20px 24px !important;
+    background: var(--modal-footer-bg, #f8f9fa) !important;
+    border-top: 1px solid var(--modal-footer-border, #e1e5e9) !important;
 }
 
+/* Button base styles */
 #sale-record-modal .popout-modal-footer .btn {
-    flex: 0 0 auto !important; /* STOP buttons from growing */
-    flex-grow: 0 !important;
-    flex-shrink: 0 !important;
-    flex-basis: auto !important;
-    width: auto !important;
+    flex: 0 0 auto !important;
     min-width: 120px !important;
     max-width: 140px !important;
+    width: auto !important;
+    padding: 10px 20px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid transparent !important;
+    box-sizing: border-box !important;
+    line-height: 1 !important;
 }
 
-/* Mobile */
+/* Cancel button */
+#sale-record-modal .popout-modal-footer .btn-outline {
+    background-color: transparent !important;
+    color: var(--modal-footer-text, #1a1a1a) !important;
+    border-color: var(--modal-input-border, #d1d5db) !important;
+}
+
+#sale-record-modal .popout-modal-footer .btn-outline:hover {
+    background-color: var(--modal-btn-text-hover, #f3f4f6) !important;
+    border-color: var(--text-secondary, #666666) !important;
+}
+
+/* Delete button */
+#sale-record-modal .popout-modal-footer .btn-danger {
+    background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626)) !important;
+    color: white !important;
+    border: none !important;
+}
+
+#sale-record-modal .popout-modal-footer .btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Save button */
+#sale-record-modal .popout-modal-footer .btn-primary {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
+}
+
+#sale-record-modal .popout-modal-footer .btn-primary:hover {
+    background: var(--gradient-primary-hover, linear-gradient(135deg, #16a34a, #15803d)) !important;
+    box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Desktop layout */
+@media (min-width: 768px) {
+    #sale-record-modal .popout-modal-footer {
+        flex-direction: row !important;
+        justify-content: flex-end !important;
+    }
+}
+
+/* Mobile layout */
 @media (max-width: 767px) {
     #sale-record-modal .popout-modal-footer {
         flex-direction: column !important;
@@ -956,92 +1018,6 @@ const SalesRecordModule = {
         min-width: 100% !important;
         max-width: 100% !important;
     }
-}
-
-/* Desktop */
-@media (min-width: 768px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: row !important;
-    }
-}
-
-/* MOBILE: Stacked buttons */
-@media (max-width: 767px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: column !important;
-    }
-    
-    #sale-record-modal .popout-modal-footer .btn {
-        width: 100% !important;
-        margin: 0 !important;
-    }
-}
-
-/* DESKTOP: Side-by-side buttons */
-@media (min-width: 768px) {
-    #sale-record-modal .popout-modal-footer {
-        flex-direction: row !important;
-        justify-content: flex-end !important; /* Align to right */
-        flex-wrap: nowrap !important;
-    }
-    
-    /* Force all buttons to be same size on desktop */
-    #sale-record-modal .popout-modal-footer .btn {
-        min-width: 120px !important;
-        max-width: 140px !important;
-        flex: 0 0 auto !important; /* Don't grow or shrink */
-    }
-}
-
-/* BUTTON BASE STYLES (keep your existing button styles) */
-#sale-record-modal .popout-modal-footer .btn {
-    padding: 10px 20px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    border: 2px solid transparent !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    text-align: center !important;
-    height: 40px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-}
-
-/* Your existing button color styles */
-#sale-record-modal .popout-modal-footer .btn-outline {
-    background-color: var(--modal-footer-bg) !important;
-    color: var(--modal-footer-text) !important;
-    border-color: var(--modal-input-border) !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-outline:hover {
-    background-color: var(--modal-btn-text-hover) !important;
-    border-color: var(--text-secondary) !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-danger {
-    background: var(--gradient-danger) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-danger:hover {
-    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-primary {
-    background: var(--gradient-primary) !important;
-    color: white !important;
-    border: none !important;
-}
-
-#sale-record-modal .popout-modal-footer .btn-primary:hover {
-    background: var(--gradient-primary-hover) !important;
-    box-shadow: var(--shadow-primary-hover) !important;
 }
 
 .hidden {
