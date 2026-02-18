@@ -2223,9 +2223,9 @@ setQuickDefaultPrice(product) {
     }
 },
 
-   handleProductChange() {
-        console.log('🔵 handleProductChange() executing...');
-       
+  handleProductChange() {
+    console.log('🔵 handleProductChange() executing...');
+   
     const productSelect = document.getElementById('sale-product');
     if (!productSelect) return;
     
@@ -2240,20 +2240,22 @@ setQuickDefaultPrice(product) {
     
     if (isMeatProduct) {
         // Show meat section, hide standard section
-        if (meatSection) meatSection.classList.remove('hidden');
-        if (meatSummary) meatSummary.classList.remove('hidden');
-        if (standardSection) standardSection.classList.add('hidden');
-        if (standardSummary) standardSummary.classList.add('hidden');
+        if (meatSection) meatSection.style.display = 'block';
+        if (meatSummary) meatSummary.style.display = 'block';
+        if (standardSection) standardSection.style.display = 'none';
+        if (standardSummary) standardSummary.style.display = 'none';
         
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect) unitSelect.value = 'animals';
         
         const weightUnit = document.getElementById('meat-weight-unit');
+        const animalCountContainer = document.getElementById('meat-animal-count-container');
+        
         if (weightUnit) {
-            // For dressed birds, provide all three options, for others just kg/lbs
+            // Store current value before rebuilding
             const currentValue = weightUnit.value;
             
-            // Clear and rebuild options
+            // Clear and rebuild options based on product
             weightUnit.innerHTML = '';
             
             if (selectedValue === 'broilers-dressed') {
@@ -2263,51 +2265,78 @@ setQuickDefaultPrice(product) {
                     <option value="kg">kg</option>
                     <option value="lbs">lbs</option>
                 `;
+                
+                // AFTER setting options, show animal count container
+                if (animalCountContainer) {
+                    animalCountContainer.classList.remove('hidden');
+                }
+                
+                // Default to 'bird' for dressed broilers
+                weightUnit.value = 'bird';
+                
             } else {
                 // Other meat: kg, lbs only
                 weightUnit.innerHTML = `
                     <option value="kg">kg</option>
                     <option value="lbs">lbs</option>
                 `;
+                
+                // Hide animal count container for other meats with kg/lbs
+                if (animalCountContainer) {
+                    if (weightUnit.value === 'kg' || weightUnit.value === 'lbs') {
+                        animalCountContainer.classList.add('hidden');
+                    } else {
+                        animalCountContainer.classList.remove('hidden');
+                    }
+                }
+                
+                // Default to kg for other meats
+                weightUnit.value = 'kg';
             }
-            
-            // Restore previous value if valid, otherwise set default
-            const validOptions = Array.from(weightUnit.options).map(opt => opt.value);
-            if (currentValue && validOptions.includes(currentValue)) {
-                weightUnit.value = currentValue;
-            } else {
-                weightUnit.value = selectedValue === 'broilers-dressed' ? 'bird' : 'kg';
-            }
-            
-            // Show/hide animal count based on unit
-            this.updateAnimalCountVisibility();
         }
         
         // Dynamic labels for different meat products
-        const animalLabel = selectedValue === 'chicken-parts' ? 'Number of Packages' : 
-                          selectedValue === 'broilers-dressed' ? 'Number of Birds' : 
-                          selectedValue === 'pork' ? 'Number of Pigs' :
-                          selectedValue === 'beef' ? 'Number of Cattle' :
-                          selectedValue === 'goat' ? 'Number of Goats' :
-                          selectedValue === 'lamb' ? 'Number of Lambs' : 'Number of Animals';
+        let animalLabel = 'Number of Animals *';
+        if (selectedValue === 'chicken-parts') {
+            animalLabel = 'Number of Packages *';
+        } else if (selectedValue === 'broilers-dressed') {
+            animalLabel = 'Number of Birds *';
+        } else if (selectedValue === 'pork') {
+            animalLabel = 'Number of Pigs *';
+        } else if (selectedValue === 'beef') {
+            animalLabel = 'Number of Cattle *';
+        } else if (selectedValue === 'goat') {
+            animalLabel = 'Number of Goats *';
+        } else if (selectedValue === 'lamb') {
+            animalLabel = 'Number of Lambs *';
+        }
         
         const animalLabelElement = document.querySelector('label[for="meat-animal-count"]');
         if (animalLabelElement) {
-            animalLabelElement.textContent = animalLabel + ' *';
+            animalLabelElement.textContent = animalLabel;
         }
         
         this.updateMeatLabels();
+        this.updateAnimalCountVisibility();
         
         const standardQuantity = document.getElementById('standard-quantity');
         const standardPrice = document.getElementById('standard-price');
         if (standardQuantity) standardQuantity.value = '';
         if (standardPrice) standardPrice.value = '';
+        
+        // Set default price for dressed broilers
+        if (selectedValue === 'broilers-dressed') {
+            const priceInput = document.getElementById('meat-price');
+            if (priceInput && !priceInput.value) {
+                priceInput.value = 5.50; // Default price per bird
+            }
+        }
     } else {
         // Show standard section, hide meat section
-        if (meatSection) meatSection.classList.add('hidden');
-        if (meatSummary) meatSummary.classList.add('hidden');
-        if (standardSection) standardSection.classList.remove('hidden');
-        if (standardSummary) standardSummary.classList.remove('hidden');
+        if (meatSection) meatSection.style.display = 'none';
+        if (meatSummary) meatSummary.style.display = 'none';
+        if (standardSection) standardSection.style.display = 'block';
+        if (standardSummary) standardSummary.style.display = 'block';
         
         const unitSelect = document.getElementById('sale-unit');
         if (unitSelect) {
@@ -2345,23 +2374,29 @@ setQuickDefaultPrice(product) {
     
     this.calculateSaleTotal();
     this.setDefaultPrice(selectedValue);
-    this.updateAnimalCountVisibility();
 },
 
 // Add this helper method
 updateAnimalCountVisibility() {
     const weightUnit = document.getElementById('meat-weight-unit');
     const animalCountContainer = document.getElementById('meat-animal-count-container');
+    const productSelect = document.getElementById('sale-product');
     
-    if (weightUnit && animalCountContainer) {
-        if (weightUnit.value === 'bird') {
-            animalCountContainer.classList.remove('hidden');
-        } else {
-            animalCountContainer.classList.add('hidden');
-        }
+    if (!weightUnit || !animalCountContainer || !productSelect) return;
+    
+    const selectedValue = productSelect.value;
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    // Only show animal count for 'bird' unit AND meat products
+    if (weightUnit.value === 'bird' && meatProducts.includes(selectedValue)) {
+        animalCountContainer.classList.remove('hidden');
+        console.log('✅ Showing animal count for bird unit');
+    } else {
+        animalCountContainer.classList.add('hidden');
+        console.log('❌ Hiding animal count for non-bird unit');
     }
 },
-
+    
 // Update updateMeatLabels() to handle all three units properly
 updateMeatLabels() {
     const productSelect = document.getElementById('sale-product');
@@ -2521,7 +2556,7 @@ setupFormFieldListeners() {
         
         let total = 0;
         
-        if (meatProducts.includes(product)) {
+       if (meatProducts.includes(product)) {
             const animalCountInput = document.getElementById('meat-animal-count');
             const weightInput = document.getElementById('meat-weight');
             const weightUnitSelect = document.getElementById('meat-weight-unit');
