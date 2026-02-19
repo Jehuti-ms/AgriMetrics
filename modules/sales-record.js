@@ -1475,8 +1475,59 @@ const SalesRecordModule = {
         this.setupEventListeners();
     },
 
+    // NEW METHOD: Specifically attach listeners to sale rows
+attachSaleRowListeners() {
+    console.log('🔗 Attaching sale row listeners...');
+    
+    const editButtons = document.querySelectorAll('.edit-sale-btn');
+    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
+    
+    console.log(`Found ${editButtons.length} edit buttons, ${deleteButtons.length} delete buttons`);
+    
+    // Remove any existing listeners by cloning and replacing
+    editButtons.forEach(button => {
+        // Clone to remove old listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add fresh listener
+        newButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = newButton.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on edit button');
+                return;
+            }
+            console.log('✏️ Edit button clicked for sale:', saleId);
+            this.editSale(saleId);
+        });
+    });
+    
+    deleteButtons.forEach(button => {
+        // Clone to remove old listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        // Add fresh listener
+        newButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = newButton.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on delete button');
+                return;
+            }
+            console.log('🗑️ Delete button clicked for sale:', saleId);
+            
+            if (confirm('Are you sure you want to delete this sale?')) {
+                this.deleteSaleRecord(saleId);
+            }
+        });
+    });
+},
+    
     // ==================== FIXED: CSP COMPLIANT EVENT LISTENERS ====================
-
    setupEventListeners() {
     console.log('🔧 Setting up event listeners...');
     
@@ -1541,58 +1592,6 @@ const SalesRecordModule = {
     
     console.log('✅ Event listeners set up');
 }
-
-// NEW METHOD: Specifically attach listeners to sale rows
-attachSaleRowListeners() {
-    console.log('🔗 Attaching sale row listeners...');
-    
-    const editButtons = document.querySelectorAll('.edit-sale-btn');
-    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
-    
-    console.log(`Found ${editButtons.length} edit buttons, ${deleteButtons.length} delete buttons`);
-    
-    // Remove any existing listeners by cloning and replacing
-    editButtons.forEach(button => {
-        // Clone to remove old listeners
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
-        
-        // Add fresh listener
-        newButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const saleId = newButton.getAttribute('data-id');
-            if (!saleId) {
-                console.error('❌ No sale ID found on edit button');
-                return;
-            }
-            console.log('✏️ Edit button clicked for sale:', saleId);
-            this.editSale(saleId);
-        });
-    });
-    
-    deleteButtons.forEach(button => {
-        // Clone to remove old listeners
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
-        
-        // Add fresh listener
-        newButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const saleId = newButton.getAttribute('data-id');
-            if (!saleId) {
-                console.error('❌ No sale ID found on delete button');
-                return;
-            }
-            console.log('🗑️ Delete button clicked for sale:', saleId);
-            
-            if (confirm('Are you sure you want to delete this sale?')) {
-                this.deleteSaleRecord(saleId);
-            }
-        });
-    });
-},
 
 // ✅ NEW METHOD: Attach direct listeners to ALL production buttons
 attachDirectProductionButtonListeners() {
