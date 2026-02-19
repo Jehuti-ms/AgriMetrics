@@ -1143,6 +1143,9 @@ showOrderForm() {
     },
 
 editOrder(id) {
+
+     console.log('🔥🔥🔥 editOrder EXECUTING with id:', id);
+    console.log('🔥🔥🔥 Stack trace:', new Error().stack);
     console.log('📝 EDITING ORDER:', id);
     console.log('1️⃣ Step 1: Looking for order with ID:', id);
     
