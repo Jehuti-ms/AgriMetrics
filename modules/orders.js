@@ -1148,22 +1148,19 @@ showOrderForm() {
         }
     },
 
-  editOrder(id) {
+ editOrder(id) {
     console.log('✏️ Editing order:', id);
     
     // Find the order
     const order = this.orders.find(o => o.id == id);
     if (!order) {
-        if (window.coreModule) {
-            window.coreModule.showNotification('Order not found!', 'error');
-        }
+        this.showNotification('Order not found!', 'error');
         return;
     }
     
-    // Set editing ID (you need to add this hidden field to your form)
+    // Set editing ID
     let editingIdField = document.getElementById('editing-order-id');
     if (!editingIdField) {
-        // Create hidden field if it doesn't exist
         editingIdField = document.createElement('input');
         editingIdField.type = 'hidden';
         editingIdField.id = 'editing-order-id';
@@ -1182,13 +1179,11 @@ showOrderForm() {
     if (itemsContainer) {
         itemsContainer.innerHTML = '';
         
-        // Add each item from the order
         if (order.items && order.items.length > 0) {
             order.items.forEach(item => {
                 this.addOrderItem(item);
             });
         } else {
-            // Add one empty item if no items
             this.addOrderItem();
         }
     }
@@ -1204,9 +1199,7 @@ showOrderForm() {
     // Scroll to form
     document.getElementById('order-form-container').scrollIntoView({ behavior: 'smooth' });
     
-    if (window.coreModule) {
-        window.coreModule.showNotification('Edit the order details and click Update Order', 'info');
-    }
+    this.showNotification('Edit the order details and click Update Order', 'info');
 },
     
     // ✅ MODIFIED: Enhanced deleteCustomer with broadcasting
@@ -1261,6 +1254,22 @@ showOrderForm() {
         }
     },
 
+    showNotification(message, type = 'info') {
+    if (window.coreModule && window.coreModule.showNotification) {
+        window.coreModule.showNotification(message, type);
+    } else {
+        // Fallback
+        console.log(`${type.toUpperCase()}: ${message}`);
+        if (type === 'error') {
+            alert(`Error: ${message}`);
+        } else if (type === 'success') {
+            alert(`Success: ${message}`);
+        } else {
+            alert(message);
+        }
+    }
+},
+    
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
