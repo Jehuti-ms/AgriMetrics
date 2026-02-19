@@ -715,6 +715,10 @@ const OrdersModule = {
 
     // EVENT DELEGATION for order buttons
     document.addEventListener('click', (e) => {
+          console.log('🔍 Click detected on:', e.target);
+          console.log('🔍 Target classes:', e.target.className);
+          console.log('🔍 Target closest .edit-order:', e.target.closest('.edit-order'));
+        
         // Edit order button
         const editButton = e.target.closest('.edit-order');
         if (editButton) {
@@ -1140,6 +1144,9 @@ showOrderForm() {
 
  editOrder(id) {
     console.log('✏️ Editing order:', id);
+    console.log('🚀 editOrder CALLED with id:', id);
+    console.log('🚀 this.orders:', this.orders);
+    console.log('🚀 this.orders length:', this.orders?.length);
     
     // Find the order
     const order = this.orders.find(o => o.id == id);
