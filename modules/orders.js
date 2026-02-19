@@ -1142,61 +1142,121 @@ showOrderForm() {
         }
     },
 
- editOrder(id) {
-    console.log('✏️ Editing order:', id);
-    console.log('🚀 editOrder CALLED with id:', id);
-    console.log('🚀 this.orders:', this.orders);
-    console.log('🚀 this.orders length:', this.orders?.length);
+editOrder(id) {
+    console.log('📝 EDITING ORDER:', id);
+    console.log('1️⃣ Step 1: Looking for order with ID:', id);
     
     // Find the order
     const order = this.orders.find(o => o.id == id);
+    console.log('2️⃣ Step 2: Order found:', order);
+    
     if (!order) {
+        console.error('❌ Step 3: Order NOT found!');
         this.showNotification('Order not found!', 'error');
         return;
     }
     
-    // Set editing ID
+    console.log('3️⃣ Step 3: Order details:', order);
+    console.log('4️⃣ Step 4: Checking form elements...');
+    
+    // Check if editing-id field exists
     let editingIdField = document.getElementById('editing-order-id');
+    console.log('5️⃣ Step 5: editing-order-id field:', editingIdField);
+    
     if (!editingIdField) {
+        console.log('6️⃣ Step 6: Creating editing-order-id field');
         editingIdField = document.createElement('input');
         editingIdField.type = 'hidden';
         editingIdField.id = 'editing-order-id';
-        document.getElementById('order-form').appendChild(editingIdField);
-    }
-    editingIdField.value = order.id;
-    
-    // Populate form fields
-    document.getElementById('order-customer').value = order.customerId;
-    document.getElementById('order-date').value = order.date;
-    document.getElementById('order-status').value = order.status;
-    document.getElementById('order-notes').value = order.notes || '';
-    
-    // Clear existing items
-    const itemsContainer = document.getElementById('order-items');
-    if (itemsContainer) {
-        itemsContainer.innerHTML = '';
+        const orderForm = document.getElementById('order-form');
+        console.log('7️⃣ Step 7: order-form found:', orderForm);
         
-        if (order.items && order.items.length > 0) {
-            order.items.forEach(item => {
-                this.addOrderItem(item);
-            });
+        if (orderForm) {
+            orderForm.appendChild(editingIdField);
+            console.log('8️⃣ Step 8: Added hidden field to form');
         } else {
-            this.addOrderItem();
+            console.error('❌ Step 8: order-form NOT found!');
         }
     }
     
-    // Show the order form and change button text
-    document.getElementById('order-form-container').classList.remove('hidden');
-    document.getElementById('order-form-title').textContent = 'Edit Order';
-    document.getElementById('order-submit-btn').textContent = 'Update Order';
+    console.log('9️⃣ Step 9: Setting editing-id value to:', order.id);
+    editingIdField.value = order.id;
+    
+    // Populate form fields
+    console.log('🔟 Step 10: Populating customer field');
+    const customerField = document.getElementById('order-customer');
+    console.log('customer field:', customerField);
+    if (customerField) customerField.value = order.customerId;
+    
+    console.log('1️⃣1️⃣ Step 11: Populating date field');
+    const dateField = document.getElementById('order-date');
+    console.log('date field:', dateField);
+    if (dateField) dateField.value = order.date;
+    
+    console.log('1️⃣2️⃣ Step 12: Populating status field');
+    const statusField = document.getElementById('order-status');
+    console.log('status field:', statusField);
+    if (statusField) statusField.value = order.status;
+    
+    console.log('1️⃣3️⃣ Step 13: Populating notes field');
+    const notesField = document.getElementById('order-notes');
+    console.log('notes field:', notesField);
+    if (notesField) notesField.value = order.notes || '';
+    
+    // Clear existing items
+    console.log('1️⃣4️⃣ Step 14: Clearing items container');
+    const itemsContainer = document.getElementById('order-items');
+    console.log('items container:', itemsContainer);
+    
+    if (itemsContainer) {
+        itemsContainer.innerHTML = '';
+        console.log('1️⃣5️⃣ Step 15: Items container cleared');
+        
+        // Add each item from the order
+        if (order.items && order.items.length > 0) {
+            console.log('1️⃣6️⃣ Step 16: Adding', order.items.length, 'items');
+            order.items.forEach((item, index) => {
+                console.log(`1️⃣7️⃣ Step 17: Adding item ${index}:`, item);
+                this.addOrderItem(item);
+            });
+        } else {
+            console.log('1️⃣8️⃣ Step 18: No items, adding empty item');
+            this.addOrderItem();
+        }
+    } else {
+        console.error('❌ Step 15: itemsContainer NOT found!');
+    }
+    
+    // Show the order form
+    console.log('1️⃣9️⃣ Step 19: Showing order form');
+    const formContainer = document.getElementById('order-form-container');
+    console.log('form container:', formContainer);
+    if (formContainer) {
+        formContainer.classList.remove('hidden');
+    }
+    
+    console.log('2️⃣0️⃣ Step 20: Updating form title');
+    const formTitle = document.getElementById('order-form-title');
+    if (formTitle) formTitle.textContent = 'Edit Order';
+    
+    console.log('2️⃣1️⃣ Step 21: Updating submit button');
+    const submitBtn = document.getElementById('order-submit-btn');
+    if (submitBtn) submitBtn.textContent = 'Update Order';
     
     // Calculate total
+    console.log('2️⃣2️⃣ Step 22: Calculating total');
     this.calculateTotal();
     
     // Scroll to form
-    document.getElementById('order-form-container').scrollIntoView({ behavior: 'smooth' });
+    console.log('2️⃣3️⃣ Step 23: Scrolling to form');
+    if (formContainer) {
+        formContainer.scrollIntoView({ behavior: 'smooth' });
+    }
     
+    console.log('2️⃣4️⃣ Step 24: Showing notification');
     this.showNotification('Edit the order details and click Update Order', 'info');
+    
+    console.log('✅ editOrder completed');
 },
     
     // ✅ MODIFIED: Enhanced deleteCustomer with broadcasting
