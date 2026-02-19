@@ -1591,7 +1591,7 @@ attachSaleRowListeners() {
     }, 200);
     
     console.log('✅ Event listeners set up');
-}
+},
 
 // ✅ NEW METHOD: Attach direct listeners to ALL production buttons
 attachDirectProductionButtonListeners() {
