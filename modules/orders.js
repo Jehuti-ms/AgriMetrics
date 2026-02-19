@@ -1773,3 +1773,15 @@ if (window.FarmModules) {
     
 })();
 
+// At the very end of orders.js, after the module definition
+if (window.FarmModules) {
+    // Add to modules Map (already done probably)
+    window.FarmModules.modules.set('orders', OrdersModule);
+    window.FarmModules.modules.set('orders.js', OrdersModule);
+    
+    // ALSO add directly to the FarmModules object
+    window.FarmModules.orders = OrdersModule;
+    window.FarmModules.Orders = OrdersModule;
+    
+    console.log('✅ Orders module added to FarmModules object');
+}
