@@ -1683,7 +1683,29 @@ attachDirectProductionButtonListeners() {
         if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
     },
 
-    removeEventListeners() {
+   removeEventListeners() {
+    // Remove direct listeners from production buttons
+    const productionBtns = document.querySelectorAll('.production-nav-btn[data-direct-listener]');
+    productionBtns.forEach(btn => {
+        btn.removeAttribute('data-direct-listener');
+        // Clone to remove all event listeners
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+    
+    // Remove sale row button listeners by cloning
+    const editButtons = document.querySelectorAll('.edit-sale-btn');
+    editButtons.forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+    
+    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
+    deleteButtons.forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+    
     // This method clones elements to remove event listeners
     const elementIds = [
         'add-sale', 'add-sale-btn', 'from-production-btn', 'from-production-btn-2',
@@ -1700,13 +1722,6 @@ attachDirectProductionButtonListeners() {
             element.parentNode.replaceChild(newElement, element);
         }
     });
-    
-    // Also remove the quick sale form listener
-    const quickSaleForm = document.getElementById('quick-sale-form');
-    if (quickSaleForm) {
-        const newForm = quickSaleForm.cloneNode(true);
-        quickSaleForm.parentNode.replaceChild(newForm, quickSaleForm);
-    }
 },
     
     setupProductionItemsListeners() {
