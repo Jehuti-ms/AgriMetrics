@@ -40,8 +40,7 @@ const SalesRecordModule = {
          setTimeout(() => {
         this.setupEventListeners();
         this.setupBroadcasterListeners();
-        this.attachSaleRowListeners();
-         }, 100);
+        }, 100);
         
         this.initialized = true;
         
@@ -1475,76 +1474,9 @@ const SalesRecordModule = {
 
         this.setupEventListeners();
     },
-
-    // NEW METHOD: Specifically attach listeners to sale rows
-// ==================== SIMPLIFIED ATTACH SALE ROW LISTENERS ====================
-attachSaleRowListeners() {
-    console.log('🔗 Attaching sale row listeners...');
-    
-    // Get all edit buttons
-    const editButtons = document.querySelectorAll('.edit-sale-btn');
-    console.log(`Found ${editButtons.length} edit buttons`);
-    
-    // Directly attach event listeners without cloning
-    editButtons.forEach(button => {
-        // Remove any existing listeners by removing and adding the event
-        button.removeEventListener('click', this.handleEditClick);
-        
-        // Define the handler
-        const handler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const saleId = button.getAttribute('data-id');
-            if (!saleId) {
-                console.error('❌ No sale ID found on edit button');
-                return;
-            }
-            console.log('✏️ Edit button clicked for sale:', saleId);
-            this.editSale(saleId);
-        };
-        
-        // Store the handler on the button for potential removal later
-        button._editHandler = handler;
-        
-        // Add the event listener
-        button.addEventListener('click', handler);
-    });
-    
-    // Get all delete buttons
-    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
-    console.log(`Found ${deleteButtons.length} delete buttons`);
-    
-    // Directly attach event listeners without cloning
-    deleteButtons.forEach(button => {
-        // Remove any existing listeners
-        button.removeEventListener('click', this.handleDeleteClick);
-        
-        // Define the handler
-        const handler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const saleId = button.getAttribute('data-id');
-            if (!saleId) {
-                console.error('❌ No sale ID found on delete button');
-                return;
-            }
-            console.log('🗑️ Delete button clicked for sale:', saleId);
-            
-            if (confirm('Are you sure you want to delete this sale?')) {
-                this.deleteSaleRecord(saleId);
-            }
-        };
-        
-        // Store the handler on the button
-        button._deleteHandler = handler;
-        
-        // Add the event listener
-        button.addEventListener('click', handler);
-    });
-},
-    
+   
     // ==================== FIXED: CSP COMPLIANT EVENT LISTENERS ====================
-   setupEventListeners() {
+  setupEventListeners() {
     console.log('🔧 Setting up event listeners...');
     
     // Remove any existing event listeners first
@@ -1578,8 +1510,7 @@ attachSaleRowListeners() {
             const salesTable = document.getElementById('sales-table');
             if (salesTable) {
                 salesTable.innerHTML = this.renderSalesTable(e.target.value);
-                // Re-attach event listeners after table refresh
-                setTimeout(() => this.attachSaleRowListeners(), 50);
+                // No need to reattach listeners - event delegation handles it!
             }
         });
     }
@@ -1601,12 +1532,44 @@ attachSaleRowListeners() {
         }
     });
 
-    // Attach listeners to initial sale rows
-    setTimeout(() => {
-        this.attachSaleRowListeners();
-    }, 200);
+    // EVENT DELEGATION - This is the key fix!
+    // Use a single event listener on document to handle all edit/delete clicks
+    document.addEventListener('click', (e) => {
+        // Check if click is on or inside an edit button
+        const editButton = e.target.closest('.edit-sale-btn');
+        if (editButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = editButton.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on edit button');
+                return;
+            }
+            console.log('✏️ Edit button clicked for sale:', saleId);
+            this.editSale(saleId);
+            return; // Stop processing
+        }
+        
+        // Check if click is on or inside a delete button
+        const deleteButton = e.target.closest('.delete-sale-btn');
+        if (deleteButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = deleteButton.getAttribute('data-id');
+            if (!saleId) {
+                console.error('❌ No sale ID found on delete button');
+                return;
+            }
+            console.log('🗑️ Delete button clicked for sale:', saleId);
+            
+            if (confirm('Are you sure you want to delete this sale?')) {
+                this.deleteSaleRecord(saleId);
+            }
+            return; // Stop processing
+        }
+    });
     
-    console.log('✅ Event listeners set up');
+    console.log('✅ Event listeners set up with delegation');
 },
     
 // ✅ NEW METHOD: Attach direct listeners to ALL production buttons
@@ -1702,30 +1665,12 @@ attachDirectProductionButtonListeners() {
   removeEventListeners() {
     console.log('🧹 Removing event listeners...');
     
-    // Remove sale row button listeners
-    const editButtons = document.querySelectorAll('.edit-sale-btn');
-    editButtons.forEach(button => {
-        if (button._editHandler) {
-            button.removeEventListener('click', button._editHandler);
-            delete button._editHandler;
-        }
-    });
-    
-    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
-    deleteButtons.forEach(button => {
-        if (button._deleteHandler) {
-            button.removeEventListener('click', button._deleteHandler);
-            delete button._deleteHandler;
-        }
-    });
-    
     // Remove direct listeners from production buttons
-    const productionBtns = document.querySelectorAll('.production-nav-btn');
+    const productionBtns = document.querySelectorAll('.production-nav-btn[data-direct-listener]');
     productionBtns.forEach(btn => {
-        if (btn._prodHandler) {
-            btn.removeEventListener('click', btn._prodHandler);
-            delete btn._prodHandler;
-        }
+        btn.removeAttribute('data-direct-listener');
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
     });
     
     // This method clones elements to remove event listeners for form elements
@@ -1744,6 +1689,9 @@ attachDirectProductionButtonListeners() {
             element.parentNode.replaceChild(newElement, element);
         }
     });
+    
+    // Note: We don't need to remove the document-level event listeners
+    // because they persist and that's the point of event delegation
 },
     
     setupProductionItemsListeners() {
@@ -3151,7 +3099,6 @@ setupFormFieldListeners() {
 
         this.saveData();
         this.renderModule();
-        setTimeout(() => this.attachSaleRowListeners(), 50);
         this.hideSaleModal();
         this.pendingProductionSale = null;
     },
@@ -3219,8 +3166,7 @@ setupFormFieldListeners() {
     
     // Update the display
     this.renderModule();
-    setTimeout(() => this.attachSaleRowListeners(), 50);
-    
+       
     // Hide modal if open
     this.hideSaleModal();
     
@@ -3340,7 +3286,6 @@ setupFormFieldListeners() {
         this.broadcastSaleRecorded(saleData);
         
         this.renderModule();
-        setTimeout(() => this.attachSaleRowListeners(), 50);
         return saleData.id;
     },
 
