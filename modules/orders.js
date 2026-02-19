@@ -998,7 +998,7 @@ handleOrderSubmit(e) {
     });
     
     if (items.length === 0) {
-        alert('Please add at least one item to the order.');
+        this.showNotification('Please add at least one item to the order.', 'error');
         return;
     }
     
@@ -1028,17 +1028,11 @@ handleOrderSubmit(e) {
                 this.broadcastOrderUpdated(oldOrder, orderData);
             }
             
-            if (window.coreModule) {
-                window.coreModule.showNotification(`Order #${orderData.id} updated successfully!`, 'success');
-            }
+            this.showNotification(`Order #${orderData.id} updated successfully!`, 'success');
         } else {
             // Order not found - shouldn't happen, but just in case
             console.error('❌ Order not found for editing:', editingId);
-            if (window.coreModule) {
-                window.coreModule.showNotification('Order not found!', 'error');
-            } else {
-                alert('Error: Order not found!');
-            }
+            this.showNotification('Order not found!', 'error');
             return;
         }
     } else {
@@ -1061,11 +1055,7 @@ handleOrderSubmit(e) {
             this.broadcastOrderCreated(orderData);
         }
         
-        if (window.coreModule) {
-            window.coreModule.showNotification(`Order #${orderData.id} created successfully!`, 'success');
-        } else {
-            alert('Order created successfully!');
-        }
+        this.showNotification(`Order #${orderData.id} created successfully!`, 'success');
     }
     
     // Reset form and hide
@@ -1075,7 +1065,7 @@ handleOrderSubmit(e) {
     // Re-render module
     this.renderModule();
 },
-
+    
     // Reset order form
 resetOrderForm() {
     document.getElementById('order-form').reset();
