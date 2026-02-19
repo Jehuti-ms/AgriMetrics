@@ -1662,38 +1662,7 @@ attachDirectProductionButtonListeners() {
         if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
     },
 
-  removeEventListeners() {
-    console.log('🧹 Removing event listeners...');
-    
-    // Remove direct listeners from production buttons
-    const productionBtns = document.querySelectorAll('.production-nav-btn[data-direct-listener]');
-    productionBtns.forEach(btn => {
-        btn.removeAttribute('data-direct-listener');
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-    });
-    
-    // This method clones elements to remove event listeners for form elements
-    const elementIds = [
-        'add-sale', 'add-sale-btn', 'from-production-btn', 'from-production-btn-2',
-        'meat-sales-btn', 'daily-report-btn', 'save-sale', 'delete-sale',
-        'cancel-sale', 'close-sale-modal', 'close-daily-report', 'close-daily-report-btn',
-        'print-daily-report', 'close-meat-sales', 'close-meat-sales-btn', 'print-meat-sales',
-        'close-production-items', 'close-production-items-btn', 'quick-product', 'period-filter'
-    ];
-    
-    elementIds.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            const newElement = element.cloneNode(true);
-            element.parentNode.replaceChild(newElement, element);
-        }
-    });
-    
-    // Note: We don't need to remove the document-level event listeners
-    // because they persist and that's the point of event delegation
-},
-    
+     
     setupProductionItemsListeners() {
         // This is called after showing production items modal to set up listeners for dynamic content
         const productionNavBtns = document.querySelectorAll('.production-nav-btn');
