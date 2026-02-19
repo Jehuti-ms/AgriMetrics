@@ -40,6 +40,7 @@ const SalesRecordModule = {
          setTimeout(() => {
         this.setupEventListeners();
         this.setupBroadcasterListeners();
+        this.attachSaleRowListeners();
          }, 100);
         
         this.initialized = true;
@@ -1476,44 +1477,53 @@ const SalesRecordModule = {
     },
 
     // NEW METHOD: Specifically attach listeners to sale rows
+// ==================== SIMPLIFIED ATTACH SALE ROW LISTENERS ====================
 attachSaleRowListeners() {
     console.log('🔗 Attaching sale row listeners...');
     
+    // Get all edit buttons
     const editButtons = document.querySelectorAll('.edit-sale-btn');
-    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
+    console.log(`Found ${editButtons.length} edit buttons`);
     
-    console.log(`Found ${editButtons.length} edit buttons, ${deleteButtons.length} delete buttons`);
-    
-    // Remove any existing listeners by cloning and replacing
+    // Directly attach event listeners without cloning
     editButtons.forEach(button => {
-        // Clone to remove old listeners
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
+        // Remove any existing listeners by removing and adding the event
+        button.removeEventListener('click', this.handleEditClick);
         
-        // Add fresh listener
-        newButton.addEventListener('click', (e) => {
+        // Define the handler
+        const handler = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const saleId = newButton.getAttribute('data-id');
+            const saleId = button.getAttribute('data-id');
             if (!saleId) {
                 console.error('❌ No sale ID found on edit button');
                 return;
             }
             console.log('✏️ Edit button clicked for sale:', saleId);
             this.editSale(saleId);
-        });
+        };
+        
+        // Store the handler on the button for potential removal later
+        button._editHandler = handler;
+        
+        // Add the event listener
+        button.addEventListener('click', handler);
     });
     
+    // Get all delete buttons
+    const deleteButtons = document.querySelectorAll('.delete-sale-btn');
+    console.log(`Found ${deleteButtons.length} delete buttons`);
+    
+    // Directly attach event listeners without cloning
     deleteButtons.forEach(button => {
-        // Clone to remove old listeners
-        const newButton = button.cloneNode(true);
-        button.parentNode.replaceChild(newButton, button);
+        // Remove any existing listeners
+        button.removeEventListener('click', this.handleDeleteClick);
         
-        // Add fresh listener
-        newButton.addEventListener('click', (e) => {
+        // Define the handler
+        const handler = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const saleId = newButton.getAttribute('data-id');
+            const saleId = button.getAttribute('data-id');
             if (!saleId) {
                 console.error('❌ No sale ID found on delete button');
                 return;
@@ -1523,7 +1533,13 @@ attachSaleRowListeners() {
             if (confirm('Are you sure you want to delete this sale?')) {
                 this.deleteSaleRecord(saleId);
             }
-        });
+        };
+        
+        // Store the handler on the button
+        button._deleteHandler = handler;
+        
+        // Add the event listener
+        button.addEventListener('click', handler);
     });
 },
     
@@ -1563,7 +1579,7 @@ attachSaleRowListeners() {
             if (salesTable) {
                 salesTable.innerHTML = this.renderSalesTable(e.target.value);
                 // Re-attach event listeners after table refresh
-                this.attachSaleRowListeners();
+                setTimeout(() => this.attachSaleRowListeners(), 50);
             }
         });
     }
@@ -1592,7 +1608,7 @@ attachSaleRowListeners() {
     
     console.log('✅ Event listeners set up');
 },
-
+    
 // ✅ NEW METHOD: Attach direct listeners to ALL production buttons
 attachDirectProductionButtonListeners() {
     const productionBtns = document.querySelectorAll('.production-nav-btn');
@@ -1683,30 +1699,36 @@ attachDirectProductionButtonListeners() {
         if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
     },
 
-   removeEventListeners() {
-    // Remove direct listeners from production buttons
-    const productionBtns = document.querySelectorAll('.production-nav-btn[data-direct-listener]');
-    productionBtns.forEach(btn => {
-        btn.removeAttribute('data-direct-listener');
-        // Clone to remove all event listeners
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-    });
+  removeEventListeners() {
+    console.log('🧹 Removing event listeners...');
     
-    // Remove sale row button listeners by cloning
+    // Remove sale row button listeners
     const editButtons = document.querySelectorAll('.edit-sale-btn');
-    editButtons.forEach(btn => {
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
+    editButtons.forEach(button => {
+        if (button._editHandler) {
+            button.removeEventListener('click', button._editHandler);
+            delete button._editHandler;
+        }
     });
     
     const deleteButtons = document.querySelectorAll('.delete-sale-btn');
-    deleteButtons.forEach(btn => {
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
+    deleteButtons.forEach(button => {
+        if (button._deleteHandler) {
+            button.removeEventListener('click', button._deleteHandler);
+            delete button._deleteHandler;
+        }
     });
     
-    // This method clones elements to remove event listeners
+    // Remove direct listeners from production buttons
+    const productionBtns = document.querySelectorAll('.production-nav-btn');
+    productionBtns.forEach(btn => {
+        if (btn._prodHandler) {
+            btn.removeEventListener('click', btn._prodHandler);
+            delete btn._prodHandler;
+        }
+    });
+    
+    // This method clones elements to remove event listeners for form elements
     const elementIds = [
         'add-sale', 'add-sale-btn', 'from-production-btn', 'from-production-btn-2',
         'meat-sales-btn', 'daily-report-btn', 'save-sale', 'delete-sale',
@@ -3129,6 +3151,7 @@ setupFormFieldListeners() {
 
         this.saveData();
         this.renderModule();
+        setTimeout(() => this.attachSaleRowListeners(), 50);
         this.hideSaleModal();
         this.pendingProductionSale = null;
     },
@@ -3196,6 +3219,7 @@ setupFormFieldListeners() {
     
     // Update the display
     this.renderModule();
+    setTimeout(() => this.attachSaleRowListeners(), 50);
     
     // Hide modal if open
     this.hideSaleModal();
@@ -3316,6 +3340,7 @@ setupFormFieldListeners() {
         this.broadcastSaleRecorded(saleData);
         
         this.renderModule();
+        setTimeout(() => this.attachSaleRowListeners(), 50);
         return saleData.id;
     },
 
