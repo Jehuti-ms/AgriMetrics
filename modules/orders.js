@@ -1143,123 +1143,184 @@ showOrderForm() {
     },
 
 editOrder(id) {
-
-     console.log('🔥🔥🔥 editOrder EXECUTING with id:', id);
-    console.log('🔥🔥🔥 Stack trace:', new Error().stack);
-    console.log('📝 EDITING ORDER:', id);
-    console.log('1️⃣ Step 1: Looking for order with ID:', id);
+    console.log('🔥🔥🔥 editOrder EXECUTING with id:', id);
     
-    // Find the order
-    const order = this.orders.find(o => o.id == id);
-    console.log('2️⃣ Step 2: Order found:', order);
-    
-    if (!order) {
-        console.error('❌ Step 3: Order NOT found!');
-        this.showNotification('Order not found!', 'error');
-        return;
-    }
-    
-    console.log('3️⃣ Step 3: Order details:', order);
-    console.log('4️⃣ Step 4: Checking form elements...');
-    
-    // Check if editing-id field exists
-    let editingIdField = document.getElementById('editing-order-id');
-    console.log('5️⃣ Step 5: editing-order-id field:', editingIdField);
-    
-    if (!editingIdField) {
-        console.log('6️⃣ Step 6: Creating editing-order-id field');
-        editingIdField = document.createElement('input');
-        editingIdField.type = 'hidden';
-        editingIdField.id = 'editing-order-id';
+    try {
+        console.log('1️⃣ Step 1: Orders array exists:', !!this.orders);
+        console.log('1️⃣ Step 1a: Orders length:', this.orders?.length);
+        console.log('1️⃣ Step 1b: Orders content:', this.orders);
+        
+        // Find the order
+        console.log('2️⃣ Step 2: Looking for order with id:', id);
+        const order = this.orders.find(o => o.id == id);
+        console.log('2️⃣ Step 2a: Order found:', order);
+        
+        if (!order) {
+            console.error('❌ Order not found!');
+            this.showNotification('Order not found!', 'error');
+            return;
+        }
+        
+        console.log('3️⃣ Step 3: Order details:', JSON.stringify(order));
+        
+        // Check if form container exists
+        console.log('4️⃣ Step 4: Looking for order-form-container');
+        const formContainer = document.getElementById('order-form-container');
+        console.log('4️⃣ Step 4a: formContainer:', formContainer);
+        
+        if (!formContainer) {
+            console.error('❌ order-form-container not found!');
+            this.showNotification('Form container not found!', 'error');
+            return;
+        }
+        
+        // Check if order form exists
+        console.log('5️⃣ Step 5: Looking for order-form');
         const orderForm = document.getElementById('order-form');
-        console.log('7️⃣ Step 7: order-form found:', orderForm);
+        console.log('5️⃣ Step 5a: orderForm:', orderForm);
         
-        if (orderForm) {
+        if (!orderForm) {
+            console.error('❌ order-form not found!');
+            this.showNotification('Order form not found!', 'error');
+            return;
+        }
+        
+        // Set editing ID
+        console.log('6️⃣ Step 6: Looking for editing-order-id field');
+        let editingIdField = document.getElementById('editing-order-id');
+        console.log('6️⃣ Step 6a: editingIdField:', editingIdField);
+        
+        if (!editingIdField) {
+            console.log('6️⃣ Step 6b: Creating editing-id field');
+            editingIdField = document.createElement('input');
+            editingIdField.type = 'hidden';
+            editingIdField.id = 'editing-order-id';
             orderForm.appendChild(editingIdField);
-            console.log('8️⃣ Step 8: Added hidden field to form');
-        } else {
-            console.error('❌ Step 8: order-form NOT found!');
+            console.log('6️⃣ Step 6c: Created and appended editing-id field');
         }
-    }
-    
-    console.log('9️⃣ Step 9: Setting editing-id value to:', order.id);
-    editingIdField.value = order.id;
-    
-    // Populate form fields
-    console.log('🔟 Step 10: Populating customer field');
-    const customerField = document.getElementById('order-customer');
-    console.log('customer field:', customerField);
-    if (customerField) customerField.value = order.customerId;
-    
-    console.log('1️⃣1️⃣ Step 11: Populating date field');
-    const dateField = document.getElementById('order-date');
-    console.log('date field:', dateField);
-    if (dateField) dateField.value = order.date;
-    
-    console.log('1️⃣2️⃣ Step 12: Populating status field');
-    const statusField = document.getElementById('order-status');
-    console.log('status field:', statusField);
-    if (statusField) statusField.value = order.status;
-    
-    console.log('1️⃣3️⃣ Step 13: Populating notes field');
-    const notesField = document.getElementById('order-notes');
-    console.log('notes field:', notesField);
-    if (notesField) notesField.value = order.notes || '';
-    
-    // Clear existing items
-    console.log('1️⃣4️⃣ Step 14: Clearing items container');
-    const itemsContainer = document.getElementById('order-items');
-    console.log('items container:', itemsContainer);
-    
-    if (itemsContainer) {
-        itemsContainer.innerHTML = '';
-        console.log('1️⃣5️⃣ Step 15: Items container cleared');
         
-        // Add each item from the order
-        if (order.items && order.items.length > 0) {
-            console.log('1️⃣6️⃣ Step 16: Adding', order.items.length, 'items');
-            order.items.forEach((item, index) => {
-                console.log(`1️⃣7️⃣ Step 17: Adding item ${index}:`, item);
-                this.addOrderItem(item);
-            });
+        editingIdField.value = order.id;
+        console.log('7️⃣ Step 7: Set editing-id to:', order.id);
+        
+        // Populate form fields
+        console.log('8️⃣ Step 8: Looking for order-customer');
+        const customerField = document.getElementById('order-customer');
+        console.log('8️⃣ Step 8a: customerField:', customerField);
+        if (customerField) {
+            customerField.value = order.customerId;
+            console.log('8️⃣ Step 8b: Set customer to:', order.customerId);
         } else {
-            console.log('1️⃣8️⃣ Step 18: No items, adding empty item');
-            this.addOrderItem();
+            console.error('❌ order-customer field not found!');
         }
-    } else {
-        console.error('❌ Step 15: itemsContainer NOT found!');
-    }
-    
-    // Show the order form
-    console.log('1️⃣9️⃣ Step 19: Showing order form');
-    const formContainer = document.getElementById('order-form-container');
-    console.log('form container:', formContainer);
-    if (formContainer) {
+        
+        console.log('9️⃣ Step 9: Looking for order-date');
+        const dateField = document.getElementById('order-date');
+        console.log('9️⃣ Step 9a: dateField:', dateField);
+        if (dateField) {
+            dateField.value = order.date;
+            console.log('9️⃣ Step 9b: Set date to:', order.date);
+        } else {
+            console.error('❌ order-date field not found!');
+        }
+        
+        console.log('🔟 Step 10: Looking for order-status');
+        const statusField = document.getElementById('order-status');
+        console.log('🔟 Step 10a: statusField:', statusField);
+        if (statusField) {
+            statusField.value = order.status;
+            console.log('🔟 Step 10b: Set status to:', order.status);
+        } else {
+            console.error('❌ order-status field not found!');
+        }
+        
+        console.log('1️⃣1️⃣ Step 11: Looking for order-notes');
+        const notesField = document.getElementById('order-notes');
+        console.log('1️⃣1️⃣ Step 11a: notesField:', notesField);
+        if (notesField) {
+            notesField.value = order.notes || '';
+            console.log('1️⃣1️⃣ Step 11b: Set notes to:', order.notes);
+        } else {
+            console.error('❌ order-notes field not found!');
+        }
+        
+        // Clear existing items
+        console.log('1️⃣2️⃣ Step 12: Looking for order-items container');
+        const itemsContainer = document.getElementById('order-items');
+        console.log('1️⃣2️⃣ Step 12a: itemsContainer:', itemsContainer);
+        
+        if (itemsContainer) {
+            itemsContainer.innerHTML = '';
+            console.log('1️⃣2️⃣ Step 12b: Items container cleared');
+            
+            if (order.items && order.items.length > 0) {
+                console.log('1️⃣3️⃣ Step 13: Adding', order.items.length, 'items');
+                order.items.forEach((item, index) => {
+                    console.log(`1️⃣3️⃣ Step 13a: Adding item ${index + 1}:`, item);
+                    if (typeof this.addOrderItem === 'function') {
+                        this.addOrderItem(item);
+                    } else {
+                        console.error('❌ addOrderItem method not found!');
+                    }
+                });
+            } else {
+                console.log('1️⃣4️⃣ Step 14: No items, adding empty item');
+                if (typeof this.addOrderItem === 'function') {
+                    this.addOrderItem();
+                } else {
+                    console.error('❌ addOrderItem method not found!');
+                }
+            }
+        } else {
+            console.error('❌ order-items container not found!');
+        }
+        
+        // Show form
+        console.log('1️⃣5️⃣ Step 15: Showing form container');
         formContainer.classList.remove('hidden');
-    }
-    
-    console.log('2️⃣0️⃣ Step 20: Updating form title');
-    const formTitle = document.getElementById('order-form-title');
-    if (formTitle) formTitle.textContent = 'Edit Order';
-    
-    console.log('2️⃣1️⃣ Step 21: Updating submit button');
-    const submitBtn = document.getElementById('order-submit-btn');
-    if (submitBtn) submitBtn.textContent = 'Update Order';
-    
-    // Calculate total
-    console.log('2️⃣2️⃣ Step 22: Calculating total');
-    this.calculateTotal();
-    
-    // Scroll to form
-    console.log('2️⃣3️⃣ Step 23: Scrolling to form');
-    if (formContainer) {
+        
+        console.log('1️⃣6️⃣ Step 16: Looking for order-form-title');
+        const formTitle = document.getElementById('order-form-title');
+        console.log('1️⃣6️⃣ Step 16a: formTitle:', formTitle);
+        if (formTitle) {
+            formTitle.textContent = 'Edit Order';
+            console.log('1️⃣6️⃣ Step 16b: Form title updated to "Edit Order"');
+        } else {
+            console.error('❌ order-form-title not found!');
+        }
+        
+        console.log('1️⃣7️⃣ Step 17: Looking for order-submit-btn');
+        const submitBtn = document.getElementById('order-submit-btn');
+        console.log('1️⃣7️⃣ Step 17a: submitBtn:', submitBtn);
+        if (submitBtn) {
+            submitBtn.textContent = 'Update Order';
+            console.log('1️⃣7️⃣ Step 17b: Submit button updated to "Update Order"');
+        } else {
+            console.error('❌ order-submit-btn not found!');
+        }
+        
+        // Calculate total
+        console.log('1️⃣8️⃣ Step 18: Calculating total');
+        if (typeof this.calculateTotal === 'function') {
+            this.calculateTotal();
+            console.log('1️⃣8️⃣ Step 18a: Total calculated');
+        } else {
+            console.warn('⚠️ calculateTotal method not found');
+        }
+        
+        // Scroll to form
+        console.log('1️⃣9️⃣ Step 19: Scrolling to form');
         formContainer.scrollIntoView({ behavior: 'smooth' });
+        
+        console.log('2️⃣0️⃣ Step 20: Showing notification');
+        this.showNotification('Edit the order details and click Update Order', 'info');
+        
+        console.log('✅ editOrder completed successfully');
+        
+    } catch (error) {
+        console.error('❌❌❌ ERROR in editOrder:', error);
+        console.error('❌❌❌ Stack trace:', error.stack);
+        this.showNotification('Error editing order: ' + error.message, 'error');
     }
-    
-    console.log('2️⃣4️⃣ Step 24: Showing notification');
-    this.showNotification('Edit the order details and click Update Order', 'info');
-    
-    console.log('✅ editOrder completed');
 },
     
     // ✅ MODIFIED: Enhanced deleteCustomer with broadcasting
