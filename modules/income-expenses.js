@@ -1935,21 +1935,49 @@ formatDate(dateString) {
   async saveTransaction() {
     console.log('Saving transaction...');
     
+    // Improved Firebase auth check
     let userId = 'anonymous';
-    if (window.firebase && window.firebase.auth() && window.firebase.auth().currentUser) {
-        userId = window.firebase.auth().currentUser.uid;
+    try {
+        if (window.firebase && window.firebase.auth) {
+            const auth = window.firebase.auth();
+            if (auth && auth.currentUser) {
+                userId = auth.currentUser.uid;
+                console.log('✅ User ID:', userId);
+            }
+        }
+    } catch (authError) {
+        console.warn('⚠️ Error getting user:', authError);
     }
     
-    const id = document.getElementById('transaction-id')?.value || Date.now();
-    const date = document.getElementById('transaction-date')?.value;
-    const type = document.getElementById('transaction-type')?.value;
-    const category = document.getElementById('transaction-category')?.value;
-    const amount = parseFloat(document.getElementById('transaction-amount')?.value || 0);
-    const description = document.getElementById('transaction-description')?.value || '';
-    const paymentMethod = document.getElementById('transaction-payment')?.value || 'cash';
-    const reference = document.getElementById('transaction-reference')?.value || '';
-    const notes = document.getElementById('transaction-notes')?.value || '';
+    // Get form values with validation
+    const idInput = document.getElementById('transaction-id');
+    const dateInput = document.getElementById('transaction-date');
+    const typeInput = document.getElementById('transaction-type');
+    const categoryInput = document.getElementById('transaction-category');
+    const amountInput = document.getElementById('transaction-amount');
+    const descriptionInput = document.getElementById('transaction-description');
+    const paymentInput = document.getElementById('transaction-payment');
+    const referenceInput = document.getElementById('transaction-reference');
+    const notesInput = document.getElementById('transaction-notes');
     
+    // Check if elements exist
+    if (!dateInput || !typeInput || !categoryInput || !amountInput || !descriptionInput) {
+        console.error('❌ Required form elements not found');
+        this.showNotification('Form elements not found', 'error');
+        return;
+    }
+    
+    const id = idInput?.value || Date.now();
+    const date = dateInput.value;
+    const type = typeInput.value;
+    const category = categoryInput.value;
+    const amount = parseFloat(amountInput.value) || 0;
+    const description = descriptionInput.value.trim();
+    const paymentMethod = paymentInput?.value || 'cash';
+    const reference = referenceInput?.value || '';
+    const notes = notesInput?.value || '';
+    
+    // Validate required fields
     if (!date || !type || !category || !amount || !description) {
         this.showNotification('Please fill in all required fields', 'error');
         return;
@@ -1960,21 +1988,25 @@ formatDate(dateString) {
         return;
     }
     
+    // Prepare receipt data if exists
     let receiptData = null;
-    if (this.receiptPreview) {
+    if (this.receiptPreview && this.receiptPreview.downloadURL) {
         receiptData = {
-            id: this.receiptPreview.id,
-            name: this.receiptPreview.name,
+            id: this.receiptPreview.id || `receipt_${Date.now()}`,
+            name: this.receiptPreview.name || 'receipt.jpg',
             downloadURL: this.receiptPreview.downloadURL,
-            size: this.receiptPreview.size,
-            type: this.receiptPreview.type,
-            uploadedAt: this.receiptPreview.uploadedAt,
+            size: this.receiptPreview.size || 0,
+            type: this.receiptPreview.type || 'image/jpeg',
+            uploadedAt: this.receiptPreview.uploadedAt || new Date().toISOString(),
             status: 'attached'
         };
     }
     
+    // Ensure ID is a number
+    const transactionId = typeof id === 'string' ? parseInt(id) || Date.now() : id;
+    
     const transactionData = {
-        id: parseInt(id),
+        id: transactionId,
         date,
         type,
         category,
@@ -1989,59 +2021,72 @@ formatDate(dateString) {
         updatedAt: new Date().toISOString()
     };
     
-    const existingIndex = this.transactions.findIndex(t => t.id == id);
+    // Check if transaction exists
+    const existingIndex = this.transactions ? this.transactions.findIndex(t => t.id == transactionId) : -1;
     
     try {
         if (existingIndex > -1) {
             // Update existing transaction
             this.transactions[existingIndex] = transactionData;
-            
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-            
-            if (this.isFirebaseAvailable && window.db) {
-                try {
-                    await window.db.collection('transactions')
-                        .doc(id.toString())
-                        .set(transactionData, { merge: true });
-                    console.log('✅ Transaction updated in Firebase:', id);
-                } catch (firebaseError) {
-                    console.warn('⚠️ Failed to update in Firebase:', firebaseError.message);
-                    this.showNotification('Saved locally (Firebase error)', 'warning');
-                }
-            }
-            
-            this.showNotification('Transaction updated successfully!', 'success');
-            
+            console.log('📝 Updated existing transaction:', transactionId);
         } else {
             // Add new transaction
-            transactionData.id = Date.now();
-            this.transactions.unshift(transactionData);
-            
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-            
-            if (this.isFirebaseAvailable && window.db) {
-                try {
-                    await window.db.collection('transactions')
-                        .doc(transactionData.id.toString())
-                        .set(transactionData);
-                    console.log('✅ Transaction saved to Firebase:', transactionData.id);
-                } catch (firebaseError) {
-                    console.warn('⚠️ Failed to save to Firebase:', firebaseError.message);
-                    this.showNotification('Saved locally (Firebase error)', 'warning');
-                }
+            if (!idInput?.value) {
+                transactionData.id = Date.now(); // Generate new ID for new transactions
             }
-            
-            this.showNotification('Transaction saved successfully!', 'success');
+            if (!this.transactions) this.transactions = [];
+            this.transactions.unshift(transactionData);
+            console.log('➕ Added new transaction:', transactionData.id);
         }
         
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
+        // Save to localStorage
+        try {
+            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+            console.log('💾 Saved to localStorage');
+        } catch (storageError) {
+            console.warn('⚠️ Failed to save to localStorage:', storageError);
+        }
         
-        this.hideTransactionModal();
+        // Save to Firebase if available
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                const docRef = window.db.collection('transactions')
+                    .doc(transactionData.id.toString());
+                
+                await docRef.set(transactionData, { merge: true });
+                console.log('✅ Transaction saved to Firebase:', transactionData.id);
+                
+                // Verify the save
+                const savedDoc = await docRef.get();
+                if (savedDoc.exists) {
+                    console.log('✅ Firebase save verified');
+                }
+                
+                this.showNotification('Transaction saved successfully!', 'success');
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase error:', firebaseError.message);
+                this.showNotification('Saved locally (Firebase error: ' + firebaseError.message + ')', 'warning');
+            }
+        } else {
+            console.log('💾 Firebase not available, saved locally only');
+            this.showNotification('Transaction saved locally!', 'success');
+        }
+        
+        // Update UI
+        if (typeof this.updateStats === 'function') this.updateStats();
+        if (typeof this.updateTransactionsList === 'function') this.updateTransactionsList();
+        if (typeof this.updateCategoryBreakdown === 'function') this.updateCategoryBreakdown();
+        
+        // Close modal
+        if (typeof this.hideTransactionModal === 'function') {
+            this.hideTransactionModal();
+        }
+        
+        // Clear form if needed
+        this.clearTransactionForm?.();
         
     } catch (error) {
-        console.error('Error saving transaction:', error);
+        console.error('❌ Error saving transaction:', error);
         this.showNotification('Error saving transaction: ' + error.message, 'error');
     }
 },
