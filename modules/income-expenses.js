@@ -1326,6 +1326,75 @@ const IncomeExpensesModule = {
         }
     },
 
+    // ===================== Delete Functionality =================
+    // Add this method to your Income & Expenses module
+editTransaction(transactionId) {
+    console.log('✏️ Editing transaction:', transactionId);
+    
+    // Find the transaction
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction) {
+        this.showNotification('Transaction not found', 'error');
+        return;
+    }
+    
+    // Set current editing ID
+    this.currentEditingId = transactionId;
+    
+    // Show the transaction modal
+    this.showTransactionModal(transactionId);
+    
+    // Fill the form with transaction data
+    setTimeout(() => {
+        // Basic fields
+        const idInput = document.getElementById('transaction-id');
+        if (idInput) idInput.value = transaction.id;
+        
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = this.formatDateForInput(transaction.date);
+        
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = transaction.type;
+        
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = transaction.category;
+        
+        const amountInput = document.getElementById('transaction-amount');
+        if (amountInput) amountInput.value = transaction.amount;
+        
+        const descriptionInput = document.getElementById('transaction-description');
+        if (descriptionInput) descriptionInput.value = transaction.description || '';
+        
+        const paymentSelect = document.getElementById('transaction-payment');
+        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+        
+        const referenceInput = document.getElementById('transaction-reference');
+        if (referenceInput) referenceInput.value = transaction.reference || '';
+        
+        const notesInput = document.getElementById('transaction-notes');
+        if (notesInput) notesInput.value = transaction.notes || '';
+        
+        // Show delete button
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'block';
+        
+        // Update modal title
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Edit Transaction';
+        
+        // Handle receipt if exists
+        if (transaction.receipt) {
+            this.receiptPreview = transaction.receipt;
+            this.showReceiptPreviewInTransactionModal(transaction.receipt);
+        } else {
+            this.receiptPreview = null;
+            this.clearReceiptPreview();
+        }
+    }, 100);
+},
+
+    
+
     // ==================== MODAL MANAGEMENT ====================
     showImportReceiptsModal() {
         console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
@@ -1375,29 +1444,33 @@ const IncomeExpensesModule = {
         }
     },
 
-    showTransactionModal(transactionId = null) {
-        this.hideAllModals();
-        const modal = document.getElementById('transaction-modal');
-        if (modal) modal.classList.remove('hidden');
-        this.currentEditingId = transactionId;
+showTransactionModal(transactionId = null) {
+    this.hideAllModals();
+    const modal = document.getElementById('transaction-modal');
+    if (modal) modal.classList.remove('hidden');
+    this.currentEditingId = transactionId;
+    
+    const form = document.getElementById('transaction-form');
+    if (form) {
+        form.reset();
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
         
-        const form = document.getElementById('transaction-form');
-        if (form) {
-            form.reset();
-            const dateInput = document.getElementById('transaction-date');
-            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-            const deleteBtn = document.getElementById('delete-transaction');
-            if (deleteBtn) deleteBtn.style.display = 'none';
-            const title = document.getElementById('transaction-modal-title');
-            if (title) title.textContent = 'Add Transaction';
-            this.clearReceiptPreview();
-            
-            if (transactionId) {
-                setTimeout(() => this.editTransaction(transactionId), 50);
-            }
+        // Hide delete button for new transactions
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        
+        // Show delete button for editing
+        if (transactionId) {
+            if (deleteBtn) deleteBtn.style.display = 'block';
         }
-    },
-
+        
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = transactionId ? 'Edit Transaction' : 'Add Transaction';
+        this.clearReceiptPreview();
+    }
+},
+    
     hideTransactionModal() {
         const modal = document.getElementById('transaction-modal');
         if (modal) modal.classList.add('hidden');
@@ -1767,6 +1840,42 @@ const IncomeExpensesModule = {
         }
     },
 
+    // ============== Date Helper ===================
+    formatDateForInput(dateString) {
+    if (!dateString) return new Date().toISOString().split('T')[0];
+    
+    // If it's already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+    }
+    
+    // Try to parse the date
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        return new Date().toISOString().split('T')[0];
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+formatDate(dateString) {
+    if (!dateString) return 'Unknown date';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        return dateString;
+    }
+    
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+},
+
     // ==================== TRANSACTION METHODS ====================
     editTransaction(transactionId) {
         console.log('Editing transaction:', transactionId);
@@ -1883,8 +1992,17 @@ const IncomeExpensesModule = {
         const existingIndex = this.transactions.findIndex(t => t.id == id);
         
         try {
-            if (existingIndex > -1) {
-                this.transactions[existingIndex] = transactionData;
+            // In saveTransaction() - update this part:
+                if (existingIndex > -1) {
+                    // Update existing transaction
+                    this.transactions[existingIndex] = transactionData;
+                    this.showNotification('Transaction updated successfully!', 'success');
+                } else {
+                    // Add new transaction
+                    transactionData.id = transactionData.id || Date.now();
+                    this.transactions.unshift(transactionData);
+                    this.showNotification('Transaction saved successfully!', 'success');
+                }
                 
                 localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
                 
@@ -3397,60 +3515,60 @@ const IncomeExpensesModule = {
     },
 
     renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
-                </div>
-            `;
-        }
-
+    if (transactions.length === 0) {
         return `
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const amountClass = isIncome ? 'amount-income' : 'amount-expense';
-                    const icon = isIncome ? '💰' : '💸';
-                    
-                    return `
-                        <div class="transaction-item" data-id="${transaction.id}" 
-                             style="display: flex; justify-content: space-between; align-items: center; 
-                                    padding: 16px; background: var(--glass-bg); border-radius: 8px; 
-                                    border: 1px solid var(--glass-border); cursor: pointer;"
-                             onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 24px;">${icon}</span>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
-                                        ${transaction.description || 'No description'}
-                                    </div>
-                                    <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
-                                        <span>${transaction.date || 'No date'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.category || 'Uncategorized'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.paymentMethod || 'Cash'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="${amountClass}" style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
-                                    ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                </div>
-                                ${transaction.reference ? `
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-                                        Ref: ${transaction.reference}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
             </div>
         `;
-    },
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${transactions.map(transaction => {
+                const isIncome = transaction.type === 'income';
+                const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+                const icon = isIncome ? '💰' : '💸';
+                
+                return `
+                    <div class="transaction-item" data-id="${transaction.id}" 
+                         style="display: flex; justify-content: space-between; align-items: center; 
+                                padding: 16px; background: var(--glass-bg); border-radius: 8px; 
+                                border: 1px solid var(--glass-border); cursor: pointer;"
+                         onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">${icon}</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                    ${transaction.description || 'No description'}
+                                </div>
+                                <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                    <span>${this.formatDate(transaction.date) || 'No date'}</span>
+                                    <span>•</span>
+                                    <span>${transaction.category || 'Uncategorized'}</span>
+                                    <span>•</span>
+                                    <span>${transaction.paymentMethod || 'Cash'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
+                                ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                            </div>
+                            ${transaction.reference ? `
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Ref: ${transaction.reference}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
 
     renderCategoryBreakdown() {
         const incomeByCategory = {};
