@@ -1734,86 +1734,100 @@ showTransactionModal(transactionId = null) {
     },
 
     setupEventListeners() {
-        console.log('Setting up event listeners (event delegation)...');
-        
-        if (this._globalClickHandler) {
-            document.removeEventListener('click', this._globalClickHandler);
-            document.removeEventListener('change', this._globalChangeHandler);
+    console.log('Setting up event listeners (event delegation)...');
+    
+    if (this._globalClickHandler) {
+        document.removeEventListener('click', this._globalClickHandler);
+        document.removeEventListener('change', this._globalChangeHandler);
+    }
+    
+    this._globalClickHandler = (e) => {
+        // ===== NEW: Handle transaction item clicks for editing =====
+        const transactionItem = e.target.closest('.transaction-item');
+        if (transactionItem) {
+            const transactionId = transactionItem.dataset.id;
+            if (transactionId) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📝 Transaction item clicked for editing:', transactionId);
+                this.editTransaction(transactionId);
+                return; // Important: stop here so button clicks inside don't trigger twice
+            }
         }
         
-        this._globalClickHandler = (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            
-            const buttonId = button.id;
-            if (!buttonId) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log(`Button clicked: ${buttonId}`);
-            
-            switch(buttonId) {
-                case 'add-transaction':
-                    this.showTransactionModal();
-                    break;
-                case 'upload-receipt-btn':
-                    this.showImportReceiptsModal();
-                    break;
-                case 'add-income-btn':
-                    this.showAddIncome();
-                    break;
-                case 'add-expense-btn':
-                    this.showAddExpense();
-                    break;
-                case 'financial-report-btn':
-                    this.generateFinancialReport();
-                    break;
-                case 'category-analysis-btn':
-                    this.generateCategoryAnalysis();
-                    break;
-                case 'save-transaction':
-                    this.saveTransaction();
-                    break;
-                case 'delete-transaction':
-                    this.deleteTransaction();
-                    break;
-                case 'cancel-transaction':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-transaction-modal':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'cancel-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'refresh-receipts-btn':
-                    this.loadReceiptsFromFirebase();
-                    this.showNotification('Receipts refreshed', 'success');
-                    break;
-                case 'process-all-receipts':
-                    this.processPendingReceipts();
-                    break;
-                case 'export-transactions':
-                    this.exportTransactions();
-                    break;
-            }
-        };
+        // Handle button clicks
+        const button = e.target.closest('button');
+        if (!button) return;
         
-        this._globalChangeHandler = (e) => {
-            if (e.target.id === 'transaction-filter') {
-                this.filterTransactions(e.target.value);
-            }
-        };
+        const buttonId = button.id;
+        if (!buttonId) return;
         
-        document.addEventListener('click', this._globalClickHandler);
-        document.addEventListener('change', this._globalChangeHandler);
+        e.preventDefault();
+        e.stopPropagation();
         
-        console.log('✅ Event delegation setup complete');
-    },
+        console.log(`Button clicked: ${buttonId}`);
+        
+        switch(buttonId) {
+            case 'add-transaction':
+                this.showTransactionModal();
+                break;
+            case 'upload-receipt-btn':
+                this.showImportReceiptsModal();
+                break;
+            case 'add-income-btn':
+                this.showAddIncome();
+                break;
+            case 'add-expense-btn':
+                this.showAddExpense();
+                break;
+            case 'financial-report-btn':
+                this.generateFinancialReport();
+                break;
+            case 'category-analysis-btn':
+                this.generateCategoryAnalysis();
+                break;
+            case 'save-transaction':
+                this.saveTransaction();
+                break;
+            case 'delete-transaction':
+                this.deleteTransaction();
+                break;
+            case 'cancel-transaction':
+                this.hideTransactionModal();
+                break;
+            case 'close-transaction-modal':
+                this.hideTransactionModal();
+                break;
+            case 'close-import-receipts':
+                this.hideImportReceiptsModal();
+                break;
+            case 'cancel-import-receipts':
+                this.hideImportReceiptsModal();
+                break;
+            case 'refresh-receipts-btn':
+                this.loadReceiptsFromFirebase();
+                this.showNotification('Receipts refreshed', 'success');
+                break;
+            case 'process-all-receipts':
+                this.processPendingReceipts();
+                break;
+            case 'export-transactions':
+                this.exportTransactions();
+                break;
+        }
+    };
+    
+    this._globalChangeHandler = (e) => {
+        if (e.target.id === 'transaction-filter') {
+            this.filterTransactions(e.target.value);
+        }
+    };
+    
+    document.addEventListener('click', this._globalClickHandler);
+    document.addEventListener('change', this._globalChangeHandler);
+    
+    console.log('✅ Event delegation setup complete with transaction item editing');
+},
 
     setupReceiptFormHandlers() {
         const uploadArea = document.getElementById('receipt-upload-area');
