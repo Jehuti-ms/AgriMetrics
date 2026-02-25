@@ -403,45 +403,76 @@ const OrdersModule = {
                     </div>
                 </div>
 
-                <!-- Create Order Form -->
-                <div id="order-form-container" class="hidden">
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
-                        <form id="order-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Customer</label>
-                                    <select class="form-input" id="order-customer" required>
-                                        <option value="">Select Customer</option>
-                                        ${this.customers.map(customer => `
-                                            <option value="${customer.id}">${customer.name}</option>
-                                        `).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Order Date</label>
-                                    <input type="date" class="form-input" id="order-date" required>
-                                </div>
-                            </div>
-                            
-                            <div style="margin-bottom: 16px;">
-                                <label class="form-label">Order Items</label>
-                                <div id="order-items">
-                                    <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
-                                        <select class="form-input product-select" required>
-                                            <option value="">Select Product</option>
-                                            ${this.products.map(product => `
-                                                <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
+               <!-- Create Order Form -->
+                    <div id="order-form-container" class="hidden">
+                        <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                            <h3 id="order-form-title" style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
+                            <form id="order-form">
+                                <!-- Hidden editing ID field - MOVED OUTSIDE the items! -->
+                                <input type="hidden" id="editing-order-id" value="">
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                    <div>
+                                        <label class="form-label">Customer</label>
+                                        <select class="form-input" id="order-customer" required>
+                                            <option value="">Select Customer</option>
+                                            ${this.customers.map(customer => `
+                                                <option value="${customer.id}">${customer.name}</option>
                                             `).join('')}
                                         </select>
-                                        <input type="hidden" id="editing-order-id" value="">
-                                        <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
-                                        <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-                                        <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Order Date</label>
+                                        <input type="date" class="form-input" id="order-date" required>
                                     </div>
                                 </div>
-                                <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
-                            </div>
+                                
+                                <div style="margin-bottom: 16px;">
+                                    <label class="form-label">Order Items</label>
+                                    <div id="order-items">
+                                        <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                                            <select class="form-input product-select" required>
+                                                <option value="">Select Product</option>
+                                                ${this.products.map(product => `
+                                                    <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
+                                                `).join('')}
+                                            </select>
+                                            <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
+                                            <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
+                                            <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
+                                </div>
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-input" id="order-status">
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <label class="form-label">Total Amount</label>
+                                    <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly style="font-weight: bold; font-size: 16px;">
+                                </div>
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <label class="form-label">Notes</label>
+                                    <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes, special instructions..."></textarea>
+                                </div>
+                                
+                                <div style="display: flex; gap: 12px;">
+                                    <button type="submit" class="btn-primary" id="order-submit-btn">Create Order</button>
+                                    <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                             
                             <div style="margin-bottom: 16px;">
                                 <label class="form-label">Status</label>
