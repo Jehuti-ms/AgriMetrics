@@ -800,6 +800,7 @@ if (target.closest('.delete-customer')) {
             if (customerId) {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation(); 
                 this.editCustomer(parseInt(customerId));
             }
             return;
