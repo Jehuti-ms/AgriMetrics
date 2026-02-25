@@ -681,142 +681,135 @@ const OrdersModule = {
         return statuses[status] || status;
     },
 
- setupEventListeners() {
+setupEventListeners() {
     console.log('🔧 Setting up Orders module event listeners...');
     
-    // Remove existing listeners to prevent duplicates
+    // Remove existing listeners
     if (this._clickHandler) {
         document.removeEventListener('click', this._clickHandler);
     }
+    if (this._captureHandler) {
+        document.removeEventListener('click', this._captureHandler, true);
+    }
     
-    // SINGLE click handler for everything (ONE listener to rule them all)
-this._clickHandler = (e) => {
-    const target = e.target;
-    
-    // Log EVERY click for debugging
-    console.log('🔍 Click detected in ORDERS module:', {
-        target: target.tagName,
-        classes: target.className,
-        id: target.id,
-        closestEditCustomer: target.closest('.edit-customer') ? 'YES' : 'NO',
-        closestDeleteCustomer: target.closest('.delete-customer') ? 'YES' : 'NO'
-    });
-    
-    // ===== CUSTOMER DELETE - Check this FIRST =====
-    const deleteBtn = target.closest('.delete-customer');
-    if (deleteBtn) {
-        const customerId = deleteBtn.getAttribute('data-id');
-        console.log('🗑️ CUSTOMER DELETE DETECTED:', {
-            button: deleteBtn,
-            customerId: customerId,
-            parsedId: parseInt(customerId),
-            html: deleteBtn.outerHTML
-        });
+    // ===== CAPTURE PHASE HANDLER (runs BEFORE any other click handlers) =====
+    this._captureHandler = (e) => {
+        const target = e.target;
         
-        if (customerId) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
+        // Check if this is an order/customer action
+        if (target.closest('.edit-order') || 
+            target.closest('.delete-order') || 
+            target.closest('.edit-customer') || 
+            target.closest('.delete-customer')) {
             
-            // Call directly without waiting
-            console.log('📞 Calling deleteCustomer with ID:', parseInt(customerId));
-            this.deleteCustomer(parseInt(customerId));
-        }
-        return;
-    }
-    
-    // ===== CUSTOMER EDIT =====
-    const editBtn = target.closest('.edit-customer');
-    if (editBtn) {
-        const customerId = editBtn.getAttribute('data-id');
-        console.log('👤 CUSTOMER EDIT DETECTED:', {
-            button: editBtn,
-            customerId: customerId,
-            parsedId: parseInt(customerId)
-        });
-        
-        if (customerId) {
+            console.log('🛑 CAPTURE PHASE: Intercepting order/customer action');
+            
+            // Mark this as handled by orders module
+            e.stopPropagation(); // Stop from going to other handlers
             e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            this.editCustomer(parseInt(customerId));
-        }
-        return;
-    }
-    
-    // ===== ORDER EDIT =====
-    if (target.closest('.edit-order')) {
-        const btn = target.closest('.edit-order');
-        const orderId = btn.getAttribute('data-id');
-        console.log('✏️ Edit order clicked:', orderId);
-        if (orderId) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            this.editOrder(parseInt(orderId));
-        }
-        return;
-    }
-    
-    // ===== ORDER DELETE =====
-    if (target.closest('.delete-order')) {
-        const btn = target.closest('.delete-order');
-        const orderId = btn.getAttribute('data-id');
-        console.log('🗑️ Delete order clicked:', orderId);
-        if (orderId) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            if (confirm('Are you sure you want to delete this order?')) {
-                this.deleteOrder(parseInt(orderId));
+            
+            // Handle the action immediately in capture phase
+            const customerDelete = target.closest('.delete-customer');
+            if (customerDelete) {
+                const customerId = customerDelete.getAttribute('data-id');
+                console.log('🗑️ CAPTURE: Delete customer', customerId);
+                if (customerId) {
+                    this.deleteCustomer(parseInt(customerId));
+                }
+                return;
+            }
+            
+            const customerEdit = target.closest('.edit-customer');
+            if (customerEdit) {
+                const customerId = customerEdit.getAttribute('data-id');
+                console.log('👤 CAPTURE: Edit customer', customerId);
+                if (customerId) {
+                    this.editCustomer(parseInt(customerId));
+                }
+                return;
+            }
+            
+            const orderDelete = target.closest('.delete-order');
+            if (orderDelete) {
+                const orderId = orderDelete.getAttribute('data-id');
+                console.log('🗑️ CAPTURE: Delete order', orderId);
+                if (orderId) {
+                    if (confirm('Are you sure you want to delete this order?')) {
+                        this.deleteOrder(parseInt(orderId));
+                    }
+                }
+                return;
+            }
+            
+            const orderEdit = target.closest('.edit-order');
+            if (orderEdit) {
+                const orderId = orderEdit.getAttribute('data-id');
+                console.log('✏️ CAPTURE: Edit order', orderId);
+                if (orderId) {
+                    this.editOrder(parseInt(orderId));
+                }
+                return;
             }
         }
-        return;
-    }
+    };
     
-    // ===== BUTTON HANDLERS (by ID) =====
-    const button = target.closest('button');
-    if (!button) return;
+    // ===== BUBBLE PHASE HANDLER (for regular buttons) =====
+    this._clickHandler = (e) => {
+        const target = e.target;
+        
+        // Log for debugging
+        console.log('🔍 BUBBLE PHASE - Click detected:', {
+            target: target.tagName,
+            classes: target.className,
+            id: target.id
+        });
+        
+        // ===== BUTTON HANDLERS (by ID) =====
+        const button = target.closest('button');
+        if (!button) return;
+        
+        const buttonId = button.id;
+        if (!buttonId) return;
+        
+        console.log(`Button clicked: ${buttonId}`);
+        
+        switch(buttonId) {
+            case 'create-order-btn':
+            case 'show-order-form':
+                this.showOrderForm();
+                break;
+            case 'manage-customers-btn':
+                this.showCustomersSection();
+                break;
+            case 'view-orders-btn':
+                this.showAllOrders();
+                break;
+            case 'add-customer-btn':
+            case 'show-customer-form':
+                this.showCustomerForm();
+                break;
+            case 'cancel-order-form':
+                this.hideOrderForm();
+                break;
+            case 'cancel-customer-form':
+                this.hideCustomerForm();
+                break;
+            case 'add-item-btn':
+                this.addOrderItem();
+                break;
+            case 'export-orders-btn':
+                this.exportOrders();
+                break;
+        }
+    };
     
-    const buttonId = button.id;
-    if (!buttonId) return;
+    // Attach capture phase handler (true = capture phase) - THIS RUNS FIRST
+    document.addEventListener('click', this._captureHandler, true);
     
-    console.log(`Button clicked: ${buttonId}`);
-    
-    switch(buttonId) {
-        case 'create-order-btn':
-        case 'show-order-form':
-            this.showOrderForm();
-            break;
-        case 'manage-customers-btn':
-            this.showCustomersSection();
-            break;
-        case 'view-orders-btn':
-            this.showAllOrders();
-            break;
-        case 'add-customer-btn':
-        case 'show-customer-form':
-            this.showCustomerForm();
-            break;
-        case 'cancel-order-form':
-            this.hideOrderForm();
-            break;
-        case 'cancel-customer-form':
-            this.hideCustomerForm();
-            break;
-        case 'add-item-btn':
-            this.addOrderItem();
-            break;
-        case 'export-orders-btn':
-            this.exportOrders();
-            break;
-    }
-};
-    
-    // Attach the SINGLE click handler
+    // Attach bubble phase handler - THIS RUNS SECOND (only for non-order/customer clicks)
     document.addEventListener('click', this._clickHandler);
     
-    // Form submissions (these need separate listeners because they're submit events, not clicks)
+    // Form submissions
     document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleOrderSubmit(e));
     document.getElementById('customer-form')?.addEventListener('submit', (e) => this.handleCustomerSubmit(e));
     
@@ -828,10 +821,9 @@ this._clickHandler = (e) => {
     // Calculate total when items change
     this.setupTotalCalculation();
     
-    // Hover effects (optional - doesn't interfere with click handling)
+    // Hover effects
     this.setupHoverEffects();
     
-    // Mark listeners as attached
     this._orderListenersAttached = true;
     console.log('✅ Orders module event listeners setup complete');
 },
