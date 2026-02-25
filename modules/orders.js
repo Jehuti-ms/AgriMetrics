@@ -443,33 +443,7 @@ const OrdersModule = {
                                         </div>
                                     </div>
                                     <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
-                                </div>
-                                
-                                <div style="margin-bottom: 20px;">
-                                    <label class="form-label">Status</label>
-                                    <select class="form-input" id="order-status">
-                                        <option value="pending">Pending</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="shipped">Shipped</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
-                                    </select>
-                                </div>
-                                
-                                <div style="margin-bottom: 20px;">
-                                    <label class="form-label">Total Amount</label>
-                                    <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly style="font-weight: bold; font-size: 16px;">
-                                </div>
-                                
-                                <div style="margin-bottom: 20px;">
-                                    <label class="form-label">Notes</label>
-                                    <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes, special instructions..."></textarea>
-                                </div>
-                                
-                                <div style="display: flex; gap: 12px;">
-                                    <button type="submit" class="btn-primary" id="order-submit-btn">Create Order</button>
-                                    <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
-                                </div>
+                                </div> 
                             </form>
                         </div>
                     </div>
@@ -1099,7 +1073,7 @@ hideCustomerForm() {
         }
     },
 
-setupActionHandlers() {
+/*setupActionHandlers() {
     // Use event delegation for all action buttons
     document.addEventListener('click', (e) => {
         const button = e.target.closest('[data-action]');
@@ -1127,8 +1101,8 @@ setupActionHandlers() {
                 break;
         }
     });
-},
-
+}, 
+*/
     setupHoverEffects() {
         const buttons = document.querySelectorAll('.quick-action-btn');
         buttons.forEach(button => {
