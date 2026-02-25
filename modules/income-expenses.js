@@ -570,7 +570,8 @@ applyReceiptCrop() {
 
 // Update capturePhoto to use the new cropping
 capturePhoto() {
-    console.log('📸 Capturing photo...');
+    console.log('📸 CAPTURE PHOTO CALLED - NEW VERSION WITH CROPPING');
+    console.trace('Trace to see who called this');
     
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
@@ -613,16 +614,25 @@ capturePhoto() {
             .then(blob => {
                 const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
                 
+                console.log('📸 Photo captured, file created:', file.name, file.size);
+                
                 // Ask if user wants to crop
                 if (confirm('Would you like to crop this photo before saving?')) {
+                    console.log('✂️ User chose to crop');
                     this.currentPhotoFile = file;
                     this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                        console.log('🔄 Crop callback received, saving cropped image');
                         this.saveCroppedReceipt(croppedFile, croppedImageUrl);
                     };
                     this.showReceiptCropperModal(file);
                 } else {
+                    console.log('💾 User chose to save without cropping');
                     this.saveReceiptFromFile(file, dataURL);
                 }
+            })
+            .catch(error => {
+                console.error('❌ Error converting photo:', error);
+                this.showNotification('Error processing photo', 'error');
             });
         
     } catch (error) {
@@ -632,6 +642,7 @@ capturePhoto() {
     }
 },
 
+// Add these helper methods
 // Add these helper methods
 saveCroppedReceipt(file, imageUrl) {
     console.log('💾 Saving cropped receipt:', file.name);
