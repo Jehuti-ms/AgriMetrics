@@ -676,15 +676,125 @@ const OrdersModule = {
         return statuses[status] || status;
     },
 
-    setupEventListeners() {
+  setupEventListeners() {
     console.log('🔧 Setting up Orders module event listeners...');
     
-    // Remove any existing order button listeners to prevent duplicates
-    // (Store a flag or remove specific listeners if needed)
-    if (this._orderListenersAttached) {
-        console.log('⚠️ Order listeners already attached, skipping...');
-        return;
+    // Remove existing listeners to prevent duplicates
+    if (this._clickHandler) {
+        document.removeEventListener('click', this._clickHandler);
     }
+    
+    // Single click handler for everything
+    this._clickHandler = (e) => {
+        const target = e.target;
+        
+        // ===== ORDER EDIT =====
+        if (target.closest('.edit-order')) {
+            const btn = target.closest('.edit-order');
+            const orderId = btn.getAttribute('data-id');
+            console.log('✏️ Edit order clicked:', orderId);
+            if (orderId) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editOrder(parseInt(orderId));
+            }
+            return;
+        }
+        
+        // ===== ORDER DELETE =====
+        if (target.closest('.delete-order')) {
+            const btn = target.closest('.delete-order');
+            const orderId = btn.getAttribute('data-id');
+            console.log('🗑️ Delete order clicked:', orderId);
+            if (orderId) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirm('Are you sure you want to delete this order?')) {
+                    this.deleteOrder(parseInt(orderId));
+                }
+            }
+            return;
+        }
+        
+        // ===== CUSTOMER EDIT =====
+        if (target.closest('.edit-customer')) {
+            const btn = target.closest('.edit-customer');
+            const customerId = btn.getAttribute('data-id');
+            console.log('👤 Edit customer clicked:', customerId);
+            if (customerId) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editCustomer(parseInt(customerId));
+            }
+            return;
+        }
+        
+        // ===== CUSTOMER DELETE =====
+        if (target.closest('.delete-customer')) {
+            const btn = target.closest('.delete-customer');
+            const customerId = btn.getAttribute('data-id');
+            console.log('🗑️ Delete customer clicked:', customerId);
+            if (customerId) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.deleteCustomer(parseInt(customerId));
+            }
+            return;
+        }
+        
+        // ===== BUTTON HANDLERS =====
+        const button = target.closest('button');
+        if (!button) return;
+        
+        const buttonId = button.id;
+        if (!buttonId) return;
+        
+        console.log(`Button clicked: ${buttonId}`);
+        
+        switch(buttonId) {
+            case 'create-order-btn':
+            case 'show-order-form':
+                this.showOrderForm();
+                break;
+            case 'manage-customers-btn':
+                this.showCustomersSection();
+                break;
+            case 'view-orders-btn':
+                this.showAllOrders();
+                break;
+            case 'add-customer-btn':
+            case 'show-customer-form':
+                this.showCustomerForm();
+                break;
+            case 'cancel-order-form':
+                this.hideOrderForm();
+                break;
+            case 'cancel-customer-form':
+                this.hideCustomerForm();
+                break;
+            case 'add-item-btn':
+                this.addOrderItem();
+                break;
+            case 'export-orders-btn':
+                this.exportOrders();
+                break;
+        }
+    };
+    
+    // Attach the single click handler
+    document.addEventListener('click', this._clickHandler);
+    
+    // Form submissions
+    document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleOrderSubmit(e));
+    document.getElementById('customer-form')?.addEventListener('submit', (e) => this.handleCustomerSubmit(e));
+    
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    const orderDate = document.getElementById('order-date');
+    if (orderDate) orderDate.value = today;
+    
+    console.log('✅ Orders module event listeners setup complete');
+},
     
     // Order form buttons
     document.getElementById('show-order-form')?.addEventListener('click', () => this.showOrderForm());
@@ -975,16 +1085,16 @@ setupActionHandlers() {
 handleOrderSubmit(e) {
     e.preventDefault();
     
-    // Check if we're editing an existing order
     const editingId = document.getElementById('editing-order-id')?.value;
     const isEditing = editingId && editingId !== '';
     
+    // Get form values
     const customerId = parseInt(document.getElementById('order-customer').value);
     const date = document.getElementById('order-date').value;
     const status = document.getElementById('order-status').value;
     const notes = document.getElementById('order-notes').value;
     
-    // Collect order items
+    // Collect items
     const items = [];
     document.querySelectorAll('.order-item').forEach(item => {
         const productSelect = item.querySelector('.product-select');
@@ -1002,71 +1112,47 @@ handleOrderSubmit(e) {
     });
     
     if (items.length === 0) {
-        this.showNotification('Please add at least one item to the order.', 'error');
+        this.showNotification('Please add at least one item', 'error');
         return;
     }
     
     const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
     
     if (isEditing) {
-        // UPDATE existing order
-        const orderData = {
-            id: parseInt(editingId),
-            customerId: customerId,
-            date: date,
-            items: items,
-            totalAmount: totalAmount,
-            status: status,
-            notes: notes
-        };
-        
-        // Find and update the order in the array
-        const index = this.orders.findIndex(o => o.id === parseInt(editingId));
-        if (index !== -1) {
-            const oldOrder = this.orders[index];
-            this.orders[index] = orderData;
+        // Update existing order
+        const orderIndex = this.orders.findIndex(o => o.id == editingId);
+        if (orderIndex !== -1) {
+            this.orders[orderIndex] = {
+                ...this.orders[orderIndex],
+                customerId,
+                date,
+                items,
+                totalAmount,
+                status,
+                notes
+            };
             this.saveData();
-            
-            // ✅ Broadcast order updated
-            if (this.broadcastOrderUpdated) {
-                this.broadcastOrderUpdated(oldOrder, orderData);
-            }
-            
-            this.showNotification(`Order #${orderData.id} updated successfully!`, 'success');
-        } else {
-            // Order not found - shouldn't happen, but just in case
-            console.error('❌ Order not found for editing:', editingId);
-            this.showNotification('Order not found!', 'error');
-            return;
+            this.showNotification(`Order #${editingId} updated!`, 'success');
         }
     } else {
-        // CREATE new order
+        // Create new order
         const orderData = {
             id: Date.now(),
-            customerId: customerId,
-            date: date,
-            items: items,
-            totalAmount: totalAmount,
-            status: status,
-            notes: notes
+            customerId,
+            date,
+            items,
+            totalAmount,
+            status,
+            notes
         };
-
         this.orders.unshift(orderData);
         this.saveData();
-        
-        // ✅ Broadcast order created
-        if (this.broadcastOrderCreated) {
-            this.broadcastOrderCreated(orderData);
-        }
-        
-        this.showNotification(`Order #${orderData.id} created successfully!`, 'success');
+        this.showNotification('Order created successfully!', 'success');
     }
     
-    // Reset form and hide
+    // Reset and hide form
     this.resetOrderForm();
     this.hideOrderForm();
-    
-    // Re-render module
     this.renderModule();
 },
     
@@ -1143,280 +1229,107 @@ showOrderForm() {
     },
 
 editOrder(orderId) {
-    console.log('📝 EDITING ORDER:', orderId);
-    console.log('1️⃣ Starting editOrder function');
+    console.log('✏️ Editing order:', orderId);
     
-    try {
-        console.log('2️⃣ Looking for order with ID:', orderId);
-        console.log('3️⃣ Orders array:', this.orders);
+    // Find the order
+    const order = this.orders.find(o => o.id == orderId);
+    if (!order) {
+        this.showNotification('Order not found', 'error');
+        return;
+    }
+    
+    // Show the order form
+    this.showOrderForm();
+    
+    // Wait for form to be visible then populate
+    setTimeout(() => {
+        // Set editing ID
+        let editingIdField = document.getElementById('editing-order-id');
+        if (!editingIdField) {
+            editingIdField = document.createElement('input');
+            editingIdField.type = 'hidden';
+            editingIdField.id = 'editing-order-id';
+            document.getElementById('order-form').appendChild(editingIdField);
+        }
+        editingIdField.value = order.id;
         
-        const order = this.orders.find(o => o.id === orderId);
-        console.log('4️⃣ Found order:', order);
+        // Change title
+        const title = document.querySelector('#order-form-container h3');
+        if (title) title.textContent = 'Edit Order';
         
-        if (!order) {
-            console.error('❌ Order not found!');
-            this.showNotification('Order not found', 'error');
-            return;
+        // Change submit button
+        const submitBtn = document.querySelector('#order-form button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Update Order';
         }
         
-        console.log('5️⃣ Order details:', JSON.stringify(order));
-        console.log('6️⃣ About to call showOrderForm()');
+        // Populate basic fields
+        document.getElementById('order-customer').value = order.customerId;
+        document.getElementById('order-date').value = order.date;
+        document.getElementById('order-status').value = order.status;
+        document.getElementById('order-notes').value = order.notes || '';
+        document.getElementById('order-total').value = order.totalAmount.toFixed(2);
         
-        // Show order form
-        this.showOrderForm();
-        console.log('7️⃣ showOrderForm() called');
+        // Clear and repopulate items
+        const itemsContainer = document.getElementById('order-items');
+        itemsContainer.innerHTML = '';
         
-        console.log('8️⃣ Setting timeout for 200ms...');
-        
-        // Wait for form to render and populate it
-        setTimeout(() => {
-            console.log('9️⃣ TIMEOUT EXECUTED - Looking for form elements...');
+        order.items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'order-item';
+            itemDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                    <select class="form-input product-select" required>
+                        <option value="">Select Product</option>
+                        ${this.products.map(product => `
+                            <option value="${product.id}" data-price="${product.price}" 
+                                ${product.id === item.productId ? 'selected' : ''}>
+                                ${product.name} - ${this.formatCurrency(product.price)}
+                            </option>
+                        `).join('')}
+                    </select>
+                    <input type="number" class="form-input quantity-input" 
+                           value="${item.quantity}" min="1" required>
+                    <input type="number" class="form-input price-input" 
+                           value="${item.price}" step="0.01" min="0" required>
+                    <button type="button" class="btn-outline remove-item">✕</button>
+                </div>
+            `;
+            itemsContainer.appendChild(itemDiv);
             
-            try {
-                const form = document.getElementById('order-form');
-                console.log('🔟 Form element:', form);
-                
-                if (!form) {
-                    console.error('❌ Order form not found!');
-                    return;
-                }
-                
-                console.log('1️⃣1️⃣ Form found, checking title element...');
-                
-                // Change title
-                const title = document.getElementById('order-form-title');
-                console.log('1️⃣2️⃣ Title element:', title);
-                if (title) {
-                    title.textContent = 'Edit Order';
-                    console.log('1️⃣3️⃣ Title updated to "Edit Order"');
-                } else {
-                    console.warn('⚠️ Title element not found');
-                }
-                
-                console.log('1️⃣4️⃣ Checking submit button...');
-                
-                // Change submit button
-                const submitBtn = document.getElementById('order-submit-btn');
-                console.log('1️⃣5️⃣ Submit button:', submitBtn);
-                if (submitBtn) {
-                    submitBtn.textContent = 'Update Order';
-                    console.log('1️⃣6️⃣ Submit button text updated');
-                    
-                    // Remove old click handlers by cloning
-                    const newSubmitBtn = submitBtn.cloneNode(true);
-                    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
-                    console.log('1️⃣7️⃣ Submit button cloned to remove old handlers');
-                    
-                    // Add new click handler
-                    newSubmitBtn.onclick = (e) => {
-                        e.preventDefault();
-                        console.log('1️⃣8️⃣ Update button clicked, calling updateEditedOrder with ID:', orderId);
-                        this.updateEditedOrder(orderId);
-                    };
-                    console.log('1️⃣9️⃣ New click handler attached');
-                } else {
-                    console.warn('⚠️ Submit button not found');
-                }
-                
-                console.log('2️⃣0️⃣ Checking for editing-id field...');
-                
-                // Set editing ID (create if doesn't exist)
-                let editingIdField = document.getElementById('editing-order-id');
-                console.log('2️⃣1️⃣ editingIdField:', editingIdField);
-                
-                if (!editingIdField) {
-                    console.log('2️⃣2️⃣ Creating editing-id field');
-                    editingIdField = document.createElement('input');
-                    editingIdField.type = 'hidden';
-                    editingIdField.id = 'editing-order-id';
-                    form.appendChild(editingIdField);
-                    console.log('2️⃣3️⃣ editing-id field created and appended');
-                }
-                editingIdField.value = order.id;
-                console.log('2️⃣4️⃣ Set editing ID to:', order.id);
-                
-                console.log('2️⃣5️⃣ Populating customer field...');
-                
-                // Populate basic fields
-                const customerField = document.getElementById('order-customer');
-                console.log('2️⃣6️⃣ customerField:', customerField);
-                if (customerField) {
-                    customerField.value = order.customerId;
-                    console.log('2️⃣7️⃣ Customer field set to:', order.customerId);
-                } else {
-                    console.warn('⚠️ Customer field not found');
-                }
-                
-                console.log('2️⃣8️⃣ Populating date field...');
-                
-                const dateField = document.getElementById('order-date');
-                console.log('2️⃣9️⃣ dateField:', dateField);
-                if (dateField) {
-                    dateField.value = order.date;
-                    console.log('3️⃣0️⃣ Date field set to:', order.date);
-                } else {
-                    console.warn('⚠️ Date field not found');
-                }
-                
-                console.log('3️⃣1️⃣ Populating status field...');
-                
-                const statusField = document.getElementById('order-status');
-                console.log('3️⃣2️⃣ statusField:', statusField);
-                if (statusField) {
-                    statusField.value = order.status;
-                    console.log('3️⃣3️⃣ Status field set to:', order.status);
-                } else {
-                    console.warn('⚠️ Status field not found');
-                }
-                
-                console.log('3️⃣4️⃣ Populating notes field...');
-                
-                const notesField = document.getElementById('order-notes');
-                console.log('3️⃣5️⃣ notesField:', notesField);
-                if (notesField) {
-                    notesField.value = order.notes || '';
-                    console.log('3️⃣6️⃣ Notes field set');
-                } else {
-                    console.warn('⚠️ Notes field not found');
-                }
-                
-                console.log('3️⃣7️⃣ Populating total field...');
-                
-                const totalField = document.getElementById('order-total');
-                console.log('3️⃣8️⃣ totalField:', totalField);
-                if (totalField) {
-                    totalField.value = order.totalAmount.toFixed(2);
-                    console.log('3️⃣9️⃣ Total field set to:', order.totalAmount);
-                } else {
-                    console.warn('⚠️ Total field not found');
-                }
-                
-                console.log('4️⃣0️⃣ Checking items container...');
-                
-                // Clear existing items
-                const itemsContainer = document.getElementById('order-items');
-                console.log('4️⃣1️⃣ itemsContainer:', itemsContainer);
-                
-                if (itemsContainer) {
-                    itemsContainer.innerHTML = '';
-                    console.log('4️⃣2️⃣ Items container cleared');
-                    
-                    // Add order items
-                    if (order.items && order.items.length > 0) {
-                        console.log(`4️⃣3️⃣ Adding ${order.items.length} items`);
-                        
-                        order.items.forEach((item, index) => {
-                            console.log(`4️⃣4️⃣ Adding item ${index + 1}:`, item);
-                            
-                            const itemDiv = document.createElement('div');
-                            itemDiv.className = 'order-item';
-                            itemDiv.innerHTML = `
-                                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
-                                    <select class="form-input product-select" required>
-                                        <option value="">Select Product</option>
-                                        ${this.products.map(product => `
-                                            <option value="${product.id}" data-price="${product.price}" ${product.id === item.productId ? 'selected' : ''}>
-                                                ${product.name} - ${this.formatCurrency(product.price)}
-                                            </option>
-                                        `).join('')}
-                                    </select>
-                                    <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="${item.quantity}" required>
-                                    <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" value="${item.price}" required>
-                                    <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
-                                </div>
-                            `;
-                            itemsContainer.appendChild(itemDiv);
-                            
-                            // Add event listeners
-                            const removeBtn = itemDiv.querySelector('.remove-item');
-                            const quantityInput = itemDiv.querySelector('.quantity-input');
-                            const priceInput = itemDiv.querySelector('.price-input');
-                            const productSelect = itemDiv.querySelector('.product-select');
-                            
-                            removeBtn.addEventListener('click', () => {
-                                itemDiv.remove();
-                                this.calculateTotal();
-                            });
-                            
-                            quantityInput.addEventListener('input', () => this.calculateTotal());
-                            priceInput.addEventListener('input', () => this.calculateTotal());
-                            
-                            productSelect.addEventListener('change', (e) => {
-                                const selectedOption = e.target.options[e.target.selectedIndex];
-                                const newPrice = selectedOption.dataset.price;
-                                if (newPrice) {
-                                    priceInput.value = newPrice;
-                                    this.calculateTotal();
-                                }
-                            });
-                        });
-                    } else {
-                        console.log('4️⃣5️⃣ No items found, adding empty item');
-                        // Add one empty item
-                        if (typeof this.addOrderItem === 'function') {
-                            this.addOrderItem();
-                        } else {
-                            console.warn('⚠️ addOrderItem method not found');
-                        }
-                    }
-                } else {
-                    console.warn('⚠️ Items container not found');
-                }
-                
-                console.log('4️⃣6️⃣ Recalculating total...');
-                
-                // Recalculate total
-                if (typeof this.calculateTotal === 'function') {
-                    this.calculateTotal();
-                    console.log('4️⃣7️⃣ Total recalculated');
-                } else {
-                    console.warn('⚠️ calculateTotal method not found');
-                }
-                
-                console.log('4️⃣8️⃣ Checking for cancel button...');
-                
-                // Add cancel edit button if it doesn't exist
-                const cancelBtn = document.getElementById('cancel-order-form');
-                console.log('4️⃣9️⃣ cancelBtn:', cancelBtn);
-                
-                if (cancelBtn) {
-                    // Check if cancel edit button already exists
-                    let cancelEditBtn = document.querySelector('.cancel-edit-btn');
-                    console.log('5️⃣0️⃣ cancelEditBtn exists?', !!cancelEditBtn);
-                    
-                    if (!cancelEditBtn) {
-                        cancelEditBtn = document.createElement('button');
-                        cancelEditBtn.type = 'button';
-                        cancelEditBtn.className = 'btn-outline cancel-edit-btn';
-                        cancelEditBtn.textContent = 'Cancel Edit';
-                        cancelEditBtn.style.marginLeft = '8px';
-                        cancelEditBtn.onclick = () => {
-                            console.log('5️⃣1️⃣ Cancel edit button clicked');
-                            this.cancelOrderEdit();
-                        };
-                        cancelBtn.parentNode.appendChild(cancelEditBtn);
-                        console.log('5️⃣2️⃣ Cancel edit button added');
-                    }
-                } else {
-                    console.warn('⚠️ Cancel button not found');
-                }
-                
-                console.log('✅ Order form ready for editing');
-                
-            } catch (timeoutError) {
-                console.error('❌ ERROR inside setTimeout:', timeoutError);
-                console.error('Stack:', timeoutError.stack);
-            }
-            
-        }, 200);
+            // Add event listeners to new item
+            this.addItemEventListeners(itemDiv);
+        });
         
-        console.log('5️⃣3️⃣ Timeout set, editOrder function complete');
+        // Recalculate total
+        this.calculateTotal();
         
-    } catch (error) {
-        console.error('❌❌❌ ERROR in editOrder (before setTimeout):', error);
-        console.error('Stack:', error.stack);
-        this.showNotification('Error editing order: ' + error.message, 'error');
-    }
+    }, 100);
+}
+
+// Helper method to add event listeners to an item
+addItemEventListeners(itemDiv) {
+    const removeBtn = itemDiv.querySelector('.remove-item');
+    const quantityInput = itemDiv.querySelector('.quantity-input');
+    const priceInput = itemDiv.querySelector('.price-input');
+    const productSelect = itemDiv.querySelector('.product-select');
+    
+    removeBtn.addEventListener('click', () => {
+        itemDiv.remove();
+        this.calculateTotal();
+    });
+    
+    quantityInput.addEventListener('input', () => this.calculateTotal());
+    priceInput.addEventListener('input', () => this.calculateTotal());
+    
+    productSelect.addEventListener('change', (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const price = selectedOption.dataset.price;
+        if (price) {
+            priceInput.value = price;
+            this.calculateTotal();
+        }
+    });
 },
     
     // ✅ MODIFIED: Enhanced deleteCustomer with broadcasting
