@@ -1073,36 +1073,7 @@ hideCustomerForm() {
         }
     },
 
-/*setupActionHandlers() {
-    // Use event delegation for all action buttons
-    document.addEventListener('click', (e) => {
-        const button = e.target.closest('[data-action]');
-        if (!button) return;
-        
-        const action = button.getAttribute('data-action');
-        const id = parseInt(button.getAttribute('data-id'));
-        
-        switch(action) {
-            case 'delete-order':
-                e.preventDefault();
-                this.deleteOrder(id);
-                break;
-            case 'edit-order':
-                e.preventDefault();
-                this.editOrder(id);
-                break;
-            case 'delete-customer':
-                e.preventDefault();
-                this.deleteCustomer(id);
-                break;
-            case 'edit-customer':
-                e.preventDefault();
-                this.editCustomer(id);
-                break;
-        }
-    });
-}, 
-*/
+
     setupHoverEffects() {
         const buttons = document.querySelectorAll('.quick-action-btn');
         buttons.forEach(button => {
