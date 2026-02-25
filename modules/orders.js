@@ -720,17 +720,62 @@ const OrdersModule = {
         const target = e.target;
         
         // ===== ORDER EDIT =====
-        if (target.closest('.edit-order')) {
-            const btn = target.closest('.edit-order');
-            const orderId = btn.getAttribute('data-id');
-            console.log('✏️ Edit order clicked:', orderId);
-            if (orderId) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.editOrder(parseInt(orderId));
-            }
-            return;
+if (target.closest('.edit-order')) {
+    const btn = target.closest('.edit-order');
+    const orderId = btn.getAttribute('data-id');
+    console.log('✏️ Edit order clicked:', orderId);
+    if (orderId) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ADD THIS
+        this.editOrder(parseInt(orderId));
+    }
+    return;
+}
+
+// ===== ORDER DELETE =====
+if (target.closest('.delete-order')) {
+    const btn = target.closest('.delete-order');
+    const orderId = btn.getAttribute('data-id');
+    console.log('🗑️ Delete order clicked:', orderId);
+    if (orderId) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ADD THIS
+        if (confirm('Are you sure you want to delete this order?')) {
+            this.deleteOrder(parseInt(orderId));
         }
+    }
+    return;
+}
+
+// ===== CUSTOMER EDIT =====
+if (target.closest('.edit-customer')) {
+    const btn = target.closest('.edit-customer');
+    const customerId = btn.getAttribute('data-id');
+    console.log('👤 Edit customer clicked:', customerId);
+    if (customerId) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ADD THIS
+        this.editCustomer(parseInt(customerId));
+    }
+    return;
+}
+
+// ===== CUSTOMER DELETE =====
+if (target.closest('.delete-customer')) {
+    const btn = target.closest('.delete-customer');
+    const customerId = btn.getAttribute('data-id');
+    console.log('🗑️ Delete customer clicked:', customerId);
+    if (customerId) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ADD THIS
+        this.deleteCustomer(parseInt(customerId));
+    }
+    return;
+}
         
         // ===== ORDER DELETE =====
         if (target.closest('.delete-order')) {
@@ -760,18 +805,19 @@ const OrdersModule = {
             return;
         }
         
-        // ===== CUSTOMER DELETE =====
-        if (target.closest('.delete-customer')) {
-            const btn = target.closest('.delete-customer');
-            const customerId = btn.getAttribute('data-id');
-            console.log('🗑️ Delete customer clicked:', customerId);
-            if (customerId) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.deleteCustomer(parseInt(customerId));
-            }
-            return;
-        }
+       // ===== CUSTOMER DELETE =====
+if (target.closest('.delete-customer')) {
+    const btn = target.closest('.delete-customer');
+    const customerId = btn.getAttribute('data-id');
+    console.log('🗑️ Delete customer clicked:', customerId);
+    if (customerId) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation(); // ADD THIS LINE
+        this.deleteCustomer(parseInt(customerId));
+    }
+    return;
+}
         
         // ===== BUTTON HANDLERS (by ID) =====
         const button = target.closest('button');
