@@ -716,148 +716,128 @@ const OrdersModule = {
     }
     
     // SINGLE click handler for everything (ONE listener to rule them all)
-    this._clickHandler = (e) => {
-        const target = e.target;
+this._clickHandler = (e) => {
+    const target = e.target;
+    
+    // Log EVERY click for debugging
+    console.log('🔍 Click detected in ORDERS module:', {
+        target: target.tagName,
+        classes: target.className,
+        id: target.id,
+        closestEditCustomer: target.closest('.edit-customer') ? 'YES' : 'NO',
+        closestDeleteCustomer: target.closest('.delete-customer') ? 'YES' : 'NO'
+    });
+    
+    // ===== CUSTOMER DELETE - Check this FIRST =====
+    const deleteBtn = target.closest('.delete-customer');
+    if (deleteBtn) {
+        const customerId = deleteBtn.getAttribute('data-id');
+        console.log('🗑️ CUSTOMER DELETE DETECTED:', {
+            button: deleteBtn,
+            customerId: customerId,
+            parsedId: parseInt(customerId),
+            html: deleteBtn.outerHTML
+        });
         
-        // ===== ORDER EDIT =====
-if (target.closest('.edit-order')) {
-    const btn = target.closest('.edit-order');
-    const orderId = btn.getAttribute('data-id');
-    console.log('✏️ Edit order clicked:', orderId);
-    if (orderId) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); // ADD THIS
-        this.editOrder(parseInt(orderId));
-    }
-    return;
-}
-
-// ===== ORDER DELETE =====
-if (target.closest('.delete-order')) {
-    const btn = target.closest('.delete-order');
-    const orderId = btn.getAttribute('data-id');
-    console.log('🗑️ Delete order clicked:', orderId);
-    if (orderId) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); // ADD THIS
-        if (confirm('Are you sure you want to delete this order?')) {
-            this.deleteOrder(parseInt(orderId));
+        if (customerId) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Call directly without waiting
+            console.log('📞 Calling deleteCustomer with ID:', parseInt(customerId));
+            this.deleteCustomer(parseInt(customerId));
         }
+        return;
     }
-    return;
-}
-
-// ===== CUSTOMER EDIT =====
-if (target.closest('.edit-customer')) {
-    const btn = target.closest('.edit-customer');
-    const customerId = btn.getAttribute('data-id');
-    console.log('👤 Edit customer clicked:', customerId);
-    if (customerId) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); // ADD THIS
-        this.editCustomer(parseInt(customerId));
-    }
-    return;
-}
-
-// ===== CUSTOMER DELETE =====
-if (target.closest('.delete-customer')) {
-    const btn = target.closest('.delete-customer');
-    const customerId = btn.getAttribute('data-id');
-    console.log('🗑️ Delete customer clicked:', customerId);
-    if (customerId) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); // ADD THIS
-        this.deleteCustomer(parseInt(customerId));
-    }
-    return;
-}
+    
+    // ===== CUSTOMER EDIT =====
+    const editBtn = target.closest('.edit-customer');
+    if (editBtn) {
+        const customerId = editBtn.getAttribute('data-id');
+        console.log('👤 CUSTOMER EDIT DETECTED:', {
+            button: editBtn,
+            customerId: customerId,
+            parsedId: parseInt(customerId)
+        });
         
-        // ===== ORDER DELETE =====
-        if (target.closest('.delete-order')) {
-            const btn = target.closest('.delete-order');
-            const orderId = btn.getAttribute('data-id');
-            console.log('🗑️ Delete order clicked:', orderId);
-            if (orderId) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (confirm('Are you sure you want to delete this order?')) {
-                    this.deleteOrder(parseInt(orderId));
-                }
+        if (customerId) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            this.editCustomer(parseInt(customerId));
+        }
+        return;
+    }
+    
+    // ===== ORDER EDIT =====
+    if (target.closest('.edit-order')) {
+        const btn = target.closest('.edit-order');
+        const orderId = btn.getAttribute('data-id');
+        console.log('✏️ Edit order clicked:', orderId);
+        if (orderId) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            this.editOrder(parseInt(orderId));
+        }
+        return;
+    }
+    
+    // ===== ORDER DELETE =====
+    if (target.closest('.delete-order')) {
+        const btn = target.closest('.delete-order');
+        const orderId = btn.getAttribute('data-id');
+        console.log('🗑️ Delete order clicked:', orderId);
+        if (orderId) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (confirm('Are you sure you want to delete this order?')) {
+                this.deleteOrder(parseInt(orderId));
             }
-            return;
         }
-        
-        // ===== CUSTOMER EDIT =====
-        if (target.closest('.edit-customer')) {
-            const btn = target.closest('.edit-customer');
-            const customerId = btn.getAttribute('data-id');
-            console.log('👤 Edit customer clicked:', customerId);
-            if (customerId) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation(); 
-                this.editCustomer(parseInt(customerId));
-            }
-            return;
-        }
-        
-       // ===== CUSTOMER DELETE =====
-if (target.closest('.delete-customer')) {
-    const btn = target.closest('.delete-customer');
-    const customerId = btn.getAttribute('data-id');
-    console.log('🗑️ Delete customer clicked:', customerId);
-    if (customerId) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); // ADD THIS LINE
-        this.deleteCustomer(parseInt(customerId));
+        return;
     }
-    return;
-}
-        
-        // ===== BUTTON HANDLERS (by ID) =====
-        const button = target.closest('button');
-        if (!button) return;
-        
-        const buttonId = button.id;
-        if (!buttonId) return;
-        
-        console.log(`Button clicked: ${buttonId}`);
-        
-        switch(buttonId) {
-            case 'create-order-btn':
-            case 'show-order-form':
-                this.showOrderForm();
-                break;
-            case 'manage-customers-btn':
-                this.showCustomersSection();
-                break;
-            case 'view-orders-btn':
-                this.showAllOrders();
-                break;
-            case 'add-customer-btn':
-            case 'show-customer-form':
-                this.showCustomerForm();
-                break;
-            case 'cancel-order-form':
-                this.hideOrderForm();
-                break;
-            case 'cancel-customer-form':
-                this.hideCustomerForm();
-                break;
-            case 'add-item-btn':
-                this.addOrderItem();
-                break;
-            case 'export-orders-btn':
-                this.exportOrders();
-                break;
-        }
-    };
+    
+    // ===== BUTTON HANDLERS (by ID) =====
+    const button = target.closest('button');
+    if (!button) return;
+    
+    const buttonId = button.id;
+    if (!buttonId) return;
+    
+    console.log(`Button clicked: ${buttonId}`);
+    
+    switch(buttonId) {
+        case 'create-order-btn':
+        case 'show-order-form':
+            this.showOrderForm();
+            break;
+        case 'manage-customers-btn':
+            this.showCustomersSection();
+            break;
+        case 'view-orders-btn':
+            this.showAllOrders();
+            break;
+        case 'add-customer-btn':
+        case 'show-customer-form':
+            this.showCustomerForm();
+            break;
+        case 'cancel-order-form':
+            this.hideOrderForm();
+            break;
+        case 'cancel-customer-form':
+            this.hideCustomerForm();
+            break;
+        case 'add-item-btn':
+            this.addOrderItem();
+            break;
+        case 'export-orders-btn':
+            this.exportOrders();
+            break;
+    }
+};
     
     // Attach the SINGLE click handler
     document.addEventListener('click', this._clickHandler);
