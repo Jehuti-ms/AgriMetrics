@@ -1393,32 +1393,74 @@ addItemEventListeners(itemDiv) {
 },
     
     // ✅ MODIFIED: Enhanced deleteCustomer with broadcasting
-  deleteCustomer(id) {
-    console.log('🗑️ Delete customer called with ID:', id, 'Type:', typeof id);
-    console.log('📋 Current customers:', this.customers.map(c => ({ id: c.id, name: c.name })));
+ deleteCustomer(id) {
+    console.log('🗑️ deleteCustomer function CALLED with:', {
+        id: id,
+        type: typeof id,
+        customers: this.customers.map(c => ({ id: c.id, name: c.name }))
+    });
     
-    // Use loose equality (==) to handle string vs number
-    const customer = this.customers.find(c => c.id == id);
+    // Try multiple ways to find the customer
+    let customer = this.customers.find(c => c.id === id);
+    console.log('🔍 Strict equality find:', customer);
     
     if (!customer) {
+        customer = this.customers.find(c => c.id == id);
+        console.log('🔍 Loose equality find:', customer);
+    }
+    
+    if (!customer) {
+        customer = this.customers.find(c => String(c.id) === String(id));
+        console.log('🔍 String comparison find:', customer);
+    }
+
+    if (!customer) {
         console.error('❌ Customer not found for ID:', id);
-        
-        // Try to find by parsing ID as number
-        const numericId = parseInt(id);
-        if (!isNaN(numericId)) {
-            const customerByNumericId = this.customers.find(c => c.id == numericId);
-            if (customerByNumericId) {
-                console.log('✅ Found customer using numeric ID:', numericId);
-                // Use this customer instead
-                return this.confirmAndDeleteCustomer(customerByNumericId, id);
-            }
-        }
-        
         this.showNotification('Customer not found', 'error');
         return;
     }
 
-    this.confirmAndDeleteCustomer(customer, id);
+    console.log('✅ Found customer:', customer);
+
+    // Check if customer has orders
+    const customerOrders = this.orders.filter(o => o.customerId == customer.id);
+    console.log('📦 Customer orders:', customerOrders.length);
+
+    if (customerOrders.length > 0) {
+        const message = `Cannot delete "${customer.name}" because they have ${customerOrders.length} order(s). Delete their orders first.`;
+        console.warn('⚠️', message);
+        this.showNotification(message, 'error');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete customer "${customer.name}"?`)) {
+        console.log('✅ Deleting customer:', customer.name);
+        
+        // Filter out the customer
+        const beforeCount = this.customers.length;
+        this.customers = this.customers.filter(c => c.id != customer.id);
+        const afterCount = this.customers.length;
+        
+        console.log(`📊 Customers: ${beforeCount} -> ${afterCount}`);
+        
+        // Save to localStorage
+        this.saveData();
+        
+        // Broadcast deletion
+        if (this.broadcastCustomerDeleted) {
+            this.broadcastCustomerDeleted(customer.id, customer.name);
+        }
+        
+        // Re-render
+        this.renderModule();
+        
+        // Show success message
+        this.showNotification(`Customer "${customer.name}" deleted successfully!`, 'success');
+        
+        console.log('✅ Customer deleted successfully');
+    } else {
+        console.log('❌ Delete cancelled by user');
+    }
 },
 
 // Helper method to handle the actual deletion after confirmation
