@@ -334,104 +334,150 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
-    // Add cropping properties at the start of camera methods
+   // ==================== CAMERA METHODS ====================
 cropperModal: null,
 cropper: null,
 currentPhotoFile: null,
 currentPhotoCallback: null,
 
-// Add these new cropping methods here:
+// ===== CROPPER LIBRARY LOADER =====
+loadCropperLibrary() {
+    return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window.Cropper) {
+            console.log('✅ Cropper already loaded');
+            resolve(window.Cropper);
+            return;
+        }
+        
+        console.log('📦 Loading Cropper library...');
+        
+        // Load CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css';
+        link.onload = () => console.log('✅ Cropper CSS loaded');
+        link.onerror = (e) => console.warn('⚠️ Cropper CSS load warning (may be CSP):', e);
+        document.head.appendChild(link);
+        
+        // Load JS
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js';
+        script.onload = () => {
+            console.log('✅ Cropper JS loaded');
+            resolve(window.Cropper);
+        };
+        script.onerror = (e) => {
+            console.error('❌ Failed to load Cropper:', e);
+            reject(new Error('Failed to load Cropper'));
+        };
+        document.head.appendChild(script);
+    });
+},
 
 // ===== RECEIPT PHOTO CROPPING METHODS =====
-showReceiptCropperModal(file) {
+async showReceiptCropperModal(file) {
     console.log('🖼️ Showing receipt cropper modal for:', file.name);
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        // Create modal HTML
-        const modalHTML = `
-            <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000;">
-                <div class="popout-modal-content" style="max-width: 800px; width: 90%;">
-                    <div class="popout-modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                        <h3 class="popout-modal-title">✂️ Crop Receipt Image</h3>
-                        <button class="popout-modal-close" id="close-receipt-cropper">&times;</button>
+    try {
+        // Load Cropper library first
+        await this.loadCropperLibrary();
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            this.initializeCropper(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    } catch (error) {
+        console.error('Failed to load cropper:', error);
+        this.showNotification('Using standard upload (crop unavailable)', 'info');
+        // Fall back to saving without cropping
+        this.saveReceiptFromFile(file, URL.createObjectURL(file));
+    }
+},
+
+initializeCropper(imageDataUrl) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000;">
+            <div class="popout-modal-content" style="max-width: 800px; width: 90%;">
+                <div class="popout-modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                    <h3 class="popout-modal-title">✂️ Crop Receipt Image</h3>
+                    <button class="popout-modal-close" id="close-receipt-cropper">&times;</button>
+                </div>
+                <div class="popout-modal-body" style="padding: 20px; max-height: 60vh; overflow: hidden;">
+                    <div style="margin-bottom: 16px; text-align: center; color: var(--text-secondary);">
+                        Drag to adjust the crop area for better receipt scanning
                     </div>
-                    <div class="popout-modal-body" style="padding: 20px; max-height: 60vh; overflow: hidden;">
-                        <div style="margin-bottom: 16px; text-align: center; color: var(--text-secondary);">
-                            Drag to adjust the crop area for better receipt scanning
-                        </div>
-                        <div style="max-height: 50vh; overflow: hidden; background: #f0f0f0; border-radius: 8px;">
-                            <img id="receipt-cropper-image" src="${e.target.result}" style="max-width: 100%; display: block;">
-                        </div>
-                        
-                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
-                            <button type="button" class="btn-outline" id="receipt-rotate-left" title="Rotate Left">↺ Rotate Left</button>
-                            <button type="button" class="btn-outline" id="receipt-rotate-right" title="Rotate Right">↻ Rotate Right</button>
-                            <button type="button" class="btn-outline" id="receipt-zoom-in" title="Zoom In">🔍+ Zoom In</button>
-                            <button type="button" class="btn-outline" id="receipt-zoom-out" title="Zoom Out">🔍- Zoom Out</button>
-                            <button type="button" class="btn-outline" id="receipt-reset-crop" title="Reset">🔄 Reset</button>
-                        </div>
-                        
-                        <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
-                            <div style="display: flex; gap: 8px; margin-left: auto;">
-                                <span style="color: var(--text-secondary);">Aspect Ratio:</span>
-                                <select id="receipt-aspect-ratio" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 8px;">
-                                    <option value="NaN">Free (Best for receipts)</option>
-                                    <option value="1">1:1 (Square)</option>
-                                    <option value="4/3">4:3</option>
-                                    <option value="16/9">16:9</option>
-                                    <option value="3/4">3:4</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
-                            <p style="margin: 0; font-size: 13px; color: #0369a1;">
-                                <strong>💡 Tip:</strong> Crop to focus on the receipt total and date for better text extraction
-                            </p>
+                    <div style="max-height: 50vh; overflow: hidden; background: #f0f0f0; border-radius: 8px;">
+                        <img id="receipt-cropper-image" src="${imageDataUrl}" style="max-width: 100%; display: block;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                        <button type="button" class="btn-outline" id="receipt-rotate-left" title="Rotate Left">↺ Rotate Left</button>
+                        <button type="button" class="btn-outline" id="receipt-rotate-right" title="Rotate Right">↻ Rotate Right</button>
+                        <button type="button" class="btn-outline" id="receipt-zoom-in" title="Zoom In">🔍+ Zoom In</button>
+                        <button type="button" class="btn-outline" id="receipt-zoom-out" title="Zoom Out">🔍- Zoom Out</button>
+                        <button type="button" class="btn-outline" id="receipt-reset-crop" title="Reset">🔄 Reset</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+                        <div style="display: flex; gap: 8px; margin-left: auto;">
+                            <span style="color: var(--text-secondary);">Aspect Ratio:</span>
+                            <select id="receipt-aspect-ratio" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 8px;">
+                                <option value="NaN">Free (Best for receipts)</option>
+                                <option value="1">1:1 (Square)</option>
+                                <option value="4/3">4:3</option>
+                                <option value="16/9">16:9</option>
+                                <option value="3/4">3:4</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
-                        <button type="button" class="btn-outline" id="cancel-receipt-crop">Cancel</button>
-                        <button type="button" class="btn-primary" id="apply-receipt-crop">Apply Crop & Save</button>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                        <p style="margin: 0; font-size: 13px; color: #0369a1;">
+                            <strong>💡 Tip:</strong> Crop to focus on the receipt total and date for better text extraction
+                        </p>
                     </div>
                 </div>
+                <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                    <button type="button" class="btn-outline" id="cancel-receipt-crop">Cancel</button>
+                    <button type="button" class="btn-primary" id="apply-receipt-crop">Apply Crop & Save</button>
+                </div>
             </div>
-        `;
-        
-        // Remove existing modal if any
-        const existingModal = document.getElementById('receipt-cropper-modal');
-        if (existingModal) existingModal.remove();
-        
-        // Add modal to page
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Get modal element
-        this.cropperModal = document.getElementById('receipt-cropper-modal');
-        
-        // Initialize cropper
-        const image = document.getElementById('receipt-cropper-image');
-        this.cropper = new Cropper(image, {
-            aspectRatio: NaN,
-            viewMode: 1,
-            dragMode: 'crop',
-            autoCropArea: 1,
-            restore: false,
-            guides: true,
-            center: true,
-            highlight: false,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-            minCropBoxWidth: 100,
-            minCropBoxHeight: 100,
-        });
-        
-        // Setup modal event listeners
-        this.setupReceiptCropperEventListeners();
-    };
+        </div>
+    `;
     
-    reader.readAsDataURL(file);
+    // Remove existing modal if any
+    const existingModal = document.getElementById('receipt-cropper-modal');
+    if (existingModal) existingModal.remove();
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Get modal element
+    this.cropperModal = document.getElementById('receipt-cropper-modal');
+    
+    // Initialize cropper
+    const image = document.getElementById('receipt-cropper-image');
+    this.cropper = new Cropper(image, {
+        aspectRatio: NaN,
+        viewMode: 1,
+        dragMode: 'crop',
+        autoCropArea: 1,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        minCropBoxWidth: 100,
+        minCropBoxHeight: 100,
+    });
+    
+    // Setup modal event listeners
+    this.setupReceiptCropperEventListeners();
 },
 
 setupReceiptCropperEventListeners() {
@@ -439,12 +485,28 @@ setupReceiptCropperEventListeners() {
     
     document.getElementById('close-receipt-cropper')?.addEventListener('click', () => this.closeReceiptCropperModal());
     document.getElementById('cancel-receipt-crop')?.addEventListener('click', () => this.closeReceiptCropperModal());
+    
     document.getElementById('apply-receipt-crop')?.addEventListener('click', () => this.applyReceiptCrop());
-    document.getElementById('receipt-rotate-left')?.addEventListener('click', () => this.cropper?.rotate(-90));
-    document.getElementById('receipt-rotate-right')?.addEventListener('click', () => this.cropper?.rotate(90));
-    document.getElementById('receipt-zoom-in')?.addEventListener('click', () => this.cropper?.zoom(0.1));
-    document.getElementById('receipt-zoom-out')?.addEventListener('click', () => this.cropper?.zoom(-0.1));
-    document.getElementById('receipt-reset-crop')?.addEventListener('click', () => this.cropper?.reset());
+    
+    document.getElementById('receipt-rotate-left')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.rotate(-90);
+    });
+    
+    document.getElementById('receipt-rotate-right')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.rotate(90);
+    });
+    
+    document.getElementById('receipt-zoom-in')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.zoom(0.1);
+    });
+    
+    document.getElementById('receipt-zoom-out')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.zoom(-0.1);
+    });
+    
+    document.getElementById('receipt-reset-crop')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.reset();
+    });
     
     document.getElementById('receipt-aspect-ratio')?.addEventListener('change', (e) => {
         if (this.cropper) {
@@ -506,7 +568,7 @@ applyReceiptCrop() {
     }, this.currentPhotoFile.type || 'image/jpeg', 0.95);
 },
 
-// Modify capturePhoto to offer cropping
+// Update capturePhoto to use the new cropping
 capturePhoto() {
     console.log('📸 Capturing photo...');
     
@@ -570,7 +632,7 @@ capturePhoto() {
     }
 },
 
-// Save cropped receipt
+// Add these helper methods
 saveCroppedReceipt(file, imageUrl) {
     console.log('💾 Saving cropped receipt:', file.name);
     
@@ -613,7 +675,6 @@ saveCroppedReceipt(file, imageUrl) {
     reader.readAsDataURL(file);
 },
 
-// Save receipt from file without cropping
 saveReceiptFromFile(file, dataURL) {
     console.log('💾 Saving receipt without cropping:', file.name);
     
