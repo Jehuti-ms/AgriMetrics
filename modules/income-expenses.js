@@ -334,6 +334,320 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
+    // Add cropping properties at the start of camera methods
+cropperModal: null,
+cropper: null,
+currentPhotoFile: null,
+currentPhotoCallback: null,
+
+// Add these new cropping methods here:
+
+// ===== RECEIPT PHOTO CROPPING METHODS =====
+showReceiptCropperModal(file) {
+    console.log('🖼️ Showing receipt cropper modal for:', file.name);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        // Create modal HTML
+        const modalHTML = `
+            <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000;">
+                <div class="popout-modal-content" style="max-width: 800px; width: 90%;">
+                    <div class="popout-modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                        <h3 class="popout-modal-title">✂️ Crop Receipt Image</h3>
+                        <button class="popout-modal-close" id="close-receipt-cropper">&times;</button>
+                    </div>
+                    <div class="popout-modal-body" style="padding: 20px; max-height: 60vh; overflow: hidden;">
+                        <div style="margin-bottom: 16px; text-align: center; color: var(--text-secondary);">
+                            Drag to adjust the crop area for better receipt scanning
+                        </div>
+                        <div style="max-height: 50vh; overflow: hidden; background: #f0f0f0; border-radius: 8px;">
+                            <img id="receipt-cropper-image" src="${e.target.result}" style="max-width: 100%; display: block;">
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                            <button type="button" class="btn-outline" id="receipt-rotate-left" title="Rotate Left">↺ Rotate Left</button>
+                            <button type="button" class="btn-outline" id="receipt-rotate-right" title="Rotate Right">↻ Rotate Right</button>
+                            <button type="button" class="btn-outline" id="receipt-zoom-in" title="Zoom In">🔍+ Zoom In</button>
+                            <button type="button" class="btn-outline" id="receipt-zoom-out" title="Zoom Out">🔍- Zoom Out</button>
+                            <button type="button" class="btn-outline" id="receipt-reset-crop" title="Reset">🔄 Reset</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+                            <div style="display: flex; gap: 8px; margin-left: auto;">
+                                <span style="color: var(--text-secondary);">Aspect Ratio:</span>
+                                <select id="receipt-aspect-ratio" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 8px;">
+                                    <option value="NaN">Free (Best for receipts)</option>
+                                    <option value="1">1:1 (Square)</option>
+                                    <option value="4/3">4:3</option>
+                                    <option value="16/9">16:9</option>
+                                    <option value="3/4">3:4</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                            <p style="margin: 0; font-size: 13px; color: #0369a1;">
+                                <strong>💡 Tip:</strong> Crop to focus on the receipt total and date for better text extraction
+                            </p>
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                        <button type="button" class="btn-outline" id="cancel-receipt-crop">Cancel</button>
+                        <button type="button" class="btn-primary" id="apply-receipt-crop">Apply Crop & Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('receipt-cropper-modal');
+        if (existingModal) existingModal.remove();
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Get modal element
+        this.cropperModal = document.getElementById('receipt-cropper-modal');
+        
+        // Initialize cropper
+        const image = document.getElementById('receipt-cropper-image');
+        this.cropper = new Cropper(image, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            dragMode: 'crop',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            minCropBoxWidth: 100,
+            minCropBoxHeight: 100,
+        });
+        
+        // Setup modal event listeners
+        this.setupReceiptCropperEventListeners();
+    };
+    
+    reader.readAsDataURL(file);
+},
+
+setupReceiptCropperEventListeners() {
+    if (!this.cropperModal) return;
+    
+    document.getElementById('close-receipt-cropper')?.addEventListener('click', () => this.closeReceiptCropperModal());
+    document.getElementById('cancel-receipt-crop')?.addEventListener('click', () => this.closeReceiptCropperModal());
+    document.getElementById('apply-receipt-crop')?.addEventListener('click', () => this.applyReceiptCrop());
+    document.getElementById('receipt-rotate-left')?.addEventListener('click', () => this.cropper?.rotate(-90));
+    document.getElementById('receipt-rotate-right')?.addEventListener('click', () => this.cropper?.rotate(90));
+    document.getElementById('receipt-zoom-in')?.addEventListener('click', () => this.cropper?.zoom(0.1));
+    document.getElementById('receipt-zoom-out')?.addEventListener('click', () => this.cropper?.zoom(-0.1));
+    document.getElementById('receipt-reset-crop')?.addEventListener('click', () => this.cropper?.reset());
+    
+    document.getElementById('receipt-aspect-ratio')?.addEventListener('change', (e) => {
+        if (this.cropper) {
+            const value = e.target.value;
+            this.cropper.setAspectRatio(value === 'NaN' ? NaN : parseFloat(value));
+        }
+    });
+    
+    this.cropperModal.addEventListener('click', (e) => {
+        if (e.target === this.cropperModal) this.closeReceiptCropperModal();
+    });
+},
+
+closeReceiptCropperModal() {
+    if (this.cropper) {
+        this.cropper.destroy();
+        this.cropper = null;
+    }
+    
+    const modal = document.getElementById('receipt-cropper-modal');
+    if (modal) modal.remove();
+    
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) fileInput.value = '';
+},
+
+applyReceiptCrop() {
+    if (!this.cropper) return;
+    
+    console.log('✂️ Applying crop to receipt...');
+    
+    const canvas = this.cropper.getCroppedCanvas({
+        maxWidth: 1200,
+        maxHeight: 1200,
+        fillColor: '#fff',
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    canvas.toBlob((blob) => {
+        const croppedFile = new File([blob], this.currentPhotoFile.name, {
+            type: this.currentPhotoFile.type || 'image/jpeg',
+            lastModified: Date.now()
+        });
+        
+        const croppedImageUrl = URL.createObjectURL(blob);
+        
+        console.log('✅ Crop applied to receipt:', {
+            originalSize: this.currentPhotoFile.size,
+            croppedSize: blob.size
+        });
+        
+        if (this.currentPhotoCallback) {
+            this.currentPhotoCallback(croppedFile, croppedImageUrl);
+        }
+        
+        this.closeReceiptCropperModal();
+        
+    }, this.currentPhotoFile.type || 'image/jpeg', 0.95);
+},
+
+// Modify capturePhoto to offer cropping
+capturePhoto() {
+    console.log('📸 Capturing photo...');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    
+    if (!video || !canvas) {
+        console.error('Video or canvas element not found');
+        this.showNotification('Camera elements missing', 'error');
+        return;
+    }
+    
+    if (!this.cameraStream || video.paused || video.readyState < 2) {
+        console.error('Camera not ready');
+        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+        return;
+    }
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const context = canvas.getContext('2d');
+    
+    try {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        if (status) status.textContent = 'Processing photo...';
+        
+        video.style.filter = 'brightness(150%) contrast(120%)';
+        setTimeout(() => {
+            video.style.filter = '';
+        }, 200);
+        
+        const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+        
+        if (status) status.textContent = 'Do you want to crop?';
+        
+        // Convert dataURL to file
+        fetch(dataURL)
+            .then(res => res.blob())
+            .then(blob => {
+                const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                
+                // Ask if user wants to crop
+                if (confirm('Would you like to crop this photo before saving?')) {
+                    this.currentPhotoFile = file;
+                    this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                        this.saveCroppedReceipt(croppedFile, croppedImageUrl);
+                    };
+                    this.showReceiptCropperModal(file);
+                } else {
+                    this.saveReceiptFromFile(file, dataURL);
+                }
+            });
+        
+    } catch (error) {
+        console.error('❌ Capture error:', error);
+        if (status) status.textContent = 'Error';
+        this.showNotification('Failed to capture photo', 'error');
+    }
+},
+
+// Save cropped receipt
+saveCroppedReceipt(file, imageUrl) {
+    console.log('💾 Saving cropped receipt:', file.name);
+    
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        const dataURL = e.target.result;
+        const receiptId = `camera_${Date.now()}`;
+        
+        const receipt = {
+            id: receiptId,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataURL: dataURL,
+            downloadURL: imageUrl,
+            status: 'pending',
+            uploadedAt: new Date().toISOString(),
+            source: 'camera',
+            cropped: true
+        };
+        
+        this.saveReceiptLocally(receipt);
+        this.saveReceiptToFirebase(receipt)
+            .then(() => {
+                this.showNotification('✅ Cropped receipt saved!', 'success');
+                this.updateModalReceiptsList();
+                this.updateReceiptQueueUI();
+                this.showCaptureSuccess(receipt);
+            })
+            .catch(error => {
+                console.error('❌ Firebase save error:', error);
+                this.showNotification('✅ Receipt saved locally!', 'success');
+                this.updateModalReceiptsList();
+                this.updateReceiptQueueUI();
+                this.showCaptureSuccess(receipt);
+            });
+    };
+    
+    reader.readAsDataURL(file);
+},
+
+// Save receipt from file without cropping
+saveReceiptFromFile(file, dataURL) {
+    console.log('💾 Saving receipt without cropping:', file.name);
+    
+    const receiptId = `camera_${Date.now()}`;
+    
+    const receipt = {
+        id: receiptId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        dataURL: dataURL,
+        status: 'pending',
+        uploadedAt: new Date().toISOString(),
+        source: 'camera',
+        cropped: false
+    };
+    
+    this.saveReceiptLocally(receipt);
+    this.saveReceiptToFirebase(receipt)
+        .then(() => {
+            this.showNotification('✅ Receipt saved!', 'success');
+            this.updateModalReceiptsList();
+            this.updateReceiptQueueUI();
+            this.showCaptureSuccess(receipt);
+        })
+        .catch(error => {
+            console.error('❌ Firebase save error:', error);
+            this.showNotification('✅ Receipt saved locally!', 'success');
+            this.updateModalReceiptsList();
+            this.updateReceiptQueueUI();
+            this.showCaptureSuccess(receipt);
+        });
+},
+    
     initializeCamera() {
         console.log('📷 Initializing camera...');
         
