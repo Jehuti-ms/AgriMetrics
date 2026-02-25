@@ -334,7 +334,6 @@ const IncomeExpensesModule = {
     },
 
     // ==================== CAMERA METHODS ====================
-   // ==================== CAMERA METHODS ====================
 cropperModal: null,
 cropper: null,
 currentPhotoFile: null,
@@ -643,7 +642,6 @@ capturePhoto() {
 },
 
 // Add these helper methods
-// Add these helper methods
 saveCroppedReceipt(file, imageUrl) {
     console.log('💾 Saving cropped receipt:', file.name);
     
@@ -720,84 +718,118 @@ saveReceiptFromFile(file, dataURL) {
         });
 },
     
-    initializeCamera() {
-        console.log('📷 Initializing camera...');
+   initializeCamera() {
+    console.log('📷 Initializing camera...');
+    
+    try {
+        const video = document.getElementById('camera-preview');
+        const status = document.getElementById('camera-status');
+        const cameraSection = document.getElementById('camera-section');
         
-        try {
-            const video = document.getElementById('camera-preview');
-            const status = document.getElementById('camera-status');
-            
-            if (!video) {
-                console.error('❌ Camera preview element not found');
-                this.showNotification('Camera preview element missing', 'error');
-                this.showUploadInterface();
-                return;
-            }
-            
-            video.srcObject = null;
-            video.pause();
-            
-            if (this.cameraStream) {
-                this.cameraStream.getTracks().forEach(track => track.stop());
-                this.cameraStream = null;
-            }
-            
-            if (status) status.textContent = 'Requesting camera access...';
-            
-            const constraints = {
-                video: {
-                    facingMode: this.cameraFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            };
-            
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(stream => {
-                    console.log('✅ Camera access granted');
-                    this.cameraStream = stream;
-                    video.srcObject = stream;
-                    
-                    video.play()
-                        .then(() => {
-                            console.log('📹 Video is playing successfully');
-                            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                            if (status) status.textContent = `${cameraType} Camera - Ready`;
-                            
-                            const switchBtn = document.getElementById('switch-camera');
-                            if (switchBtn) {
-                                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                                switchBtn.innerHTML = `
-                                    <span class="btn-icon">🔄</span>
-                                    <span class="btn-text">Switch to ${nextMode}</span>
-                                `;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('❌ Video play error:', error);
-                            this.showNotification('Failed to start camera playback', 'error');
-                        });
-                })
-                .catch(error => {
-                    console.error('❌ Camera error:', error);
-                    let errorMessage = 'Camera access denied.';
-                    if (error.name === 'NotFoundError') {
-                        errorMessage = 'No camera found on this device.';
-                    } else if (error.name === 'NotAllowedError') {
-                        errorMessage = 'Camera permission denied.';
-                    }
-                    this.showNotification(errorMessage, 'error');
-                    this.showUploadInterface();
-                });
-                
-        } catch (error) {
-            console.error('🚨 Camera initialization error:', error);
-            this.showNotification('Camera initialization failed', 'error');
+        if (!video) {
+            console.error('❌ Camera preview element not found');
+            this.showNotification('Camera preview element missing', 'error');
             this.showUploadInterface();
+            return;
         }
-    },
-
+        
+        // First check if mediaDevices is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            console.error('❌ Camera API not supported in this browser');
+            if (status) status.textContent = 'Camera not supported';
+            this.showNotification('Camera not supported in this browser', 'error');
+            this.showUploadInterface();
+            return;
+        }
+        
+        video.srcObject = null;
+        video.pause();
+        
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        
+        if (status) status.textContent = 'Requesting camera access...';
+        
+        // Check if any cameras are available
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                console.log(`📹 Found ${videoDevices.length} camera(s):`, videoDevices.map(d => d.label || 'Unnamed camera'));
+                
+                if (videoDevices.length === 0) {
+                    throw new Error('No camera found on this device');
+                }
+                
+                const constraints = {
+                    video: {
+                        facingMode: this.cameraFacingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+                
+                return navigator.mediaDevices.getUserMedia(constraints);
+            })
+            .then(stream => {
+                console.log('✅ Camera access granted');
+                this.cameraStream = stream;
+                video.srcObject = stream;
+                
+                video.play()
+                    .then(() => {
+                        console.log('📹 Video is playing successfully');
+                        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                        if (status) status.textContent = `${cameraType} Camera - Ready`;
+                        
+                        const switchBtn = document.getElementById('switch-camera');
+                        if (switchBtn) {
+                            const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                            switchBtn.innerHTML = `
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Switch to ${nextMode}</span>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Video play error:', error);
+                        this.showNotification('Failed to start camera playback', 'error');
+                        this.showUploadInterface();
+                    });
+            })
+            .catch(error => {
+                console.error('❌ Camera error:', error);
+                let errorMessage = 'Camera access denied.';
+                
+                if (error.message === 'No camera found on this device') {
+                    errorMessage = 'No camera found on this device.';
+                } else if (error.name === 'NotFoundError' || error.message.includes('NotReadableError')) {
+                    errorMessage = 'No camera found on this device.';
+                } else if (error.name === 'NotAllowedError' || error.message.includes('Permission denied')) {
+                    errorMessage = 'Camera permission denied. Please check your browser settings.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Camera is already in use by another application.';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage = 'Camera does not support required settings.';
+                }
+                
+                if (status) status.textContent = 'Camera unavailable';
+                this.showNotification(errorMessage, 'error');
+                
+                // Show upload interface as fallback
+                setTimeout(() => {
+                    this.showUploadInterface();
+                }, 2000);
+            });
+            
+    } catch (error) {
+        console.error('🚨 Camera initialization error:', error);
+        this.showNotification('Camera initialization failed', 'error');
+        this.showUploadInterface();
+    }
+},
   
     createReceiptFromBase64(dataURL, timestamp) {
         const base64Data = dataURL.split(',')[1];
@@ -1859,25 +1891,63 @@ showTransactionModal(transactionId = null) {
         }, 100);
     },
 
-    showCameraInterface() {
-        console.log('📷 Showing camera interface...');
+   showCameraInterface() {
+    console.log('📷 Showing camera interface...');
+    
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    if (uploadSection) uploadSection.style.display = 'none';
+    if (quickActionsSection) quickActionsSection.style.display = 'none';
+    if (cameraSection) {
+        cameraSection.style.display = 'block';
         
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        if (uploadSection) uploadSection.style.display = 'none';
-        if (quickActionsSection) quickActionsSection.style.display = 'none';
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
+        // Quick check if camera might be available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const status = document.getElementById('camera-status');
+            if (status) status.textContent = 'Camera not supported';
+            this.showNotification('Camera not supported in this browser', 'warning');
+            
+            // Show upload option after 3 seconds
+            setTimeout(() => {
+                if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                    this.showUploadInterface();
+                }
+            }, 3000);
+        } else {
             this.initializeCamera();
         }
-        if (recentSection) recentSection.style.display = 'block';
         
-        console.log('✅ Camera interface shown');
-    },
+        // Add crop button after camera is initialized
+        setTimeout(() => {
+            this.addCropButtonToCamera();
+        }, 500);
+    }
+    if (recentSection) recentSection.style.display = 'block';
+    
+    console.log('✅ Camera interface shown');
+},
 
+    checkCameraAvailability() {
+    return new Promise((resolve) => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            resolve(false);
+            return;
+        }
+        
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const hasCamera = devices.some(device => device.kind === 'videoinput');
+                resolve(hasCamera);
+            })
+            .catch(() => {
+                resolve(false);
+            });
+    });
+},
+    
     // ==================== EVENT HANDLERS ====================
     setupImportReceiptsHandlers() {
         console.log('Setting up import receipt handlers');
