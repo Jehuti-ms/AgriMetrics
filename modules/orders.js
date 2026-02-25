@@ -676,7 +676,7 @@ const OrdersModule = {
         return statuses[status] || status;
     },
 
-  setupEventListeners() {
+ setupEventListeners() {
     console.log('🔧 Setting up Orders module event listeners...');
     
     // Remove existing listeners to prevent duplicates
@@ -684,7 +684,7 @@ const OrdersModule = {
         document.removeEventListener('click', this._clickHandler);
     }
     
-    // Single click handler for everything
+    // SINGLE click handler for everything (ONE listener to rule them all)
     this._clickHandler = (e) => {
         const target = e.target;
         
@@ -742,7 +742,7 @@ const OrdersModule = {
             return;
         }
         
-        // ===== BUTTON HANDLERS =====
+        // ===== BUTTON HANDLERS (by ID) =====
         const button = target.closest('button');
         if (!button) return;
         
@@ -781,10 +781,10 @@ const OrdersModule = {
         }
     };
     
-    // Attach the single click handler
+    // Attach the SINGLE click handler
     document.addEventListener('click', this._clickHandler);
     
-    // Form submissions
+    // Form submissions (these need separate listeners because they're submit events, not clicks)
     document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleOrderSubmit(e));
     document.getElementById('customer-form')?.addEventListener('submit', (e) => this.handleCustomerSubmit(e));
     
@@ -792,88 +792,11 @@ const OrdersModule = {
     const today = new Date().toISOString().split('T')[0];
     const orderDate = document.getElementById('order-date');
     if (orderDate) orderDate.value = today;
-    
-    console.log('✅ Orders module event listeners setup complete');
-}
-    
-    // Order form buttons
-    document.getElementById('show-order-form')?.addEventListener('click', () => this.showOrderForm());
-    document.getElementById('create-order-btn')?.addEventListener('click', () => this.showOrderForm());
-    document.getElementById('cancel-order-form')?.addEventListener('click', () => this.hideOrderForm());
-    
-    // Customer form buttons
-    document.getElementById('show-customer-form')?.addEventListener('click', () => this.showCustomerForm());
-    document.getElementById('add-customer-btn')?.addEventListener('click', () => this.showCustomerForm());
-    document.getElementById('cancel-customer-form')?.addEventListener('click', () => this.hideCustomerForm());
-    
-    // Action buttons
-    document.getElementById('manage-customers-btn')?.addEventListener('click', () => this.showCustomersSection());
-    document.getElementById('view-orders-btn')?.addEventListener('click', () => this.showAllOrders());
-    document.getElementById('export-orders-btn')?.addEventListener('click', () => this.exportOrders());
-    
-    // Form submissions
-    document.getElementById('order-form')?.addEventListener('submit', (e) => this.handleOrderSubmit(e));
-    document.getElementById('customer-form')?.addEventListener('submit', (e) => this.handleCustomerSubmit(e));
-    
-    // Add item button
-    document.getElementById('add-item-btn')?.addEventListener('click', () => this.addOrderItem());
-    
-    // Set today's date
-    const today = new Date().toISOString().split('T')[0];
-    const orderDate = document.getElementById('order-date');
-    if (orderDate) orderDate.value = today;
-
-    // EVENT DELEGATION for order buttons
-    document.addEventListener('click', (e) => {
-          console.log('🔍 Click detected on:', e.target);
-          console.log('🔍 Target classes:', e.target.className);
-          console.log('🔍 Target closest .edit-order:', e.target.closest('.edit-order'));
-        
-        // Edit order button
-        const editButton = e.target.closest('.edit-order');
-        if (editButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            const orderId = editButton.getAttribute('data-id');
-            console.log('✏️ Edit order clicked:', orderId);
-            
-            if (!orderId) {
-                console.error('❌ No order ID found');
-                return;
-            }
-            
-            // Call your edit function
-            this.editOrder(orderId);
-            return;
-        }
-        
-        // Delete order button
-        const deleteButton = e.target.closest('.delete-order');
-        if (deleteButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            const orderId = deleteButton.getAttribute('data-id');
-            console.log('🗑️ Delete order clicked:', orderId);
-            
-            if (!orderId) {
-                console.error('❌ No order ID found');
-                return;
-            }
-            
-            if (confirm('Are you sure you want to delete this order?')) {
-                this.deleteOrder(orderId);
-            }
-            return;
-        }
-    });
     
     // Calculate total when items change
     this.setupTotalCalculation();
     
-    // Delete and edit handlers
-    this.setupActionHandlers();
-    
-    // Hover effects
+    // Hover effects (optional - doesn't interfere with click handling)
     this.setupHoverEffects();
     
     // Mark listeners as attached
