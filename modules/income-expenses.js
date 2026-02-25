@@ -1922,8 +1922,10 @@ showTransactionModal(transactionId = null) {
         
         // Add crop button after camera is initialized
         setTimeout(() => {
-            this.addCropButtonToCamera();
-        }, 500);
+            if (document.getElementById('camera-section')?.style.display === 'block') {
+                this.addCropButtonToCamera();
+            }
+        }, 1000);
     }
     if (recentSection) recentSection.style.display = 'block';
     
