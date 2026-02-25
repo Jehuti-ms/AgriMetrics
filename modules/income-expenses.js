@@ -1147,85 +1147,97 @@ saveReceiptFromFile(file, dataURL) {
     },
 
     // ==================== FILE UPLOAD ====================
-    handleFileUpload(files) {
-        console.log('🎯 ========== handleFileUpload START ==========');
-        console.log('📁 Number of files:', files.length);
+   // Update your existing handleFileUpload method or add this if it doesn't exist
+handleFileUpload(files) {
+    console.log('🎯 ========== handleFileUpload START ==========');
+    console.log('📁 Number of files:', files.length);
+    
+    if (!files || files.length === 0) {
+        console.log('❌ No files');
+        return;
+    }
+    
+    // For first file, offer cropping
+    const file = files[0];
+    console.log('📄 Processing file:', file.name);
+    
+    // Show cropping option for images
+    if (file.type.startsWith('image/')) {
+        this.currentPhotoFile = file;
+        this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+            this.processCroppedReceipt(croppedFile, croppedImageUrl);
+        };
+        this.showReceiptCropperModal(file);
+    } else {
+        // For non-images (PDFs), process directly
+        this.processReceiptFile(file);
+    }
+},
+
+processCroppedReceipt(file, imageUrl) {
+    console.log('📦 Processing cropped receipt:', file.name);
+    
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        const dataURL = e.target.result;
+        const receiptId = 'receipt_' + Date.now();
         
-        if (!files || files.length === 0) {
-            console.log('❌ No files');
-            return;
-        }
-        
-        const file = files[0];
-        console.log('📄 Processing file:', file.name);
-        
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            console.log('✅ FileReader loaded successfully');
-            
-            try {
-                const dataURL = e.target.result;
-                const receiptId = 'upload_' + Date.now();
-                
-                const receipt = {
-                    id: receiptId,
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    dataURL: dataURL,
-                    status: 'pending',
-                    uploadedAt: new Date().toISOString(),
-                    source: 'upload'
-                };
-                
-                console.log('📦 Receipt created:', receipt);
-                
-                console.log('💾 Calling saveReceiptLocally...');
-                if (this.saveReceiptLocally) {
-                    this.saveReceiptLocally(receipt);
-                    console.log('✅ Called saveReceiptLocally');
-                } else {
-                    console.error('❌ saveReceiptLocally not found!');
-                }
-                
-                console.log('🔍 Checking receiptQueue after save:', {
-                    length: this.receiptQueue.length,
-                    containsReceipt: this.receiptQueue.some(r => r.id === receiptId),
-                    lastReceipt: this.receiptQueue[0]
-                });
-                
-                console.log('🔄 Updating UI...');
-                this.updateReceiptQueueUI();
-                this.updateModalReceiptsList();
-                
-                console.log('🔔 Showing notification...');
-                this.showNotification(`Uploaded: ${file.name}`, 'success');
-                
-                console.log('🪟 Showing success modal...');
-                this.showSimpleSuccessModal([receipt]);
-                
-                console.log('✅ ========== handleFileUpload SUCCESS ==========');
-                
-            } catch (error) {
-                console.error('❌ Error in handleFileUpload:', error);
-                this.showNotification('Upload failed: ' + error.message, 'error');
-            }
+        const receipt = {
+            id: receiptId,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataURL: dataURL,
+            downloadURL: imageUrl,
+            status: 'pending',
+            uploadedAt: new Date().toISOString(),
+            source: 'upload',
+            cropped: true
         };
         
-        reader.onerror = (error) => {
-            console.error('❌ FileReader error:', error);
-            this.showNotification('Failed to read file', 'error');
+        this.saveReceiptLocally(receipt);
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+        
+        this.showNotification(`Receipt "${file.name}" uploaded and cropped!`, 'success');
+        this.showSimpleSuccessModal([receipt]);
+    };
+    
+    reader.readAsDataURL(file);
+},
+
+processReceiptFile(file) {
+    console.log('📄 Processing receipt file without cropping:', file.name);
+    
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        const dataURL = e.target.result;
+        const receiptId = 'receipt_' + Date.now();
+        
+        const receipt = {
+            id: receiptId,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataURL: dataURL,
+            status: 'pending',
+            uploadedAt: new Date().toISOString(),
+            source: 'upload',
+            cropped: false
         };
         
-        reader.onabort = () => {
-            console.error('❌ FileReader aborted');
-            this.showNotification('File reading cancelled', 'error');
-        };
+        this.saveReceiptLocally(receipt);
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
         
-        console.log('📖 Starting FileReader readAsDataURL...');
-        reader.readAsDataURL(file);
-    },
+        this.showNotification(`Receipt "${file.name}" uploaded!`, 'success');
+        this.showSimpleSuccessModal([receipt]);
+    };
+    
+    reader.readAsDataURL(file);
+},
     
     showSimpleSuccessModal(receipts) {
         console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
