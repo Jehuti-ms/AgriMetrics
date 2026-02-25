@@ -794,7 +794,7 @@ const OrdersModule = {
     if (orderDate) orderDate.value = today;
     
     console.log('✅ Orders module event listeners setup complete');
-},
+}
     
     // Order form buttons
     document.getElementById('show-order-form')?.addEventListener('click', () => this.showOrderForm());
