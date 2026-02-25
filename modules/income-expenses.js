@@ -717,7 +717,7 @@ saveReceiptFromFile(file, dataURL) {
             this.showCaptureSuccess(receipt);
         });
 },
-    
+   
    initializeCamera() {
     console.log('📷 Initializing camera...');
     
@@ -1946,6 +1946,48 @@ showTransactionModal(transactionId = null) {
                 resolve(false);
             });
     });
+},
+
+     // Add this method to add a crop button to camera interface
+addCropButtonToCamera() {
+    const cameraControls = document.querySelector('.camera-controls');
+    if (!cameraControls) return;
+    
+    // Check if button already exists
+    if (document.getElementById('crop-captured-btn')) return;
+    
+    const cropBtn = document.createElement('button');
+    cropBtn.id = 'crop-captured-btn';
+    cropBtn.className = 'btn btn-outline';
+    cropBtn.innerHTML = `
+        <span class="btn-icon">✂️</span>
+        <span class="btn-text">Crop Last</span>
+    `;
+    
+    cropBtn.addEventListener('click', () => {
+        if (this.receiptQueue.length > 0) {
+            const lastReceipt = this.receiptQueue[0];
+            if (lastReceipt.type?.startsWith('image/')) {
+                // Convert dataURL to file
+                fetch(lastReceipt.dataURL)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], lastReceipt.name, { type: lastReceipt.type });
+                        this.currentPhotoFile = file;
+                        this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                            this.saveCroppedReceipt(croppedFile, croppedImageUrl);
+                        };
+                        this.showReceiptCropperModal(file);
+                    });
+            } else {
+                this.showNotification('Last receipt is not an image', 'error');
+            }
+        } else {
+            this.showNotification('No receipts to crop', 'info');
+        }
+    });
+    
+    cameraControls.appendChild(cropBtn);
 },
     
     // ==================== EVENT HANDLERS ====================
