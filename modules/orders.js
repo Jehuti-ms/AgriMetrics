@@ -804,32 +804,111 @@ const OrdersModule = {
     console.log('✅ Orders module event listeners setup complete');
 },
 
-    showOrderForm() {
-        document.getElementById('order-form-container').classList.remove('hidden');
-        document.getElementById('customer-form-container').classList.add('hidden');
-        document.getElementById('order-form').reset();
-        
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('order-date').value = today;
-        
-        document.getElementById('order-form-container').scrollIntoView({ behavior: 'smooth' });
-    },
+// Fix showOrderForm
+showOrderForm() {
+    console.log('📝 Showing order form');
+    
+    const formContainer = document.getElementById('order-form-container');
+    if (!formContainer) {
+        console.error('❌ Order form container not found');
+        return;
+    }
+    
+    formContainer.classList.remove('hidden');
+    
+    // Hide customer form if visible
+    const customerContainer = document.getElementById('customer-form-container');
+    if (customerContainer) customerContainer.classList.add('hidden');
+    
+    // Reset form
+    const form = document.getElementById('order-form');
+    if (form) form.reset();
+    
+    // Clear editing ID
+    const editingId = document.getElementById('editing-order-id');
+    if (editingId) editingId.value = '';
+    
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    const orderDate = document.getElementById('order-date');
+    if (orderDate) orderDate.value = today;
+    
+    // Reset items to one empty item
+    const itemsContainer = document.getElementById('order-items');
+    if (itemsContainer) {
+        itemsContainer.innerHTML = '';
+        this.addOrderItem(); // Add one empty item row
+    }
+    
+    // Update title if it exists
+    const title = document.querySelector('#order-form-container h3');
+    if (title) title.textContent = 'Create New Order';
+    
+    // Update submit button if it exists
+    const submitBtn = document.querySelector('#order-form button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Create Order';
+    
+    // Scroll to form
+    formContainer.scrollIntoView({ behavior: 'smooth' });
+},
 
-    hideOrderForm() {
-        document.getElementById('order-form-container').classList.add('hidden');
-    },
+// Fix hideOrderForm
+hideOrderForm() {
+    console.log('🙈 Hiding order form');
+    
+    const formContainer = document.getElementById('order-form-container');
+    if (formContainer) {
+        formContainer.classList.add('hidden');
+    }
+    
+    // Remove any cancel edit buttons
+    document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+},
 
-    showCustomerForm() {
-        document.getElementById('customer-form-container').classList.remove('hidden');
-        document.getElementById('order-form-container').classList.add('hidden');
-        document.getElementById('customer-form').reset();
-        
-        document.getElementById('customer-form-container').scrollIntoView({ behavior: 'smooth' });
-    },
+// Fix showCustomerForm
+showCustomerForm() {
+    console.log('👤 Showing customer form');
+    
+    const customerContainer = document.getElementById('customer-form-container');
+    if (!customerContainer) {
+        console.error('❌ Customer form container not found');
+        return;
+    }
+    
+    customerContainer.classList.remove('hidden');
+    
+    // Hide order form if visible
+    const orderContainer = document.getElementById('order-form-container');
+    if (orderContainer) orderContainer.classList.add('hidden');
+    
+    // Reset form
+    const form = document.getElementById('customer-form');
+    if (form) form.reset();
+    
+    // Update title if it exists
+    const title = document.querySelector('#customer-form-container h3');
+    if (title) title.textContent = 'Add New Customer';
+    
+    // Update submit button if it exists
+    const submitBtn = document.querySelector('#customer-form button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Add Customer';
+    
+    // Scroll to form
+    customerContainer.scrollIntoView({ behavior: 'smooth' });
+},
 
-    hideCustomerForm() {
-        document.getElementById('customer-form-container').classList.add('hidden');
-    },
+// Fix hideCustomerForm
+hideCustomerForm() {
+    console.log('🙈 Hiding customer form');
+    
+    const customerContainer = document.getElementById('customer-form-container');
+    if (customerContainer) {
+        customerContainer.classList.add('hidden');
+    }
+    
+    // Remove any cancel edit buttons
+    document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+},
 
     showCustomersSection() {
         const customersSection = document.getElementById('customers-section');
