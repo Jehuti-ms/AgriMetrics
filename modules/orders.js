@@ -1228,7 +1228,7 @@ editOrder(orderId) {
         this.calculateTotal();
         
     }, 100);
-}
+},
 
 // Helper method to add event listeners to an item
 addItemEventListeners(itemDiv) {
