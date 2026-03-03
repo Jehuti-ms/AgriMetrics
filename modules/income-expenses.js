@@ -111,6 +111,20 @@ setupSalesListeners() {
     }
 },
 
+    /*
+    // Simpler version
+setupSalesListeners() {
+    console.log('📡 Setting up sales listeners...');
+    
+    // Just use custom events (simpler and more reliable)
+    window.addEventListener('sale-completed', (event) => {
+        console.log('💰 Sale completed event received:', event.detail);
+        this.addIncomeFromSale(event.detail);
+    });
+    
+    console.log('✅ Sales listeners setup complete');
+},
+*/
     // Add this method
 setupFallbackSalesListener() {
     console.log('📡 Setting up fallback sales listener (custom events)');
