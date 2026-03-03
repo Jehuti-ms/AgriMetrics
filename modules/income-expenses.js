@@ -25,59 +25,150 @@ const IncomeExpensesModule = {
     isDeleting: false,
     
     // ==================== INITIALIZATION ====================
-    initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+  initialize() {
+    console.log('💰 Initializing Income & Expenses...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
 
-        // Check if Firebase services are available
-        this.isFirebaseAvailable = !!(window.firebase && window.db);
-        console.log('Firebase available:', this.isFirebaseAvailable, {
-            firebase: !!window.firebase,
-            db: !!window.db
+    // Check if Firebase services are available
+    this.isFirebaseAvailable = !!(window.firebase && window.db);
+    console.log('Firebase available:', this.isFirebaseAvailable, {
+        firebase: !!window.firebase,
+        db: !!window.db
+    });
+
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    // Setup network detection
+    this.setupNetworkDetection();
+    
+    // Load transactions
+    this.loadData();
+    
+    // Load receipts from Firebase
+    this.loadReceiptsFromFirebase();
+
+    // Setup global click handler for receipts
+    this.setupReceiptActionListeners();
+    
+    // Process any pending syncs
+    if (this.isFirebaseAvailable) {
+        setTimeout(() => {
+            this.syncLocalTransactionsToFirebase();
+        }, 3000);
+    }
+
+    // Make sure receiptQueue is initialized
+    this.receiptQueue = this.receiptQueue || [];
+    
+    // ✅ NEW: Listen for sales from Orders module
+    this.setupSalesListeners();
+            
+    this.renderModule();
+    this.initialized = true;
+    
+    console.log('✅ Income & Expenses initialized');
+    return true;
+},
+
+// ✅ NEW: Add this method to listen for sales
+setupSalesListeners() {
+    console.log('📡 Setting up sales listeners...');
+    
+    // Listen via Data Broadcaster
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.on('sale-completed', (saleData) => {
+            console.log('💰 Sale completed event received:', saleData);
+            this.addIncomeFromSale(saleData);
         });
-
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
-
-        // Setup network detection
-        this.setupNetworkDetection();
         
-        // Load transactions
-        this.loadData();
-        
-        // Load receipts from Firebase
-        this.loadReceiptsFromFirebase();
+        console.log('✅ DataBroadcaster listener registered');
+    }
+    
+    // Also listen via custom events as fallback
+    window.addEventListener('sale-completed', (event) => {
+        console.log('💰 Sale completed custom event received:', event.detail);
+        this.addIncomeFromSale(event.detail);
+    });
+    
+    console.log('✅ Sales listeners setup complete');
+},
 
-        // Setup global click handler for receipts
-        this.setupReceiptActionListeners();
-        
-        // Process any pending syncs
-        if (this.isFirebaseAvailable) {
-            setTimeout(() => {
-                this.syncLocalTransactionsToFirebase();
-            }, 3000);
-        }
-
-        // Make sure receiptQueue is initialized
-        this.receiptQueue = this.receiptQueue || [];
-                
-        this.renderModule();
-        this.initialized = true;
-        
-        console.log('✅ Income & Expenses initialized');
-        return true;
-    },
-
-    onThemeChange(theme) {
-        console.log(`Income & Expenses updating for theme: ${theme}`);
-    },
-
+// ✅ NEW: Add this method to create income from sale
+addIncomeFromSale(saleData) {
+    console.log('➕ Adding income from sale:', saleData);
+    
+    // Check if this order was already added
+    const existingTransaction = this.transactions.find(t => 
+        t.reference === `ORDER-${saleData.orderId}` || 
+        (t.source === 'orders-module' && t.orderId === saleData.orderId)
+    );
+    
+    if (existingTransaction) {
+        console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
+        return;
+    }
+    
+    // Create transaction data
+    const transactionData = {
+        id: Date.now() + Math.floor(Math.random() * 1000), // Ensure unique ID
+        date: saleData.date || new Date().toISOString().split('T')[0],
+        type: 'income',
+        category: 'sales',
+        amount: saleData.amount,
+        description: saleData.description || `Sale from order`,
+        paymentMethod: saleData.paymentMethod || 'cash',
+        reference: saleData.reference || `ORDER-${saleData.orderId}`,
+        notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
+        receipt: null,
+        userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        source: 'orders-module',
+        orderId: saleData.orderId,
+        customerName: saleData.customerName
+    };
+    
+    // Add to transactions array
+    if (!this.transactions) this.transactions = [];
+    this.transactions.unshift(transactionData);
+    
+    // Save to localStorage
+    try {
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        console.log('💾 Saved sale to localStorage:', transactionData.id);
+    } catch (storageError) {
+        console.warn('⚠️ Failed to save to localStorage:', storageError);
+    }
+    
+    // Save to Firebase if available
+    if (this.isFirebaseAvailable && window.db) {
+        this.saveTransactionToFirebase(transactionData)
+            .then(() => {
+                console.log('✅ Sale saved to Firebase');
+            })
+            .catch(error => {
+                console.warn('⚠️ Failed to save sale to Firebase:', error.message);
+            });
+    }
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    // Show notification
+    this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
+    
+    console.log('✅ Income added successfully:', transactionData);
+},
+    
     // ==================== NETWORK DETECTION ====================
     setupNetworkDetection() {
         this.isOnline = navigator.onLine;
