@@ -25,7 +25,7 @@ const IncomeExpensesModule = {
     isDeleting: false,
     
     // ==================== INITIALIZATION ====================
-  initialize() {
+ initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     this.element = document.getElementById('content-area');
@@ -68,7 +68,7 @@ const IncomeExpensesModule = {
     this.receiptQueue = this.receiptQueue || [];
     
     // ✅ NEW: Listen for sales from Orders module
-    this.setupSalesListeners();
+    this.setupSalesListeners();  
             
     this.renderModule();
     this.initialized = true;
@@ -77,7 +77,7 @@ const IncomeExpensesModule = {
     return true;
 },
 
-// ✅ NEW: Add this method to listen for sales
+// ✅ Add this method
 setupSalesListeners() {
     console.log('📡 Setting up sales listeners...');
     
