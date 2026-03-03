@@ -78,6 +78,7 @@ const IncomeExpensesModule = {
 },
 
 // ✅ Add this method, an even more robust version
+// Update this method
 setupSalesListeners() {
     console.log('📡 Setting up sales listeners...');
     
@@ -106,8 +107,27 @@ setupSalesListeners() {
     
     if (!listenerAttached) {
         console.log('⚠️ No event system found, using fallback');
-        this.setupFallbackSalesListener();
+        this.setupFallbackSalesListener(); 
     }
+},
+
+    // Add this method
+setupFallbackSalesListener() {
+    console.log('📡 Setting up fallback sales listener (custom events)');
+    
+    // Listen via custom events
+    window.addEventListener('sale-completed', (event) => {
+        console.log('💰 Sale completed custom event received:', event.detail);
+        this.addIncomeFromSale(event.detail);
+    });
+    
+    // Also listen for other possible event names
+    window.addEventListener('order-completed', (event) => {
+        console.log('💰 Order completed event received:', event.detail);
+        this.addIncomeFromSale(event.detail);
+    });
+    
+    console.log('✅ Fallback sales listeners setup complete');
 },
 
 // ✅ NEW: Add this method to create income from sale
