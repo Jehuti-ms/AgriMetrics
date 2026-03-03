@@ -1765,76 +1765,7 @@ processReceiptFile(file) {
             }, 1000);
         }
     },
-
-    // ===================== Delete Functionality =================
-    // Add this method to your Income & Expenses module
-editTransaction(transactionId) {
-    console.log('✏️ Editing transaction:', transactionId);
-    
-    // Find the transaction
-    const transaction = this.transactions.find(t => t.id == transactionId);
-    if (!transaction) {
-        this.showNotification('Transaction not found', 'error');
-        return;
-    }
-    
-    // Set current editing ID
-    this.currentEditingId = transactionId;
-    
-    // Show the transaction modal
-    this.showTransactionModal(transactionId);
-    
-    // Fill the form with transaction data
-    setTimeout(() => {
-        // Basic fields
-        const idInput = document.getElementById('transaction-id');
-        if (idInput) idInput.value = transaction.id;
-        
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = this.formatDateForInput(transaction.date);
-        
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = transaction.type;
-        
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = transaction.category;
-        
-        const amountInput = document.getElementById('transaction-amount');
-        if (amountInput) amountInput.value = transaction.amount;
-        
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) descriptionInput.value = transaction.description || '';
-        
-        const paymentSelect = document.getElementById('transaction-payment');
-        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
-        
-        const referenceInput = document.getElementById('transaction-reference');
-        if (referenceInput) referenceInput.value = transaction.reference || '';
-        
-        const notesInput = document.getElementById('transaction-notes');
-        if (notesInput) notesInput.value = transaction.notes || '';
-        
-        // Show delete button
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) deleteBtn.style.display = 'block';
-        
-        // Update modal title
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Edit Transaction';
-        
-        // Handle receipt if exists
-        if (transaction.receipt) {
-            this.receiptPreview = transaction.receipt;
-            this.showReceiptPreviewInTransactionModal(transaction.receipt);
-        } else {
-            this.receiptPreview = null;
-            this.clearReceiptPreview();
-        }
-    }, 100);
-},
-
-    
-
+  
     // ==================== MODAL MANAGEMENT ====================
     showImportReceiptsModal() {
         console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
