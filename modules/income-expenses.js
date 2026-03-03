@@ -77,27 +77,37 @@ const IncomeExpensesModule = {
     return true;
 },
 
-// ✅ Add this method
+// ✅ Add this method, an even more robust version
 setupSalesListeners() {
     console.log('📡 Setting up sales listeners...');
     
-    // Listen via Data Broadcaster
-    if (window.DataBroadcaster) {
-        window.DataBroadcaster.on('sale-completed', (saleData) => {
-            console.log('💰 Sale completed event received:', saleData);
-            this.addIncomeFromSale(saleData);
-        });
-        
-        console.log('✅ DataBroadcaster listener registered');
+    // Try different possible event systems
+    const possibleEventSystems = [
+        { obj: window.DataBroadcaster, name: 'DataBroadcaster' },
+        { obj: window.broadcaster, name: 'broadcaster' },
+        { obj: window.Broadcaster, name: 'Broadcaster' },
+        { obj: window.EventBus, name: 'EventBus' },
+        { obj: window.PubSub, name: 'PubSub' }
+    ];
+    
+    let listenerAttached = false;
+    
+    for (const system of possibleEventSystems) {
+        if (system.obj && typeof system.obj.on === 'function') {
+            system.obj.on('sale-completed', (saleData) => {
+                console.log(`💰 Sale completed via ${system.name}:`, saleData);
+                this.addIncomeFromSale(saleData);
+            });
+            console.log(`✅ Listener attached to ${system.name}`);
+            listenerAttached = true;
+            break;
+        }
     }
     
-    // Also listen via custom events as fallback
-    window.addEventListener('sale-completed', (event) => {
-        console.log('💰 Sale completed custom event received:', event.detail);
-        this.addIncomeFromSale(event.detail);
-    });
-    
-    console.log('✅ Sales listeners setup complete');
+    if (!listenerAttached) {
+        console.log('⚠️ No event system found, using fallback');
+        this.setupFallbackSalesListener();
+    }
 },
 
 // ✅ NEW: Add this method to create income from sale
