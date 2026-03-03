@@ -1119,6 +1119,8 @@ handleOrderSubmit(e) {
         // Update existing order
         const orderIndex = this.orders.findIndex(o => o.id == editingId);
         if (orderIndex !== -1) {
+            const oldStatus = this.orders[orderIndex].status;
+            
             this.orders[orderIndex] = {
                 ...this.orders[orderIndex],
                 customerId,
@@ -1129,6 +1131,12 @@ handleOrderSubmit(e) {
                 notes
             };
             this.saveData();
+            
+            // ✅ NEW: If status changed to completed, broadcast sale
+            if (status === 'completed' && oldStatus !== 'completed') {
+                this.broadcastOrderAsSale(this.orders[orderIndex]);
+            }
+            
             this.showNotification(`Order #${editingId} updated!`, 'success');
         }
     } else {
@@ -1144,6 +1152,12 @@ handleOrderSubmit(e) {
         };
         this.orders.unshift(orderData);
         this.saveData();
+        
+        // ✅ NEW: If order is completed, broadcast sale
+        if (status === 'completed') {
+            this.broadcastOrderAsSale(orderData);
+        }
+        
         this.showNotification('Order created successfully!', 'success');
     }
     
@@ -1151,6 +1165,47 @@ handleOrderSubmit(e) {
     this.resetOrderForm();
     this.hideOrderForm();
     this.renderModule();
+},
+
+// ✅ NEW: Add this method to broadcast order as sale
+broadcastOrderAsSale(order) {
+    console.log('📢 Broadcasting order as sale:', order.id);
+    
+    const customer = this.customers.find(c => c.id === order.customerId);
+    
+    // Create sale data
+    const saleData = {
+        id: order.id,
+        date: order.date,
+        description: `Order #${order.id} - ${customer?.name || 'Unknown Customer'}`,
+        amount: order.totalAmount,
+        type: 'income',
+        category: 'sales',
+        paymentMethod: 'cash', // Default, can be changed
+        reference: `ORDER-${order.id}`,
+        notes: `Auto-generated from order. ${order.notes || ''}`,
+        items: order.items,
+        customerId: order.customerId,
+        customerName: customer?.name,
+        source: 'orders-module',
+        orderId: order.id
+    };
+    
+    // Broadcast via Data Broadcaster
+    if (this.broadcaster) {
+        console.log('📡 Broadcasting sale-completed event');
+        this.broadcaster.broadcast('sale-completed', saleData);
+    } else {
+        console.log('⚠️ Broadcaster not available, using direct window event');
+        // Fallback: use custom event
+        const event = new CustomEvent('sale-completed', { detail: saleData });
+        window.dispatchEvent(event);
+    }
+    
+    // Also use the existing broadcast method if it exists
+    if (this.broadcastSaleCompleted) {
+        this.broadcastSaleCompleted(saleData);
+    }
 },
     
     // Reset order form
