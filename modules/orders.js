@@ -147,6 +147,30 @@ const OrdersModule = {
         }
     },
 
+    // ✅ ADD THIS NEW METHOD HERE (around line 180-200)
+broadcastSaleCompleted(saleData) {
+    if (!this.broadcaster) {
+        console.log('⚠️ Broadcaster not available for sale event');
+        // Fallback: use custom event
+        const event = new CustomEvent('sale-completed', { detail: saleData });
+        window.dispatchEvent(event);
+        return;
+    }
+    
+    console.log('📢 Broadcasting sale completed:', saleData);
+    
+    this.broadcaster.broadcast('sale-completed', {
+        module: 'orders',
+        timestamp: new Date().toISOString(),
+        orderId: saleData.orderId,
+        amount: saleData.amount,
+        items: saleData.items || [],
+        customer: saleData.customerName || 'Unknown',
+        date: saleData.date || new Date().toISOString().split('T')[0],
+        description: `Order #${saleData.orderId} - ${saleData.customerName || 'Unknown Customer'}`
+    });
+},
+    
     // ✅ NEW: Broadcast when order is deleted
     broadcastOrderDeleted(orderId) {
         if (!this.broadcaster) return;
@@ -1120,6 +1144,7 @@ handleOrderSubmit(e) {
         const orderIndex = this.orders.findIndex(o => o.id == editingId);
         if (orderIndex !== -1) {
             const oldStatus = this.orders[orderIndex].status;
+            const oldOrder = {...this.orders[orderIndex]};
             
             this.orders[orderIndex] = {
                 ...this.orders[orderIndex],
@@ -1132,10 +1157,8 @@ handleOrderSubmit(e) {
             };
             this.saveData();
             
-            // ✅ NEW: If status changed to completed, broadcast sale
-            if (status === 'completed' && oldStatus !== 'completed') {
-                this.broadcastOrderAsSale(this.orders[orderIndex]);
-            }
+            // Broadcast update
+            this.broadcastOrderUpdated(this.orders[orderIndex]);
             
             this.showNotification(`Order #${editingId} updated!`, 'success');
         }
@@ -1153,10 +1176,8 @@ handleOrderSubmit(e) {
         this.orders.unshift(orderData);
         this.saveData();
         
-        // ✅ NEW: If order is completed, broadcast sale
-        if (status === 'completed') {
-            this.broadcastOrderAsSale(orderData);
-        }
+        // Broadcast creation (this will also trigger sale broadcast if completed)
+        this.broadcastOrderCreated(orderData);
         
         this.showNotification('Order created successfully!', 'success');
     }
