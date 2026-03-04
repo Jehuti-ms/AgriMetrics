@@ -1045,5 +1045,207 @@ setTimeout(() => {
     }
 }, 2000);
 
+// ==================== AGRIMETRICS SYNC MANAGER ====================
+let agrimetricsSyncWorker = null;
+
+// Initialize Agrimetrics sync
+async function initAgrimetricsSync() {
+    console.log('🌾 Initializing Agrimetrics sync...');
+    
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        try {
+            const registration = await navigator.serviceWorker.register('sw.js');
+            console.log('Agrimetrics Service Worker registered');
+            
+            await navigator.serviceWorker.ready;
+            
+            navigator.serviceWorker.addEventListener('message', handleAgrimetricsSWMessage);
+            
+            // Register periodic sync
+            if ('periodicSync' in registration) {
+                const status = await navigator.permissions.query({
+                    name: 'periodic-background-sync',
+                });
+                
+                if (status.state === 'granted') {
+                    await registration.periodicSync.register('agrimetrics-periodic-sync', {
+                        minInterval: 60 * 60 * 1000 // 1 hour
+                    });
+                    console.log('Agrimetrics periodic sync registered');
+                }
+            }
+            
+            agrimetricsSyncWorker = registration;
+            
+            // Initial sync
+            triggerAgrimetricsSync();
+            
+            // Online/offline listeners
+            window.addEventListener('online', () => {
+                console.log('📶 Agrimetrics back online - syncing');
+                triggerAgrimetricsSync();
+            });
+            
+            return true;
+            
+        } catch (error) {
+            console.error('Agrimetrics sync initialization failed:', error);
+            return false;
+        }
+    }
+    return false;
+}
+
+// Handle messages from Service Worker
+function handleAgrimetricsSWMessage(event) {
+    const { type, timestamp, success, error, data } = event.data;
+    
+    console.log('📨 Agrimetrics SW message:', type, data);
+    
+    switch (type) {
+        case 'AGRIMETRICS_SYNC_STARTED':
+            showAgrimetricsNotification('Syncing data...', 'info');
+            updateAgrimetricsSyncStatus('🔄 Syncing...', '#2196F3');
+            break;
+            
+        case 'AGRIMETRICS_SYNC_COMPLETED':
+            if (success) {
+                showAgrimetricsNotification('Sync complete!', 'success');
+                updateAgrimetricsSyncStatus('✅ Synced', '#4CAF50');
+                if (typeof loadAgrimetricsData === 'function') {
+                    loadAgrimetricsData();
+                }
+            } else {
+                showAgrimetricsNotification('Sync failed', 'error');
+                updateAgrimetricsSyncStatus('❌ Failed', '#f44336');
+            }
+            localStorage.setItem('agrimetricsLastSync', timestamp);
+            updateAgrimetricsLastSync();
+            break;
+            
+        case 'AGRIMETRICS_SYNC_FAILED':
+            showAgrimetricsNotification(`Sync error: ${error}`, 'error');
+            updateAgrimetricsSyncStatus('❌ Error', '#f44336');
+            break;
+    }
+}
+
+// Trigger Agrimetrics background sync
+async function triggerAgrimetricsSync() {
+    if (!agrimetricsSyncWorker || !agrimetricsSyncWorker.sync) {
+        console.log('Agrimetrics background sync not available');
+        return false;
+    }
+    
+    try {
+        const userData = localStorage.getItem('agrimetricsUser');
+        if (!userData) return false;
+        
+        const user = JSON.parse(userData);
+        
+        // Get current farm/production data
+        const syncData = {
+            userId: user.uid,
+            farmId: localStorage.getItem('currentFarmId'),
+            dataType: 'production',
+            payload: {
+                production: window.agrimetricsData || [],
+                lastUpdated: new Date().toISOString()
+            }
+        };
+        
+        const registration = await navigator.serviceWorker.ready;
+        
+        if (registration.active) {
+            registration.active.postMessage({
+                type: 'QUEUE_AGRIMETRICS_DATA',
+                payload: syncData
+            });
+            
+            if (registration.sync) {
+                await registration.sync.register('agrimetrics-firestore-sync');
+                console.log('✅ Agrimetrics background sync registered');
+            }
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('Failed to trigger Agrimetrics sync:', error);
+        return false;
+    }
+}
+
+// Update sync status in UI
+function updateAgrimetricsSyncStatus(message, color) {
+    const statusElement = document.getElementById('agrimetrics-sync-status');
+    if (statusElement) {
+        statusElement.innerHTML = `<span style="color: ${color}">${message}</span>`;
+    }
+}
+
+// Update last sync display
+function updateAgrimetricsLastSync() {
+    const lastSync = localStorage.getItem('agrimetricsLastSync');
+    const element = document.getElementById('agrimetrics-last-sync');
+    
+    if (element && lastSync) {
+        const date = new Date(lastSync);
+        element.textContent = `Last sync: ${date.toLocaleString()}`;
+    }
+}
+
+// Show notification
+function showAgrimetricsNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `agrimetrics-notification ${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Add CSS animations
+const agrimetricsStyle = document.createElement('style');
+agrimetricsStyle.textContent = `
+    @keyframes agrimetricsSlideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .agrimetrics-sync-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+        animation: agrimetricsPulse 2s infinite;
+    }
+    
+    @keyframes agrimetricsPulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+`;
+document.head.appendChild(agrimetricsStyle);
+
 // Initialize the app
 window.app = new FarmManagementApp();
