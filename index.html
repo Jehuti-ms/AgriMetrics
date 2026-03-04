@@ -187,6 +187,20 @@
                 <div class="side-menu-title">Farm Operations</div>
                 <div class="side-menu-subtitle">Production & Management</div>
             </div>
+           
+             <!-- Sync Status Indicator -->
+                <div class="side-menu-sync">
+                    <div class="sync-indicator-compact">
+                        <span class="sync-dot" id="sync-dot"></span>
+                        <span class="sync-text" id="agrimetrics-sync-status">Connected</span>
+                    </div>
+                    <div class="sync-time" id="agrimetrics-last-sync"></div>
+                    <button class="sync-now-btn-side" onclick="triggerAgrimetricsSync()" title="Sync Now">
+                        🔄
+                    </button>
+                </div>
+            </div>
+        
             <div class="side-menu-items">
                 <!-- Production & Operations -->
                 <div class="side-menu-section">
