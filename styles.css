@@ -4530,7 +4530,7 @@ body.dark-mode {
 }
 
 /* Mini Sync Status - Won't break layout */
-.sync-status-mini {
+/*.sync-status-mini {
     font-size: 11px;
     margin-top: 5px;
     padding: 2px 0;
@@ -4538,5 +4538,5 @@ body.dark-mode {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
+}*/
 
