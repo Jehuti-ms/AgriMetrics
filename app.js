@@ -107,6 +107,17 @@ fixContentPosition() {
     }, 100);
 }
 
+    // Helper to get current sales data (add this near your other global functions)
+function getSalesData() {
+    return window.salesData || window.currentSalesData || [];
+}
+
+// Helper to refresh data from Firebase
+async function refreshAllData() {
+    console.log('🔄 Refreshing all data from Firebase...');
+    await window.app.initializeAppComponents();
+}
+
 // NEW METHOD: Fix specific problematic modules
 fixModuleHeaderSpecifics() {
     const contentArea = document.getElementById('content-area');
@@ -263,35 +274,176 @@ checkInitialAuth() {
     }
     
            async initializeAppComponents() {
-            console.log('🚀 Initializing app components...');
-            
-            // Initialize modules
-            this.initializeStyleManager();
-            this.initializeFarmModules();
-            
-            // Load user preferences
-            await this.loadUserPreferences();
-
-            this.applyUserTheme();
-
-            this.setupSystemThemeListener();
-               
-            // Setup UI - CREATE NAVIGATION FIRST
-            this.createTopNavigation();
-               
-            // Setup logout handlers AFTER creating navigation
-            this.setupLogoutHandlers();
-
-                        
-            setTimeout(() => {
-                this.setupHamburgerMenu();
-                this.setupEventListeners(); 
-                this.setupDarkMode(); // SETUP THEME TOGGLE AFTER NAV IS CREATED
-                this.showSection(this.currentSection);
-                this.hideLoading();
-                console.log('✅ App fully initialized');
-            }, 100);
+    console.log('🚀 Initializing app components...');
+    
+    // Initialize modules
+    this.initializeStyleManager();
+    this.initializeFarmModules();
+    
+    // Load user preferences
+    await this.loadUserPreferences();
+    this.applyUserTheme();
+    this.setupSystemThemeListener();
+    
+    // Setup UI - CREATE NAVIGATION FIRST
+    this.createTopNavigation();
+    
+    // Setup logout handlers AFTER creating navigation
+    this.setupLogoutHandlers();
+    
+    // ===== CRITICAL: LOAD ALL DATA FROM FIREBASE =====
+    try {
+        console.log('🔥 Loading all farm data from Firebase...');
+        
+        // Show loading notification
+        if (typeof showAgrimetricsNotification === 'function') {
+            showAgrimetricsNotification('Loading your farm data...', 'info');
         }
+        
+        // Get current user
+        const user = firebase.auth().currentUser;
+        if (user) {
+            console.log('👤 Loading data for user:', user.uid);
+            
+            // ===== 1. LOAD SALES RECORDS =====
+            try {
+                const salesSnapshot = await db.collection('sales').doc(user.uid).collection('records').get();
+                console.log(`📊 Found ${salesSnapshot.size} sales periods`);
+                
+                let allSales = [];
+                salesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.entries && data.entries.length > 0) {
+                        allSales = allSales.concat(data.entries);
+                    } else if (data.sales && data.sales.length > 0) {
+                        allSales = allSales.concat(data.sales);
+                    } else if (Array.isArray(data) && data.length > 0) {
+                        allSales = allSales.concat(data);
+                    }
+                });
+                
+                if (allSales.length > 0) {
+                    window.salesData = allSales;
+                    window.currentSalesData = allSales;
+                    localStorage.setItem('salesData', JSON.stringify(allSales));
+                    console.log(`✅ Loaded ${allSales.length} sales records`);
+                } else {
+                    console.log('ℹ️ No sales records found');
+                    window.salesData = [];
+                    window.currentSalesData = [];
+                }
+            } catch (e) {
+                console.log('Error loading sales:', e);
+                window.salesData = [];
+                window.currentSalesData = [];
+            }
+            
+            // ===== 2. LOAD PRODUCTION RECORDS =====
+            try {
+                const productionSnapshot = await db.collection('production').doc(user.uid).collection('records').get();
+                console.log(`📊 Found ${productionSnapshot.size} production periods`);
+                
+                let allProduction = [];
+                productionSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.entries && data.entries.length > 0) {
+                        allProduction = allProduction.concat(data.entries);
+                    } else if (Array.isArray(data) && data.length > 0) {
+                        allProduction = allProduction.concat(data);
+                    }
+                });
+                
+                if (allProduction.length > 0) {
+                    window.productionData = allProduction;
+                    localStorage.setItem('productionData', JSON.stringify(allProduction));
+                    console.log(`✅ Loaded ${allProduction.length} production records`);
+                } else {
+                    console.log('ℹ️ No production records found');
+                    window.productionData = [];
+                }
+            } catch (e) {
+                console.log('Error loading production:', e);
+                window.productionData = [];
+            }
+            
+            // ===== 3. LOAD INVENTORY DATA =====
+            try {
+                const inventoryDoc = await db.collection('inventory').doc(user.uid).get();
+                if (inventoryDoc.exists) {
+                    const data = inventoryDoc.data();
+                    window.inventoryData = data.items || data.inventory || [];
+                    localStorage.setItem('inventoryData', JSON.stringify(window.inventoryData));
+                    console.log(`✅ Loaded ${window.inventoryData.length} inventory items`);
+                } else {
+                    console.log('ℹ️ No inventory data found');
+                    window.inventoryData = [];
+                }
+            } catch (e) {
+                console.log('Error loading inventory:', e);
+                window.inventoryData = [];
+            }
+            
+            // ===== 4. LOAD EXPENSES DATA =====
+            try {
+                const expensesSnapshot = await db.collection('expenses').doc(user.uid).collection('records').get();
+                console.log(`📊 Found ${expensesSnapshot.size} expense periods`);
+                
+                let allExpenses = [];
+                expensesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.entries && data.entries.length > 0) {
+                        allExpenses = allExpenses.concat(data.entries);
+                    } else if (Array.isArray(data) && data.length > 0) {
+                        allExpenses = allExpenses.concat(data);
+                    }
+                });
+                
+                if (allExpenses.length > 0) {
+                    window.expensesData = allExpenses;
+                    localStorage.setItem('expensesData', JSON.stringify(allExpenses));
+                    console.log(`✅ Loaded ${allExpenses.length} expense records`);
+                } else {
+                    console.log('ℹ️ No expense records found');
+                    window.expensesData = [];
+                }
+            } catch (e) {
+                console.log('Error loading expenses:', e);
+                window.expensesData = [];
+            }
+            
+            // Update last sync time
+            localStorage.setItem('agrimetricsLastSync', new Date().toISOString());
+            
+            // Show success
+            if (typeof showAgrimetricsNotification === 'function') {
+                showAgrimetricsNotification('All farm data loaded!', 'success');
+            }
+            if (typeof updateAgrimetricsSyncStatus === 'function') {
+                updateAgrimetricsSyncStatus('✅ Synced', '#4CAF50');
+            }
+            
+            console.log('✅ All Firebase data loaded successfully');
+        } else {
+            console.log('⚠️ No user logged in, skipping data load');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading farm data:', error);
+        if (typeof showAgrimetricsNotification === 'function') {
+            showAgrimetricsNotification('Error loading data', 'error');
+        }
+    }
+    
+    // Continue with UI setup
+    setTimeout(() => {
+        this.setupHamburgerMenu();
+        this.setupEventListeners(); 
+        this.setupDarkMode();
+        this.showSection(this.currentSection);
+        this.hideLoading();
+        console.log('✅ App fully initialized');
+    }, 100);
+}
     
   handleNoUser() {
     console.log('🔒 No user found, showing auth');
@@ -1246,6 +1398,143 @@ agrimetricsStyle.textContent = `
     }
 `;
 document.head.appendChild(agrimetricsStyle);
+
+// ==================== LOAD ALL FARM DATA FROM FIREBASE ====================
+async function loadAllFarmDataFromFirebase() {
+    console.log('🔥 LOADING ALL FARM DATA FROM FIREBASE');
+    
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            console.log('❌ No user logged in');
+            return;
+        }
+        
+        console.log('👤 Loading ALL data for user:', user.uid);
+        
+        // Show loading notification
+        showAgrimetricsNotification('Loading your farm data...', 'info');
+        
+        // ===== 1. LOAD SALES RECORDS =====
+        try {
+            const salesSnapshot = await db.collection('sales').doc(user.uid).collection('records').get();
+            console.log(`📊 Found ${salesSnapshot.size} sales periods`);
+            
+            let allSales = [];
+            salesSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.entries) allSales = allSales.concat(data.entries);
+                else if (data.sales) allSales = allSales.concat(data.sales);
+                else if (Array.isArray(data)) allSales = allSales.concat(data);
+            });
+            
+            if (allSales.length > 0) {
+                window.salesData = allSales;
+                localStorage.setItem('salesData', JSON.stringify(allSales));
+                console.log(`✅ Loaded ${allSales.length} sales records`);
+            }
+        } catch (e) {
+            console.log('Error loading sales:', e);
+        }
+        
+        // ===== 2. LOAD PRODUCTION RECORDS =====
+        try {
+            const productionSnapshot = await db.collection('production').doc(user.uid).collection('records').get();
+            console.log(`📊 Found ${productionSnapshot.size} production periods`);
+            
+            let allProduction = [];
+            productionSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.entries) allProduction = allProduction.concat(data.entries);
+                else if (Array.isArray(data)) allProduction = allProduction.concat(data);
+            });
+            
+            if (allProduction.length > 0) {
+                window.productionData = allProduction;
+                localStorage.setItem('productionData', JSON.stringify(allProduction));
+                console.log(`✅ Loaded ${allProduction.length} production records`);
+            }
+        } catch (e) {
+            console.log('Error loading production:', e);
+        }
+        
+        // ===== 3. LOAD INVENTORY DATA =====
+        try {
+            const inventoryDoc = await db.collection('inventory').doc(user.uid).get();
+            if (inventoryDoc.exists) {
+                const data = inventoryDoc.data();
+                window.inventoryData = data.items || [];
+                localStorage.setItem('inventoryData', JSON.stringify(window.inventoryData));
+                console.log(`✅ Loaded ${window.inventoryData.length} inventory items`);
+            }
+        } catch (e) {
+            console.log('Error loading inventory:', e);
+        }
+        
+        // ===== 4. LOAD EXPENSES DATA =====
+        try {
+            const expensesSnapshot = await db.collection('expenses').doc(user.uid).collection('records').get();
+            console.log(`📊 Found ${expensesSnapshot.size} expense periods`);
+            
+            let allExpenses = [];
+            expensesSnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.entries) allExpenses = allExpenses.concat(data.entries);
+                else if (Array.isArray(data)) allExpenses = allExpenses.concat(data);
+            });
+            
+            if (allExpenses.length > 0) {
+                window.expensesData = allExpenses;
+                localStorage.setItem('expensesData', JSON.stringify(allExpenses));
+                console.log(`✅ Loaded ${allExpenses.length} expense records`);
+            }
+        } catch (e) {
+            console.log('Error loading expenses:', e);
+        }
+        
+        // Show success
+        showAgrimetricsNotification('All farm data loaded!', 'success');
+        updateAgrimetricsSyncStatus('✅ Synced', '#4CAF50');
+        
+    } catch (error) {
+        console.error('❌ Error loading farm data:', error);
+        showAgrimetricsNotification('Error loading data', 'error');
+    }
+}
+
+// Run this in console to SEE what's in Firebase
+async function checkMyFirebaseData() {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        console.log('❌ Login first');
+        return;
+    }
+    
+    console.log('🔍 CHECKING ALL YOUR FIREBASE DATA');
+    console.log('User ID:', user.uid);
+    
+    const collections = ['sales', 'production', 'expenses', 'inventory'];
+    
+    for (const collection of collections) {
+        try {
+            if (collection === 'inventory') {
+                const doc = await db.collection(collection).doc(user.uid).get();
+                console.log(`📁 ${collection}:`, doc.exists ? doc.data() : 'No data');
+            } else {
+                const snapshot = await db.collection(collection).doc(user.uid).collection('records').get();
+                console.log(`📁 ${collection}: ${snapshot.size} periods`);
+                snapshot.forEach(doc => {
+                    console.log(`  - ${doc.id}:`, doc.data());
+                });
+            }
+        } catch (e) {
+            console.log(`Error checking ${collection}:`, e);
+        }
+    }
+}
+
+// Run it
+//checkMyFirebaseData();
 
 // Initialize the app
 window.app = new FarmManagementApp();
