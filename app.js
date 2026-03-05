@@ -1534,7 +1534,7 @@ async function checkMyFirebaseData() {
 }
 
 // Run it
-//checkMyFirebaseData();
+checkMyFirebaseData();
 
 // Initialize the app
 window.app = new FarmManagementApp();
