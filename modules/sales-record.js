@@ -245,7 +245,7 @@ const SalesRecordModule = {
         });
     },
 
-    // Make sure sales are broadcasting when saved
+   // Make sure sales are broadcasting when saved
 function broadcastSalesToIncome(salesData) {
     console.log('📢 Sales module broadcasting to income...');
     
@@ -281,7 +281,7 @@ async function saveSales(salesData) {
     
     // Also save to Firebase for income module to read
     await saveSalesToIncomeCollection(salesData);
-}
+}  
 
 // Save to income collection in Firebase
 async function saveSalesToIncomeCollection(salesData) {
@@ -312,7 +312,7 @@ async function saveSalesToIncomeCollection(salesData) {
     }, { merge: true });
     
     console.log('✅ Sales also saved to income collection');
-},
+}  
 
     // ✅ NEW: Handle order completions from orders module
     handleOrderCompletion(orderData) {
