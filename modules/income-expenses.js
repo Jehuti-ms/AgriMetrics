@@ -4780,6 +4780,9 @@ if (window.FarmModules) {
     console.log('✅ Income & Expenses module registered');
 }
 
+// MAKE IT GLOBAL - ADD THIS LINE!
+window.IncomeExpensesModule = IncomeExpensesModule;
+
 // Universal registration
 (function() {
     console.log(`📦 Registering income-expenses module...`);
