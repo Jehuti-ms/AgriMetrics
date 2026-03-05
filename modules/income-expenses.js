@@ -24,62 +24,62 @@ const IncomeExpensesModule = {
     isOnline: true,
     isDeleting: false,
     
-    // ==================== INITIALIZATION ====================
-    initialize() {
-        console.log('💰 Initializing Income & Expenses...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+   // ==================== INITIALIZATION ====================
+async initialize() {  // ← ADD async
+    console.log('💰 Initializing Income & Expenses...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
 
-        // Check if Firebase services are available
-        this.isFirebaseAvailable = !!(window.firebase && window.db);
-        console.log('Firebase available:', this.isFirebaseAvailable, {
-            firebase: !!window.firebase,
-            db: !!window.db
-        });
+    // Check if Firebase services are available
+    this.isFirebaseAvailable = !!(window.firebase && window.db);
+    console.log('Firebase available:', this.isFirebaseAvailable, {
+        firebase: !!window.firebase,
+        db: !!window.db
+    });
 
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
 
-        // Setup network detection
-        this.setupNetworkDetection();
-        
-        // Load transactions
-        this.loadData();
-        
-        // Load receipts from Firebase
-        this.loadReceiptsFromFirebase();
+    // Setup network detection
+    this.setupNetworkDetection();
+    
+    // Load transactions - WAIT for this to complete
+    await this.loadData();  // ← ADD await
+    
+    // Load receipts from Firebase - WAIT for this too
+    await this.loadReceiptsFromFirebase();  // ← ADD await
 
-        // Setup global click handler for receipts
-        this.setupReceiptActionListeners();
-        
-        // Process any pending syncs
-        if (this.isFirebaseAvailable) {
-            setTimeout(() => {
-                this.syncLocalTransactionsToFirebase();
-            }, 3000);
-        }
+    // Setup global click handler for receipts
+    this.setupReceiptActionListeners();
+    
+    // Process any pending syncs (don't need to await this)
+    if (this.isFirebaseAvailable) {
+        setTimeout(() => {
+            this.syncLocalTransactionsToFirebase();
+        }, 3000);
+    }
 
-        // Make sure receiptQueue is initialized
-        this.receiptQueue = this.receiptQueue || [];
-        
-        // ✅ NEW: Listen for sales from Orders module
-        this.setupSalesListeners();  
-                
-        this.renderModule();
-        this.initialized = true;
-        
-        // ✅ Connect to Data Broadcaster
-        this.connectToDataBroadcaster();
-        
-        console.log('✅ Income & Expenses initialized');
-        return true;
-    },
-
+    // Make sure receiptQueue is initialized
+    this.receiptQueue = this.receiptQueue || [];
+    
+    // Listen for sales from Orders module
+    this.setupSalesListeners();  
+            
+    this.renderModule();  // ← Now this happens AFTER data is loaded
+    this.initialized = true;
+    
+    // Connect to Data Broadcaster
+    this.connectToDataBroadcaster();
+    
+    console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
+    return true;
+},
+    
     // ✅ FIXED: Moved inside the module
     connectToDataBroadcaster() {
         console.log('🔌 Income module attempting to connect to Data Broadcaster...');
