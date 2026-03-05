@@ -282,164 +282,258 @@
 <!-- 10. Sign-in Fix (loaded last) -->
 <script src="signin-fix.js"></script>
 
-    <!-- Minimal Floating Sync Indicator - Completely Independent -->
-<div id="agrimetrics-mini-sync" style="
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    background: rgba(33, 33, 33, 0.8);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border-radius: 30px;
-    padding: 6px 14px;
-    font-size: 12px;
-    color: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
-    z-index: 10000;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-">
-    <span id="mini-sync-dot" style="
+    <!-- Minimal Floating Sync Indicator - Self-contained, won't break anything -->
+<style>
+    /* ALL sync styles are here - completely separate from your main CSS */
+    .agri-float-sync {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        background: rgba(33, 33, 33, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border-radius: 40px;
+        padding: 8px 18px;
+        font-size: 13px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.15);
+        z-index: 999999;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        letter-spacing: 0.3px;
+    }
+    
+    .agri-sync-dot {
         display: inline-block;
         width: 8px;
         height: 8px;
         border-radius: 50%;
         background: #4CAF50;
-        box-shadow: 0 0 5px currentColor;
-    "></span>
-    <span id="mini-sync-text">Connected</span>
+        box-shadow: 0 0 8px #4CAF50;
+        animation: agriPulse 2s infinite;
+    }
+    
+    .agri-sync-dot.syncing {
+        background: #2196F3;
+        box-shadow: 0 0 8px #2196F3;
+        animation: agriRotate 1s infinite;
+    }
+    
+    .agri-sync-dot.error {
+        background: #f44336;
+        box-shadow: 0 0 8px #f44336;
+        animation: none;
+    }
+    
+    .agri-sync-button {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        background: #2196F3;
+        border-radius: 40px;
+        padding: 8px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: white;
+        box-shadow: 0 4px 15px rgba(33,150,243,0.3);
+        z-index: 1000000;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        letter-spacing: 0.3px;
+    }
+    
+    .agri-sync-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(33,150,243,0.4);
+        background: #1976D2;
+    }
+    
+    .agri-sync-button:active {
+        transform: translateY(0);
+    }
+    
+    .agri-sync-button.syncing {
+        background: #666;
+        pointer-events: none;
+        opacity: 0.8;
+    }
+    
+    @keyframes agriPulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.2); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes agriRotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Mobile adjustments - still separate */
+    @media (max-width: 480px) {
+        .agri-float-sync {
+            bottom: 10px;
+            right: 10px;
+            padding: 6px 14px;
+            font-size: 12px;
+        }
+        
+        .agri-sync-button {
+            bottom: 10px;
+            right: 10px;
+            padding: 6px 16px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<!-- Sync Indicator (always present, shown when logged in) -->
+<div id="agriSyncIndicator" class="agri-float-sync">
+    <span id="agriSyncDot" class="agri-sync-dot"></span>
+    <span id="agriSyncText">Connected</span>
 </div>
 
-<!-- Optional: Clickable sync button (if you want manual sync) -->
-<div id="agrimetrics-sync-button" style="
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    background: #2196F3;
-    border-radius: 30px;
-    padding: 8px 16px;
-    font-size: 13px;
-    color: white;
-    box-shadow: 0 2px 10px rgba(33,150,243,0.3);
-    z-index: 10001;
-    display: none;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-" onclick="triggerAgrimetricsSync()">
+<!-- Sync Button (optional - for manual sync) -->
+<button id="agriSyncButton" class="agri-sync-button" onclick="triggerAgriSync()">
     <span>🔄</span>
     <span>Sync Now</span>
-</div>
+</button>
 
-    <script>
-// ==================== MINIMAL FLOATING SYNC INDICATOR ====================
-
-// Initialize sync indicator
-function initMiniSync() {
-    const miniSync = document.getElementById('agrimetrics-mini-sync');
-    const syncButton = document.getElementById('agrimetrics-sync-button');
-    
-    if (!miniSync) return;
+<script>
+// ==================== AGRI SYNC INDICATOR - SELF CONTAINED ====================
+(function() {
+    // Get elements
+    const indicator = document.getElementById('agriSyncIndicator');
+    const button = document.getElementById('agriSyncButton');
+    const dot = document.getElementById('agriSyncDot');
+    const text = document.getElementById('agriSyncText');
     
     // Check if user is logged in (adjust this based on your auth system)
-    const isLoggedIn = localStorage.getItem('agrimetricsUser') !== null || 
-                       localStorage.getItem('currentUser') !== null;
-    
-    if (isLoggedIn) {
-        miniSync.style.display = 'flex';
-        if (syncButton) syncButton.style.display = 'flex';
-        updateMiniSyncStatus('Connected', '#4CAF50');
-        loadLastSyncTime();
-    } else {
-        miniSync.style.display = 'none';
-        if (syncButton) syncButton.style.display = 'none';
-    }
-}
-
-// Update sync status
-function updateMiniSyncStatus(status, color) {
-    const dot = document.getElementById('mini-sync-dot');
-    const text = document.getElementById('mini-sync-text');
-    
-    if (dot) {
-        dot.style.background = color;
-        dot.style.boxShadow = `0 0 5px ${color}`;
-    }
-    if (text) text.textContent = status;
-}
-
-// Load and display last sync time
-function loadLastSyncTime() {
-    const lastSync = localStorage.getItem('agrimetricsLastSync');
-    const miniSync = document.getElementById('agrimetrics-mini-sync');
-    
-    if (lastSync && miniSync) {
-        const date = new Date(lastSync);
-        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        miniSync.title = `Last sync: ${date.toLocaleString()}`;
-    }
-}
-
-// Manual sync trigger
-function triggerAgrimetricsSync() {
-    const button = document.getElementById('agrimetrics-sync-button');
-    const originalText = button ? button.innerHTML : '';
-    
-    // Update UI to show syncing
-    updateMiniSyncStatus('Syncing...', '#2196F3');
-    if (button) {
-        button.innerHTML = '<span>⏳</span><span>Syncing...</span>';
-        button.style.background = '#666';
-        button.style.pointerEvents = 'none';
+    function isUserLoggedIn() {
+        return localStorage.getItem('agrimetricsUser') !== null || 
+               localStorage.getItem('currentUser') !== null ||
+               localStorage.getItem('user') !== null;
     }
     
-    // Simulate sync (replace with your actual sync logic)
-    setTimeout(() => {
-        // Update last sync time
-        const now = new Date().toISOString();
-        localStorage.setItem('agrimetricsLastSync', now);
+    // Update sync status
+    window.updateAgriSyncStatus = function(status, type) {
+        if (!indicator || !dot || !text) return;
         
-        // Restore UI
-        updateMiniSyncStatus('Connected', '#4CAF50');
-        if (button) {
-            button.innerHTML = '<span>🔄</span><span>Sync Now</span>';
-            button.style.background = '#2196F3';
-            button.style.pointerEvents = 'auto';
+        indicator.style.display = isUserLoggedIn() ? 'flex' : 'none';
+        
+        if (!isUserLoggedIn()) return;
+        
+        text.textContent = status;
+        
+        // Update dot based on type
+        dot.className = 'agri-sync-dot';
+        if (type === 'syncing') {
+            dot.classList.add('syncing');
+            if (button) button.classList.add('syncing');
+        } else if (type === 'error') {
+            dot.classList.add('error');
+            if (button) button.classList.remove('syncing');
+        } else {
+            if (button) button.classList.remove('syncing');
         }
-        loadLastSyncTime();
         
-        // Optional: Show success briefly
-        updateMiniSyncStatus('✓ Synced', '#4CAF50');
-        setTimeout(() => {
-            updateMiniSyncStatus('Connected', '#4CAF50');
-        }, 2000);
-    }, 1500);
-}
-
-// Listen for auth changes (adjust based on your auth system)
-window.addEventListener('storage', (e) => {
-    if (e.key === 'agrimetricsUser' || e.key === 'currentUser') {
-        initMiniSync();
-    }
-});
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', initMiniSync);
-
-// Also check every few seconds for updates
-setInterval(() => {
-    if (document.getElementById('agrimetrics-mini-sync').style.display === 'flex') {
+        // Update colors
+        if (type === 'syncing') {
+            dot.style.background = '#2196F3';
+            dot.style.boxShadow = '0 0 8px #2196F3';
+        } else if (type === 'error') {
+            dot.style.background = '#f44336';
+            dot.style.boxShadow = '0 0 8px #f44336';
+        } else {
+            dot.style.background = '#4CAF50';
+            dot.style.boxShadow = '0 0 8px #4CAF50';
+        }
+        
+        // Load last sync time
         loadLastSyncTime();
+    };
+    
+    // Load last sync time
+    function loadLastSyncTime() {
+        const lastSync = localStorage.getItem('agrimetricsLastSync');
+        if (lastSync && indicator) {
+            const date = new Date(lastSync);
+            indicator.title = `Last sync: ${date.toLocaleString()}`;
+        }
     }
-}, 10000);
+    
+    // Manual sync function
+    window.triggerAgriSync = function() {
+        // Show syncing state
+        window.updateAgriSyncStatus('Syncing...', 'syncing');
+        
+        // Disable button
+        if (button) {
+            button.style.pointerEvents = 'none';
+            button.innerHTML = '<span>⏳</span><span>Syncing...</span>';
+        }
+        
+        // Simulate sync (replace with your actual sync logic)
+        setTimeout(() => {
+            // Update last sync time
+            localStorage.setItem('agrimetricsLastSync', new Date().toISOString());
+            
+            // Show success
+            window.updateAgriSyncStatus('✓ Synced', 'success');
+            
+            // Restore button
+            if (button) {
+                button.style.pointerEvents = 'auto';
+                button.innerHTML = '<span>🔄</span><span>Sync Now</span>';
+            }
+            
+            // Revert to Connected after 2 seconds
+            setTimeout(() => {
+                window.updateAgriSyncStatus('Connected', 'connected');
+            }, 2000);
+            
+        }, 1500);
+    };
+    
+    // Initialize on load
+    function init() {
+        if (isUserLoggedIn()) {
+            indicator.style.display = 'flex';
+            if (button) button.style.display = 'flex';
+            window.updateAgriSyncStatus('Connected', 'connected');
+        } else {
+            indicator.style.display = 'none';
+            if (button) button.style.display = 'none';
+        }
+    }
+    
+    // Listen for storage events (login/logout in other tabs)
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'agrimetricsUser' || e.key === 'currentUser' || e.key === 'user') {
+            init();
+        }
+    });
+    
+    // Initialize
+    init();
+    
+    // Check for updates every 30 seconds
+    setInterval(() => {
+        if (isUserLoggedIn()) {
+            loadLastSyncTime();
+        }
+    }, 30000);
+})();
 </script>
     
 </body>
