@@ -316,123 +316,238 @@ const IncomeExpensesModule = {
 
     // ==================== DATA MANAGEMENT ====================
     async loadData() {
-        console.log('Loading transactions...');
+    console.log('Loading transactions...');
+    
+    try {
+        let loadedFromFirebase = false;
         
-        try {
-            let loadedFromFirebase = false;
-            
-            // Try to load from Firebase first
-            if (this.isFirebaseAvailable && window.db) {
-                try {
-                    const user = window.firebase.auth().currentUser;
-                    if (user) {
-                        console.log('👤 User authenticated:', user.uid);
+        // Try to load from Firebase first
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                const user = window.firebase.auth().currentUser;
+                if (user) {
+                    console.log('👤 User authenticated:', user.uid);
+                    
+                    const today = new Date();
+                    const month = today.getMonth();
+                    const year = today.getFullYear();
+                    const period = `${month}-${year}`;
+                    
+                    // TRY MULTIPLE PATHS WHERE DATA MIGHT BE
+                    
+                    // Path 1: income collection (this is where your phone likely saves)
+                    try {
+                        const incomeRef = window.db.collection('income').doc(user.uid).collection('transactions').doc(period);
+                        const incomeDoc = await incomeRef.get();
                         
-                        const snapshot = await window.db.collection('transactions')
-                            .where('userId', '==', user.uid)
-                            .limit(100)
-                            .get();
-                        
-                        if (!snapshot.empty) {
-                            this.transactions = snapshot.docs.map(doc => {
-                                const data = doc.data();
-                                return {
-                                    id: data.id || parseInt(doc.id),
-                                    date: data.date,
-                                    type: data.type,
-                                    category: data.category,
-                                    amount: parseFloat(data.amount) || 0,
-                                    description: data.description || '',
-                                    paymentMethod: data.paymentMethod || 'cash',
-                                    reference: data.reference || '',
-                                    notes: data.notes || '',
-                                    receipt: data.receipt || null,
-                                    userId: data.userId || user.uid,
-                                    createdAt: data.createdAt || new Date().toISOString(),
-                                    updatedAt: data.updatedAt || new Date().toISOString(),
-                                    syncedAt: data.syncedAt,
-                                    source: 'firebase'
-                                };
-                            });
+                        if (incomeDoc.exists) {
+                            const data = incomeDoc.data();
+                            if (data.entries && data.entries.length > 0) {
+                                this.transactions = data.entries;
+                                console.log('✅ Loaded from income collection:', this.transactions.length);
+                                loadedFromFirebase = true;
+                                
+                                // Save to localStorage
+                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('No data in income collection');
+                    }
+                    
+                    // Path 2: income-expenses collection
+                    if (!loadedFromFirebase) {
+                        try {
+                            const ieRef = window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period);
+                            const ieDoc = await ieRef.get();
                             
-                            // Sort locally after loading
-                            this.transactions.sort((a, b) => {
-                                const dateA = new Date(a.createdAt || a.date);
-                                const dateB = new Date(b.createdAt || b.date);
-                                return dateB - dateA;
-                            });
-                            
-                            console.log('✅ Loaded transactions from Firebase:', this.transactions.length);
-                            
-                            // Save to localStorage for offline use
-                            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                            localStorage.setItem('last-firebase-sync', new Date().toISOString());
-                            
-                            loadedFromFirebase = true;
+                            if (ieDoc.exists) {
+                                const data = ieDoc.data();
+                                if (data.entries && data.entries.length > 0) {
+                                    this.transactions = data.entries;
+                                    console.log('✅ Loaded from income-expenses collection:', this.transactions.length);
+                                    loadedFromFirebase = true;
+                                    
+                                    // Save to localStorage
+                                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('No data in income-expenses collection');
                         }
                     }
-                } catch (firebaseError) {
-                    console.error('❌ Firebase load error:', firebaseError);
                     
-                    if (firebaseError.code === 'permission-denied') {
-                        this.showNotification(
-                            'Firebase permission denied. Using local data for now.',
-                            'warning'
-                        );
+                    // Path 3: your original transactions collection (for backward compatibility)
+                    if (!loadedFromFirebase) {
+                        try {
+                            const snapshot = await window.db.collection('transactions')
+                                .where('userId', '==', user.uid)
+                                .limit(100)
+                                .get();
+                            
+                            if (!snapshot.empty) {
+                                this.transactions = snapshot.docs.map(doc => {
+                                    const data = doc.data();
+                                    return {
+                                        id: data.id || parseInt(doc.id),
+                                        date: data.date,
+                                        type: data.type,
+                                        category: data.category,
+                                        amount: parseFloat(data.amount) || 0,
+                                        description: data.description || '',
+                                        paymentMethod: data.paymentMethod || 'cash',
+                                        reference: data.reference || '',
+                                        notes: data.notes || '',
+                                        receipt: data.receipt || null,
+                                        userId: data.userId || user.uid,
+                                        createdAt: data.createdAt || new Date().toISOString(),
+                                        updatedAt: data.updatedAt || new Date().toISOString(),
+                                        syncedAt: data.syncedAt,
+                                        source: 'firebase'
+                                    };
+                                });
+                                
+                                // Sort locally after loading
+                                this.transactions.sort((a, b) => {
+                                    const dateA = new Date(a.createdAt || a.date);
+                                    const dateB = new Date(b.createdAt || b.date);
+                                    return dateB - dateA;
+                                });
+                                
+                                console.log('✅ Loaded transactions from Firebase (transactions collection):', this.transactions.length);
+                                
+                                // Save to localStorage for offline use
+                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                                localStorage.setItem('last-firebase-sync', new Date().toISOString());
+                                
+                                loadedFromFirebase = true;
+                            }
+                        } catch (firebaseError) {
+                            console.error('❌ Firebase load error:', firebaseError);
+                            
+                            if (firebaseError.code === 'permission-denied') {
+                                this.showNotification(
+                                    'Firebase permission denied. Using local data for now.',
+                                    'warning'
+                                );
+                            }
+                        }
                     }
                 }
+            } catch (error) {
+                console.error('Error in Firebase loading:', error);
             }
-            
-            // Fallback to localStorage if Firebase failed or no data
-            if (!loadedFromFirebase) {
-                console.log('🔄 Falling back to localStorage');
-                const saved = localStorage.getItem('farm-transactions');
-                this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
-                
-                // Add source marker for local transactions
-                this.transactions.forEach(t => {
-                    if (!t.source) {
-                        t.source = 'local';
-                        t.updatedAt = t.updatedAt || new Date().toISOString();
-                    }
-                });
-                
-                console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
-            }
-            
-        } catch (error) {
-            console.error('❌ Error loading transactions:', error);
-            this.transactions = this.getDemoData();
-            console.log('📝 Loaded demo transactions:', this.transactions.length);
         }
-    },
+        
+        // Fallback to localStorage if Firebase failed or no data
+        if (!loadedFromFirebase) {
+            console.log('🔄 Falling back to localStorage');
+            const saved = localStorage.getItem('farm-transactions');
+            this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+            
+            // Add source marker for local transactions
+            this.transactions.forEach(t => {
+                if (!t.source) {
+                    t.source = 'local';
+                    t.updatedAt = t.updatedAt || new Date().toISOString();
+                }
+            });
+            
+            console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading transactions:', error);
+        this.transactions = this.getDemoData();
+        console.log('📝 Loaded demo transactions:', this.transactions.length);
+    }
+},
+
+  async saveToFirebase() {
+    console.log('💾 Saving to Firebase...');
     
-    getDemoData() {
-        return [
-            {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                type: 'income',
-                category: 'sales',
-                amount: 1500,
-                description: 'Corn harvest sale',
-                paymentMethod: 'cash',
-                reference: 'INV001',
-                notes: 'First harvest of the season',
-                receipt: null,
-                userId: 'demo',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                source: 'demo'
-            }
-        ];
-    },
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('Firebase not available, skipping cloud save');
+        return false;
+    }
+    
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) {
+            console.log('No user logged in, skipping cloud save');
+            return false;
+        }
+        
+        const today = new Date();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+        const period = `${month}-${year}`;
+        
+        // Save to income collection (primary)
+        await window.db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
+            entries: this.transactions,
+            totalAmount: this.calculateStats().totalIncome,
+            lastUpdated: new Date().toISOString(),
+            userId: user.uid,
+            period: period
+        }, { merge: true });
+        
+        // Also save to income-expenses as backup
+        await window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period).set({
+            entries: this.transactions,
+            lastUpdated: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log('✅ Saved to Firebase:', this.transactions.length, 'transactions');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error saving to Firebase:', error);
+        return false;
+    }
+},
 
     saveData() {
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-        console.log('💾 Saved transactions to localStorage:', this.transactions.length);
-    },
+    console.log('💾 Saving transactions to localStorage');
+    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+    
+    // Also save to Firebase
+    this.saveToFirebase();
+},
 
+async saveTransaction(transactionData) {
+    console.log('Saving transaction...', transactionData);
+    
+    // Add to transactions array
+    if (!this.transactions) this.transactions = [];
+    
+    // Check if exists
+    const existingIndex = this.transactions.findIndex(t => t.id === transactionData.id);
+    
+    if (existingIndex >= 0) {
+        // Update
+        this.transactions[existingIndex] = transactionData;
+    } else {
+        // Add new
+        this.transactions.unshift(transactionData);
+    }
+    
+    // Save to localStorage
+    this.saveData();
+    
+    // Save to Firebase
+    await this.saveToFirebase();
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    return true;
+},
+    
     // ==================== RECEIPT MANAGEMENT ====================
     async loadReceiptsFromFirebase() {
         console.log('Loading receipts from Firebase...');
