@@ -4540,3 +4540,30 @@ body.dark-mode {
     text-overflow: ellipsis;
 }*/
 
+/* Optional hover effect for sync button */
+#agrimetrics-sync-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(33,150,243,0.4);
+}
+
+#agrimetrics-sync-button:active {
+    transform: translateY(0);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    #agrimetrics-mini-sync {
+        bottom: 10px;
+        right: 10px;
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+    
+    #agrimetrics-sync-button {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+
