@@ -107,17 +107,6 @@ fixContentPosition() {
     }, 100);
 }
 
-    // Helper to get current sales data (add this near your other global functions)
-function getSalesData() {
-    return window.salesData || window.currentSalesData || [];
-}
-
-// Helper to refresh data from Firebase
-async function refreshAllData() {
-    console.log('🔄 Refreshing all data from Firebase...');
-    await window.app.initializeAppComponents();
-}
-
 // NEW METHOD: Fix specific problematic modules
 fixModuleHeaderSpecifics() {
     const contentArea = document.getElementById('content-area');
@@ -1500,6 +1489,17 @@ async function loadAllFarmDataFromFirebase() {
         console.error('❌ Error loading farm data:', error);
         showAgrimetricsNotification('Error loading data', 'error');
     }
+}
+
+   // Helper to get current sales data (add this near your other global functions)
+function getSalesData() {
+    return window.salesData || window.currentSalesData || [];
+}
+
+// Helper to refresh data from Firebase
+async function refreshAllData() {
+    console.log('🔄 Refreshing all data from Firebase...');
+    await window.app.initializeAppComponents();
 }
 
 // Run this in console to SEE what's in Firebase
