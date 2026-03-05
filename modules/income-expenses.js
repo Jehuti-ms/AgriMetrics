@@ -212,7 +212,96 @@ addIncomeFromSale(saleData) {
     
     console.log('✅ Income added successfully:', transactionData);
 },
+
+    // Add this near the top of your income-expenses.js initialization
+function connectToDataBroadcaster() {
+    console.log('🔌 Income module attempting to connect to Data Broadcaster...');
     
+    // Try multiple times (in case broadcaster loads later)
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    function tryConnect() {
+        attempts++;
+        
+        if (window.DataBroadcaster && window.DataBroadcaster.on) {
+            console.log('✅ Income module connected to Data Broadcaster!');
+            
+            // Listen for sales updates
+            window.DataBroadcaster.on('sales:updated', (data) => {
+                console.log('📨 Income module received sales update:', data);
+                handleSalesUpdate(data.sales || data);
+            });
+            
+            // Also listen for general finance updates
+            window.DataBroadcaster.on('finance:updated', (data) => {
+                console.log('💰 Finance update received:', data);
+                refreshIncomeDisplay();
+            });
+            
+            return true;
+        }
+        
+        if (attempts < maxAttempts) {
+            console.log(`⏳ Waiting for Data Broadcaster... (${attempts}/${maxAttempts})`);
+            setTimeout(tryConnect, 500);
+        } else {
+            console.log('⚠️ Using fallback event system');
+            setupFallbackListeners();
+        }
+    }
+    
+    tryConnect();
+}
+
+// Fallback using custom events
+function setupFallbackListeners() {
+    window.addEventListener('sales-updated', (event) => {
+        console.log('📨 Received sales update via fallback:', event.detail);
+        handleSalesUpdate(event.detail.sales || event.detail);
+    });
+}
+
+// Handle the sales data
+function handleSalesUpdate(salesData) {
+    console.log(`💰 Processing ${salesData?.length || 0} sales for income`);
+    
+    // Convert sales to income transactions
+    if (salesData && Array.isArray(salesData)) {
+        const incomeTransactions = salesData.map(sale => ({
+            id: sale.id || Date.now() + Math.random(),
+            date: sale.date || new Date().toISOString().split('T')[0],
+            description: `Sale: ${sale.product || sale.customer || 'Farm sale'}`,
+            amount: sale.total || 0,
+            category: 'Sales Revenue',
+            type: 'income',
+            source: 'sales'
+        }));
+        
+        // Add to income data
+        if (!window.incomeData) window.incomeData = [];
+        
+        // Merge without duplicates
+        const existingIds = new Set(window.incomeData.map(t => t.id));
+        const newTransactions = incomeTransactions.filter(t => !existingIds.has(t.id));
+        
+        window.incomeData = [...window.incomeData, ...newTransactions];
+        
+        // Update UI if income module is active
+        if (window.app?.currentSection === 'income-expenses') {
+            refreshIncomeDisplay();
+        }
+        
+        // Show notification
+        if (typeof showNotification === 'function') {
+            showNotification(`💰 Added ${newTransactions.length} sales to income`, 'success');
+        }
+    }
+}
+
+// Call this during module initialization
+connectToDataBroadcaster();
+
     // ==================== NETWORK DETECTION ====================
     setupNetworkDetection() {
         this.isOnline = navigator.onLine;
