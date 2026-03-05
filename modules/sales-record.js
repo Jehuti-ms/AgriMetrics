@@ -245,6 +245,75 @@ const SalesRecordModule = {
         });
     },
 
+    // Make sure sales are broadcasting when saved
+function broadcastSalesToIncome(salesData) {
+    console.log('📢 Sales module broadcasting to income...');
+    
+    // Method 1: Use Data Broadcaster
+    if (window.DataBroadcaster && window.DataBroadcaster.emit) {
+        window.DataBroadcaster.emit('sales:updated', {
+            sales: salesData,
+            timestamp: new Date().toISOString()
+        });
+        console.log('✅ Broadcast via Data Broadcaster');
+    }
+    
+    // Method 2: Custom event as backup
+    const event = new CustomEvent('sales-updated', {
+        detail: {
+            sales: salesData,
+            timestamp: new Date().toISOString()
+        }
+    });
+    window.dispatchEvent(event);
+    console.log('✅ Broadcast via CustomEvent');
+    
+    // Method 3: Update global variable
+    window.latestSales = salesData;
+}
+
+// Call this after saving sales
+async function saveSales(salesData) {
+    // Your existing save code...
+    
+    // After saving, broadcast
+    broadcastSalesToIncome(salesData);
+    
+    // Also save to Firebase for income module to read
+    await saveSalesToIncomeCollection(salesData);
+}
+
+// Save to income collection in Firebase
+async function saveSalesToIncomeCollection(salesData) {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    
+    const today = new Date();
+    const month = today.getMonth();
+    const year = today.getFullYear();
+    const period = `${month}-${year}`;
+    
+    // Convert sales to income format
+    const incomeTransactions = salesData.map(sale => ({
+        id: sale.id,
+        date: sale.date,
+        description: `Sale: ${sale.product || sale.customer}`,
+        amount: sale.total || 0,
+        category: 'Sales',
+        type: 'income',
+        source: 'sales'
+    }));
+    
+    // Save to income collection
+    await db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
+        entries: incomeTransactions,
+        totalAmount: incomeTransactions.reduce((sum, t) => sum + t.amount, 0),
+        lastUpdated: new Date().toISOString()
+    }, { merge: true });
+    
+    console.log('✅ Sales also saved to income collection');
+},
+
     // ✅ NEW: Handle order completions from orders module
     handleOrderCompletion(orderData) {
         console.log('🔄 Converting order to sale:', orderData);
