@@ -25,282 +25,271 @@ const IncomeExpensesModule = {
     isDeleting: false,
     
     // ==================== INITIALIZATION ====================
- initialize() {
-    console.log('💰 Initializing Income & Expenses...');
-    
-    this.element = document.getElementById('content-area');
-    if (!this.element) {
-        console.error('Content area element not found');
-        return false;
-    }
-
-    // Check if Firebase services are available
-    this.isFirebaseAvailable = !!(window.firebase && window.db);
-    console.log('Firebase available:', this.isFirebaseAvailable, {
-        firebase: !!window.firebase,
-        db: !!window.db
-    });
-
-    if (window.StyleManager) {
-        StyleManager.registerModule(this.name, this.element, this);
-    }
-
-    // Setup network detection
-    this.setupNetworkDetection();
-    
-    // Load transactions
-    this.loadData();
-    
-    // Load receipts from Firebase
-    this.loadReceiptsFromFirebase();
-
-    // Setup global click handler for receipts
-    this.setupReceiptActionListeners();
-    
-    // Process any pending syncs
-    if (this.isFirebaseAvailable) {
-        setTimeout(() => {
-            this.syncLocalTransactionsToFirebase();
-        }, 3000);
-    }
-
-    // Make sure receiptQueue is initialized
-    this.receiptQueue = this.receiptQueue || [];
-    
-    // ✅ NEW: Listen for sales from Orders module
-    this.setupSalesListeners();  
-            
-    this.renderModule();
-    this.initialized = true;
-    
-    console.log('✅ Income & Expenses initialized');
-    return true;
-},
-
-// ✅ Add this method, an even more robust version
-// Update this method
-setupSalesListeners() {
-    console.log('📡 Setting up sales listeners...');
-    
-    // Try different possible event systems
-    const possibleEventSystems = [
-        { obj: window.DataBroadcaster, name: 'DataBroadcaster' },
-        { obj: window.broadcaster, name: 'broadcaster' },
-        { obj: window.Broadcaster, name: 'Broadcaster' },
-        { obj: window.EventBus, name: 'EventBus' },
-        { obj: window.PubSub, name: 'PubSub' }
-    ];
-    
-    let listenerAttached = false;
-    
-    for (const system of possibleEventSystems) {
-        if (system.obj && typeof system.obj.on === 'function') {
-            system.obj.on('sale-completed', (saleData) => {
-                console.log(`💰 Sale completed via ${system.name}:`, saleData);
-                this.addIncomeFromSale(saleData);
-            });
-            console.log(`✅ Listener attached to ${system.name}`);
-            listenerAttached = true;
-            break;
-        }
-    }
-    
-    if (!listenerAttached) {
-        console.log('⚠️ No event system found, using fallback');
-        this.setupFallbackSalesListener(); 
-    }
-},
-
-    /*
-    // Simpler version
-setupSalesListeners() {
-    console.log('📡 Setting up sales listeners...');
-    
-    // Just use custom events (simpler and more reliable)
-    window.addEventListener('sale-completed', (event) => {
-        console.log('💰 Sale completed event received:', event.detail);
-        this.addIncomeFromSale(event.detail);
-    });
-    
-    console.log('✅ Sales listeners setup complete');
-},
-*/
-    // Add this method
-setupFallbackSalesListener() {
-    console.log('📡 Setting up fallback sales listener (custom events)');
-    
-    // Listen via custom events
-    window.addEventListener('sale-completed', (event) => {
-        console.log('💰 Sale completed custom event received:', event.detail);
-        this.addIncomeFromSale(event.detail);
-    });
-    
-    // Also listen for other possible event names
-    window.addEventListener('order-completed', (event) => {
-        console.log('💰 Order completed event received:', event.detail);
-        this.addIncomeFromSale(event.detail);
-    });
-    
-    console.log('✅ Fallback sales listeners setup complete');
-},
-
-// ✅ NEW: Add this method to create income from sale
-addIncomeFromSale(saleData) {
-    console.log('➕ Adding income from sale:', saleData);
-    
-    // Check if this order was already added
-    const existingTransaction = this.transactions.find(t => 
-        t.reference === `ORDER-${saleData.orderId}` || 
-        (t.source === 'orders-module' && t.orderId === saleData.orderId)
-    );
-    
-    if (existingTransaction) {
-        console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
-        return;
-    }
-    
-    // Create transaction data
-    const transactionData = {
-        id: Date.now() + Math.floor(Math.random() * 1000), // Ensure unique ID
-        date: saleData.date || new Date().toISOString().split('T')[0],
-        type: 'income',
-        category: 'sales',
-        amount: saleData.amount,
-        description: saleData.description || `Sale from order`,
-        paymentMethod: saleData.paymentMethod || 'cash',
-        reference: saleData.reference || `ORDER-${saleData.orderId}`,
-        notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
-        receipt: null,
-        userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        source: 'orders-module',
-        orderId: saleData.orderId,
-        customerName: saleData.customerName
-    };
-    
-    // Add to transactions array
-    if (!this.transactions) this.transactions = [];
-    this.transactions.unshift(transactionData);
-    
-    // Save to localStorage
-    try {
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-        console.log('💾 Saved sale to localStorage:', transactionData.id);
-    } catch (storageError) {
-        console.warn('⚠️ Failed to save to localStorage:', storageError);
-    }
-    
-    // Save to Firebase if available
-    if (this.isFirebaseAvailable && window.db) {
-        this.saveTransactionToFirebase(transactionData)
-            .then(() => {
-                console.log('✅ Sale saved to Firebase');
-            })
-            .catch(error => {
-                console.warn('⚠️ Failed to save sale to Firebase:', error.message);
-            });
-    }
-    
-    // Update UI
-    this.updateStats();
-    this.updateTransactionsList();
-    this.updateCategoryBreakdown();
-    
-    // Show notification
-    this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
-    
-    console.log('✅ Income added successfully:', transactionData);
-},
-
-    // Add this near the top of your income-expenses.js initialization
-function connectToDataBroadcaster() {
-    console.log('🔌 Income module attempting to connect to Data Broadcaster...');
-    
-    // Try multiple times (in case broadcaster loads later)
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    function tryConnect() {
-        attempts++;
+    initialize() {
+        console.log('💰 Initializing Income & Expenses...');
         
-        if (window.DataBroadcaster && window.DataBroadcaster.on) {
-            console.log('✅ Income module connected to Data Broadcaster!');
+        this.element = document.getElementById('content-area');
+        if (!this.element) {
+            console.error('Content area element not found');
+            return false;
+        }
+
+        // Check if Firebase services are available
+        this.isFirebaseAvailable = !!(window.firebase && window.db);
+        console.log('Firebase available:', this.isFirebaseAvailable, {
+            firebase: !!window.firebase,
+            db: !!window.db
+        });
+
+        if (window.StyleManager) {
+            StyleManager.registerModule(this.name, this.element, this);
+        }
+
+        // Setup network detection
+        this.setupNetworkDetection();
+        
+        // Load transactions
+        this.loadData();
+        
+        // Load receipts from Firebase
+        this.loadReceiptsFromFirebase();
+
+        // Setup global click handler for receipts
+        this.setupReceiptActionListeners();
+        
+        // Process any pending syncs
+        if (this.isFirebaseAvailable) {
+            setTimeout(() => {
+                this.syncLocalTransactionsToFirebase();
+            }, 3000);
+        }
+
+        // Make sure receiptQueue is initialized
+        this.receiptQueue = this.receiptQueue || [];
+        
+        // ✅ NEW: Listen for sales from Orders module
+        this.setupSalesListeners();  
+                
+        this.renderModule();
+        this.initialized = true;
+        
+        // ✅ Connect to Data Broadcaster
+        this.connectToDataBroadcaster();
+        
+        console.log('✅ Income & Expenses initialized');
+        return true;
+    },
+
+    // ✅ FIXED: Moved inside the module
+    connectToDataBroadcaster() {
+        console.log('🔌 Income module attempting to connect to Data Broadcaster...');
+        
+        // Try multiple times (in case broadcaster loads later)
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const tryConnect = () => {
+            attempts++;
             
-            // Listen for sales updates
-            window.DataBroadcaster.on('sales:updated', (data) => {
-                console.log('📨 Income module received sales update:', data);
-                handleSalesUpdate(data.sales || data);
-            });
+            if (window.DataBroadcaster && window.DataBroadcaster.on) {
+                console.log('✅ Income module connected to Data Broadcaster!');
+                
+                // Listen for sales updates
+                window.DataBroadcaster.on('sales:updated', (data) => {
+                    console.log('📨 Income module received sales update:', data);
+                    this.handleSalesUpdate(data.sales || data);
+                });
+                
+                // Also listen for general finance updates
+                window.DataBroadcaster.on('finance:updated', (data) => {
+                    console.log('💰 Finance update received:', data);
+                    this.refreshIncomeDisplay();
+                });
+                
+                return true;
+            }
             
-            // Also listen for general finance updates
-            window.DataBroadcaster.on('finance:updated', (data) => {
-                console.log('💰 Finance update received:', data);
-                refreshIncomeDisplay();
-            });
+            if (attempts < maxAttempts) {
+                console.log(`⏳ Waiting for Data Broadcaster... (${attempts}/${maxAttempts})`);
+                setTimeout(tryConnect, 500);
+            } else {
+                console.log('⚠️ Using fallback event system');
+                this.setupFallbackListeners();
+            }
+        };
+        
+        tryConnect();
+    },
+
+    // ✅ FIXED: Moved inside the module
+    setupFallbackListeners() {
+        window.addEventListener('sales-updated', (event) => {
+            console.log('📨 Received sales update via fallback:', event.detail);
+            this.handleSalesUpdate(event.detail.sales || event.detail);
+        });
+    },
+
+    // ✅ FIXED: Moved inside the module
+    handleSalesUpdate(salesData) {
+        console.log(`💰 Processing ${salesData?.length || 0} sales for income`);
+        
+        // Convert sales to income transactions
+        if (salesData && Array.isArray(salesData)) {
+            const incomeTransactions = salesData.map(sale => ({
+                id: sale.id || Date.now() + Math.random(),
+                date: sale.date || new Date().toISOString().split('T')[0],
+                description: `Sale: ${sale.product || sale.customer || 'Farm sale'}`,
+                amount: sale.total || 0,
+                category: 'Sales Revenue',
+                type: 'income',
+                source: 'sales'
+            }));
             
-            return true;
+            // Add to income data
+            if (!window.incomeData) window.incomeData = [];
+            
+            // Merge without duplicates
+            const existingIds = new Set(window.incomeData.map(t => t.id));
+            const newTransactions = incomeTransactions.filter(t => !existingIds.has(t.id));
+            
+            window.incomeData = [...window.incomeData, ...newTransactions];
+            
+            // Update UI if income module is active
+            if (window.app?.currentSection === 'income-expenses') {
+                this.refreshIncomeDisplay();
+            }
+            
+            // Show notification
+            if (typeof this.showNotification === 'function') {
+                this.showNotification(`💰 Added ${newTransactions.length} sales to income`, 'success');
+            }
+        }
+    },
+
+    refreshIncomeDisplay() {
+        // Refresh the transactions list
+        this.updateTransactionsList();
+        this.updateStats();
+        this.updateCategoryBreakdown();
+    },
+
+    setupSalesListeners() {
+        console.log('📡 Setting up sales listeners...');
+        
+        // Try different possible event systems
+        const possibleEventSystems = [
+            { obj: window.DataBroadcaster, name: 'DataBroadcaster' },
+            { obj: window.broadcaster, name: 'broadcaster' },
+            { obj: window.Broadcaster, name: 'Broadcaster' },
+            { obj: window.EventBus, name: 'EventBus' },
+            { obj: window.PubSub, name: 'PubSub' }
+        ];
+        
+        let listenerAttached = false;
+        
+        for (const system of possibleEventSystems) {
+            if (system.obj && typeof system.obj.on === 'function') {
+                system.obj.on('sale-completed', (saleData) => {
+                    console.log(`💰 Sale completed via ${system.name}:`, saleData);
+                    this.addIncomeFromSale(saleData);
+                });
+                console.log(`✅ Listener attached to ${system.name}`);
+                listenerAttached = true;
+                break;
+            }
         }
         
-        if (attempts < maxAttempts) {
-            console.log(`⏳ Waiting for Data Broadcaster... (${attempts}/${maxAttempts})`);
-            setTimeout(tryConnect, 500);
-        } else {
-            console.log('⚠️ Using fallback event system');
-            setupFallbackListeners();
+        if (!listenerAttached) {
+            console.log('⚠️ No event system found, using fallback');
+            this.setupFallbackSalesListener(); 
         }
-    }
-    
-    tryConnect();
-},
+    },
 
-// Fallback using custom events
-function setupFallbackListeners() {
-    window.addEventListener('sales-updated', (event) => {
-        console.log('📨 Received sales update via fallback:', event.detail);
-        handleSalesUpdate(event.detail.sales || event.detail);
-    });
-}
+    setupFallbackSalesListener() {
+        console.log('📡 Setting up fallback sales listener (custom events)');
+        
+        // Listen via custom events
+        window.addEventListener('sale-completed', (event) => {
+            console.log('💰 Sale completed custom event received:', event.detail);
+            this.addIncomeFromSale(event.detail);
+        });
+        
+        // Also listen for other possible event names
+        window.addEventListener('order-completed', (event) => {
+            console.log('💰 Order completed event received:', event.detail);
+            this.addIncomeFromSale(event.detail);
+        });
+        
+        console.log('✅ Fallback sales listeners setup complete');
+    },
 
-// Handle the sales data
-function handleSalesUpdate(salesData) {
-    console.log(`💰 Processing ${salesData?.length || 0} sales for income`);
-    
-    // Convert sales to income transactions
-    if (salesData && Array.isArray(salesData)) {
-        const incomeTransactions = salesData.map(sale => ({
-            id: sale.id || Date.now() + Math.random(),
-            date: sale.date || new Date().toISOString().split('T')[0],
-            description: `Sale: ${sale.product || sale.customer || 'Farm sale'}`,
-            amount: sale.total || 0,
-            category: 'Sales Revenue',
+    addIncomeFromSale(saleData) {
+        console.log('➕ Adding income from sale:', saleData);
+        
+        // Check if this order was already added
+        const existingTransaction = this.transactions.find(t => 
+            t.reference === `ORDER-${saleData.orderId}` || 
+            (t.source === 'orders-module' && t.orderId === saleData.orderId)
+        );
+        
+        if (existingTransaction) {
+            console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
+            return;
+        }
+        
+        // Create transaction data
+        const transactionData = {
+            id: Date.now() + Math.floor(Math.random() * 1000), // Ensure unique ID
+            date: saleData.date || new Date().toISOString().split('T')[0],
             type: 'income',
-            source: 'sales'
-        }));
+            category: 'sales',
+            amount: saleData.amount,
+            description: saleData.description || `Sale from order`,
+            paymentMethod: saleData.paymentMethod || 'cash',
+            reference: saleData.reference || `ORDER-${saleData.orderId}`,
+            notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
+            receipt: null,
+            userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            source: 'orders-module',
+            orderId: saleData.orderId,
+            customerName: saleData.customerName
+        };
         
-        // Add to income data
-        if (!window.incomeData) window.incomeData = [];
+        // Add to transactions array
+        if (!this.transactions) this.transactions = [];
+        this.transactions.unshift(transactionData);
         
-        // Merge without duplicates
-        const existingIds = new Set(window.incomeData.map(t => t.id));
-        const newTransactions = incomeTransactions.filter(t => !existingIds.has(t.id));
-        
-        window.incomeData = [...window.incomeData, ...newTransactions];
-        
-        // Update UI if income module is active
-        if (window.app?.currentSection === 'income-expenses') {
-            refreshIncomeDisplay();
+        // Save to localStorage
+        try {
+            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+            console.log('💾 Saved sale to localStorage:', transactionData.id);
+        } catch (storageError) {
+            console.warn('⚠️ Failed to save to localStorage:', storageError);
         }
+        
+        // Save to Firebase if available
+        if (this.isFirebaseAvailable && window.db) {
+            this.saveTransactionToFirebase(transactionData)
+                .then(() => {
+                    console.log('✅ Sale saved to Firebase');
+                })
+                .catch(error => {
+                    console.warn('⚠️ Failed to save sale to Firebase:', error.message);
+                });
+        }
+        
+        // Update UI
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
         
         // Show notification
-        if (typeof showNotification === 'function') {
-            showNotification(`💰 Added ${newTransactions.length} sales to income`, 'success');
-        }
-    }
-}
-
-// Call this during module initialization
-connectToDataBroadcaster();
+        this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
+        
+        console.log('✅ Income added successfully:', transactionData);
+    },
 
     // ==================== NETWORK DETECTION ====================
     setupNetworkDetection() {
@@ -558,321 +547,357 @@ connectToDataBroadcaster();
     },
 
     // ==================== CAMERA METHODS ====================
-cropperModal: null,
-cropper: null,
-currentPhotoFile: null,
-currentPhotoCallback: null,
+    cropperModal: null,
+    cropper: null,
+    currentPhotoFile: null,
+    currentPhotoCallback: null,
 
-// ===== CROPPER LIBRARY LOADER =====
-loadCropperLibrary() {
-    return new Promise((resolve, reject) => {
-        // Check if already loaded
-        if (window.Cropper) {
-            console.log('✅ Cropper already loaded');
-            resolve(window.Cropper);
+    // ===== CROPPER LIBRARY LOADER =====
+    loadCropperLibrary() {
+        return new Promise((resolve, reject) => {
+            // Check if already loaded
+            if (window.Cropper) {
+                console.log('✅ Cropper already loaded');
+                resolve(window.Cropper);
+                return;
+            }
+            
+            console.log('📦 Loading Cropper library...');
+            
+            // Load CSS
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css';
+            link.onload = () => console.log('✅ Cropper CSS loaded');
+            link.onerror = (e) => console.warn('⚠️ Cropper CSS load warning (may be CSP):', e);
+            document.head.appendChild(link);
+            
+            // Load JS
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js';
+            script.onload = () => {
+                console.log('✅ Cropper JS loaded');
+                resolve(window.Cropper);
+            };
+            script.onerror = (e) => {
+                console.error('❌ Failed to load Cropper:', e);
+                reject(new Error('Failed to load Cropper'));
+            };
+            document.head.appendChild(script);
+        });
+    },
+
+    // ===== RECEIPT PHOTO CROPPING METHODS =====
+    async showReceiptCropperModal(file) {
+        console.log('🖼️ Showing receipt cropper modal for:', file.name);
+        
+        try {
+            // Load Cropper library first
+            await this.loadCropperLibrary();
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.initializeCropper(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Failed to load cropper:', error);
+            this.showNotification('Using standard upload (crop unavailable)', 'info');
+            // Fall back to saving without cropping
+            this.saveReceiptFromFile(file, URL.createObjectURL(file));
+        }
+    },
+
+    initializeCropper(imageDataUrl) {
+        // Create modal HTML
+        const modalHTML = `
+            <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000;">
+                <div class="popout-modal-content" style="max-width: 800px; width: 90%;">
+                    <div class="popout-modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                        <h3 class="popout-modal-title">✂️ Crop Receipt Image</h3>
+                        <button class="popout-modal-close" id="close-receipt-cropper">&times;</button>
+                    </div>
+                    <div class="popout-modal-body" style="padding: 20px; max-height: 60vh; overflow: hidden;">
+                        <div style="margin-bottom: 16px; text-align: center; color: var(--text-secondary);">
+                            Drag to adjust the crop area for better receipt scanning
+                        </div>
+                        <div style="max-height: 50vh; overflow: hidden; background: #f0f0f0; border-radius: 8px;">
+                            <img id="receipt-cropper-image" src="${imageDataUrl}" style="max-width: 100%; display: block;">
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
+                            <button type="button" class="btn-outline" id="receipt-rotate-left" title="Rotate Left">↺ Rotate Left</button>
+                            <button type="button" class="btn-outline" id="receipt-rotate-right" title="Rotate Right">↻ Rotate Right</button>
+                            <button type="button" class="btn-outline" id="receipt-zoom-in" title="Zoom In">🔍+ Zoom In</button>
+                            <button type="button" class="btn-outline" id="receipt-zoom-out" title="Zoom Out">🔍- Zoom Out</button>
+                            <button type="button" class="btn-outline" id="receipt-reset-crop" title="Reset">🔄 Reset</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
+                            <div style="display: flex; gap: 8px; margin-left: auto;">
+                                <span style="color: var(--text-secondary);">Aspect Ratio:</span>
+                                <select id="receipt-aspect-ratio" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 8px;">
+                                    <option value="NaN">Free (Best for receipts)</option>
+                                    <option value="1">1:1 (Square)</option>
+                                    <option value="4/3">4:3</option>
+                                    <option value="16/9">16:9</option>
+                                    <option value="3/4">3:4</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                            <p style="margin: 0; font-size: 13px; color: #0369a1;">
+                                <strong>💡 Tip:</strong> Crop to focus on the receipt total and date for better text extraction
+                            </p>
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                        <button type="button" class="btn-outline" id="cancel-receipt-crop">Cancel</button>
+                        <button type="button" class="btn-primary" id="apply-receipt-crop">Apply Crop & Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('receipt-cropper-modal');
+        if (existingModal) existingModal.remove();
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Get modal element
+        this.cropperModal = document.getElementById('receipt-cropper-modal');
+        
+        // Initialize cropper
+        const image = document.getElementById('receipt-cropper-image');
+        this.cropper = new Cropper(image, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            dragMode: 'crop',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            minCropBoxWidth: 100,
+            minCropBoxHeight: 100,
+        });
+        
+        // Setup modal event listeners
+        this.setupReceiptCropperEventListeners();
+    },
+
+    setupReceiptCropperEventListeners() {
+        if (!this.cropperModal) return;
+        
+        document.getElementById('close-receipt-cropper')?.addEventListener('click', () => this.closeReceiptCropperModal());
+        document.getElementById('cancel-receipt-crop')?.addEventListener('click', () => this.closeReceiptCropperModal());
+        
+        document.getElementById('apply-receipt-crop')?.addEventListener('click', () => this.applyReceiptCrop());
+        
+        document.getElementById('receipt-rotate-left')?.addEventListener('click', () => {
+            if (this.cropper) this.cropper.rotate(-90);
+        });
+        
+        document.getElementById('receipt-rotate-right')?.addEventListener('click', () => {
+            if (this.cropper) this.cropper.rotate(90);
+        });
+        
+        document.getElementById('receipt-zoom-in')?.addEventListener('click', () => {
+            if (this.cropper) this.cropper.zoom(0.1);
+        });
+        
+        document.getElementById('receipt-zoom-out')?.addEventListener('click', () => {
+            if (this.cropper) this.cropper.zoom(-0.1);
+        });
+        
+        document.getElementById('receipt-reset-crop')?.addEventListener('click', () => {
+            if (this.cropper) this.cropper.reset();
+        });
+        
+        document.getElementById('receipt-aspect-ratio')?.addEventListener('change', (e) => {
+            if (this.cropper) {
+                const value = e.target.value;
+                this.cropper.setAspectRatio(value === 'NaN' ? NaN : parseFloat(value));
+            }
+        });
+        
+        this.cropperModal.addEventListener('click', (e) => {
+            if (e.target === this.cropperModal) this.closeReceiptCropperModal();
+        });
+    },
+
+    closeReceiptCropperModal() {
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+        
+        const modal = document.getElementById('receipt-cropper-modal');
+        if (modal) modal.remove();
+        
+        const fileInput = document.getElementById('receipt-upload-input');
+        if (fileInput) fileInput.value = '';
+    },
+
+    applyReceiptCrop() {
+        if (!this.cropper) return;
+        
+        console.log('✂️ Applying crop to receipt...');
+        
+        const canvas = this.cropper.getCroppedCanvas({
+            maxWidth: 1200,
+            maxHeight: 1200,
+            fillColor: '#fff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+        
+        canvas.toBlob((blob) => {
+            const croppedFile = new File([blob], this.currentPhotoFile.name, {
+                type: this.currentPhotoFile.type || 'image/jpeg',
+                lastModified: Date.now()
+            });
+            
+            const croppedImageUrl = URL.createObjectURL(blob);
+            
+            console.log('✅ Crop applied to receipt:', {
+                originalSize: this.currentPhotoFile.size,
+                croppedSize: blob.size
+            });
+            
+            if (this.currentPhotoCallback) {
+                this.currentPhotoCallback(croppedFile, croppedImageUrl);
+            }
+            
+            this.closeReceiptCropperModal();
+            
+        }, this.currentPhotoFile.type || 'image/jpeg', 0.95);
+    },
+
+    capturePhoto() {
+        console.log('📸 CAPTURE PHOTO CALLED - NEW VERSION WITH CROPPING');
+        console.trace('Trace to see who called this');
+        
+        const video = document.getElementById('camera-preview');
+        const canvas = document.getElementById('camera-canvas');
+        const status = document.getElementById('camera-status');
+        
+        if (!video || !canvas) {
+            console.error('Video or canvas element not found');
+            this.showNotification('Camera elements missing', 'error');
             return;
         }
         
-        console.log('📦 Loading Cropper library...');
+        if (!this.cameraStream || video.paused || video.readyState < 2) {
+            console.error('Camera not ready');
+            this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+            return;
+        }
         
-        // Load CSS
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css';
-        link.onload = () => console.log('✅ Cropper CSS loaded');
-        link.onerror = (e) => console.warn('⚠️ Cropper CSS load warning (may be CSP):', e);
-        document.head.appendChild(link);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
         
-        // Load JS
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js';
-        script.onload = () => {
-            console.log('✅ Cropper JS loaded');
-            resolve(window.Cropper);
-        };
-        script.onerror = (e) => {
-            console.error('❌ Failed to load Cropper:', e);
-            reject(new Error('Failed to load Cropper'));
-        };
-        document.head.appendChild(script);
-    });
-},
+        const context = canvas.getContext('2d');
+        
+        try {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            if (status) status.textContent = 'Processing photo...';
+            
+            video.style.filter = 'brightness(150%) contrast(120%)';
+            setTimeout(() => {
+                video.style.filter = '';
+            }, 200);
+            
+            const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+            
+            if (status) status.textContent = 'Do you want to crop?';
+            
+            // Convert dataURL to file
+            fetch(dataURL)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    
+                    console.log('📸 Photo captured, file created:', file.name, file.size);
+                    
+                    // Ask if user wants to crop
+                    if (confirm('Would you like to crop this photo before saving?')) {
+                        console.log('✂️ User chose to crop');
+                        this.currentPhotoFile = file;
+                        this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                            console.log('🔄 Crop callback received, saving cropped image');
+                            this.saveCroppedReceipt(croppedFile, croppedImageUrl);
+                        };
+                        this.showReceiptCropperModal(file);
+                    } else {
+                        console.log('💾 User chose to save without cropping');
+                        this.saveReceiptFromFile(file, dataURL);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error converting photo:', error);
+                    this.showNotification('Error processing photo', 'error');
+                });
+            
+        } catch (error) {
+            console.error('❌ Capture error:', error);
+            if (status) status.textContent = 'Error';
+            this.showNotification('Failed to capture photo', 'error');
+        }
+    },
 
-// ===== RECEIPT PHOTO CROPPING METHODS =====
-async showReceiptCropperModal(file) {
-    console.log('🖼️ Showing receipt cropper modal for:', file.name);
-    
-    try {
-        // Load Cropper library first
-        await this.loadCropperLibrary();
+    saveCroppedReceipt(file, imageUrl) {
+        console.log('💾 Saving cropped receipt:', file.name);
         
         const reader = new FileReader();
+        
         reader.onload = (e) => {
-            this.initializeCropper(e.target.result);
+            const dataURL = e.target.result;
+            const receiptId = `camera_${Date.now()}`;
+            
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                dataURL: dataURL,
+                downloadURL: imageUrl,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                source: 'camera',
+                cropped: true
+            };
+            
+            this.saveReceiptLocally(receipt);
+            this.saveReceiptToFirebase(receipt)
+                .then(() => {
+                    this.showNotification('✅ Cropped receipt saved!', 'success');
+                    this.updateModalReceiptsList();
+                    this.updateReceiptQueueUI();
+                    this.showCaptureSuccess(receipt);
+                })
+                .catch(error => {
+                    console.error('❌ Firebase save error:', error);
+                    this.showNotification('✅ Receipt saved locally!', 'success');
+                    this.updateModalReceiptsList();
+                    this.updateReceiptQueueUI();
+                    this.showCaptureSuccess(receipt);
+                });
         };
+        
         reader.readAsDataURL(file);
-    } catch (error) {
-        console.error('Failed to load cropper:', error);
-        this.showNotification('Using standard upload (crop unavailable)', 'info');
-        // Fall back to saving without cropping
-        this.saveReceiptFromFile(file, URL.createObjectURL(file));
-    }
-},
+    },
 
-initializeCropper(imageDataUrl) {
-    // Create modal HTML
-    const modalHTML = `
-        <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000;">
-            <div class="popout-modal-content" style="max-width: 800px; width: 90%;">
-                <div class="popout-modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                    <h3 class="popout-modal-title">✂️ Crop Receipt Image</h3>
-                    <button class="popout-modal-close" id="close-receipt-cropper">&times;</button>
-                </div>
-                <div class="popout-modal-body" style="padding: 20px; max-height: 60vh; overflow: hidden;">
-                    <div style="margin-bottom: 16px; text-align: center; color: var(--text-secondary);">
-                        Drag to adjust the crop area for better receipt scanning
-                    </div>
-                    <div style="max-height: 50vh; overflow: hidden; background: #f0f0f0; border-radius: 8px;">
-                        <img id="receipt-cropper-image" src="${imageDataUrl}" style="max-width: 100%; display: block;">
-                    </div>
-                    
-                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
-                        <button type="button" class="btn-outline" id="receipt-rotate-left" title="Rotate Left">↺ Rotate Left</button>
-                        <button type="button" class="btn-outline" id="receipt-rotate-right" title="Rotate Right">↻ Rotate Right</button>
-                        <button type="button" class="btn-outline" id="receipt-zoom-in" title="Zoom In">🔍+ Zoom In</button>
-                        <button type="button" class="btn-outline" id="receipt-zoom-out" title="Zoom Out">🔍- Zoom Out</button>
-                        <button type="button" class="btn-outline" id="receipt-reset-crop" title="Reset">🔄 Reset</button>
-                    </div>
-                    
-                    <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--glass-border);">
-                        <div style="display: flex; gap: 8px; margin-left: auto;">
-                            <span style="color: var(--text-secondary);">Aspect Ratio:</span>
-                            <select id="receipt-aspect-ratio" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 6px; padding: 4px 8px;">
-                                <option value="NaN">Free (Best for receipts)</option>
-                                <option value="1">1:1 (Square)</option>
-                                <option value="4/3">4:3</option>
-                                <option value="16/9">16:9</option>
-                                <option value="3/4">3:4</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
-                        <p style="margin: 0; font-size: 13px; color: #0369a1;">
-                            <strong>💡 Tip:</strong> Crop to focus on the receipt total and date for better text extraction
-                        </p>
-                    </div>
-                </div>
-                <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
-                    <button type="button" class="btn-outline" id="cancel-receipt-crop">Cancel</button>
-                    <button type="button" class="btn-primary" id="apply-receipt-crop">Apply Crop & Save</button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Remove existing modal if any
-    const existingModal = document.getElementById('receipt-cropper-modal');
-    if (existingModal) existingModal.remove();
-    
-    // Add modal to page
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Get modal element
-    this.cropperModal = document.getElementById('receipt-cropper-modal');
-    
-    // Initialize cropper
-    const image = document.getElementById('receipt-cropper-image');
-    this.cropper = new Cropper(image, {
-        aspectRatio: NaN,
-        viewMode: 1,
-        dragMode: 'crop',
-        autoCropArea: 1,
-        restore: false,
-        guides: true,
-        center: true,
-        highlight: false,
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-        minCropBoxWidth: 100,
-        minCropBoxHeight: 100,
-    });
-    
-    // Setup modal event listeners
-    this.setupReceiptCropperEventListeners();
-},
-
-setupReceiptCropperEventListeners() {
-    if (!this.cropperModal) return;
-    
-    document.getElementById('close-receipt-cropper')?.addEventListener('click', () => this.closeReceiptCropperModal());
-    document.getElementById('cancel-receipt-crop')?.addEventListener('click', () => this.closeReceiptCropperModal());
-    
-    document.getElementById('apply-receipt-crop')?.addEventListener('click', () => this.applyReceiptCrop());
-    
-    document.getElementById('receipt-rotate-left')?.addEventListener('click', () => {
-        if (this.cropper) this.cropper.rotate(-90);
-    });
-    
-    document.getElementById('receipt-rotate-right')?.addEventListener('click', () => {
-        if (this.cropper) this.cropper.rotate(90);
-    });
-    
-    document.getElementById('receipt-zoom-in')?.addEventListener('click', () => {
-        if (this.cropper) this.cropper.zoom(0.1);
-    });
-    
-    document.getElementById('receipt-zoom-out')?.addEventListener('click', () => {
-        if (this.cropper) this.cropper.zoom(-0.1);
-    });
-    
-    document.getElementById('receipt-reset-crop')?.addEventListener('click', () => {
-        if (this.cropper) this.cropper.reset();
-    });
-    
-    document.getElementById('receipt-aspect-ratio')?.addEventListener('change', (e) => {
-        if (this.cropper) {
-            const value = e.target.value;
-            this.cropper.setAspectRatio(value === 'NaN' ? NaN : parseFloat(value));
-        }
-    });
-    
-    this.cropperModal.addEventListener('click', (e) => {
-        if (e.target === this.cropperModal) this.closeReceiptCropperModal();
-    });
-},
-
-closeReceiptCropperModal() {
-    if (this.cropper) {
-        this.cropper.destroy();
-        this.cropper = null;
-    }
-    
-    const modal = document.getElementById('receipt-cropper-modal');
-    if (modal) modal.remove();
-    
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput) fileInput.value = '';
-},
-
-applyReceiptCrop() {
-    if (!this.cropper) return;
-    
-    console.log('✂️ Applying crop to receipt...');
-    
-    const canvas = this.cropper.getCroppedCanvas({
-        maxWidth: 1200,
-        maxHeight: 1200,
-        fillColor: '#fff',
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high',
-    });
-    
-    canvas.toBlob((blob) => {
-        const croppedFile = new File([blob], this.currentPhotoFile.name, {
-            type: this.currentPhotoFile.type || 'image/jpeg',
-            lastModified: Date.now()
-        });
+    saveReceiptFromFile(file, dataURL) {
+        console.log('💾 Saving receipt without cropping:', file.name);
         
-        const croppedImageUrl = URL.createObjectURL(blob);
-        
-        console.log('✅ Crop applied to receipt:', {
-            originalSize: this.currentPhotoFile.size,
-            croppedSize: blob.size
-        });
-        
-        if (this.currentPhotoCallback) {
-            this.currentPhotoCallback(croppedFile, croppedImageUrl);
-        }
-        
-        this.closeReceiptCropperModal();
-        
-    }, this.currentPhotoFile.type || 'image/jpeg', 0.95);
-},
-
-// Update capturePhoto to use the new cropping
-capturePhoto() {
-    console.log('📸 CAPTURE PHOTO CALLED - NEW VERSION WITH CROPPING');
-    console.trace('Trace to see who called this');
-    
-    const video = document.getElementById('camera-preview');
-    const canvas = document.getElementById('camera-canvas');
-    const status = document.getElementById('camera-status');
-    
-    if (!video || !canvas) {
-        console.error('Video or canvas element not found');
-        this.showNotification('Camera elements missing', 'error');
-        return;
-    }
-    
-    if (!this.cameraStream || video.paused || video.readyState < 2) {
-        console.error('Camera not ready');
-        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
-        return;
-    }
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const context = canvas.getContext('2d');
-    
-    try {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        if (status) status.textContent = 'Processing photo...';
-        
-        video.style.filter = 'brightness(150%) contrast(120%)';
-        setTimeout(() => {
-            video.style.filter = '';
-        }, 200);
-        
-        const dataURL = canvas.toDataURL('image/jpeg', 0.85);
-        
-        if (status) status.textContent = 'Do you want to crop?';
-        
-        // Convert dataURL to file
-        fetch(dataURL)
-            .then(res => res.blob())
-            .then(blob => {
-                const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                
-                console.log('📸 Photo captured, file created:', file.name, file.size);
-                
-                // Ask if user wants to crop
-                if (confirm('Would you like to crop this photo before saving?')) {
-                    console.log('✂️ User chose to crop');
-                    this.currentPhotoFile = file;
-                    this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
-                        console.log('🔄 Crop callback received, saving cropped image');
-                        this.saveCroppedReceipt(croppedFile, croppedImageUrl);
-                    };
-                    this.showReceiptCropperModal(file);
-                } else {
-                    console.log('💾 User chose to save without cropping');
-                    this.saveReceiptFromFile(file, dataURL);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error converting photo:', error);
-                this.showNotification('Error processing photo', 'error');
-            });
-        
-    } catch (error) {
-        console.error('❌ Capture error:', error);
-        if (status) status.textContent = 'Error';
-        this.showNotification('Failed to capture photo', 'error');
-    }
-},
-
-// Add these helper methods
-saveCroppedReceipt(file, imageUrl) {
-    console.log('💾 Saving cropped receipt:', file.name);
-    
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        const dataURL = e.target.result;
         const receiptId = `camera_${Date.now()}`;
         
         const receipt = {
@@ -881,17 +906,16 @@ saveCroppedReceipt(file, imageUrl) {
             type: file.type,
             size: file.size,
             dataURL: dataURL,
-            downloadURL: imageUrl,
             status: 'pending',
             uploadedAt: new Date().toISOString(),
             source: 'camera',
-            cropped: true
+            cropped: false
         };
         
         this.saveReceiptLocally(receipt);
         this.saveReceiptToFirebase(receipt)
             .then(() => {
-                this.showNotification('✅ Cropped receipt saved!', 'success');
+                this.showNotification('✅ Receipt saved!', 'success');
                 this.updateModalReceiptsList();
                 this.updateReceiptQueueUI();
                 this.showCaptureSuccess(receipt);
@@ -903,157 +927,120 @@ saveCroppedReceipt(file, imageUrl) {
                 this.updateReceiptQueueUI();
                 this.showCaptureSuccess(receipt);
             });
-    };
-    
-    reader.readAsDataURL(file);
-},
-
-saveReceiptFromFile(file, dataURL) {
-    console.log('💾 Saving receipt without cropping:', file.name);
-    
-    const receiptId = `camera_${Date.now()}`;
-    
-    const receipt = {
-        id: receiptId,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        dataURL: dataURL,
-        status: 'pending',
-        uploadedAt: new Date().toISOString(),
-        source: 'camera',
-        cropped: false
-    };
-    
-    this.saveReceiptLocally(receipt);
-    this.saveReceiptToFirebase(receipt)
-        .then(() => {
-            this.showNotification('✅ Receipt saved!', 'success');
-            this.updateModalReceiptsList();
-            this.updateReceiptQueueUI();
-            this.showCaptureSuccess(receipt);
-        })
-        .catch(error => {
-            console.error('❌ Firebase save error:', error);
-            this.showNotification('✅ Receipt saved locally!', 'success');
-            this.updateModalReceiptsList();
-            this.updateReceiptQueueUI();
-            this.showCaptureSuccess(receipt);
-        });
-},
+    },
    
-   initializeCamera() {
-    console.log('📷 Initializing camera...');
-    
-    try {
-        const video = document.getElementById('camera-preview');
-        const status = document.getElementById('camera-status');
-        const cameraSection = document.getElementById('camera-section');
+    initializeCamera() {
+        console.log('📷 Initializing camera...');
         
-        if (!video) {
-            console.error('❌ Camera preview element not found');
-            this.showNotification('Camera preview element missing', 'error');
-            this.showUploadInterface();
-            return;
-        }
-        
-        // First check if mediaDevices is supported
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            console.error('❌ Camera API not supported in this browser');
-            if (status) status.textContent = 'Camera not supported';
-            this.showNotification('Camera not supported in this browser', 'error');
-            this.showUploadInterface();
-            return;
-        }
-        
-        video.srcObject = null;
-        video.pause();
-        
-        if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => track.stop());
-            this.cameraStream = null;
-        }
-        
-        if (status) status.textContent = 'Requesting camera access...';
-        
-        // Check if any cameras are available
-        navigator.mediaDevices.enumerateDevices()
-            .then(devices => {
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                console.log(`📹 Found ${videoDevices.length} camera(s):`, videoDevices.map(d => d.label || 'Unnamed camera'));
-                
-                if (videoDevices.length === 0) {
-                    throw new Error('No camera found on this device');
-                }
-                
-                const constraints = {
-                    video: {
-                        facingMode: this.cameraFacingMode,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false
-                };
-                
-                return navigator.mediaDevices.getUserMedia(constraints);
-            })
-            .then(stream => {
-                console.log('✅ Camera access granted');
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                
-                video.play()
-                    .then(() => {
-                        console.log('📹 Video is playing successfully');
-                        const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                        if (status) status.textContent = `${cameraType} Camera - Ready`;
-                        
-                        const switchBtn = document.getElementById('switch-camera');
-                        if (switchBtn) {
-                            const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                            switchBtn.innerHTML = `
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch to ${nextMode}</span>
-                            `;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('❌ Video play error:', error);
-                        this.showNotification('Failed to start camera playback', 'error');
-                        this.showUploadInterface();
-                    });
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error);
-                let errorMessage = 'Camera access denied.';
-                
-                if (error.message === 'No camera found on this device') {
-                    errorMessage = 'No camera found on this device.';
-                } else if (error.name === 'NotFoundError' || error.message.includes('NotReadableError')) {
-                    errorMessage = 'No camera found on this device.';
-                } else if (error.name === 'NotAllowedError' || error.message.includes('Permission denied')) {
-                    errorMessage = 'Camera permission denied. Please check your browser settings.';
-                } else if (error.name === 'NotReadableError') {
-                    errorMessage = 'Camera is already in use by another application.';
-                } else if (error.name === 'OverconstrainedError') {
-                    errorMessage = 'Camera does not support required settings.';
-                }
-                
-                if (status) status.textContent = 'Camera unavailable';
-                this.showNotification(errorMessage, 'error');
-                
-                // Show upload interface as fallback
-                setTimeout(() => {
-                    this.showUploadInterface();
-                }, 2000);
-            });
+        try {
+            const video = document.getElementById('camera-preview');
+            const status = document.getElementById('camera-status');
+            const cameraSection = document.getElementById('camera-section');
             
-    } catch (error) {
-        console.error('🚨 Camera initialization error:', error);
-        this.showNotification('Camera initialization failed', 'error');
-        this.showUploadInterface();
-    }
-},
+            if (!video) {
+                console.error('❌ Camera preview element not found');
+                this.showNotification('Camera preview element missing', 'error');
+                this.showUploadInterface();
+                return;
+            }
+            
+            // First check if mediaDevices is supported
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.error('❌ Camera API not supported in this browser');
+                if (status) status.textContent = 'Camera not supported';
+                this.showNotification('Camera not supported in this browser', 'error');
+                this.showUploadInterface();
+                return;
+            }
+            
+            video.srcObject = null;
+            video.pause();
+            
+            if (this.cameraStream) {
+                this.cameraStream.getTracks().forEach(track => track.stop());
+                this.cameraStream = null;
+            }
+            
+            if (status) status.textContent = 'Requesting camera access...';
+            
+            // Check if any cameras are available
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                    console.log(`📹 Found ${videoDevices.length} camera(s):`, videoDevices.map(d => d.label || 'Unnamed camera'));
+                    
+                    if (videoDevices.length === 0) {
+                        throw new Error('No camera found on this device');
+                    }
+                    
+                    const constraints = {
+                        video: {
+                            facingMode: this.cameraFacingMode,
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    };
+                    
+                    return navigator.mediaDevices.getUserMedia(constraints);
+                })
+                .then(stream => {
+                    console.log('✅ Camera access granted');
+                    this.cameraStream = stream;
+                    video.srcObject = stream;
+                    
+                    video.play()
+                        .then(() => {
+                            console.log('📹 Video is playing successfully');
+                            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                            if (status) status.textContent = `${cameraType} Camera - Ready`;
+                            
+                            const switchBtn = document.getElementById('switch-camera');
+                            if (switchBtn) {
+                                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                                switchBtn.innerHTML = `
+                                    <span class="btn-icon">🔄</span>
+                                    <span class="btn-text">Switch to ${nextMode}</span>
+                                `;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('❌ Video play error:', error);
+                            this.showNotification('Failed to start camera playback', 'error');
+                            this.showUploadInterface();
+                        });
+                })
+                .catch(error => {
+                    console.error('❌ Camera error:', error);
+                    let errorMessage = 'Camera access denied.';
+                    
+                    if (error.message === 'No camera found on this device') {
+                        errorMessage = 'No camera found on this device.';
+                    } else if (error.name === 'NotFoundError' || error.message.includes('NotReadableError')) {
+                        errorMessage = 'No camera found on this device.';
+                    } else if (error.name === 'NotAllowedError' || error.message.includes('Permission denied')) {
+                        errorMessage = 'Camera permission denied. Please check your browser settings.';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage = 'Camera is already in use by another application.';
+                    } else if (error.name === 'OverconstrainedError') {
+                        errorMessage = 'Camera does not support required settings.';
+                    }
+                    
+                    if (status) status.textContent = 'Camera unavailable';
+                    this.showNotification(errorMessage, 'error');
+                    
+                    // Show upload interface as fallback
+                    setTimeout(() => {
+                        this.showUploadInterface();
+                    }, 2000);
+                });
+                
+        } catch (error) {
+            console.error('🚨 Camera initialization error:', error);
+            this.showNotification('Camera initialization failed', 'error');
+            this.showUploadInterface();
+        }
+    },
   
     createReceiptFromBase64(dataURL, timestamp) {
         const base64Data = dataURL.split(',')[1];
@@ -1414,97 +1401,96 @@ saveReceiptFromFile(file, dataURL) {
     },
 
     // ==================== FILE UPLOAD ====================
-   // Update your existing handleFileUpload method or add this if it doesn't exist
-handleFileUpload(files) {
-    console.log('🎯 ========== handleFileUpload START ==========');
-    console.log('📁 Number of files:', files.length);
-    
-    if (!files || files.length === 0) {
-        console.log('❌ No files');
-        return;
-    }
-    
-    // For first file, offer cropping
-    const file = files[0];
-    console.log('📄 Processing file:', file.name);
-    
-    // Show cropping option for images
-    if (file.type.startsWith('image/')) {
-        this.currentPhotoFile = file;
-        this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
-            this.processCroppedReceipt(croppedFile, croppedImageUrl);
-        };
-        this.showReceiptCropperModal(file);
-    } else {
-        // For non-images (PDFs), process directly
-        this.processReceiptFile(file);
-    }
-},
+    handleFileUpload(files) {
+        console.log('🎯 ========== handleFileUpload START ==========');
+        console.log('📁 Number of files:', files.length);
+        
+        if (!files || files.length === 0) {
+            console.log('❌ No files');
+            return;
+        }
+        
+        // For first file, offer cropping
+        const file = files[0];
+        console.log('📄 Processing file:', file.name);
+        
+        // Show cropping option for images
+        if (file.type.startsWith('image/')) {
+            this.currentPhotoFile = file;
+            this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                this.processCroppedReceipt(croppedFile, croppedImageUrl);
+            };
+            this.showReceiptCropperModal(file);
+        } else {
+            // For non-images (PDFs), process directly
+            this.processReceiptFile(file);
+        }
+    },
 
-processCroppedReceipt(file, imageUrl) {
-    console.log('📦 Processing cropped receipt:', file.name);
-    
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        const dataURL = e.target.result;
-        const receiptId = 'receipt_' + Date.now();
+    processCroppedReceipt(file, imageUrl) {
+        console.log('📦 Processing cropped receipt:', file.name);
         
-        const receipt = {
-            id: receiptId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            dataURL: dataURL,
-            downloadURL: imageUrl,
-            status: 'pending',
-            uploadedAt: new Date().toISOString(),
-            source: 'upload',
-            cropped: true
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const dataURL = e.target.result;
+            const receiptId = 'receipt_' + Date.now();
+            
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                dataURL: dataURL,
+                downloadURL: imageUrl,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                source: 'upload',
+                cropped: true
+            };
+            
+            this.saveReceiptLocally(receipt);
+            this.updateReceiptQueueUI();
+            this.updateModalReceiptsList();
+            
+            this.showNotification(`Receipt "${file.name}" uploaded and cropped!`, 'success');
+            this.showSimpleSuccessModal([receipt]);
         };
         
-        this.saveReceiptLocally(receipt);
-        this.updateReceiptQueueUI();
-        this.updateModalReceiptsList();
-        
-        this.showNotification(`Receipt "${file.name}" uploaded and cropped!`, 'success');
-        this.showSimpleSuccessModal([receipt]);
-    };
-    
-    reader.readAsDataURL(file);
-},
+        reader.readAsDataURL(file);
+    },
 
-processReceiptFile(file) {
-    console.log('📄 Processing receipt file without cropping:', file.name);
-    
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        const dataURL = e.target.result;
-        const receiptId = 'receipt_' + Date.now();
+    processReceiptFile(file) {
+        console.log('📄 Processing receipt file without cropping:', file.name);
         
-        const receipt = {
-            id: receiptId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            dataURL: dataURL,
-            status: 'pending',
-            uploadedAt: new Date().toISOString(),
-            source: 'upload',
-            cropped: false
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const dataURL = e.target.result;
+            const receiptId = 'receipt_' + Date.now();
+            
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                dataURL: dataURL,
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                source: 'upload',
+                cropped: false
+            };
+            
+            this.saveReceiptLocally(receipt);
+            this.updateReceiptQueueUI();
+            this.updateModalReceiptsList();
+            
+            this.showNotification(`Receipt "${file.name}" uploaded!`, 'success');
+            this.showSimpleSuccessModal([receipt]);
         };
         
-        this.saveReceiptLocally(receipt);
-        this.updateReceiptQueueUI();
-        this.updateModalReceiptsList();
-        
-        this.showNotification(`Receipt "${file.name}" uploaded!`, 'success');
-        this.showSimpleSuccessModal([receipt]);
-    };
-    
-    reader.readAsDataURL(file);
-},
+        reader.readAsDataURL(file);
+    },
     
     showSimpleSuccessModal(receipts) {
         console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
@@ -1948,32 +1934,32 @@ processReceiptFile(file) {
         }
     },
 
-showTransactionModal(transactionId = null) {
-    this.hideAllModals();
-    const modal = document.getElementById('transaction-modal');
-    if (modal) modal.classList.remove('hidden');
-    this.currentEditingId = transactionId;
-    
-    const form = document.getElementById('transaction-form');
-    if (form) {
-        form.reset();
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    showTransactionModal(transactionId = null) {
+        this.hideAllModals();
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.remove('hidden');
+        this.currentEditingId = transactionId;
         
-        // Hide delete button for new transactions
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) deleteBtn.style.display = 'none';
-        
-        // Show delete button for editing
-        if (transactionId) {
-            if (deleteBtn) deleteBtn.style.display = 'block';
+        const form = document.getElementById('transaction-form');
+        if (form) {
+            form.reset();
+            const dateInput = document.getElementById('transaction-date');
+            if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+            
+            // Hide delete button for new transactions
+            const deleteBtn = document.getElementById('delete-transaction');
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            
+            // Show delete button for editing
+            if (transactionId) {
+                if (deleteBtn) deleteBtn.style.display = 'block';
+            }
+            
+            const title = document.getElementById('transaction-modal-title');
+            if (title) title.textContent = transactionId ? 'Edit Transaction' : 'Add Transaction';
+            this.clearReceiptPreview();
         }
-        
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = transactionId ? 'Edit Transaction' : 'Add Transaction';
-        this.clearReceiptPreview();
-    }
-},
+    },
     
     hideTransactionModal() {
         const modal = document.getElementById('transaction-modal');
@@ -2046,106 +2032,105 @@ showTransactionModal(transactionId = null) {
         }, 100);
     },
 
-   showCameraInterface() {
-    console.log('📷 Showing camera interface...');
-    
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    if (uploadSection) uploadSection.style.display = 'none';
-    if (quickActionsSection) quickActionsSection.style.display = 'none';
-    if (cameraSection) {
-        cameraSection.style.display = 'block';
+    showCameraInterface() {
+        console.log('📷 Showing camera interface...');
         
-        // Quick check if camera might be available
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            const status = document.getElementById('camera-status');
-            if (status) status.textContent = 'Camera not supported';
-            this.showNotification('Camera not supported in this browser', 'warning');
+        const cameraSection = document.getElementById('camera-section');
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        const quickActionsSection = document.querySelector('.quick-actions-section');
+        
+        if (uploadSection) uploadSection.style.display = 'none';
+        if (quickActionsSection) quickActionsSection.style.display = 'none';
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
             
-            // Show upload option after 3 seconds
-            setTimeout(() => {
-                if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                    this.showUploadInterface();
-                }
-            }, 3000);
-        } else {
-            this.initializeCamera();
-        }
-        
-        // Add crop button after camera is initialized
-        setTimeout(() => {
-            if (document.getElementById('camera-section')?.style.display === 'block') {
-                this.addCropButtonToCamera();
+            // Quick check if camera might be available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                const status = document.getElementById('camera-status');
+                if (status) status.textContent = 'Camera not supported';
+                this.showNotification('Camera not supported in this browser', 'warning');
+                
+                // Show upload option after 3 seconds
+                setTimeout(() => {
+                    if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                        this.showUploadInterface();
+                    }
+                }, 3000);
+            } else {
+                this.initializeCamera();
             }
-        }, 1000);
-    }
-    if (recentSection) recentSection.style.display = 'block';
-    
-    console.log('✅ Camera interface shown');
-},
+            
+            // Add crop button after camera is initialized
+            setTimeout(() => {
+                if (document.getElementById('camera-section')?.style.display === 'block') {
+                    this.addCropButtonToCamera();
+                }
+            }, 1000);
+        }
+        if (recentSection) recentSection.style.display = 'block';
+        
+        console.log('✅ Camera interface shown');
+    },
 
     checkCameraAvailability() {
-    return new Promise((resolve) => {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-            resolve(false);
-            return;
-        }
-        
-        navigator.mediaDevices.enumerateDevices()
-            .then(devices => {
-                const hasCamera = devices.some(device => device.kind === 'videoinput');
-                resolve(hasCamera);
-            })
-            .catch(() => {
+        return new Promise((resolve) => {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
                 resolve(false);
-            });
-    });
-},
-
-     // Add this method to add a crop button to camera interface
-addCropButtonToCamera() {
-    const cameraControls = document.querySelector('.camera-controls');
-    if (!cameraControls) return;
-    
-    // Check if button already exists
-    if (document.getElementById('crop-captured-btn')) return;
-    
-    const cropBtn = document.createElement('button');
-    cropBtn.id = 'crop-captured-btn';
-    cropBtn.className = 'btn btn-outline';
-    cropBtn.innerHTML = `
-        <span class="btn-icon">✂️</span>
-        <span class="btn-text">Crop Last</span>
-    `;
-    
-    cropBtn.addEventListener('click', () => {
-        if (this.receiptQueue.length > 0) {
-            const lastReceipt = this.receiptQueue[0];
-            if (lastReceipt.type?.startsWith('image/')) {
-                // Convert dataURL to file
-                fetch(lastReceipt.dataURL)
-                    .then(res => res.blob())
-                    .then(blob => {
-                        const file = new File([blob], lastReceipt.name, { type: lastReceipt.type });
-                        this.currentPhotoFile = file;
-                        this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
-                            this.saveCroppedReceipt(croppedFile, croppedImageUrl);
-                        };
-                        this.showReceiptCropperModal(file);
-                    });
-            } else {
-                this.showNotification('Last receipt is not an image', 'error');
+                return;
             }
-        } else {
-            this.showNotification('No receipts to crop', 'info');
-        }
-    });
-    
-    cameraControls.appendChild(cropBtn);
-},
+            
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    const hasCamera = devices.some(device => device.kind === 'videoinput');
+                    resolve(hasCamera);
+                })
+                .catch(() => {
+                    resolve(false);
+                });
+        });
+    },
+
+    addCropButtonToCamera() {
+        const cameraControls = document.querySelector('.camera-controls');
+        if (!cameraControls) return;
+        
+        // Check if button already exists
+        if (document.getElementById('crop-captured-btn')) return;
+        
+        const cropBtn = document.createElement('button');
+        cropBtn.id = 'crop-captured-btn';
+        cropBtn.className = 'btn btn-outline';
+        cropBtn.innerHTML = `
+            <span class="btn-icon">✂️</span>
+            <span class="btn-text">Crop Last</span>
+        `;
+        
+        cropBtn.addEventListener('click', () => {
+            if (this.receiptQueue.length > 0) {
+                const lastReceipt = this.receiptQueue[0];
+                if (lastReceipt.type?.startsWith('image/')) {
+                    // Convert dataURL to file
+                    fetch(lastReceipt.dataURL)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const file = new File([blob], lastReceipt.name, { type: lastReceipt.type });
+                            this.currentPhotoFile = file;
+                            this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                                this.saveCroppedReceipt(croppedFile, croppedImageUrl);
+                            };
+                            this.showReceiptCropperModal(file);
+                        });
+                } else {
+                    this.showNotification('Last receipt is not an image', 'error');
+                }
+            } else {
+                this.showNotification('No receipts to crop', 'info');
+            }
+        });
+        
+        cameraControls.appendChild(cropBtn);
+    },
     
     // ==================== EVENT HANDLERS ====================
     setupImportReceiptsHandlers() {
@@ -2320,100 +2305,100 @@ addCropButtonToCamera() {
     },
 
     setupEventListeners() {
-    console.log('Setting up event listeners (event delegation)...');
-    
-    if (this._globalClickHandler) {
-        document.removeEventListener('click', this._globalClickHandler);
-        document.removeEventListener('change', this._globalChangeHandler);
-    }
-    
-    this._globalClickHandler = (e) => {
-        // ===== NEW: Handle transaction item clicks for editing =====
-        const transactionItem = e.target.closest('.transaction-item');
-        if (transactionItem) {
-            const transactionId = transactionItem.dataset.id;
-            if (transactionId) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('📝 Transaction item clicked for editing:', transactionId);
-                this.editTransaction(transactionId);
-                return; // Important: stop here so button clicks inside don't trigger twice
+        console.log('Setting up event listeners (event delegation)...');
+        
+        if (this._globalClickHandler) {
+            document.removeEventListener('click', this._globalClickHandler);
+            document.removeEventListener('change', this._globalChangeHandler);
+        }
+        
+        this._globalClickHandler = (e) => {
+            // ===== NEW: Handle transaction item clicks for editing =====
+            const transactionItem = e.target.closest('.transaction-item');
+            if (transactionItem) {
+                const transactionId = transactionItem.dataset.id;
+                if (transactionId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📝 Transaction item clicked for editing:', transactionId);
+                    this.editTransaction(transactionId);
+                    return; // Important: stop here so button clicks inside don't trigger twice
+                }
             }
-        }
+            
+            // Handle button clicks
+            const button = e.target.closest('button');
+            if (!button) return;
+            
+            const buttonId = button.id;
+            if (!buttonId) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`Button clicked: ${buttonId}`);
+            
+            switch(buttonId) {
+                case 'add-transaction':
+                    this.showTransactionModal();
+                    break;
+                case 'upload-receipt-btn':
+                    this.showImportReceiptsModal();
+                    break;
+                case 'add-income-btn':
+                    this.showAddIncome();
+                    break;
+                case 'add-expense-btn':
+                    this.showAddExpense();
+                    break;
+                case 'financial-report-btn':
+                    this.generateFinancialReport();
+                    break;
+                case 'category-analysis-btn':
+                    this.generateCategoryAnalysis();
+                    break;
+                case 'save-transaction':
+                    this.saveTransaction();
+                    break;
+                case 'delete-transaction':
+                    this.deleteTransaction();
+                    break;
+                case 'cancel-transaction':
+                    this.hideTransactionModal();
+                    break;
+                case 'close-transaction-modal':
+                    this.hideTransactionModal();
+                    break;
+                case 'close-import-receipts':
+                    this.hideImportReceiptsModal();
+                    break;
+                case 'cancel-import-receipts':
+                    this.hideImportReceiptsModal();
+                    break;
+                case 'refresh-receipts-btn':
+                    this.loadReceiptsFromFirebase();
+                    this.showNotification('Receipts refreshed', 'success');
+                    break;
+                case 'process-all-receipts':
+                    this.processPendingReceipts();
+                    break;
+                case 'export-transactions':
+                    this.exportTransactions();
+                    break;
+            }
+        };
         
-        // Handle button clicks
-        const button = e.target.closest('button');
-        if (!button) return;
+        this._globalChangeHandler = (e) => {
+            if (e.target.id === 'transaction-filter') {
+                this.filterTransactions(e.target.value);
+            }
+        };
         
-        const buttonId = button.id;
-        if (!buttonId) return;
+        document.addEventListener('click', this._globalClickHandler);
+        document.addEventListener('change', this._globalChangeHandler);
         
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log(`Button clicked: ${buttonId}`);
-        
-        switch(buttonId) {
-            case 'add-transaction':
-                this.showTransactionModal();
-                break;
-            case 'upload-receipt-btn':
-                this.showImportReceiptsModal();
-                break;
-            case 'add-income-btn':
-                this.showAddIncome();
-                break;
-            case 'add-expense-btn':
-                this.showAddExpense();
-                break;
-            case 'financial-report-btn':
-                this.generateFinancialReport();
-                break;
-            case 'category-analysis-btn':
-                this.generateCategoryAnalysis();
-                break;
-            case 'save-transaction':
-                this.saveTransaction();
-                break;
-            case 'delete-transaction':
-                this.deleteTransaction();
-                break;
-            case 'cancel-transaction':
-                this.hideTransactionModal();
-                break;
-            case 'close-transaction-modal':
-                this.hideTransactionModal();
-                break;
-            case 'close-import-receipts':
-                this.hideImportReceiptsModal();
-                break;
-            case 'cancel-import-receipts':
-                this.hideImportReceiptsModal();
-                break;
-            case 'refresh-receipts-btn':
-                this.loadReceiptsFromFirebase();
-                this.showNotification('Receipts refreshed', 'success');
-                break;
-            case 'process-all-receipts':
-                this.processPendingReceipts();
-                break;
-            case 'export-transactions':
-                this.exportTransactions();
-                break;
-        }
-    };
-    
-    this._globalChangeHandler = (e) => {
-        if (e.target.id === 'transaction-filter') {
-            this.filterTransactions(e.target.value);
-        }
-    };
-    
-    document.addEventListener('click', this._globalClickHandler);
-    document.addEventListener('change', this._globalChangeHandler);
-    
-    console.log('✅ Event delegation setup complete with transaction item editing');
-},
+        console.log('✅ Event delegation setup complete with transaction item editing');
+    },
 
     setupReceiptFormHandlers() {
         const uploadArea = document.getElementById('receipt-upload-area');
@@ -2442,39 +2427,39 @@ addCropButtonToCamera() {
 
     // ============== Date Helper ===================
     formatDateForInput(dateString) {
-    if (!dateString) return new Date().toISOString().split('T')[0];
-    
-    // If it's already in YYYY-MM-DD format, return as is
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-        return dateString;
-    }
-    
-    // Try to parse the date
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-        return new Date().toISOString().split('T')[0];
-    }
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-},
+        if (!dateString) return new Date().toISOString().split('T')[0];
+        
+        // If it's already in YYYY-MM-DD format, return as is
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            return dateString;
+        }
+        
+        // Try to parse the date
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    },
 
-formatDate(dateString) {
-    if (!dateString) return 'Unknown date';
-    
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-        return dateString;
-    }
-    
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-},
+    formatDate(dateString) {
+        if (!dateString) return 'Unknown date';
+        
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return dateString;
+        }
+        
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    },
 
     // ==================== TRANSACTION METHODS ====================
     editTransaction(transactionId) {
@@ -2532,164 +2517,164 @@ formatDate(dateString) {
         }
     },
 
-  async saveTransaction() {
-    console.log('Saving transaction...');
-    
-    // Improved Firebase auth check
-    let userId = 'anonymous';
-    try {
-        if (window.firebase && window.firebase.auth) {
-            const auth = window.firebase.auth();
-            if (auth && auth.currentUser) {
-                userId = auth.currentUser.uid;
-                console.log('✅ User ID:', userId);
-            }
-        }
-    } catch (authError) {
-        console.warn('⚠️ Error getting user:', authError);
-    }
-    
-    // Get form values with validation
-    const idInput = document.getElementById('transaction-id');
-    const dateInput = document.getElementById('transaction-date');
-    const typeInput = document.getElementById('transaction-type');
-    const categoryInput = document.getElementById('transaction-category');
-    const amountInput = document.getElementById('transaction-amount');
-    const descriptionInput = document.getElementById('transaction-description');
-    const paymentInput = document.getElementById('transaction-payment');
-    const referenceInput = document.getElementById('transaction-reference');
-    const notesInput = document.getElementById('transaction-notes');
-    
-    // Check if elements exist
-    if (!dateInput || !typeInput || !categoryInput || !amountInput || !descriptionInput) {
-        console.error('❌ Required form elements not found');
-        this.showNotification('Form elements not found', 'error');
-        return;
-    }
-    
-    const id = idInput?.value || Date.now();
-    const date = dateInput.value;
-    const type = typeInput.value;
-    const category = categoryInput.value;
-    const amount = parseFloat(amountInput.value) || 0;
-    const description = descriptionInput.value.trim();
-    const paymentMethod = paymentInput?.value || 'cash';
-    const reference = referenceInput?.value || '';
-    const notes = notesInput?.value || '';
-    
-    // Validate required fields
-    if (!date || !type || !category || !amount || !description) {
-        this.showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    if (amount <= 0) {
-        this.showNotification('Amount must be greater than 0', 'error');
-        return;
-    }
-    
-    // Prepare receipt data if exists
-    let receiptData = null;
-    if (this.receiptPreview && this.receiptPreview.downloadURL) {
-        receiptData = {
-            id: this.receiptPreview.id || `receipt_${Date.now()}`,
-            name: this.receiptPreview.name || 'receipt.jpg',
-            downloadURL: this.receiptPreview.downloadURL,
-            size: this.receiptPreview.size || 0,
-            type: this.receiptPreview.type || 'image/jpeg',
-            uploadedAt: this.receiptPreview.uploadedAt || new Date().toISOString(),
-            status: 'attached'
-        };
-    }
-    
-    // Ensure ID is a number
-    const transactionId = typeof id === 'string' ? parseInt(id) || Date.now() : id;
-    
-    const transactionData = {
-        id: transactionId,
-        date,
-        type,
-        category,
-        amount,
-        description,
-        paymentMethod,
-        reference,
-        notes,
-        receipt: receiptData,
-        userId: userId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    
-    // Check if transaction exists
-    const existingIndex = this.transactions ? this.transactions.findIndex(t => t.id == transactionId) : -1;
-    
-    try {
-        if (existingIndex > -1) {
-            // Update existing transaction
-            this.transactions[existingIndex] = transactionData;
-            console.log('📝 Updated existing transaction:', transactionId);
-        } else {
-            // Add new transaction
-            if (!idInput?.value) {
-                transactionData.id = Date.now(); // Generate new ID for new transactions
-            }
-            if (!this.transactions) this.transactions = [];
-            this.transactions.unshift(transactionData);
-            console.log('➕ Added new transaction:', transactionData.id);
-        }
+    async saveTransaction() {
+        console.log('Saving transaction...');
         
-        // Save to localStorage
+        // Improved Firebase auth check
+        let userId = 'anonymous';
         try {
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-            console.log('💾 Saved to localStorage');
-        } catch (storageError) {
-            console.warn('⚠️ Failed to save to localStorage:', storageError);
-        }
-        
-        // Save to Firebase if available
-        if (this.isFirebaseAvailable && window.db) {
-            try {
-                const docRef = window.db.collection('transactions')
-                    .doc(transactionData.id.toString());
-                
-                await docRef.set(transactionData, { merge: true });
-                console.log('✅ Transaction saved to Firebase:', transactionData.id);
-                
-                // Verify the save
-                const savedDoc = await docRef.get();
-                if (savedDoc.exists) {
-                    console.log('✅ Firebase save verified');
+            if (window.firebase && window.firebase.auth) {
+                const auth = window.firebase.auth();
+                if (auth && auth.currentUser) {
+                    userId = auth.currentUser.uid;
+                    console.log('✅ User ID:', userId);
                 }
-                
-                this.showNotification('Transaction saved successfully!', 'success');
-            } catch (firebaseError) {
-                console.warn('⚠️ Firebase error:', firebaseError.message);
-                this.showNotification('Saved locally (Firebase error: ' + firebaseError.message + ')', 'warning');
             }
-        } else {
-            console.log('💾 Firebase not available, saved locally only');
-            this.showNotification('Transaction saved locally!', 'success');
+        } catch (authError) {
+            console.warn('⚠️ Error getting user:', authError);
         }
         
-        // Update UI
-        if (typeof this.updateStats === 'function') this.updateStats();
-        if (typeof this.updateTransactionsList === 'function') this.updateTransactionsList();
-        if (typeof this.updateCategoryBreakdown === 'function') this.updateCategoryBreakdown();
+        // Get form values with validation
+        const idInput = document.getElementById('transaction-id');
+        const dateInput = document.getElementById('transaction-date');
+        const typeInput = document.getElementById('transaction-type');
+        const categoryInput = document.getElementById('transaction-category');
+        const amountInput = document.getElementById('transaction-amount');
+        const descriptionInput = document.getElementById('transaction-description');
+        const paymentInput = document.getElementById('transaction-payment');
+        const referenceInput = document.getElementById('transaction-reference');
+        const notesInput = document.getElementById('transaction-notes');
         
-        // Close modal
-        if (typeof this.hideTransactionModal === 'function') {
-            this.hideTransactionModal();
+        // Check if elements exist
+        if (!dateInput || !typeInput || !categoryInput || !amountInput || !descriptionInput) {
+            console.error('❌ Required form elements not found');
+            this.showNotification('Form elements not found', 'error');
+            return;
         }
         
-        // Clear form if needed
-        this.clearTransactionForm?.();
+        const id = idInput?.value || Date.now();
+        const date = dateInput.value;
+        const type = typeInput.value;
+        const category = categoryInput.value;
+        const amount = parseFloat(amountInput.value) || 0;
+        const description = descriptionInput.value.trim();
+        const paymentMethod = paymentInput?.value || 'cash';
+        const reference = referenceInput?.value || '';
+        const notes = notesInput?.value || '';
         
-    } catch (error) {
-        console.error('❌ Error saving transaction:', error);
-        this.showNotification('Error saving transaction: ' + error.message, 'error');
-    }
-},
+        // Validate required fields
+        if (!date || !type || !category || !amount || !description) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (amount <= 0) {
+            this.showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+        
+        // Prepare receipt data if exists
+        let receiptData = null;
+        if (this.receiptPreview && this.receiptPreview.downloadURL) {
+            receiptData = {
+                id: this.receiptPreview.id || `receipt_${Date.now()}`,
+                name: this.receiptPreview.name || 'receipt.jpg',
+                downloadURL: this.receiptPreview.downloadURL,
+                size: this.receiptPreview.size || 0,
+                type: this.receiptPreview.type || 'image/jpeg',
+                uploadedAt: this.receiptPreview.uploadedAt || new Date().toISOString(),
+                status: 'attached'
+            };
+        }
+        
+        // Ensure ID is a number
+        const transactionId = typeof id === 'string' ? parseInt(id) || Date.now() : id;
+        
+        const transactionData = {
+            id: transactionId,
+            date,
+            type,
+            category,
+            amount,
+            description,
+            paymentMethod,
+            reference,
+            notes,
+            receipt: receiptData,
+            userId: userId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Check if transaction exists
+        const existingIndex = this.transactions ? this.transactions.findIndex(t => t.id == transactionId) : -1;
+        
+        try {
+            if (existingIndex > -1) {
+                // Update existing transaction
+                this.transactions[existingIndex] = transactionData;
+                console.log('📝 Updated existing transaction:', transactionId);
+            } else {
+                // Add new transaction
+                if (!idInput?.value) {
+                    transactionData.id = Date.now(); // Generate new ID for new transactions
+                }
+                if (!this.transactions) this.transactions = [];
+                this.transactions.unshift(transactionData);
+                console.log('➕ Added new transaction:', transactionData.id);
+            }
+            
+            // Save to localStorage
+            try {
+                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                console.log('💾 Saved to localStorage');
+            } catch (storageError) {
+                console.warn('⚠️ Failed to save to localStorage:', storageError);
+            }
+            
+            // Save to Firebase if available
+            if (this.isFirebaseAvailable && window.db) {
+                try {
+                    const docRef = window.db.collection('transactions')
+                        .doc(transactionData.id.toString());
+                    
+                    await docRef.set(transactionData, { merge: true });
+                    console.log('✅ Transaction saved to Firebase:', transactionData.id);
+                    
+                    // Verify the save
+                    const savedDoc = await docRef.get();
+                    if (savedDoc.exists) {
+                        console.log('✅ Firebase save verified');
+                    }
+                    
+                    this.showNotification('Transaction saved successfully!', 'success');
+                } catch (firebaseError) {
+                    console.warn('⚠️ Firebase error:', firebaseError.message);
+                    this.showNotification('Saved locally (Firebase error: ' + firebaseError.message + ')', 'warning');
+                }
+            } else {
+                console.log('💾 Firebase not available, saved locally only');
+                this.showNotification('Transaction saved locally!', 'success');
+            }
+            
+            // Update UI
+            if (typeof this.updateStats === 'function') this.updateStats();
+            if (typeof this.updateTransactionsList === 'function') this.updateTransactionsList();
+            if (typeof this.updateCategoryBreakdown === 'function') this.updateCategoryBreakdown();
+            
+            // Close modal
+            if (typeof this.hideTransactionModal === 'function') {
+                this.hideTransactionModal();
+            }
+            
+            // Clear form if needed
+            this.clearTransactionForm?.();
+            
+        } catch (error) {
+            console.error('❌ Error saving transaction:', error);
+            this.showNotification('Error saving transaction: ' + error.message, 'error');
+        }
+    },
     
     deleteTransaction() {
         const transactionId = document.getElementById('transaction-id')?.value;
@@ -2998,7 +2983,7 @@ formatDate(dateString) {
     display: none !important;
 }
 
-/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal */
+/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal above */
 #import-receipts-modal {
     /* All styles moved to .popout-modal above */
 }
@@ -4153,60 +4138,60 @@ formatDate(dateString) {
     },
 
     renderTransactionsList(transactions) {
-    if (transactions.length === 0) {
+        if (transactions.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
+                </div>
+            `;
+        }
+
         return `
-            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
-                <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${transactions.map(transaction => {
+                    const isIncome = transaction.type === 'income';
+                    const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+                    const icon = isIncome ? '💰' : '💸';
+                    
+                    return `
+                        <div class="transaction-item" data-id="${transaction.id}" 
+                             style="display: flex; justify-content: space-between; align-items: center; 
+                                    padding: 16px; background: var(--glass-bg); border-radius: 8px; 
+                                    border: 1px solid var(--glass-border); cursor: pointer;"
+                             onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 24px;">${icon}</span>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                        ${transaction.description || 'No description'}
+                                    </div>
+                                    <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                        <span>${this.formatDate(transaction.date) || 'No date'}</span>
+                                        <span>•</span>
+                                        <span>${transaction.category || 'Uncategorized'}</span>
+                                        <span>•</span>
+                                        <span>${transaction.paymentMethod || 'Cash'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
+                                    ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                                </div>
+                                ${transaction.reference ? `
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                        Ref: ${transaction.reference}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
-    }
-
-    return `
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${transactions.map(transaction => {
-                const isIncome = transaction.type === 'income';
-                const amountClass = isIncome ? 'amount-income' : 'amount-expense';
-                const icon = isIncome ? '💰' : '💸';
-                
-                return `
-                    <div class="transaction-item" data-id="${transaction.id}" 
-                         style="display: flex; justify-content: space-between; align-items: center; 
-                                padding: 16px; background: var(--glass-bg); border-radius: 8px; 
-                                border: 1px solid var(--glass-border); cursor: pointer;"
-                         onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="font-size: 24px;">${icon}</span>
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
-                                    ${transaction.description || 'No description'}
-                                </div>
-                                <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
-                                    <span>${this.formatDate(transaction.date) || 'No date'}</span>
-                                    <span>•</span>
-                                    <span>${transaction.category || 'Uncategorized'}</span>
-                                    <span>•</span>
-                                    <span>${transaction.paymentMethod || 'Cash'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
-                                ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                            </div>
-                            ${transaction.reference ? `
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-                                    Ref: ${transaction.reference}
-                                </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-},
+    },
 
     renderCategoryBreakdown() {
         const incomeByCategory = {};
@@ -4347,24 +4332,24 @@ formatDate(dateString) {
     },
 
     updateProcessReceiptsButton() {
-    const processBtn = document.getElementById('process-receipts-btn');
-    const processCount = document.getElementById('process-receipts-count');
-    
-    if (!processBtn || !processCount) return;
-    
-    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
-    const pendingCount = pendingReceipts.length;
-    
-    if (pendingCount > 0) {
-        processBtn.classList.remove('hidden'); // ← Use class instead of style
-        processCount.textContent = pendingCount;
-        processCount.classList.remove('hidden'); // ← Use class for count too
-        processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
-    } else {
-        processBtn.classList.add('hidden'); // ← Use class instead of style
-        processCount.classList.add('hidden');
-    }
-},
+        const processBtn = document.getElementById('process-receipts-btn');
+        const processCount = document.getElementById('process-receipts-count');
+        
+        if (!processBtn || !processCount) return;
+        
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        const pendingCount = pendingReceipts.length;
+        
+        if (pendingCount > 0) {
+            processBtn.classList.remove('hidden'); // ← Use class instead of style
+            processCount.textContent = pendingCount;
+            processCount.classList.remove('hidden'); // ← Use class for count too
+            processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
+        } else {
+            processBtn.classList.add('hidden'); // ← Use class instead of style
+            processCount.classList.add('hidden');
+        }
+    },
 
     updateStats() {
         const stats = this.calculateStats();
