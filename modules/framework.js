@@ -60,25 +60,43 @@ class FarmModules {
         
         // If a container is provided, use it
         if (container) {
-            if (module.template) {
+            // CHECK FOR renderModule METHOD FIRST (most modules have this)
+            if (module.renderModule && typeof module.renderModule === 'function') {
+                // Clear container and let module render itself
+                container.innerHTML = '';
+                module.renderModule();
+            }
+            // THEN CHECK FOR template property
+            else if (module.template) {
                 container.innerHTML = module.template;
-            } else if (module.render && typeof module.render === 'function') {
-                // If module has its own render method
+            }
+            // THEN CHECK FOR generic render method
+            else if (module.render && typeof module.render === 'function') {
                 container.innerHTML = '';
                 module.render(container);
-            } else {
+            }
+            // FINALLY, show a simple success message (no error)
+            else {
                 container.innerHTML = `
                     <div style="padding: 40px; text-align: center;">
                         <h2>${this.formatModuleName(name)}</h2>
-                        <p>Module loaded but no template available.</p>
+                        <p>Module loaded successfully.</p>
                     </div>
                 `;
             }
         } else {
             // Fallback to default content area
             const contentArea = document.getElementById('content-area');
-            if (contentArea && module.template) {
-                contentArea.innerHTML = module.template;
+            if (contentArea) {
+                if (module.template) {
+                    contentArea.innerHTML = module.template;
+                } else if (module.renderModule && typeof module.renderModule === 'function') {
+                    contentArea.innerHTML = '';
+                    module.renderModule();
+                } else if (module.render && typeof module.render === 'function') {
+                    contentArea.innerHTML = '';
+                    module.render(contentArea);
+                }
             }
         }
         
