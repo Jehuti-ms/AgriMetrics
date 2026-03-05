@@ -252,7 +252,7 @@ function connectToDataBroadcaster() {
     }
     
     tryConnect();
-}
+},
 
 // Fallback using custom events
 function setupFallbackListeners() {
