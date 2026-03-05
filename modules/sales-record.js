@@ -37,9 +37,9 @@ const SalesRecordModule = {
         this.loadSalesData();
         this.renderModule();
         
-         setTimeout(() => {
-        this.setupEventListeners();
-        this.setupBroadcasterListeners();
+        setTimeout(() => {
+            this.setupEventListeners();
+            this.setupBroadcasterListeners();
         }, 100);
         
         this.initialized = true;
@@ -150,6 +150,9 @@ const SalesRecordModule = {
         
         // ✅ Update dashboard stats
         this.broadcastSalesStats();
+        
+        // ✅ Also broadcast specifically for income module
+        this.broadcastSalesToIncome([sale]);
     },
 
     // ✅ NEW: Broadcast when sale is updated
@@ -178,6 +181,10 @@ const SalesRecordModule = {
                 adjustment: newSale.totalAmount - oldSale.totalAmount
             });
         }
+        
+        // Broadcast updated sales list to income module
+        const allSales = window.FarmModules.appData.sales || [];
+        this.broadcastSalesToIncome(allSales);
     },
 
     // ✅ NEW: Broadcast when sale is deleted
@@ -217,6 +224,10 @@ const SalesRecordModule = {
         
         // Update dashboard stats
         this.broadcastSalesStats();
+        
+        // Broadcast updated sales list to income module
+        const allSales = window.FarmModules.appData.sales || [];
+        this.broadcastSalesToIncome(allSales);
     },
 
     // ✅ NEW: Broadcast sales stats for dashboard
@@ -245,74 +256,79 @@ const SalesRecordModule = {
         });
     },
 
-   // Make sure sales are broadcasting when saved
-function broadcastSalesToIncome(salesData) {
-    console.log('📢 Sales module broadcasting to income...');
-    
-    // Method 1: Use Data Broadcaster
-    if (window.DataBroadcaster && window.DataBroadcaster.emit) {
-        window.DataBroadcaster.emit('sales:updated', {
-            sales: salesData,
-            timestamp: new Date().toISOString()
-        });
-        console.log('✅ Broadcast via Data Broadcaster');
-    }
-    
-    // Method 2: Custom event as backup
-    const event = new CustomEvent('sales-updated', {
-        detail: {
-            sales: salesData,
-            timestamp: new Date().toISOString()
+    // ✅ FIXED: Moved inside the module - broadcasts sales to income module
+    broadcastSalesToIncome(salesData) {
+        console.log('📢 Sales module broadcasting to income...');
+        
+        // Method 1: Use Data Broadcaster
+        if (window.DataBroadcaster && window.DataBroadcaster.emit) {
+            window.DataBroadcaster.emit('sales:updated', {
+                sales: salesData,
+                timestamp: new Date().toISOString()
+            });
+            console.log('✅ Broadcast via Data Broadcaster');
         }
-    });
-    window.dispatchEvent(event);
-    console.log('✅ Broadcast via CustomEvent');
-    
-    // Method 3: Update global variable
-    window.latestSales = salesData;
-}
+        
+        // Method 2: Custom event as backup
+        const event = new CustomEvent('sales-updated', {
+            detail: {
+                sales: salesData,
+                timestamp: new Date().toISOString()
+            }
+        });
+        window.dispatchEvent(event);
+        console.log('✅ Broadcast via CustomEvent');
+        
+        // Method 3: Update global variable
+        window.latestSales = salesData;
+    },
 
-// Call this after saving sales
-async function saveSales(salesData) {
-    // Your existing save code...
-    
-    // After saving, broadcast
-    broadcastSalesToIncome(salesData);
-    
-    // Also save to Firebase for income module to read
-    await saveSalesToIncomeCollection(salesData);
-}  
+    // ✅ FIXED: Moved inside the module - saves sales and triggers broadcast
+    async saveSales(salesData) {
+        console.log('💾 Saving sales data...');
+        
+        // Your existing save code would go here
+        // This is a placeholder - integrate with your actual save logic
+        
+        // After saving, broadcast
+        this.broadcastSalesToIncome(salesData);
+        
+        // Also save to Firebase for income module to read
+        await this.saveSalesToIncomeCollection(salesData);
+        
+        return true;
+    },
 
-// Save to income collection in Firebase
-async function saveSalesToIncomeCollection(salesData) {
-    const user = firebase.auth().currentUser;
-    if (!user) return;
-    
-    const today = new Date();
-    const month = today.getMonth();
-    const year = today.getFullYear();
-    const period = `${month}-${year}`;
-    
-    // Convert sales to income format
-    const incomeTransactions = salesData.map(sale => ({
-        id: sale.id,
-        date: sale.date,
-        description: `Sale: ${sale.product || sale.customer}`,
-        amount: sale.total || 0,
-        category: 'Sales',
-        type: 'income',
-        source: 'sales'
-    }));
-    
-    // Save to income collection
-    await db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
-        entries: incomeTransactions,
-        totalAmount: incomeTransactions.reduce((sum, t) => sum + t.amount, 0),
-        lastUpdated: new Date().toISOString()
-    }, { merge: true });
-    
-    console.log('✅ Sales also saved to income collection');
-}  
+    // ✅ FIXED: Moved inside the module - saves to income collection
+    async saveSalesToIncomeCollection(salesData) {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        
+        const today = new Date();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+        const period = `${month}-${year}`;
+        
+        // Convert sales to income format
+        const incomeTransactions = salesData.map(sale => ({
+            id: sale.id,
+            date: sale.date,
+            description: `Sale: ${sale.product || sale.customer}`,
+            amount: sale.total || 0,
+            category: 'Sales',
+            type: 'income',
+            source: 'sales'
+        }));
+        
+        // Save to income collection
+        await db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
+            entries: incomeTransactions,
+            totalAmount: incomeTransactions.reduce((sum, t) => sum + t.amount, 0),
+            lastUpdated: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log('✅ Sales also saved to income collection');
+    },
 
     // ✅ NEW: Handle order completions from orders module
     handleOrderCompletion(orderData) {
@@ -482,21 +498,21 @@ async function saveSalesToIncomeCollection(salesData) {
     },
 
     handleProductionNavAction(action) {
-    console.log('🔄 Handling production nav action:', action);
-    
-    switch(action) {
-        case 'navigate-to-production':
-            console.log('🚀 Navigating to production module...');
-            this.navigateToProduction();
-            break;
-        case 'show-production-items':
-            console.log('📦 Showing production items...');
-            this.showProductionItems();
-            break;
-        default:
-            console.warn('Unknown production nav action:', action);
-    }
-},
+        console.log('🔄 Handling production nav action:', action);
+        
+        switch(action) {
+            case 'navigate-to-production':
+                console.log('🚀 Navigating to production module...');
+                this.navigateToProduction();
+                break;
+            case 'show-production-items':
+                console.log('📦 Showing production items...');
+                this.showProductionItems();
+                break;
+            default:
+                console.warn('Unknown production nav action:', action);
+        }
+    },
 
     checkDependencies() {
         if (!window.FarmModules || !window.FarmModules.appData) {
@@ -617,6 +633,9 @@ async function saveSalesToIncomeCollection(salesData) {
                 salesCount: window.FarmModules.appData.sales.length
             });
         }
+        
+        // Also broadcast to income module
+        this.broadcastSalesToIncome(window.FarmModules.appData.sales);
     },
 
     onThemeChange(theme) {
@@ -879,106 +898,106 @@ async function saveSalesToIncomeCollection(salesData) {
         this.hideProductionItemsModal();
     },
 
-   renderSalesTable(period = 'today') {
-    const sales = window.FarmModules.appData.sales || [];
-    
-    let filteredSales = sales;
-    if (period === 'meat') {
-        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-        filteredSales = sales.filter(sale => meatProducts.includes(sale.product));
-    } else if (period === 'production') {
-        filteredSales = sales.filter(sale => sale.productionSource);
-    } else if (period !== 'all') {
-        const cutoffDate = new Date();
-        if (period === 'today') {
-            cutoffDate.setDate(cutoffDate.getDate() - 1);
-        } else if (period === 'week') {
-            cutoffDate.setDate(cutoffDate.getDate() - 7);
-        } else if (period === 'month') {
-            cutoffDate.setDate(cutoffDate.getDate() - 30);
+    renderSalesTable(period = 'today') {
+        const sales = window.FarmModules.appData.sales || [];
+        
+        let filteredSales = sales;
+        if (period === 'meat') {
+            const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+            filteredSales = sales.filter(sale => meatProducts.includes(sale.product));
+        } else if (period === 'production') {
+            filteredSales = sales.filter(sale => sale.productionSource);
+        } else if (period !== 'all') {
+            const cutoffDate = new Date();
+            if (period === 'today') {
+                cutoffDate.setDate(cutoffDate.getDate() - 1);
+            } else if (period === 'week') {
+                cutoffDate.setDate(cutoffDate.getDate() - 7);
+            } else if (period === 'month') {
+                cutoffDate.setDate(cutoffDate.getDate() - 30);
+            }
+            filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
         }
-        filteredSales = sales.filter(sale => new Date(sale.date) >= cutoffDate);
-    }
 
-    if (filteredSales.length === 0) {
+        if (filteredSales.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No sales recorded</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first sale to get started</div>
+                </div>
+            `;
+        }
+
+        const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
         return `
-            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">💰</div>
-                <div style="font-size: 16px; margin-bottom: 8px;">No sales recorded</div>
-                <div style="font-size: 14px; color: var(--text-secondary);">Record your first sale to get started</div>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--glass-border);">
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
+                            <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedSales.map(sale => {
+                            const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+                            const isMeat = meatProducts.includes(sale.product);
+                            
+                            let quantityInfo = `${sale.quantity} ${sale.unit}`;
+                            if (isMeat && sale.weight && sale.weight > 0) {
+                                quantityInfo = `${sale.animalCount || sale.quantity} animal${(sale.animalCount || sale.quantity) !== 1 ? 's' : ''}`;
+                                if (sale.weight) {
+                                    const weightUnit = sale.weightUnit || 'kg';
+                                    quantityInfo += ` • ${sale.weight} ${weightUnit}`;
+                                }
+                            }
+                            
+                            const sourceBadge = sale.productionSource 
+                                ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
+                                : '';
+                            
+                            return `
+                                <tr style="border-bottom: 1px solid var(--glass-border);" data-sale-id="${sale.id}">
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
+                                            <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
+                                            ${sourceBadge}
+                                        </div>
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary);">
+                                        ${this.formatCurrency(sale.unitPrice)}
+                                        ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
+                                    </td>
+                                    <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
+                                    <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
+                                        ${sale.productionSource ? 'Production' : 'Direct'}
+                                    </td>
+                                    <td style="padding: 12px 8px;">
+                                        <div style="display: flex; gap: 4px;">
+                                            <button class="edit-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary); font-size: 16px;" title="Edit">✏️</button>
+                                            <button class="delete-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary); font-size: 16px;" title="Delete">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
             </div>
         `;
-    }
-
-    const sortedSales = filteredSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    return `
-        <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--glass-border);">
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Date</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Product</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Customer</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Animals/Quantity</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Unit Price</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Total</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Source</th>
-                        <th style="padding: 12px 8px; text-align: left; font-weight: 600; color: var(--text-secondary);">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sortedSales.map(sale => {
-                        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-                        const isMeat = meatProducts.includes(sale.product);
-                        
-                        let quantityInfo = `${sale.quantity} ${sale.unit}`;
-                        if (isMeat && sale.weight && sale.weight > 0) {
-                            quantityInfo = `${sale.animalCount || sale.quantity} animal${(sale.animalCount || sale.quantity) !== 1 ? 's' : ''}`;
-                            if (sale.weight) {
-                                const weightUnit = sale.weightUnit || 'kg';
-                                quantityInfo += ` • ${sale.weight} ${weightUnit}`;
-                            }
-                        }
-                        
-                        const sourceBadge = sale.productionSource 
-                            ? '<span style="background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 4px;">PROD</span>'
-                            : '';
-                        
-                        return `
-                            <tr style="border-bottom: 1px solid var(--glass-border);" data-sale-id="${sale.id}">
-                                <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(sale.date)}</td>
-                                <td style="padding: 12px 8px; color: var(--text-primary);">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span style="font-size: 18px;">${this.getProductIcon(sale.product)}</span>
-                                        <span style="font-weight: 500;">${this.formatProductName(sale.product)}</span>
-                                        ${sourceBadge}
-                                    </div>
-                                </td>
-                                <td style="padding: 12px 8px; color: var(--text-secondary);">${sale.customer || 'Walk-in'}</td>
-                                <td style="padding: 12px 8px; color: var(--text-primary);">${quantityInfo}</td>
-                                <td style="padding: 12px 8px; color: var(--text-primary);">
-                                    ${this.formatCurrency(sale.unitPrice)}
-                                    ${sale.weightUnit === 'lbs' ? '/lb' : sale.weightUnit ? `/${sale.weightUnit}` : sale.priceUnit === 'per-lb' ? '/lb' : '/kg'}
-                                </td>
-                                <td style="padding: 12px 8px; color: var(--text-primary); font-weight: 600;">${this.formatCurrency(sale.totalAmount)}</td>
-                                <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">
-                                    ${sale.productionSource ? 'Production' : 'Direct'}
-                                </td>
-                                <td style="padding: 12px 8px;">
-                                    <div style="display: flex; gap: 4px;">
-                                        <button class="edit-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary); font-size: 16px;" title="Edit">✏️</button>
-                                        <button class="delete-sale-btn" data-id="${sale.id}" style="background: none; border: none; cursor: pointer; padding: 6px; border-radius: 6px; color: var(--text-secondary); font-size: 16px;" title="Delete">🗑️</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-},
+    },
 
     renderModule() {
         if (!this.element) return;
@@ -1545,131 +1564,131 @@ async function saveSalesToIncomeCollection(salesData) {
     },
    
     // ==================== FIXED: CSP COMPLIANT EVENT LISTENERS ====================
-  setupEventListeners() {
-    console.log('🔧 Setting up event listeners...');
-    
-    // Remove any existing event listeners first
-    this.removeEventListeners();
-    
-    // Quick sale form
-    const quickSaleForm = document.getElementById('quick-sale-form');
-    if (quickSaleForm) {
-        quickSaleForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleQuickSale();
-        });
-    }
-
-    // Setup all button listeners
-    this.setupButtonListeners();
-    
-    // Form field event listeners
-    this.setupFormFieldListeners();
-    
-    // Quick product change
-    const quickProduct = document.getElementById('quick-product');
-    if (quickProduct) {
-        quickProduct.addEventListener('change', () => this.handleQuickProductChange());
-    }
-
-    // Filter
-    const periodFilter = document.getElementById('period-filter');
-    if (periodFilter) {
-        periodFilter.addEventListener('change', (e) => {
-            const salesTable = document.getElementById('sales-table');
-            if (salesTable) {
-                salesTable.innerHTML = this.renderSalesTable(e.target.value);
-                // No need to reattach listeners - event delegation handles it!
-            }
-        });
-    }
-
-    // Handle modal close buttons
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('popout-modal-close')) {
-            const modal = e.target.closest('.popout-modal');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
-        }
-    });
-    
-    // Close modals when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('popout-modal')) {
-            this.hideAllModals();
-        }
-    });
-
-    // EVENT DELEGATION - This is the key fix!
-    // Use a single event listener on document to handle all edit/delete clicks
-    document.addEventListener('click', (e) => {
-        // Check if click is on or inside an edit button
-        const editButton = e.target.closest('.edit-sale-btn');
-        if (editButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            const saleId = editButton.getAttribute('data-id');
-            if (!saleId) {
-                console.error('❌ No sale ID found on edit button');
-                return;
-            }
-            console.log('✏️ Edit button clicked for sale:', saleId);
-            this.editSale(saleId);
-            return; // Stop processing
-        }
+    setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
         
-        // Check if click is on or inside a delete button
-        const deleteButton = e.target.closest('.delete-sale-btn');
-        if (deleteButton) {
-            e.preventDefault();
-            e.stopPropagation();
-            const saleId = deleteButton.getAttribute('data-id');
-            if (!saleId) {
-                console.error('❌ No sale ID found on delete button');
-                return;
-            }
-            console.log('🗑️ Delete button clicked for sale:', saleId);
-            
-            if (confirm('Are you sure you want to delete this sale?')) {
-                this.deleteSaleRecord(saleId);
-            }
-            return; // Stop processing
-        }
-    });
-    
-    console.log('✅ Event listeners set up with delegation');
-},
-    
-// ✅ NEW METHOD: Attach direct listeners to ALL production buttons
-attachDirectProductionButtonListeners() {
-    const productionBtns = document.querySelectorAll('.production-nav-btn');
-    console.log(`🔍 Found ${productionBtns.length} production navigation buttons total`);
-    
-    productionBtns.forEach((btn, index) => {
-        // Skip if already has direct listener
-        if (btn.hasAttribute('data-direct-listener')) {
-            return;
-        }
+        // Remove any existing event listeners first
+        this.removeEventListeners();
         
-        btn.setAttribute('data-direct-listener', 'true');
-        
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const action = btn.getAttribute('data-action');
-            console.log(`🎯 Direct listener fired for button ${index}:`, action, {
-                isInModal: !!btn.closest('.popout-modal'),
-                buttonText: btn.textContent.trim()
+        // Quick sale form
+        const quickSaleForm = document.getElementById('quick-sale-form');
+        if (quickSaleForm) {
+            quickSaleForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleQuickSale();
             });
-            
-            this.handleProductionNavAction(action);
-        }, true); // Use capture phase to fire BEFORE other handlers
+        }
+
+        // Setup all button listeners
+        this.setupButtonListeners();
         
-        console.log(`✅ Added direct listener to production button ${index}`);
-    });
-},
+        // Form field event listeners
+        this.setupFormFieldListeners();
+        
+        // Quick product change
+        const quickProduct = document.getElementById('quick-product');
+        if (quickProduct) {
+            quickProduct.addEventListener('change', () => this.handleQuickProductChange());
+        }
+
+        // Filter
+        const periodFilter = document.getElementById('period-filter');
+        if (periodFilter) {
+            periodFilter.addEventListener('change', (e) => {
+                const salesTable = document.getElementById('sales-table');
+                if (salesTable) {
+                    salesTable.innerHTML = this.renderSalesTable(e.target.value);
+                    // No need to reattach listeners - event delegation handles it!
+                }
+            });
+        }
+
+        // Handle modal close buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal-close')) {
+                const modal = e.target.closest('.popout-modal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                }
+            }
+        });
+        
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('popout-modal')) {
+                this.hideAllModals();
+            }
+        });
+
+        // EVENT DELEGATION - This is the key fix!
+        // Use a single event listener on document to handle all edit/delete clicks
+        document.addEventListener('click', (e) => {
+            // Check if click is on or inside an edit button
+            const editButton = e.target.closest('.edit-sale-btn');
+            if (editButton) {
+                e.preventDefault();
+                e.stopPropagation();
+                const saleId = editButton.getAttribute('data-id');
+                if (!saleId) {
+                    console.error('❌ No sale ID found on edit button');
+                    return;
+                }
+                console.log('✏️ Edit button clicked for sale:', saleId);
+                this.editSale(saleId);
+                return; // Stop processing
+            }
+            
+            // Check if click is on or inside a delete button
+            const deleteButton = e.target.closest('.delete-sale-btn');
+            if (deleteButton) {
+                e.preventDefault();
+                e.stopPropagation();
+                const saleId = deleteButton.getAttribute('data-id');
+                if (!saleId) {
+                    console.error('❌ No sale ID found on delete button');
+                    return;
+                }
+                console.log('🗑️ Delete button clicked for sale:', saleId);
+                
+                if (confirm('Are you sure you want to delete this sale?')) {
+                    this.deleteSaleRecord(saleId);
+                }
+                return; // Stop processing
+            }
+        });
+        
+        console.log('✅ Event listeners set up with delegation');
+    },
+    
+    // ✅ NEW METHOD: Attach direct listeners to ALL production buttons
+    attachDirectProductionButtonListeners() {
+        const productionBtns = document.querySelectorAll('.production-nav-btn');
+        console.log(`🔍 Found ${productionBtns.length} production navigation buttons total`);
+        
+        productionBtns.forEach((btn, index) => {
+            // Skip if already has direct listener
+            if (btn.hasAttribute('data-direct-listener')) {
+                return;
+            }
+            
+            btn.setAttribute('data-direct-listener', 'true');
+            
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const action = btn.getAttribute('data-action');
+                console.log(`🎯 Direct listener fired for button ${index}:`, action, {
+                    isInModal: !!btn.closest('.popout-modal'),
+                    buttonText: btn.textContent.trim()
+                });
+                
+                this.handleProductionNavAction(action);
+            }, true); // Use capture phase to fire BEFORE other handlers
+            
+            console.log(`✅ Added direct listener to production button ${index}`);
+        });
+    },
     
     setupButtonListeners() {
         // Modal buttons
@@ -1950,21 +1969,21 @@ attachDirectProductionButtonListeners() {
         this.setupProductionItemsListeners();
 
         setTimeout(() => {
-        this.attachDirectProductionButtonListeners();
+            this.attachDirectProductionButtonListeners();
         }, 100);
         
     },
     
-   removeEventListeners() {
-    // Remove direct listeners from production buttons
-    const productionBtns = document.querySelectorAll('.production-nav-btn[data-direct-listener]');
-    productionBtns.forEach(btn => {
-        btn.removeAttribute('data-direct-listener');
-        // Clone to remove all event listeners
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-    });
-       
+    removeEventListeners() {
+        // Remove direct listeners from production buttons
+        const productionBtns = document.querySelectorAll('.production-nav-btn[data-direct-listener]');
+        productionBtns.forEach(btn => {
+            btn.removeAttribute('data-direct-listener');
+            // Clone to remove all event listeners
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+        });
+        
         // This method clones elements to remove event listeners
         const elementIds = [
             'add-sale', 'add-sale-btn', 'from-production-btn', 'from-production-btn-2',
@@ -1983,7 +2002,7 @@ attachDirectProductionButtonListeners() {
         });
     },
 
-         setupFormFieldListeners() {
+    setupFormFieldListeners() {
         console.log('🔧 Setting up form field listeners for meat UI...');
         
         // Product change - FIXED with proper event handling
@@ -2009,7 +2028,7 @@ attachDirectProductionButtonListeners() {
             newWeightUnit.addEventListener('change', () => {
                 console.log('📏 Weight unit changed to:', newWeightUnit.value);
                 this.updateMeatLabels();
-                this.updateAnimalCountVisibility(); // ADD THIS
+                this.updateAnimalCountVisibility();
                 this.calculateSaleTotal();
             });
         }
@@ -2060,7 +2079,7 @@ attachDirectProductionButtonListeners() {
         console.log('✅ Form field listeners set up');
     },
 
-        updateAnimalCountVisibility() {
+    updateAnimalCountVisibility() {
         console.log('👀 Updating animal count visibility...');
         const weightUnit = document.getElementById('meat-weight-unit');
         const animalCountContainer = document.getElementById('meat-animal-count-container');
@@ -2086,412 +2105,412 @@ attachDirectProductionButtonListeners() {
         }
     },
 
-   updateMeatLabels() {
-    const productSelect = document.getElementById('sale-product');
-    if (!productSelect) return;
-    
-    const selectedValue = productSelect.value;
-    const weightUnit = document.getElementById('meat-weight-unit');
-    const unit = weightUnit ? weightUnit.value : 'kg';
-    
-    // Update weight label based on selected unit and product
-    const weightLabelElement = document.querySelector('label[for="meat-weight"]');
-    if (weightLabelElement) {
-        if (unit === 'bird') {
-            weightLabelElement.textContent = 'Number of Birds *';
-        } else if (unit === 'kg') {
-            if (selectedValue === 'chicken-parts') {
-                weightLabelElement.textContent = 'Package Weight (kg) *';
-            } else if (selectedValue === 'broilers-dressed') {
-                weightLabelElement.textContent = 'Total Weight (kg) *';
-            } else {
-                weightLabelElement.textContent = 'Weight (kg) *';
+    updateMeatLabels() {
+        const productSelect = document.getElementById('sale-product');
+        if (!productSelect) return;
+        
+        const selectedValue = productSelect.value;
+        const weightUnit = document.getElementById('meat-weight-unit');
+        const unit = weightUnit ? weightUnit.value : 'kg';
+        
+        // Update weight label based on selected unit and product
+        const weightLabelElement = document.querySelector('label[for="meat-weight"]');
+        if (weightLabelElement) {
+            if (unit === 'bird') {
+                weightLabelElement.textContent = 'Number of Birds *';
+            } else if (unit === 'kg') {
+                if (selectedValue === 'chicken-parts') {
+                    weightLabelElement.textContent = 'Package Weight (kg) *';
+                } else if (selectedValue === 'broilers-dressed') {
+                    weightLabelElement.textContent = 'Total Weight (kg) *';
+                } else {
+                    weightLabelElement.textContent = 'Weight (kg) *';
+                }
+            } else if (unit === 'lbs') {
+                if (selectedValue === 'chicken-parts') {
+                    weightLabelElement.textContent = 'Package Weight (lbs) *';
+                } else if (selectedValue === 'broilers-dressed') {
+                    weightLabelElement.textContent = 'Total Weight (lbs) *';
+                } else {
+                    weightLabelElement.textContent = 'Weight (lbs) *';
+                }
             }
-        } else if (unit === 'lbs') {
-            if (selectedValue === 'chicken-parts') {
-                weightLabelElement.textContent = 'Package Weight (lbs) *';
-            } else if (selectedValue === 'broilers-dressed') {
-                weightLabelElement.textContent = 'Total Weight (lbs) *';
-            } else {
-                weightLabelElement.textContent = 'Weight (lbs) *';
+        }
+        
+        // Update price label
+        const priceLabelElement = document.querySelector('label[for="meat-price"]');
+        if (priceLabelElement) {
+            if (unit === 'bird') {
+                priceLabelElement.textContent = 'Price per Bird *';
+            } else if (unit === 'kg') {
+                priceLabelElement.textContent = 'Price per kg *';
+            } else if (unit === 'lbs') {
+                priceLabelElement.textContent = 'Price per lb *';
             }
         }
-    }
-    
-    // Update price label
-    const priceLabelElement = document.querySelector('label[for="meat-price"]');
-    if (priceLabelElement) {
-        if (unit === 'bird') {
-            priceLabelElement.textContent = 'Price per Bird *';
-        } else if (unit === 'kg') {
-            priceLabelElement.textContent = 'Price per kg *';
-        } else if (unit === 'lbs') {
-            priceLabelElement.textContent = 'Price per lb *';
+        
+        // Update price unit label in the input field
+        const priceUnitLabel = document.getElementById('meat-price-unit-label');
+        if (priceUnitLabel) {
+            if (unit === 'bird') {
+                priceUnitLabel.textContent = 'per bird';
+            } else if (unit === 'kg') {
+                priceUnitLabel.textContent = 'per kg';
+            } else if (unit === 'lbs') {
+                priceUnitLabel.textContent = 'per lb';
+            }
         }
-    }
-    
-    // Update price unit label in the input field
-    const priceUnitLabel = document.getElementById('meat-price-unit-label');
-    if (priceUnitLabel) {
-        if (unit === 'bird') {
-            priceUnitLabel.textContent = 'per bird';
-        } else if (unit === 'kg') {
-            priceUnitLabel.textContent = 'per kg';
-        } else if (unit === 'lbs') {
-            priceUnitLabel.textContent = 'per lb';
+        
+        // Update calculation summary
+        const meatCalculationElement = document.getElementById('meat-calculation');
+        if (meatCalculationElement) {
+            if (unit === 'bird') {
+                meatCalculationElement.textContent = 'Birds × Price per Bird = Total';
+            } else if (unit === 'kg') {
+                meatCalculationElement.textContent = 'Weight (kg) × Price per kg = Total';
+            } else if (unit === 'lbs') {
+                meatCalculationElement.textContent = 'Weight (lbs) × Price per lb = Total';
+            }
         }
-    }
-    
-    // Update calculation summary
-    const meatCalculationElement = document.getElementById('meat-calculation');
-    if (meatCalculationElement) {
-        if (unit === 'bird') {
-            meatCalculationElement.textContent = 'Birds × Price per Bird = Total';
-        } else if (unit === 'kg') {
-            meatCalculationElement.textContent = 'Weight (kg) × Price per kg = Total';
-        } else if (unit === 'lbs') {
-            meatCalculationElement.textContent = 'Weight (lbs) × Price per lb = Total';
-        }
-    }
-},
+    },
 
     handleQuickProductChange() {
-    const productSelect = document.getElementById('quick-product');
-    const unitSelect = document.getElementById('quick-unit');
-    const priceLabel = document.getElementById('quick-price-label');
-    
-    if (!productSelect || !unitSelect || !priceLabel) return;
-    
-    const product = productSelect.value;
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    
-    if (meatProducts.includes(product)) {
-        if (unitSelect.value === 'kg' || unitSelect.value === 'lbs') {
-            priceLabel.textContent = `Price (per ${unitSelect.value === 'lbs' ? 'lb' : 'kg'}) *`;
+        const productSelect = document.getElementById('quick-product');
+        const unitSelect = document.getElementById('quick-unit');
+        const priceLabel = document.getElementById('quick-price-label');
+        
+        if (!productSelect || !unitSelect || !priceLabel) return;
+        
+        const product = productSelect.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        
+        if (meatProducts.includes(product)) {
+            if (unitSelect.value === 'kg' || unitSelect.value === 'lbs') {
+                priceLabel.textContent = `Price (per ${unitSelect.value === 'lbs' ? 'lb' : 'kg'}) *`;
+            } else {
+                priceLabel.textContent = 'Price *';
+            }
         } else {
             priceLabel.textContent = 'Price *';
         }
-    } else {
-        priceLabel.textContent = 'Price *';
-    }
-    
-    this.setQuickDefaultPrice(product);
-},
+        
+        this.setQuickDefaultPrice(product);
+    },
 
-setQuickDefaultPrice(product) {
-    const defaultPrices = {
-        'broilers-dressed': 5.50,
-        'pork': 4.25,
-        'beef': 6.75,
-        'chicken-parts': 3.95,
-        'goat': 5.25,
-        'lamb': 6.50,
-        'broilers-live': 4.00,
-        'layers': 12.00,
-        'chicks': 2.50,
-        'eggs': 3.25,
-        'tomatoes': 1.75,
-        'peppers': 2.25,
-        'cucumbers': 1.50,
-        'lettuce': 1.25,
-        'carrots': 1.00,
-        'potatoes': 0.75,
-        'milk': 2.50,
-        'honey': 8.00,
-        'cheese': 6.00,
-        'yogurt': 3.50,
-        'butter': 4.50,
-        'jam': 5.00,
-        'bread': 2.75
-    };
-    
-    if (defaultPrices[product]) {
-        const priceInput = document.getElementById('quick-price');
-        if (priceInput) {
-            priceInput.value = defaultPrices[product];
+    setQuickDefaultPrice(product) {
+        const defaultPrices = {
+            'broilers-dressed': 5.50,
+            'pork': 4.25,
+            'beef': 6.75,
+            'chicken-parts': 3.95,
+            'goat': 5.25,
+            'lamb': 6.50,
+            'broilers-live': 4.00,
+            'layers': 12.00,
+            'chicks': 2.50,
+            'eggs': 3.25,
+            'tomatoes': 1.75,
+            'peppers': 2.25,
+            'cucumbers': 1.50,
+            'lettuce': 1.25,
+            'carrots': 1.00,
+            'potatoes': 0.75,
+            'milk': 2.50,
+            'honey': 8.00,
+            'cheese': 6.00,
+            'yogurt': 3.50,
+            'butter': 4.50,
+            'jam': 5.00,
+            'bread': 2.75
+        };
+        
+        if (defaultPrices[product]) {
+            const priceInput = document.getElementById('quick-price');
+            if (priceInput) {
+                priceInput.value = defaultPrices[product];
+            }
         }
-    }
-},
+    },
 
-  handleProductChange() {
-    console.log('🔵 handleProductChange() executing...');
-   
-    const productSelect = document.getElementById('sale-product');
-    if (!productSelect) return;
-    
-    const selectedValue = productSelect.value;
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    const isMeatProduct = meatProducts.includes(selectedValue);
-    
-    const meatSection = document.getElementById('meat-section');
-    const standardSection = document.getElementById('standard-section');
-    const meatSummary = document.getElementById('meat-summary');
-    const standardSummary = document.getElementById('standard-summary');
-    
-    if (isMeatProduct) {
-        // Show meat section, hide standard section
-        if (meatSection) meatSection.style.display = 'block';
-        if (meatSummary) meatSummary.style.display = 'block';
-        if (standardSection) standardSection.style.display = 'none';
-        if (standardSummary) standardSummary.style.display = 'none';
+    handleProductChange() {
+        console.log('🔵 handleProductChange() executing...');
+       
+        const productSelect = document.getElementById('sale-product');
+        if (!productSelect) return;
         
-        const unitSelect = document.getElementById('sale-unit');
-        if (unitSelect) unitSelect.value = 'animals';
+        const selectedValue = productSelect.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const isMeatProduct = meatProducts.includes(selectedValue);
         
-        const weightUnit = document.getElementById('meat-weight-unit');
-        const animalCountContainer = document.getElementById('meat-animal-count-container');
+        const meatSection = document.getElementById('meat-section');
+        const standardSection = document.getElementById('standard-section');
+        const meatSummary = document.getElementById('meat-summary');
+        const standardSummary = document.getElementById('standard-summary');
         
-        if (weightUnit) {
-            // Store current value before rebuilding
-            const currentValue = weightUnit.value;
+        if (isMeatProduct) {
+            // Show meat section, hide standard section
+            if (meatSection) meatSection.style.display = 'block';
+            if (meatSummary) meatSummary.style.display = 'block';
+            if (standardSection) standardSection.style.display = 'none';
+            if (standardSummary) standardSummary.style.display = 'none';
             
-            // Clear and rebuild options based on product
-            weightUnit.innerHTML = '';
+            const unitSelect = document.getElementById('sale-unit');
+            if (unitSelect) unitSelect.value = 'animals';
             
-            if (selectedValue === 'broilers-dressed') {
-                // Dressed birds: bird, kg, lbs
-                weightUnit.innerHTML = `
-                    <option value="bird">bird</option>
-                    <option value="kg">kg</option>
-                    <option value="lbs">lbs</option>
-                `;
+            const weightUnit = document.getElementById('meat-weight-unit');
+            const animalCountContainer = document.getElementById('meat-animal-count-container');
+            
+            if (weightUnit) {
+                // Store current value before rebuilding
+                const currentValue = weightUnit.value;
                 
-                // AFTER setting options, show animal count container
-                if (animalCountContainer) {
-                    animalCountContainer.classList.remove('hidden');
-                }
+                // Clear and rebuild options based on product
+                weightUnit.innerHTML = '';
                 
-                // Default to 'bird' for dressed broilers
-                weightUnit.value = 'bird';
-                
-            } else {
-                // Other meat: kg, lbs only
-                weightUnit.innerHTML = `
-                    <option value="kg">kg</option>
-                    <option value="lbs">lbs</option>
-                `;
-                
-                // Hide animal count container for other meats with kg/lbs
-                if (animalCountContainer) {
-                    if (weightUnit.value === 'kg' || weightUnit.value === 'lbs') {
-                        animalCountContainer.classList.add('hidden');
-                    } else {
+                if (selectedValue === 'broilers-dressed') {
+                    // Dressed birds: bird, kg, lbs
+                    weightUnit.innerHTML = `
+                        <option value="bird">bird</option>
+                        <option value="kg">kg</option>
+                        <option value="lbs">lbs</option>
+                    `;
+                    
+                    // AFTER setting options, show animal count container
+                    if (animalCountContainer) {
                         animalCountContainer.classList.remove('hidden');
                     }
-                }
-                
-                // Default to kg for other meats
-                weightUnit.value = 'kg';
-            }
-        }
-        
-        // Dynamic labels for different meat products
-        let animalLabel = 'Number of Animals *';
-        if (selectedValue === 'chicken-parts') {
-            animalLabel = 'Number of Packages *';
-        } else if (selectedValue === 'broilers-dressed') {
-            animalLabel = 'Number of Birds *';
-        } else if (selectedValue === 'pork') {
-            animalLabel = 'Number of Pigs *';
-        } else if (selectedValue === 'beef') {
-            animalLabel = 'Number of Cattle *';
-        } else if (selectedValue === 'goat') {
-            animalLabel = 'Number of Goats *';
-        } else if (selectedValue === 'lamb') {
-            animalLabel = 'Number of Lambs *';
-        }
-        
-        const animalLabelElement = document.querySelector('label[for="meat-animal-count"]');
-        if (animalLabelElement) {
-            animalLabelElement.textContent = animalLabel;
-        }
-        
-        this.updateMeatLabels();
-        this.updateAnimalCountVisibility();
-        
-        const standardQuantity = document.getElementById('standard-quantity');
-        const standardPrice = document.getElementById('standard-price');
-        if (standardQuantity) standardQuantity.value = '';
-        if (standardPrice) standardPrice.value = '';
-        
-        // Set default price for dressed broilers
-        if (selectedValue === 'broilers-dressed') {
-            const priceInput = document.getElementById('meat-price');
-            if (priceInput && !priceInput.value) {
-                priceInput.value = 5.50; // Default price per bird
-            }
-        }
-    } else {
-        // Show standard section, hide meat section
-        if (meatSection) meatSection.style.display = 'none';
-        if (meatSummary) meatSummary.style.display = 'none';
-        if (standardSection) standardSection.style.display = 'block';
-        if (standardSummary) standardSummary.style.display = 'block';
-        
-        const unitSelect = document.getElementById('sale-unit');
-        if (unitSelect) {
-            // Auto-set unit based on product type
-            if (!unitSelect.value || unitSelect.value === '') {
-                if (selectedValue === 'eggs') {
-                    unitSelect.value = 'dozen';
-                } else if (selectedValue === 'milk') {
-                    unitSelect.value = 'liters';
-                } else if (selectedValue === 'broilers-live' || selectedValue === 'layers' || selectedValue === 'chicks') {
-                    unitSelect.value = 'birds';
-                } else if (selectedValue === 'tomatoes' || selectedValue === 'peppers' || selectedValue === 'cucumbers') {
-                    unitSelect.value = 'kg';
-                } else if (selectedValue === 'honey' || selectedValue === 'jam') {
-                    unitSelect.value = 'jar';
-                } else if (selectedValue === 'bread') {
-                    unitSelect.value = 'loaf';
-                } else if (selectedValue === 'cheese' || selectedValue === 'butter') {
-                    unitSelect.value = 'kg';
+                    
+                    // Default to 'bird' for dressed broilers
+                    weightUnit.value = 'bird';
+                    
                 } else {
-                    unitSelect.value = 'units';
+                    // Other meat: kg, lbs only
+                    weightUnit.innerHTML = `
+                        <option value="kg">kg</option>
+                        <option value="lbs">lbs</option>
+                    `;
+                    
+                    // Hide animal count container for other meats with kg/lbs
+                    if (animalCountContainer) {
+                        if (weightUnit.value === 'kg' || weightUnit.value === 'lbs') {
+                            animalCountContainer.classList.add('hidden');
+                        } else {
+                            animalCountContainer.classList.remove('hidden');
+                        }
+                    }
+                    
+                    // Default to kg for other meats
+                    weightUnit.value = 'kg';
                 }
             }
-        }
-        
-        this.updateStandardPriceLabel();
-        
-        const meatAnimalCount = document.getElementById('meat-animal-count');
-        const meatWeight = document.getElementById('meat-weight');
-        const meatPrice = document.getElementById('meat-price');
-        if (meatAnimalCount) meatAnimalCount.value = '';
-        if (meatWeight) meatWeight.value = '';
-        if (meatPrice) meatPrice.value = '';
-    }
-    
-    this.calculateSaleTotal();
-    this.setDefaultPrice(selectedValue);
-},
-
-// Add this helper method
-updateAnimalCountVisibility() {
-    const weightUnit = document.getElementById('meat-weight-unit');
-    const animalCountContainer = document.getElementById('meat-animal-count-container');
-    const productSelect = document.getElementById('sale-product');
-    
-    if (!weightUnit || !animalCountContainer || !productSelect) return;
-    
-    const selectedValue = productSelect.value;
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    
-    // Only show animal count for 'bird' unit AND meat products
-    if (weightUnit.value === 'bird' && meatProducts.includes(selectedValue)) {
-        animalCountContainer.classList.remove('hidden');
-        console.log('✅ Showing animal count for bird unit');
-    } else {
-        animalCountContainer.classList.add('hidden');
-        console.log('❌ Hiding animal count for non-bird unit');
-    }
-},
-    
-// Update updateMeatLabels() to handle all three units properly
-updateMeatLabels() {
-    const productSelect = document.getElementById('sale-product');
-    if (!productSelect) return;
-    
-    const selectedValue = productSelect.value;
-    const weightUnit = document.getElementById('meat-weight-unit');
-    const unit = weightUnit ? weightUnit.value : 'kg';
-    
-    // Update weight label based on selected unit
-    const weightLabelElement = document.querySelector('label[for="meat-weight"]');
-    if (weightLabelElement) {
-        if (unit === 'bird') {
-            weightLabelElement.textContent = 'Number of Birds *';
-        } else if (unit === 'kg') {
-            weightLabelElement.textContent = selectedValue === 'chicken-parts' ? 'Package Weight (kg) *' : 'Weight (kg) *';
-        } else if (unit === 'lbs') {
-            weightLabelElement.textContent = selectedValue === 'chicken-parts' ? 'Package Weight (lbs) *' : 'Weight (lbs) *';
-        }
-    }
-    
-    // Update price label
-    const priceLabelElement = document.querySelector('label[for="meat-price"]');
-    if (priceLabelElement) {
-        if (unit === 'bird') {
-            priceLabelElement.textContent = 'Price per Bird *';
-        } else if (unit === 'kg') {
-            priceLabelElement.textContent = 'Price per kg *';
-        } else if (unit === 'lbs') {
-            priceLabelElement.textContent = 'Price per lb *';
-        }
-    }
-    
-    // Update the inline price unit label if it exists
-    const priceUnitLabel = document.getElementById('meat-price-unit-label');
-    if (priceUnitLabel) {
-        if (unit === 'bird') {
-            priceUnitLabel.textContent = 'per bird';
-        } else if (unit === 'kg') {
-            priceUnitLabel.textContent = 'per kg';
-        } else if (unit === 'lbs') {
-            priceUnitLabel.textContent = 'per lb';
-        }
-    }
-    
-    // Update average weight label if it exists
-    const avgWeightElement = document.getElementById('meat-avg-weight');
-    if (avgWeightElement && avgWeightElement.previousElementSibling) {
-        const avgLabel = avgWeightElement.previousElementSibling;
-        if (unit === 'bird') {
-            avgLabel.textContent = 'Average per Bird';
-        } else if (unit === 'kg' || unit === 'lbs') {
-            avgLabel.textContent = 'Average per Animal';
-        }
-    }
-},
-
-// Update setupFormFieldListeners() to handle weight unit changes
-setupFormFieldListeners() {
-    // Product change
-    const productSelect = document.getElementById('sale-product');
-    if (productSelect) {
-        productSelect.addEventListener('change', () => this.handleProductChange());
-    }
-
-    // Real-time total calculation
-    const fieldsToWatch = [
-        'standard-quantity',
-        'standard-price',
-        'meat-animal-count',
-        'meat-weight',
-        'meat-price'
-    ];
-    
-    fieldsToWatch.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('input', () => this.calculateSaleTotal());
-        }
-    });
-    
-    // Weight unit change - IMPORTANT: Rebuild this listener
-    const weightUnit = document.getElementById('meat-weight-unit');
-    if (weightUnit) {
-        // Remove any existing listeners by cloning
-        const newWeightUnit = weightUnit.cloneNode(true);
-        weightUnit.parentNode.replaceChild(newWeightUnit, weightUnit);
-        
-        // Add new listener
-        newWeightUnit.addEventListener('change', () => {
+            
+            // Dynamic labels for different meat products
+            let animalLabel = 'Number of Animals *';
+            if (selectedValue === 'chicken-parts') {
+                animalLabel = 'Number of Packages *';
+            } else if (selectedValue === 'broilers-dressed') {
+                animalLabel = 'Number of Birds *';
+            } else if (selectedValue === 'pork') {
+                animalLabel = 'Number of Pigs *';
+            } else if (selectedValue === 'beef') {
+                animalLabel = 'Number of Cattle *';
+            } else if (selectedValue === 'goat') {
+                animalLabel = 'Number of Goats *';
+            } else if (selectedValue === 'lamb') {
+                animalLabel = 'Number of Lambs *';
+            }
+            
+            const animalLabelElement = document.querySelector('label[for="meat-animal-count"]');
+            if (animalLabelElement) {
+                animalLabelElement.textContent = animalLabel;
+            }
+            
             this.updateMeatLabels();
             this.updateAnimalCountVisibility();
-            this.calculateSaleTotal();
-        });
-    }
-    
-    // Unit change
-    const unitSelect = document.getElementById('sale-unit');
-    if (unitSelect) {
-        unitSelect.addEventListener('change', () => {
+            
+            const standardQuantity = document.getElementById('standard-quantity');
+            const standardPrice = document.getElementById('standard-price');
+            if (standardQuantity) standardQuantity.value = '';
+            if (standardPrice) standardPrice.value = '';
+            
+            // Set default price for dressed broilers
+            if (selectedValue === 'broilers-dressed') {
+                const priceInput = document.getElementById('meat-price');
+                if (priceInput && !priceInput.value) {
+                    priceInput.value = 5.50; // Default price per bird
+                }
+            }
+        } else {
+            // Show standard section, hide meat section
+            if (meatSection) meatSection.style.display = 'none';
+            if (meatSummary) meatSummary.style.display = 'none';
+            if (standardSection) standardSection.style.display = 'block';
+            if (standardSummary) standardSummary.style.display = 'block';
+            
+            const unitSelect = document.getElementById('sale-unit');
+            if (unitSelect) {
+                // Auto-set unit based on product type
+                if (!unitSelect.value || unitSelect.value === '') {
+                    if (selectedValue === 'eggs') {
+                        unitSelect.value = 'dozen';
+                    } else if (selectedValue === 'milk') {
+                        unitSelect.value = 'liters';
+                    } else if (selectedValue === 'broilers-live' || selectedValue === 'layers' || selectedValue === 'chicks') {
+                        unitSelect.value = 'birds';
+                    } else if (selectedValue === 'tomatoes' || selectedValue === 'peppers' || selectedValue === 'cucumbers') {
+                        unitSelect.value = 'kg';
+                    } else if (selectedValue === 'honey' || selectedValue === 'jam') {
+                        unitSelect.value = 'jar';
+                    } else if (selectedValue === 'bread') {
+                        unitSelect.value = 'loaf';
+                    } else if (selectedValue === 'cheese' || selectedValue === 'butter') {
+                        unitSelect.value = 'kg';
+                    } else {
+                        unitSelect.value = 'units';
+                    }
+                }
+            }
+            
             this.updateStandardPriceLabel();
-            this.calculateSaleTotal();
+            
+            const meatAnimalCount = document.getElementById('meat-animal-count');
+            const meatWeight = document.getElementById('meat-weight');
+            const meatPrice = document.getElementById('meat-price');
+            if (meatAnimalCount) meatAnimalCount.value = '';
+            if (meatWeight) meatWeight.value = '';
+            if (meatPrice) meatPrice.value = '';
+        }
+        
+        this.calculateSaleTotal();
+        this.setDefaultPrice(selectedValue);
+    },
+
+    // Add this helper method
+    updateAnimalCountVisibility() {
+        const weightUnit = document.getElementById('meat-weight-unit');
+        const animalCountContainer = document.getElementById('meat-animal-count-container');
+        const productSelect = document.getElementById('sale-product');
+        
+        if (!weightUnit || !animalCountContainer || !productSelect) return;
+        
+        const selectedValue = productSelect.value;
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        
+        // Only show animal count for 'bird' unit AND meat products
+        if (weightUnit.value === 'bird' && meatProducts.includes(selectedValue)) {
+            animalCountContainer.classList.remove('hidden');
+            console.log('✅ Showing animal count for bird unit');
+        } else {
+            animalCountContainer.classList.add('hidden');
+            console.log('❌ Hiding animal count for non-bird unit');
+        }
+    },
+    
+    // Update updateMeatLabels() to handle all three units properly
+    updateMeatLabels() {
+        const productSelect = document.getElementById('sale-product');
+        if (!productSelect) return;
+        
+        const selectedValue = productSelect.value;
+        const weightUnit = document.getElementById('meat-weight-unit');
+        const unit = weightUnit ? weightUnit.value : 'kg';
+        
+        // Update weight label based on selected unit
+        const weightLabelElement = document.querySelector('label[for="meat-weight"]');
+        if (weightLabelElement) {
+            if (unit === 'bird') {
+                weightLabelElement.textContent = 'Number of Birds *';
+            } else if (unit === 'kg') {
+                weightLabelElement.textContent = selectedValue === 'chicken-parts' ? 'Package Weight (kg) *' : 'Weight (kg) *';
+            } else if (unit === 'lbs') {
+                weightLabelElement.textContent = selectedValue === 'chicken-parts' ? 'Package Weight (lbs) *' : 'Weight (lbs) *';
+            }
+        }
+        
+        // Update price label
+        const priceLabelElement = document.querySelector('label[for="meat-price"]');
+        if (priceLabelElement) {
+            if (unit === 'bird') {
+                priceLabelElement.textContent = 'Price per Bird *';
+            } else if (unit === 'kg') {
+                priceLabelElement.textContent = 'Price per kg *';
+            } else if (unit === 'lbs') {
+                priceLabelElement.textContent = 'Price per lb *';
+            }
+        }
+        
+        // Update the inline price unit label if it exists
+        const priceUnitLabel = document.getElementById('meat-price-unit-label');
+        if (priceUnitLabel) {
+            if (unit === 'bird') {
+                priceUnitLabel.textContent = 'per bird';
+            } else if (unit === 'kg') {
+                priceUnitLabel.textContent = 'per kg';
+            } else if (unit === 'lbs') {
+                priceUnitLabel.textContent = 'per lb';
+            }
+        }
+        
+        // Update average weight label if it exists
+        const avgWeightElement = document.getElementById('meat-avg-weight');
+        if (avgWeightElement && avgWeightElement.previousElementSibling) {
+            const avgLabel = avgWeightElement.previousElementSibling;
+            if (unit === 'bird') {
+                avgLabel.textContent = 'Average per Bird';
+            } else if (unit === 'kg' || unit === 'lbs') {
+                avgLabel.textContent = 'Average per Animal';
+            }
+        }
+    },
+
+    // Update setupFormFieldListeners() to handle weight unit changes
+    setupFormFieldListeners() {
+        // Product change
+        const productSelect = document.getElementById('sale-product');
+        if (productSelect) {
+            productSelect.addEventListener('change', () => this.handleProductChange());
+        }
+
+        // Real-time total calculation
+        const fieldsToWatch = [
+            'standard-quantity',
+            'standard-price',
+            'meat-animal-count',
+            'meat-weight',
+            'meat-price'
+        ];
+        
+        fieldsToWatch.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('input', () => this.calculateSaleTotal());
+            }
         });
-    }
-},
+        
+        // Weight unit change - IMPORTANT: Rebuild this listener
+        const weightUnit = document.getElementById('meat-weight-unit');
+        if (weightUnit) {
+            // Remove any existing listeners by cloning
+            const newWeightUnit = weightUnit.cloneNode(true);
+            weightUnit.parentNode.replaceChild(newWeightUnit, weightUnit);
+            
+            // Add new listener
+            newWeightUnit.addEventListener('change', () => {
+                this.updateMeatLabels();
+                this.updateAnimalCountVisibility();
+                this.calculateSaleTotal();
+            });
+        }
+        
+        // Unit change
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) {
+            unitSelect.addEventListener('change', () => {
+                this.updateStandardPriceLabel();
+                this.calculateSaleTotal();
+            });
+        }
+    },
     
     updateStandardPriceLabel() {
         const unitSelect = document.getElementById('sale-unit');
@@ -2537,7 +2556,7 @@ setupFormFieldListeners() {
         standardPriceUnitLabel.textContent = labelText;
     },
 
-      calculateSaleTotal() {
+    calculateSaleTotal() {
         const productSelect = document.getElementById('sale-product');
         if (!productSelect) return;
         
@@ -2546,7 +2565,7 @@ setupFormFieldListeners() {
         
         let total = 0;
         
-       if (meatProducts.includes(product)) {
+        if (meatProducts.includes(product)) {
             const animalCountInput = document.getElementById('meat-animal-count');
             const weightInput = document.getElementById('meat-weight');
             const weightUnitSelect = document.getElementById('meat-weight-unit');
@@ -2867,7 +2886,7 @@ setupFormFieldListeners() {
         }, 50);
     },
 
-       showProductionSourceNotice() {
+    showProductionSourceNotice() {
         if (!this.pendingProductionSale) return;
         
         const noticeElement = document.getElementById('production-source-notice');
@@ -2986,7 +3005,7 @@ setupFormFieldListeners() {
         this.showNotification('Sale recorded successfully!', 'success');
     },
 
-      saveSale() {
+    saveSale() {
         const saleIdInput = document.getElementById('sale-id');
         const dateInput = document.getElementById('sale-date');
         const customerInput = document.getElementById('sale-customer');
@@ -3175,143 +3194,143 @@ setupFormFieldListeners() {
         }
     },
 
-   deleteSaleRecord(saleId) {
-    console.log('🗑️ Deleting sale:', saleId);
-    
-    // Find the sale before deleting
-    const saleToDelete = window.FarmModules.appData.sales.find(s => s.id === saleId);
-    if (!saleToDelete) {
-        this.showNotification('Sale not found', 'error');
-        return;
-    }
-    
-    // Filter out the sale to be deleted
-    window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
-    
-    // Save the updated data
-    this.saveData();
-    
-    // Broadcast sale deleted
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('sale-deleted', {
-            module: 'sales-record',
-            timestamp: new Date().toISOString(),
-            saleId: saleId,
-            amount: saleToDelete.totalAmount,
-            product: saleToDelete.product
-        });
-    }
-    
-    // Update the display
-    this.renderModule();
-       
-    // Hide modal if open
-    this.hideSaleModal();
-    
-    // Show notification
-    this.showNotification('Sale deleted successfully!', 'success');
-},
-    
-         editSale(saleId) {
-    console.log('✏️ Editing sale:', saleId);
-    
-    const sale = window.FarmModules.appData.sales.find(s => s.id === saleId);
-    if (!sale) {
-        this.showNotification('Sale not found', 'error');
-        return;
-    }
-    
-    this.currentEditingId = saleId;
-    const saleModalTitle = document.getElementById('sale-modal-title');
-    if (saleModalTitle) saleModalTitle.textContent = 'Edit Sale';
-    
-    const saleIdInput = document.getElementById('sale-id');
-    if (saleIdInput) saleIdInput.value = sale.id;
-    
-    const deleteSaleBtn = document.getElementById('delete-sale');
-    if (deleteSaleBtn) deleteSaleBtn.classList.remove('hidden');
-    
-    const dateInput = document.getElementById('sale-date');
-    if (dateInput) dateInput.value = this.formatDateForInput(sale.date);
-    
-    const customerInput = document.getElementById('sale-customer');
-    if (customerInput) customerInput.value = sale.customer || '';
-    
-    const productSelect = document.getElementById('sale-product');
-    if (productSelect) productSelect.value = sale.product;
-    
-    const unitSelect = document.getElementById('sale-unit');
-    if (unitSelect) unitSelect.value = sale.unit || '';
-    
-    const paymentMethodSelect = document.getElementById('sale-payment');
-    if (paymentMethodSelect) paymentMethodSelect.value = sale.paymentMethod || 'cash';
-    
-    const paymentStatusSelect = document.getElementById('sale-status');
-    if (paymentStatusSelect) paymentStatusSelect.value = sale.paymentStatus || 'paid';
-    
-    const notesInput = document.getElementById('sale-notes');
-    if (notesInput) notesInput.value = sale.notes || '';
-    
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    const isMeatProduct = meatProducts.includes(sale.product);
-    
-    if (isMeatProduct) {
-        const animalCountInput = document.getElementById('meat-animal-count');
-        const weightInput = document.getElementById('meat-weight');
-        const weightUnitSelect = document.getElementById('meat-weight-unit');
-        const priceInput = document.getElementById('meat-price');
+    deleteSaleRecord(saleId) {
+        console.log('🗑️ Deleting sale:', saleId);
         
-        // Set weight unit first
-        if (weightUnitSelect) {
-            weightUnitSelect.value = sale.weightUnit || 'kg';
+        // Find the sale before deleting
+        const saleToDelete = window.FarmModules.appData.sales.find(s => s.id === saleId);
+        if (!saleToDelete) {
+            this.showNotification('Sale not found', 'error');
+            return;
         }
         
-        // Handle bird units differently
-        if (sale.weightUnit === 'bird') {
-            if (weightInput) weightInput.value = sale.quantity || sale.weight || '';
-            if (animalCountInput) animalCountInput.value = sale.originalAnimalCount || sale.quantity || sale.animalCount || '';
+        // Filter out the sale to be deleted
+        window.FarmModules.appData.sales = window.FarmModules.appData.sales.filter(s => s.id !== saleId);
+        
+        // Save the updated data
+        this.saveData();
+        
+        // Broadcast sale deleted
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('sale-deleted', {
+                module: 'sales-record',
+                timestamp: new Date().toISOString(),
+                saleId: saleId,
+                amount: saleToDelete.totalAmount,
+                product: saleToDelete.product
+            });
+        }
+        
+        // Update the display
+        this.renderModule();
+        
+        // Hide modal if open
+        this.hideSaleModal();
+        
+        // Show notification
+        this.showNotification('Sale deleted successfully!', 'success');
+    },
+    
+    editSale(saleId) {
+        console.log('✏️ Editing sale:', saleId);
+        
+        const sale = window.FarmModules.appData.sales.find(s => s.id === saleId);
+        if (!sale) {
+            this.showNotification('Sale not found', 'error');
+            return;
+        }
+        
+        this.currentEditingId = saleId;
+        const saleModalTitle = document.getElementById('sale-modal-title');
+        if (saleModalTitle) saleModalTitle.textContent = 'Edit Sale';
+        
+        const saleIdInput = document.getElementById('sale-id');
+        if (saleIdInput) saleIdInput.value = sale.id;
+        
+        const deleteSaleBtn = document.getElementById('delete-sale');
+        if (deleteSaleBtn) deleteSaleBtn.classList.remove('hidden');
+        
+        const dateInput = document.getElementById('sale-date');
+        if (dateInput) dateInput.value = this.formatDateForInput(sale.date);
+        
+        const customerInput = document.getElementById('sale-customer');
+        if (customerInput) customerInput.value = sale.customer || '';
+        
+        const productSelect = document.getElementById('sale-product');
+        if (productSelect) productSelect.value = sale.product;
+        
+        const unitSelect = document.getElementById('sale-unit');
+        if (unitSelect) unitSelect.value = sale.unit || '';
+        
+        const paymentMethodSelect = document.getElementById('sale-payment');
+        if (paymentMethodSelect) paymentMethodSelect.value = sale.paymentMethod || 'cash';
+        
+        const paymentStatusSelect = document.getElementById('sale-status');
+        if (paymentStatusSelect) paymentStatusSelect.value = sale.paymentStatus || 'paid';
+        
+        const notesInput = document.getElementById('sale-notes');
+        if (notesInput) notesInput.value = sale.notes || '';
+        
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const isMeatProduct = meatProducts.includes(sale.product);
+        
+        if (isMeatProduct) {
+            const animalCountInput = document.getElementById('meat-animal-count');
+            const weightInput = document.getElementById('meat-weight');
+            const weightUnitSelect = document.getElementById('meat-weight-unit');
+            const priceInput = document.getElementById('meat-price');
+            
+            // Set weight unit first
+            if (weightUnitSelect) {
+                weightUnitSelect.value = sale.weightUnit || 'kg';
+            }
+            
+            // Handle bird units differently
+            if (sale.weightUnit === 'bird') {
+                if (weightInput) weightInput.value = sale.quantity || sale.weight || '';
+                if (animalCountInput) animalCountInput.value = sale.originalAnimalCount || sale.quantity || sale.animalCount || '';
+            } else {
+                if (weightInput) weightInput.value = sale.weight || '';
+                if (animalCountInput) animalCountInput.value = sale.animalCount || sale.quantity || '';
+            }
+            
+            if (priceInput) priceInput.value = sale.unitPrice || '';
         } else {
-            if (weightInput) weightInput.value = sale.weight || '';
-            if (animalCountInput) animalCountInput.value = sale.animalCount || sale.quantity || '';
+            const quantityInput = document.getElementById('standard-quantity');
+            if (quantityInput) quantityInput.value = sale.quantity || '';
+            
+            const priceInput = document.getElementById('standard-price');
+            if (priceInput) priceInput.value = sale.unitPrice || '';
         }
         
-        if (priceInput) priceInput.value = sale.unitPrice || '';
-    } else {
-        const quantityInput = document.getElementById('standard-quantity');
-        if (quantityInput) quantityInput.value = sale.quantity || '';
-        
-        const priceInput = document.getElementById('standard-price');
-        if (priceInput) priceInput.value = sale.unitPrice || '';
-    }
-    
-    // Handle production source
-    if (sale.productionSourceId) {
-        const productionSourceIdInput = document.getElementById('production-source-id');
-        if (productionSourceIdInput) productionSourceIdInput.value = sale.productionSourceId;
-        
-        const productionSourceNotice = document.getElementById('production-source-notice');
-        if (productionSourceNotice) productionSourceNotice.classList.remove('hidden');
-        
-        const productionSourceInfo = document.getElementById('production-source-info');
-        if (productionSourceInfo) {
-            productionSourceInfo.textContent = `Source: ${sale.product} (ID: ${sale.productionSourceId})`;
+        // Handle production source
+        if (sale.productionSourceId) {
+            const productionSourceIdInput = document.getElementById('production-source-id');
+            if (productionSourceIdInput) productionSourceIdInput.value = sale.productionSourceId;
+            
+            const productionSourceNotice = document.getElementById('production-source-notice');
+            if (productionSourceNotice) productionSourceNotice.classList.remove('hidden');
+            
+            const productionSourceInfo = document.getElementById('production-source-info');
+            if (productionSourceInfo) {
+                productionSourceInfo.textContent = `Source: ${sale.product} (ID: ${sale.productionSourceId})`;
+            }
+        } else {
+            const productionSourceNotice = document.getElementById('production-source-notice');
+            if (productionSourceNotice) productionSourceNotice.classList.add('hidden');
         }
-    } else {
-        const productionSourceNotice = document.getElementById('production-source-notice');
-        if (productionSourceNotice) productionSourceNotice.classList.add('hidden');
-    }
-    
-    // Trigger product change to update UI
-    setTimeout(() => {
-        this.handleProductChange();
-        this.calculateSaleTotal();
-    }, 50);
-    
-    const modal = document.getElementById('sale-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
-},
+        
+        // Trigger product change to update UI
+        setTimeout(() => {
+            this.handleProductChange();
+            this.calculateSaleTotal();
+        }, 50);
+        
+        const modal = document.getElementById('sale-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    },
 
     addSale(saleData) {
         if (!saleData.id) {
@@ -3476,45 +3495,45 @@ setupFormFieldListeners() {
         }
     },
     
-  generateMeatSalesReport() {
-    const sales = window.FarmModules.appData.sales || [];
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-    
-    const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
-    
-    const totalWeight = meatSales.reduce((sum, sale) => {
-        if (sale.weightUnit === 'lbs') {
-            return sum + (sale.weight || 0) * 0.453592;
-        }
-        return sum + (sale.weight || 0);
-    }, 0);
-    
-    const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
-    const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    
-    // ✅ FIXED: Properly initialize productBreakdown object
-    const productBreakdown = {};
-    
-    meatSales.forEach(sale => {
-        const productName = this.formatProductName(sale.product);
-        if (!productBreakdown[productName]) {
-            productBreakdown[productName] = {
-                weight: 0,
-                animals: 0,
-                revenue: 0
-            };
-        }
+    generateMeatSalesReport() {
+        const sales = window.FarmModules.appData.sales || [];
+        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
         
-        let weight = sale.weight || 0;
-        if (sale.weightUnit === 'lbs') {
-            weight = weight * 0.453592;
-        }
+        const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
         
-        productBreakdown[productName].weight += weight;
-        productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
-        productBreakdown[productName].revenue += sale.totalAmount;
-    });
-    
+        const totalWeight = meatSales.reduce((sum, sale) => {
+            if (sale.weightUnit === 'lbs') {
+                return sum + (sale.weight || 0) * 0.453592;
+            }
+            return sum + (sale.weight || 0);
+        }, 0);
+        
+        const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+        const totalRevenue = meatSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        
+        // ✅ FIXED: Properly initialize productBreakdown object
+        const productBreakdown = {};
+        
+        meatSales.forEach(sale => {
+            const productName = this.formatProductName(sale.product);
+            if (!productBreakdown[productName]) {
+                productBreakdown[productName] = {
+                    weight: 0,
+                    animals: 0,
+                    revenue: 0
+                };
+            }
+            
+            let weight = sale.weight || 0;
+            if (sale.weightUnit === 'lbs') {
+                weight = weight * 0.453592;
+            }
+            
+            productBreakdown[productName].weight += weight;
+            productBreakdown[productName].animals += sale.animalCount || sale.quantity || 0;
+            productBreakdown[productName].revenue += sale.totalAmount;
+        });
+        
         // ✅ Broadcast meat report generation
         if (this.broadcaster) {
             this.broadcaster.broadcast('meat-report-generated', {
@@ -3789,23 +3808,23 @@ setupFormFieldListeners() {
         }).format(amount);
     },
 
-   showNotification(message, type = 'info') {
-    // Add animation styles to document head
-    if (!document.querySelector('#notification-styles')) {
-        const style = document.createElement('style');
-        style.id = 'notification-styles';
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            @keyframes slideOut {
-                from { transform: translateX(0); opacity: 1; }
-                to { transform: translateX(100%); opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    showNotification(message, type = 'info') {
+        // Add animation styles to document head
+        if (!document.querySelector('#notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
         
         // Create notification element
         const notification = document.createElement('div');
@@ -3847,19 +3866,19 @@ setupFormFieldListeners() {
         }, 3000);
     },
     
-       unload() {
-    console.log('📦 Unloading Sales module...');
-    this.initialized = false;
-    this.element = null;
-    this.broadcaster = null;
-    this.removeEventListeners();
-    
-    // Remove any notification styles
-    const notificationStyles = document.querySelector('#notification-styles');
-    if (notificationStyles) {
-        notificationStyles.remove();
+    unload() {
+        console.log('📦 Unloading Sales module...');
+        this.initialized = false;
+        this.element = null;
+        this.broadcaster = null;
+        this.removeEventListeners();
+        
+        // Remove any notification styles
+        const notificationStyles = document.querySelector('#notification-styles');
+        if (notificationStyles) {
+            notificationStyles.remove();
+        }
     }
-}
 };
 
 // ==================== UNIVERSAL REGISTRATION ====================
