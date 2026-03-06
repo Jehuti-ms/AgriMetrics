@@ -630,47 +630,110 @@ initializePDFCapabilities() {
         `;
     },
 
-    getFarmStats() {
-        // Try to get from shared app data first
-        if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
-            const sharedStats = window.FarmModules.appData.profile.dashboardStats;
-            return {
-                totalRevenue: sharedStats.totalRevenue || 0,
-                netProfit: sharedStats.netProfit || 0,
-                totalBirds: sharedStats.totalBirds || 0,
-                totalProduction: sharedStats.totalProduction || 0,
-                lowStockItems: sharedStats.lowStockItems || 0,
-                totalFeedUsed: sharedStats.totalFeedUsed || 0
-            };
-        }
-
-        // Fallback to localStorage
-        const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
-        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
-        const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
-        const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
-        const currentStock = parseInt(localStorage.getItem('farm-current-stock') || '1000');
-
-        const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-        const totalExpenses = transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + (t.amount || 0), 0);
-        
-        const netProfit = totalRevenue - totalExpenses;
-        const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
-        const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-
+ getFarmStats() {
+    // Try to get from shared app data first
+    if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
+        const sharedStats = window.FarmModules.appData.profile.dashboardStats;
         return {
-            totalRevenue,
-            netProfit,
-            totalBirds: currentStock,
-            totalProduction,
-            lowStockItems,
-            totalFeedUsed
+            totalRevenue: sharedStats.totalRevenue || 0,
+            netProfit: sharedStats.netProfit || 0,
+            totalBirds: sharedStats.totalBirds || 0,
+            totalProduction: sharedStats.totalProduction || 0,
+            lowStockItems: sharedStats.lowStockItems || 0,
+            totalFeedUsed: sharedStats.totalFeedUsed || 0
         };
-    },
+    }
+
+    // Fallback to localStorage
+    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    const feedRecords = JSON.parse(localStorage.getItem('farm-feed-records') || '[]');
+    const sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+    
+    // ===== FIXED: Get ACTUAL bird count instead of default 1000 =====
+    let totalBirds = 0;
+    
+    // Method 1: Try to get from broiler mortality module
+    if (window.BroilerMortalityModule) {
+        // Check if module has a method to get current stock
+        if (typeof window.BroilerMortalityModule.getCurrentStock === 'function') {
+            totalBirds = window.BroilerMortalityModule.getCurrentStock();
+        } 
+        // Check if module has a currentStock property
+        else if (window.BroilerMortalityModule.currentStock) {
+            totalBirds = window.BroilerMortalityModule.currentStock;
+        }
+        // Check if module has records we can calculate from
+        else if (window.BroilerMortalityModule.records) {
+            const mortalityRecords = window.BroilerMortalityModule.records;
+            const initialStock = parseInt(localStorage.getItem('farm-initial-stock') || '0');
+            const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+            totalBirds = Math.max(0, initialStock - totalMortality);
+        }
+    }
+    
+    // Method 2: Try from production module (birds produced)
+    if (totalBirds === 0 && window.ProductionModule) {
+        const birdProduction = production.filter(p => 
+            p.product?.toLowerCase().includes('bird') || 
+            p.product?.toLowerCase().includes('broiler') ||
+            p.product?.toLowerCase().includes('chicken')
+        );
+        totalBirds = birdProduction.reduce((sum, p) => sum + (p.quantity || 0), 0);
+    }
+    
+    // Method 3: Try from inventory
+    if (totalBirds === 0) {
+        const birdInventory = inventory.find(item => 
+            (item.name && (item.name.toLowerCase().includes('bird') || 
+                          item.name.toLowerCase().includes('broiler') || 
+                          item.name.toLowerCase().includes('chicken'))) ||
+            (item.category && (item.category.toLowerCase().includes('poultry') || 
+                              item.category.toLowerCase().includes('livestock')))
+        );
+        totalBirds = birdInventory?.quantity || 0;
+    }
+    
+    // Method 4: Check for farm-current-stock in localStorage (but don't default to 1000)
+    if (totalBirds === 0) {
+        const storedStock = localStorage.getItem('farm-current-stock');
+        if (storedStock) {
+            totalBirds = parseInt(storedStock);
+        }
+    }
+    
+    // Method 5: Calculate from mortality records as last resort
+    if (totalBirds === 0) {
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        const initialStock = parseInt(localStorage.getItem('farm-initial-stock') || '0');
+        if (initialStock > 0) {
+            const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+            totalBirds = Math.max(0, initialStock - totalMortality);
+        }
+    }
+    
+    // ===== END OF FIX =====
+
+    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    const totalExpenses = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    const netProfit = totalRevenue - totalExpenses;
+    const totalProduction = production.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock).length;
+    const totalFeedUsed = feedRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+
+    return {
+        totalRevenue,
+        netProfit,
+        totalBirds,  // ✅ Now shows REAL bird count, not default 1000
+        totalProduction,
+        lowStockItems,
+        totalFeedUsed
+    };
+},
 
     renderRecentActivity() {
         const activities = this.getRecentActivities();
