@@ -563,6 +563,242 @@ broadcastSaleCompleted(saleData) {
         this.calculateTotal(); // Initialize total
     },
 
+    // Add this to your orders module
+completeOrder(orderId) {
+    console.log(`✅ Completing order: ${orderId}`);
+    
+    // Find the order
+    const order = this.orders.find(o => o.id === orderId);
+    if (!order) {
+        this.showNotification('Order not found', 'error');
+        return;
+    }
+    
+    // Mark order as completed
+    order.status = 'completed';
+    order.completedAt = new Date().toISOString();
+    
+    // Save to localStorage
+    this.saveOrders();
+    
+    // Show notification
+    this.showNotification(`Order #${orderId} completed!`, 'success');
+    
+    // ========== CREATE SALE FROM ORDER ==========
+    
+    // Generate sale ID
+    const saleId = 'SALE-' + Date.now().toString().slice(-6);
+    
+    // Create sale data from order
+    const saleData = {
+        id: saleId,
+        date: new Date().toISOString().split('T')[0],
+        customer: order.customerName || 'Walk-in',
+        product: this.mapOrderItemsToProduct(order.items),
+        unit: 'items',
+        quantity: this.calculateOrderQuantity(order.items),
+        unitPrice: order.total / this.calculateOrderQuantity(order.items),
+        totalAmount: order.total,
+        paymentMethod: order.paymentMethod || 'cash',
+        paymentStatus: 'paid',
+        notes: `From order #${orderId}`,
+        orderSource: true,
+        orderId: orderId,
+        items: order.items
+    };
+    
+    console.log('🔄 Creating sale from order:', saleData);
+    
+    // ========== ADD TO SALES MODULE ==========
+    
+    // Method 1: Direct update if sales module is accessible
+    if (window.SalesRecordModule) {
+        console.log('💰 Directly updating SalesRecordModule');
+        
+        // Initialize sales array if needed
+        if (!window.SalesRecordModule.sales) {
+            window.SalesRecordModule.sales = [];
+        }
+        
+        // Add the sale
+        window.SalesRecordModule.sales.push(saleData);
+        
+        // Save data
+        if (typeof window.SalesRecordModule.saveData === 'function') {
+            window.SalesRecordModule.saveData();
+        }
+        
+        // Refresh sales display if active
+        if (window.FarmModules.currentModule === 'sales-record') {
+            window.SalesRecordModule.renderModule();
+        }
+    }
+    
+    // ========== ADD TO INCOME MODULE ==========
+    
+    // Create income transaction from sale
+    const incomeTransaction = {
+        id: Date.now(),
+        date: saleData.date,
+        type: 'income',
+        category: 'sales',
+        amount: saleData.totalAmount,
+        description: `Sale from Order #${orderId} - ${order.customerName || 'Customer'}`,
+        paymentMethod: order.paymentMethod || 'cash',
+        reference: saleId,
+        notes: `Auto-generated from completed order`,
+        source: 'orders-module',
+        orderId: orderId,
+        saleId: saleId
+    };
+    
+    // Direct update if income module is accessible
+    if (window.IncomeExpensesModule) {
+        console.log('💰 Directly updating IncomeExpensesModule');
+        if (!window.IncomeExpensesModule.transactions) {
+            window.IncomeExpensesModule.transactions = [];
+        }
+        window.IncomeExpensesModule.transactions.unshift(incomeTransaction);
+        
+        if (typeof window.IncomeExpensesModule.saveData === 'function') {
+            window.IncomeExpensesModule.saveData();
+        }
+        
+        // Refresh income display if active
+        if (window.FarmModules.currentModule === 'income-expenses') {
+            window.IncomeExpensesModule.renderModule();
+        }
+    }
+    
+    // ========== BROADCAST EVENTS ==========
+    
+    // Broadcast order completed event
+    const orderCompletedEvent = new CustomEvent('order-completed', {
+        detail: {
+            orderId: orderId,
+            customerName: order.customerName || 'Customer',
+            items: order.items,
+            totalAmount: order.total,
+            date: saleData.date,
+            paymentMethod: order.paymentMethod || 'cash',
+            saleId: saleId,
+            saleData: saleData
+        }
+    });
+    window.dispatchEvent(orderCompletedEvent);
+    console.log('📢 Dispatched order-completed event');
+    
+    // Broadcast sale completed event (for income module)
+    const saleCompletedEvent = new CustomEvent('sale-completed', {
+        detail: {
+            orderId: orderId,
+            saleId: saleId,
+            amount: order.total,
+            date: saleData.date,
+            description: `Order #${orderId} completed`,
+            customerName: order.customerName || 'Customer',
+            paymentMethod: order.paymentMethod || 'cash',
+            product: this.mapOrderItemsToProduct(order.items),
+            items: order.items
+        }
+    });
+    window.dispatchEvent(saleCompletedEvent);
+    console.log('📢 Dispatched sale-completed event');
+    
+    // Use DataBroadcaster if available
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('order-completed', {
+            orderId: orderId,
+            customerName: order.customerName || 'Customer',
+            items: order.items,
+            totalAmount: order.total,
+            date: saleData.date,
+            paymentMethod: order.paymentMethod || 'cash',
+            saleId: saleId
+        });
+        
+        window.DataBroadcaster.emit('sale-completed', {
+            orderId: orderId,
+            saleId: saleId,
+            amount: order.total,
+            date: saleData.date,
+            description: `Order #${orderId} completed`,
+            customerName: order.customerName || 'Customer',
+            product: this.mapOrderItemsToProduct(order.items)
+        });
+        console.log('📢 Broadcast via DataBroadcaster');
+    }
+    
+    // ========== UPDATE DASHBOARD ==========
+    if (window.dashboardModule && typeof window.dashboardModule.updateStats === 'function') {
+        window.dashboardModule.updateStats();
+    }
+    
+    // Trigger dashboard refresh via event
+    const dashboardEvent = new CustomEvent('dashboard-update', {
+        detail: {
+            type: 'order-completed',
+            amount: order.total,
+            orderId: orderId,
+            timestamp: new Date().toISOString()
+        }
+    });
+    window.dispatchEvent(dashboardEvent);
+    
+    // ========== UPDATE UI ==========
+    this.renderModule();
+    
+    console.log('✅ Order completed and communicated to all modules:', {
+        order: order,
+        sale: saleData,
+        income: incomeTransaction
+    });
+    
+    return saleId;
+}
+
+// Helper functions for the orders module
+mapOrderItemsToProduct(items) {
+    if (!items || items.length === 0) return 'other';
+    
+    // If there are multiple items, use the first one for categorization
+    const firstItem = items[0];
+    
+    // Map common products
+    const productMap = {
+        'eggs': 'eggs',
+        'broilers': 'broilers-live',
+        'layers': 'layers',
+        'chicks': 'chicks',
+        'feed': 'feed',
+        'medication': 'medical',
+        'equipment': 'equipment'
+    };
+    
+    return productMap[firstItem.productId] || 'other';
+}
+
+calculateOrderQuantity(items) {
+    if (!items || items.length === 0) return 1;
+    return items.reduce((total, item) => total + (item.quantity || 0), 0);
+}
+
+// Add this to your orders module initialization to set up the complete button
+setupCompleteOrderButtons() {
+    document.addEventListener('click', (e) => {
+        const completeBtn = e.target.closest('.complete-order-btn');
+        if (completeBtn) {
+            const orderId = completeBtn.dataset.orderId;
+            if (orderId) {
+                e.preventDefault();
+                if (confirm('Complete this order? This will create a sale and add to income.')) {
+                    this.completeOrder(orderId);
+                }
+            }
+        }
+    });
+},
+
     calculateStats() {
         const pendingOrders = this.orders.filter(order => order.status === 'pending').length;
         const completedOrders = this.orders.filter(order => order.status === 'completed').length;
@@ -579,54 +815,62 @@ broadcastSaleCompleted(saleData) {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
-    renderOrdersList() {
-        if (this.orders.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
-                </div>
-            `;
-        }
-
+   renderOrdersList() {
+    if (this.orders.length === 0) {
         return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.orders.map(order => {
-                    const customer = this.customers.find(c => c.id === order.customerId);
-                    return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: var(--text-primary);">
-                                    Order #${order.id} - ${customer?.name || 'Unknown Customer'}
-                                </div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">
-                                    ${order.date} • ${order.items.length} item${order.items.length > 1 ? 's' : ''}
-                                </div>
-                                ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${order.notes}</div>` : ''}
-                            </div>
-                            <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
-                                <div>
-                                    <div style="font-weight: bold; color: var(--text-primary);">${this.formatCurrency(order.totalAmount)}</div>
-                                    <div style="font-size: 12px; padding: 2px 8px; border-radius: 8px; background: ${this.getStatusColor(order.status)}20; color: ${this.getStatusColor(order.status)}; margin-top: 4px;">
-                                        ${this.formatStatus(order.status)}
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 4px;">
-                                    <button class="btn-icon edit-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Edit Order">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Delete Order">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
             </div>
         `;
-    },
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            ${this.orders.map(order => {
+                const customer = this.customers.find(c => c.id === order.customerId);
+                const isPending = order.status === 'pending' || order.status === 'draft';
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary);">
+                                Order #${order.id} - ${customer?.name || 'Unknown Customer'}
+                            </div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">
+                                ${order.date} • ${order.items.length} item${order.items.length > 1 ? 's' : ''}
+                            </div>
+                            ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${order.notes}</div>` : ''}
+                        </div>
+                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                            <div>
+                                <div style="font-weight: bold; color: var(--text-primary);">${this.formatCurrency(order.totalAmount)}</div>
+                                <div style="font-size: 12px; padding: 2px 8px; border-radius: 8px; background: ${this.getStatusColor(order.status)}20; color: ${this.getStatusColor(order.status)}; margin-top: 4px;">
+                                    ${this.formatStatus(order.status)}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                ${isPending ? `
+                                    <button class="btn-icon complete-order-btn" data-order-id="${order.id}" 
+                                            style="background: #4CAF50; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px; display: flex; align-items: center; gap: 4px;" 
+                                            title="Complete Order">
+                                        ✅ Complete
+                                    </button>
+                                ` : ''}
+                                <button class="btn-icon edit-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Edit Order">
+                                    ✏️
+                                </button>
+                                <button class="btn-icon delete-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Delete Order">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
 
     renderCustomersList() {
         if (this.customers.length === 0) {
@@ -724,7 +968,8 @@ setupEventListeners() {
         if (target.closest('.edit-order') || 
             target.closest('.delete-order') || 
             target.closest('.edit-customer') || 
-            target.closest('.delete-customer')) {
+            target.closest('.delete-customer') ||
+            target.closest('.complete-order-btn')) {  // ← ADD THIS LINE
             
             console.log('🛑 CAPTURE PHASE: Intercepting order/customer action');
             
@@ -733,6 +978,18 @@ setupEventListeners() {
             e.preventDefault();
             
             // Handle the action immediately in capture phase
+            const completeBtn = target.closest('.complete-order-btn');
+            if (completeBtn) {
+                const orderId = completeBtn.getAttribute('data-order-id');
+                console.log('✅ CAPTURE: Complete order', orderId);
+                if (orderId) {
+                    if (confirm('Complete this order? This will create a sale and add to income.')) {
+                        this.completeOrder(orderId);
+                    }
+                }
+                return;
+            }
+            
             const customerDelete = target.closest('.delete-customer');
             if (customerDelete) {
                 const customerId = customerDelete.getAttribute('data-id');
