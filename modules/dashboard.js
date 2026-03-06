@@ -1429,7 +1429,7 @@ const dashboardStyles = `
             opacity: 0;
         }
     }
-`;
+`,
 
 // Add this right before the final closing brace of DashboardModule
 unload() {
