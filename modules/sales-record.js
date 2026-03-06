@@ -3005,160 +3005,249 @@ const SalesRecordModule = {
         this.showNotification('Sale recorded successfully!', 'success');
     },
 
-    saveSale() {
-        const saleIdInput = document.getElementById('sale-id');
-        const dateInput = document.getElementById('sale-date');
-        const customerInput = document.getElementById('sale-customer');
-        const productSelect = document.getElementById('sale-product');
-        const unitSelect = document.getElementById('sale-unit');
-        const paymentMethodSelect = document.getElementById('sale-payment');
-        const paymentStatusSelect = document.getElementById('sale-status');
-        const notesInput = document.getElementById('sale-notes');
+   saveSale() {
+    const saleIdInput = document.getElementById('sale-id');
+    const dateInput = document.getElementById('sale-date');
+    const customerInput = document.getElementById('sale-customer');
+    const productSelect = document.getElementById('sale-product');
+    const unitSelect = document.getElementById('sale-unit');
+    const paymentMethodSelect = document.getElementById('sale-payment');
+    const paymentStatusSelect = document.getElementById('sale-status');
+    const notesInput = document.getElementById('sale-notes');
 
-        const saleId = saleIdInput ? saleIdInput.value : '';
-        let date = dateInput ? dateInput.value : '';
-        const customer = customerInput ? customerInput.value : '';
-        const product = productSelect ? productSelect.value : '';
-        const unit = unitSelect ? unitSelect.value : '';
-        const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
-        const paymentStatus = paymentStatusSelect ? paymentStatusSelect.value : '';
-        const notes = notesInput ? notesInput.value : '';
+    const saleId = saleIdInput ? saleIdInput.value : '';
+    let date = dateInput ? dateInput.value : '';
+    const customer = customerInput ? customerInput.value : '';
+    const product = productSelect ? productSelect.value : '';
+    const unit = unitSelect ? unitSelect.value : '';
+    const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
+    const paymentStatus = paymentStatusSelect ? paymentStatusSelect.value : '';
+    const notes = notesInput ? notesInput.value : '';
 
-        if (!date || !product || !unit || !paymentMethod) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
+    if (!date || !product || !unit || !paymentMethod) {
+        this.showNotification('Please fill in all required fields', 'error');
+        return;
+    }
 
-        // Use our normalizeDateForStorage method
-        date = this.normalizeDateForStorage(date);
+    // Use our normalizeDateForStorage method
+    date = this.normalizeDateForStorage(date);
 
-        const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
-        const isMeatProduct = meatProducts.includes(product);
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
 
-        let saleData;
+    let saleData;
+    
+    if (isMeatProduct) {
+        const animalCountInput = document.getElementById('meat-animal-count');
+        const weightInput = document.getElementById('meat-weight');
+        const weightUnitSelect = document.getElementById('meat-weight-unit');
+        const priceInput = document.getElementById('meat-price');
         
-        if (isMeatProduct) {
-            const animalCountInput = document.getElementById('meat-animal-count');
-            const weightInput = document.getElementById('meat-weight');
-            const weightUnitSelect = document.getElementById('meat-weight-unit');
-            const priceInput = document.getElementById('meat-price');
+        const animalCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
+        const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
+        const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
+        const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        
+        let totalAmount;
+        let priceUnit;
+        
+        // Calculate based on weight unit
+        if (weightUnit === 'bird') {
+            // For bird units, weight = number of birds, price = price per bird
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-bird';
             
-            const animalCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
-            const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
-            const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
-            const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+            // Ensure animal count matches weight for bird units
+            if (animalCountInput && weight > 0 && animalCount === 0) {
+                // This should already be handled in calculateSaleTotal, but just in case
+                animalCountInput.value = weight;
+            }
+        } else if (weightUnit === 'lbs') {
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-lb';
+        } else {
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-kg';
+        }
+        
+        // Calculate effective animal count for averages
+        const effectiveAnimalCount = weightUnit === 'bird' ? weight : (animalCount > 0 ? animalCount : 1);
+        const avgWeightPerAnimal = weightUnit === 'bird' ? 1 : (effectiveAnimalCount > 0 ? weight / effectiveAnimalCount : 0);
+        const avgValuePerAnimal = effectiveAnimalCount > 0 ? totalAmount / effectiveAnimalCount : 0;
+        
+        saleData = {
+            id: saleId || 'SALE-' + Date.now().toString().slice(-6),
+            date: date,
+            customer: customer || 'Walk-in',
+            product: product,
+            unit: unit,
+            quantity: effectiveAnimalCount, // Use effective animal count for quantity
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus || 'paid',
+            notes: notes,
+            weight: weight,
+            weightUnit: weightUnit,
+            animalCount: effectiveAnimalCount, // Store effective animal count
+            originalAnimalCount: animalCount, // Store the original input if different
+            priceUnit: priceUnit,
+            avgWeightPerAnimal: avgWeightPerAnimal,
+            avgValuePerAnimal: avgValuePerAnimal
+        };
+    } else {
+        const quantityInput = document.getElementById('standard-quantity');
+        const priceInput = document.getElementById('standard-price');
+        
+        const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
+        const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        const totalAmount = quantity * unitPrice;
+        
+        saleData = {
+            id: saleId || 'SALE-' + Date.now().toString().slice(-6),
+            date: date,
+            customer: customer || 'Walk-in',
+            product: product,
+            unit: unit,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus || 'paid',
+            notes: notes
+        };
+    }
+
+    if (this.pendingProductionSale) {
+        saleData.productionSource = true;
+        saleData.productionSourceId = this.pendingProductionSale.id;
+        this.updateProductionAfterSale(this.pendingProductionSale.id, saleData);
+    }
+
+    const validation = this.validateSaleData(saleData);
+    if (!validation.isValid) {
+        this.showNotification(validation.errors.join(', '), 'error');
+        return;
+    }
+
+    let isNewSale = false;
+    let oldSale = null;
+
+    if (saleId) {
+        // Update existing sale
+        oldSale = window.FarmModules.appData.sales.find(s => s.id === saleId);
+        const index = window.FarmModules.appData.sales.findIndex(s => s.id === saleId);
+        if (index !== -1) {
+            window.FarmModules.appData.sales[index] = saleData;
             
-            let totalAmount;
-            let priceUnit;
-            
-            // Calculate based on weight unit
-            if (weightUnit === 'bird') {
-                // For bird units, weight = number of birds, price = price per bird
-                totalAmount = weight * unitPrice;
-                priceUnit = 'per-bird';
-                
-                // Ensure animal count matches weight for bird units
-                if (animalCountInput && weight > 0 && animalCount === 0) {
-                    // This should already be handled in calculateSaleTotal, but just in case
-                    animalCountInput.value = weight;
-                }
-            } else if (weightUnit === 'lbs') {
-                totalAmount = weight * unitPrice;
-                priceUnit = 'per-lb';
-            } else {
-                totalAmount = weight * unitPrice;
-                priceUnit = 'per-kg';
+            // ✅ Broadcast sale updated
+            if (oldSale) {
+                this.broadcastSaleUpdated(oldSale, saleData);
             }
             
-            // Calculate effective animal count for averages
-            const effectiveAnimalCount = weightUnit === 'bird' ? weight : (animalCount > 0 ? animalCount : 1);
-            const avgWeightPerAnimal = weightUnit === 'bird' ? 1 : (effectiveAnimalCount > 0 ? weight / effectiveAnimalCount : 0);
-            const avgValuePerAnimal = effectiveAnimalCount > 0 ? totalAmount / effectiveAnimalCount : 0;
-            
-            saleData = {
-                id: saleId || 'SALE-' + Date.now().toString().slice(-6),
-                date: date,
-                customer: customer || 'Walk-in',
-                product: product,
-                unit: unit,
-                quantity: effectiveAnimalCount, // Use effective animal count for quantity
-                unitPrice: unitPrice,
-                totalAmount: totalAmount,
-                paymentMethod: paymentMethod,
-                paymentStatus: paymentStatus || 'paid',
-                notes: notes,
-                weight: weight,
-                weightUnit: weightUnit,
-                animalCount: effectiveAnimalCount, // Store effective animal count
-                originalAnimalCount: animalCount, // Store the original input if different
-                priceUnit: priceUnit,
-                avgWeightPerAnimal: avgWeightPerAnimal,
-                avgValuePerAnimal: avgValuePerAnimal
-            };
-        } else {
-            const quantityInput = document.getElementById('standard-quantity');
-            const priceInput = document.getElementById('standard-price');
-            
-            const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
-            const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
-            const totalAmount = quantity * unitPrice;
-            
-            saleData = {
-                id: saleId || 'SALE-' + Date.now().toString().slice(-6),
-                date: date,
-                customer: customer || 'Walk-in',
-                product: product,
-                unit: unit,
-                quantity: quantity,
-                unitPrice: unitPrice,
-                totalAmount: totalAmount,
-                paymentMethod: paymentMethod,
-                paymentStatus: paymentStatus || 'paid',
-                notes: notes
-            };
+            this.showNotification('Sale updated successfully!', 'success');
         }
+    } else {
+        // Add new sale
+        isNewSale = true;
+        window.FarmModules.appData.sales.push(saleData);
+        
+        // ✅ Broadcast new sale recorded
+        this.broadcastSaleRecorded(saleData);
+        
+        this.showNotification('Sale recorded successfully!', 'success');
+    }
 
-        if (this.pendingProductionSale) {
-            saleData.productionSource = true;
-            saleData.productionSourceId = this.pendingProductionSale.id;
-            this.updateProductionAfterSale(this.pendingProductionSale.id, saleData);
+    // ========== CRITICAL: COMMUNICATE WITH INCOME MODULE ==========
+    
+    // Create income transaction from sale
+    const incomeTransaction = {
+        id: Date.now(),
+        date: saleData.date,
+        type: 'income',
+        category: 'sales',
+        amount: saleData.totalAmount,
+        description: `Sale: ${this.formatProductName(saleData.product)} - ${saleData.customer || 'Walk-in'}`,
+        paymentMethod: saleData.paymentMethod,
+        reference: saleData.id,
+        notes: saleData.notes || '',
+        source: 'sales-module',
+        saleId: saleData.id
+    };
+
+    // Method 1: Direct update if income module is accessible
+    if (window.IncomeExpensesModule) {
+        console.log('💰 Directly updating IncomeExpensesModule');
+        if (!window.IncomeExpensesModule.transactions) {
+            window.IncomeExpensesModule.transactions = [];
         }
-
-        const validation = this.validateSaleData(saleData);
-        if (!validation.isValid) {
-            this.showNotification(validation.errors.join(', '), 'error');
-            return;
+        window.IncomeExpensesModule.transactions.unshift(incomeTransaction);
+        window.IncomeExpensesModule.saveData();
+        
+        // Refresh income display if active
+        if (window.FarmModules.currentModule === 'income-expenses') {
+            window.IncomeExpensesModule.renderModule();
         }
+    }
 
-        if (saleId) {
-            // Update existing sale
-            const oldSale = window.FarmModules.appData.sales.find(s => s.id === saleId);
-            const index = window.FarmModules.appData.sales.findIndex(s => s.id === saleId);
-            if (index !== -1) {
-                window.FarmModules.appData.sales[index] = saleData;
-                
-                // ✅ Broadcast sale updated
-                if (oldSale) {
-                    this.broadcastSaleUpdated(oldSale, saleData);
-                }
-                
-                this.showNotification('Sale updated successfully!', 'success');
-            }
-        } else {
-            // Add new sale
-            window.FarmModules.appData.sales.push(saleData);
-            
-            // ✅ Broadcast new sale recorded
-            this.broadcastSaleRecorded(saleData);
-            
-            this.showNotification('Sale recorded successfully!', 'success');
+    // Method 2: Broadcast via Custom Event
+    const saleCompletedEvent = new CustomEvent('sale-completed', {
+        detail: {
+            orderId: saleData.id,
+            amount: saleData.totalAmount,
+            date: saleData.date,
+            description: `Sale: ${this.formatProductName(saleData.product)}`,
+            customerName: saleData.customer || 'Walk-in',
+            paymentMethod: saleData.paymentMethod,
+            product: saleData.product,
+            quantity: saleData.quantity,
+            unitPrice: saleData.unitPrice
         }
+    });
+    window.dispatchEvent(saleCompletedEvent);
+    console.log('📢 Dispatched sale-completed event');
 
-        this.saveData();
-        this.renderModule();
-        this.hideSaleModal();
-        this.pendingProductionSale = null;
-    },
+    // Method 3: Use DataBroadcaster if available
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('sale-completed', {
+            orderId: saleData.id,
+            amount: saleData.totalAmount,
+            date: saleData.date,
+            description: `Sale: ${this.formatProductName(saleData.product)}`,
+            customerName: saleData.customer || 'Walk-in',
+            paymentMethod: saleData.paymentMethod,
+            product: saleData.product,
+            quantity: saleData.quantity
+        });
+        console.log('📢 Broadcast via DataBroadcaster');
+    }
+
+    // ========== UPDATE DASHBOARD ==========
+    if (window.dashboardModule && typeof window.dashboardModule.updateStats === 'function') {
+        window.dashboardModule.updateStats();
+    }
+
+    // Trigger dashboard refresh via event
+    const dashboardEvent = new CustomEvent('dashboard-update', {
+        detail: {
+            type: 'sale',
+            amount: saleData.totalAmount,
+            timestamp: new Date().toISOString()
+        }
+    });
+    window.dispatchEvent(dashboardEvent);
+
+    this.saveData();
+    this.renderModule();
+    this.hideSaleModal();
+    this.pendingProductionSale = null;
+
+    console.log('✅ Sale saved and communicated to all modules:', {
+        sale: saleData,
+        isNew: isNewSale,
+        incomeTransaction: incomeTransaction
+    });
+},
 
     updateProductionAfterSale(productionId, saleData) {
         const productionModule = window.FarmModules.Production;
