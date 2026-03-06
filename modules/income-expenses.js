@@ -4771,10 +4771,47 @@ async saveTransaction(transactionData) {
         
         document.body.appendChild(modal);
         setTimeout(() => modal.classList.remove('hidden'), 10);
+    },
+
+    // Add this right before the final closing brace of IncomeExpensesModule
+unload() {
+    console.log('📦 Unloading Income & Expenses module...');
+    
+    // Stop camera if active
+    this.stopCamera();
+    
+    // Remove event listeners
+    if (this._globalClickHandler) {
+        document.removeEventListener('click', this._globalClickHandler);
+        this._globalClickHandler = null;
     }
+    if (this._globalChangeHandler) {
+        document.removeEventListener('change', this._globalChangeHandler);
+        this._globalChangeHandler = null;
+    }
+    
+    // Hide any open modals
+    this.hideAllModals();
+    
+    // Clean up file input if created
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
+        fileInput.remove();
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    this.currentEditingId = null;
+    this.receiptQueue = [];
+    this.cameraStream = null;
+    this.receiptPreview = null;
+    
+    console.log('✅ Income & Expenses module unloaded');
+}
 };
 
-// Register with FarmModules framework
+// =============== Register with FarmModules framework ===================
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
     console.log('✅ Income & Expenses module registered');
