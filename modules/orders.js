@@ -755,7 +755,7 @@ completeOrder(orderId) {
     });
     
     return saleId;
-}
+},
 
 // Helper functions for the orders module
 mapOrderItemsToProduct(items) {
