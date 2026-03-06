@@ -82,85 +82,200 @@ initializePDFCapabilities() {
 }, */
     
     // ✅ ADDED: Setup broadcaster listeners
-    setupBroadcasterListeners() {
-        if (!this.broadcaster) return;
-        
-        // Listen for financial updates
-        this.broadcaster.on('expense-recorded', (data) => {
-            console.log('📡 Reports received expense update:', data);
+   setupBroadcasterListeners() {
+    if (!this.broadcaster) {
+        console.warn('⚠️ Broadcaster not available, reports will not auto-update');
+        return;
+    }
+    
+    console.log('📡 Setting up reports broadcaster listeners...');
+    
+    // Keep track of active listeners
+    this.activeListeners = [];
+    
+    // Helper to register listeners with tracking
+    const registerListener = (event, handler, description) => {
+        try {
+            this.broadcaster.on(event, handler);
+            this.activeListeners.push(event);
+            console.log(`  ✅ Listening for: ${description} (${event})`);
+        } catch (error) {
+            console.error(`  ❌ Failed to listen for ${event}:`, error);
+        }
+    };
+    
+    // Financial updates
+    registerListener('expense-recorded', (data) => {
+        console.log('💰 Reports: Expense recorded', data?.amount ? `$${data.amount}` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('financial');
+    }, 'expenses');
+    
+    registerListener('sale-completed', (data) => {
+        console.log('💵 Reports: Sale completed', data?.amount ? `$${data.amount}` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('sales');
+    }, 'sales');
+    
+    registerListener('income-recorded', (data) => {
+        console.log('📈 Reports: Income recorded', data?.amount ? `$${data.amount}` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('financial');
+    }, 'income');
+    
+    // Production updates
+    registerListener('production-created', (data) => {
+        console.log('🚜 Reports: Production created', data?.product || '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('production');
+    }, 'production');
+    
+    registerListener('production-updated', (data) => {
+        console.log('🔄 Reports: Production updated');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('production');
+    }, 'production updates');
+    
+    // Inventory updates
+    registerListener('inventory-updated', (data) => {
+        console.log('📦 Reports: Inventory updated');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('inventory');
+    }, 'inventory');
+    
+    registerListener('inventory-low', (data) => {
+        console.log('⚠️ Reports: Low inventory alert', data?.items || '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('inventory');
+    }, 'low inventory');
+    
+    // Feed updates
+    registerListener('feed-recorded', (data) => {
+        console.log('🌾 Reports: Feed recorded', data?.quantity ? `${data.quantity}kg` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('feed');
+    }, 'feed');
+    
+    // Health/Mortality updates
+    registerListener('mortality-recorded', (data) => {
+        console.log('😔 Reports: Mortality recorded', data?.quantity ? `${data.quantity} birds` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('health');
+    }, 'mortality');
+    
+    registerListener('health-check-completed', (data) => {
+        console.log('🩺 Reports: Health check completed');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('health');
+    }, 'health checks');
+    
+    // Order updates
+    registerListener('order-created', (data) => {
+        console.log('📋 Reports: Order created', data?.total ? `$${data.total}` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('sales');
+    }, 'orders');
+    
+    registerListener('order-completed', (data) => {
+        console.log('✅ Reports: Order completed', data?.total ? `$${data.total}` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('sales');
+    }, 'completed orders');
+    
+    // Profile updates
+    registerListener('profile-updated', (data) => {
+        console.log('👤 Reports: Profile updated');
+        this.updateQuickStats();
+    }, 'profile');
+    
+    // Farm stock updates
+    registerListener('stock-updated', (data) => {
+        console.log('🐔 Reports: Bird stock updated', data?.count ? `to ${data.count}` : '');
+        this.updateQuickStats();
+        this.broadcastStatsUpdate('inventory');
+    }, 'bird stock');
+    
+    // Theme changes
+    registerListener('theme-changed', (data) => {
+        console.log('🎨 Reports: Theme changed to', data.theme);
+        if (this.initialized && data.theme) {
+            this.onThemeChange(data.theme);
+        }
+    }, 'theme');
+    
+    // Module activations
+    registerListener('module-activated', (data) => {
+        if (data.module === 'reports') {
+            console.log('📊 Reports module activated - refreshing stats');
             this.updateQuickStats();
-            this.broadcastStatsUpdate('financial');
-        });
-        
-        this.broadcaster.on('sale-completed', (data) => {
-            console.log('📡 Reports received sale update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('sales');
-        });
-        
-        this.broadcaster.on('income-recorded', (data) => {
-            console.log('📡 Reports received income update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('financial');
-        });
-        
-        // Listen for production updates
-        this.broadcaster.on('production-created', (data) => {
-            console.log('📡 Reports received production update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('production');
-        });
-        
-        // Listen for inventory updates
-        this.broadcaster.on('inventory-updated', (data) => {
-            console.log('📡 Reports received inventory update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('inventory');
-        });
-        
-        // Listen for feed updates
-        this.broadcaster.on('feed-recorded', (data) => {
-            console.log('📡 Reports received feed update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('feed');
-        });
-        
-        // Listen for mortality updates
-        this.broadcaster.on('mortality-recorded', (data) => {
-            console.log('📡 Reports received mortality update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('health');
-        });
-        
-        // Listen for theme changes
-        this.broadcaster.on('theme-changed', (data) => {
-            console.log('📡 Reports theme changed:', data);
-            if (this.initialized && data.theme) {
-                this.onThemeChange(data.theme);
+            
+            // Also refresh the full report if one was open
+            if (this.currentReport) {
+                this.showReport(this.currentReport.title, this.currentReport.content);
             }
-        });
-        
-        // Listen for order updates
-        this.broadcaster.on('order-created', (data) => {
-            console.log('📡 Reports received order update:', data);
-            this.updateQuickStats();
-            this.broadcastStatsUpdate('sales');
-        });
-        
-        // Listen for profile updates
-        this.broadcaster.on('profile-updated', (data) => {
-            console.log('📡 Reports received profile update:', data);
-            this.updateQuickStats();
-        });
-        
-        // Listen for module activations
-        this.broadcaster.on('module-activated', (data) => {
-            if (data.module === 'reports') {
-                console.log('📡 Reports module activated via broadcaster');
-                this.updateQuickStats();
+        }
+    }, 'module activation');
+    
+    // Manual refresh trigger
+    registerListener('refresh-reports', () => {
+        console.log('🔄 Reports: Manual refresh requested');
+        this.updateQuickStats();
+        if (this.currentReport) {
+            this.regenerateCurrentReport();
+        }
+    }, 'manual refresh');
+    
+    console.log(`✅ Reports broadcaster listeners setup complete (${this.activeListeners.length} events)`);
+},
+
+// Add this helper method to regenerate current report
+regenerateCurrentReport() {
+    if (!this.currentReport) return;
+    
+    switch(this.currentReport.type) {
+        case 'financial':
+            this.generateFinancialReport();
+            break;
+        case 'production':
+            this.generateProductionReport();
+            break;
+        case 'inventory':
+            this.generateInventoryReport();
+            break;
+        case 'sales':
+            this.generateSalesReport();
+            break;
+        case 'health':
+            this.generateHealthReport();
+            break;
+        case 'feed':
+            this.generateFeedReport();
+            break;
+        case 'comprehensive':
+            this.generateComprehensiveReport();
+            break;
+    }
+},
+
+// Add cleanup method
+cleanupBroadcasterListeners() {
+    if (!this.broadcaster || !this.activeListeners) return;
+    
+    console.log('🧹 Cleaning up reports broadcaster listeners...');
+    // Note: This assumes your broadcaster has an 'off' method
+    // If it doesn't, you may need to implement it
+    this.activeListeners.forEach(event => {
+        try {
+            if (typeof this.broadcaster.off === 'function') {
+                this.broadcaster.off(event);
             }
-        });
-    },
+        } catch (error) {
+            console.warn(`Failed to remove listener for ${event}:`, error);
+        }
+    });
+    this.activeListeners = [];
+    console.log('✅ Reports listeners cleaned up');
+},
 
     // ✅ ADDED: Broadcast reports loaded
     broadcastReportsLoaded() {
@@ -590,46 +705,80 @@ initializePDFCapabilities() {
     },
 
     // ==================== CORE METHODS (UPDATED FOR BROADCASTER) ====================
-    renderQuickStats() {
-        const stats = this.getFarmStats();
-        
-        // ✅ Broadcast stats being rendered
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('reports-quickstats-rendered', {
-                module: 'reports',
-                timestamp: new Date().toISOString(),
-                stats: stats
-            });
-        }
-        
-        return `
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Revenue</div>
-                <div style="font-size: 20px; font-weight: bold; color: #22c55e;" id="total-expenses">${this.formatCurrency(stats.totalRevenue)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Net Profit</div>
-                <div style="font-size: 20px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};" id="net-profit">${this.formatCurrency(stats.netProfit)}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Total Birds</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-birds">${stats.totalBirds}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Production</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-production">${stats.totalProduction}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Low Stock Items</div>
-                <div style="font-size: 20px; font-weight: bold; color: ${stats.lowStockItems > 0 ? '#f59e0b' : '#22c55e'};" id="low-stock-items">${stats.lowStockItems}</div>
-            </div>
-            <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
-                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Feed Used</div>
-                <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-feed-used">${stats.totalFeedUsed} kg</div>
-            </div>
-        `;
-    },
+   renderQuickStats() {
+    const stats = this.getFarmStats();
+    
+    // Log to debug
+    console.log('📊 Quick Stats:', stats);
+    
+    // ✅ Broadcast stats being rendered
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('reports-quickstats-rendered', {
+            module: 'reports',
+            timestamp: new Date().toISOString(),
+            stats: stats
+        });
+    }
+    
+    return `
+        <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">💰 Total Revenue</div>
+            <div style="font-size: 20px; font-weight: bold; color: #22c55e;" id="total-revenue">${this.formatCurrency(stats.totalRevenue)}</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">📈 Net Profit</div>
+            <div style="font-size: 20px; font-weight: bold; color: ${stats.netProfit >= 0 ? '#22c55e' : '#ef4444'};" id="net-profit">${this.formatCurrency(stats.netProfit)}</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">🐔 Total Birds</div>
+            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-birds">${stats.totalBirds}</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">🚜 Production</div>
+            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-production">${stats.totalProduction} units</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">📦 Low Stock Items</div>
+            <div style="font-size: 20px; font-weight: bold; color: ${stats.lowStockItems > 0 ? '#f59e0b' : '#22c55e'};" id="low-stock-items">${stats.lowStockItems}</div>
+        </div>
+        <div style="text-align: center; padding: 16px; background: var(--glass-bg); border-radius: 8px;">
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">🌾 Feed Used</div>
+            <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);" id="total-feed-used">${stats.totalFeedUsed} kg</div>
+        </div>
+    `;
+},
 
+    updateQuickStats() {
+    const stats = this.getFarmStats();
+    
+    // Update each stat if the element exists
+    const revenueEl = document.getElementById('total-revenue');
+    if (revenueEl) revenueEl.textContent = this.formatCurrency(stats.totalRevenue);
+    
+    const profitEl = document.getElementById('net-profit');
+    if (profitEl) {
+        profitEl.textContent = this.formatCurrency(stats.netProfit);
+        profitEl.style.color = stats.netProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
+    
+    const birdsEl = document.getElementById('total-birds');
+    if (birdsEl) birdsEl.textContent = stats.totalBirds;
+    
+    const productionEl = document.getElementById('total-production');
+    if (productionEl) productionEl.textContent = stats.totalProduction + ' units';
+    
+    const lowStockEl = document.getElementById('low-stock-items');
+    if (lowStockEl) {
+        lowStockEl.textContent = stats.lowStockItems;
+        lowStockEl.style.color = stats.lowStockItems > 0 ? '#f59e0b' : '#22c55e';
+    }
+    
+    const feedEl = document.getElementById('total-feed-used');
+    if (feedEl) feedEl.textContent = stats.totalFeedUsed + ' kg';
+    
+    console.log('🔄 Quick stats updated:', stats);
+},
+    
  getFarmStats() {
     // Try to get from shared app data first
     if (window.FarmModules && window.FarmModules.appData && window.FarmModules.appData.profile && window.FarmModules.appData.profile.dashboardStats) {
@@ -4855,6 +5004,67 @@ async generateFeedPDF() {
         } else {
             return "Immediate attention required. Review all aspects of farm operations including finances, production, and inventory. Consider consulting with farm management experts to develop a turnaround strategy.";
         }
+    }
+
+        // ===== ADD THE UNLOAD METHOD HERE =====
+    unload() {
+        console.log('📦 Unloading Reports module...');
+        
+        // Clean up broadcaster listeners
+        if (this.broadcaster && this.activeListeners) {
+            console.log('🧹 Cleaning up reports broadcaster listeners...');
+            this.activeListeners.forEach(event => {
+                try {
+                    if (typeof this.broadcaster.off === 'function') {
+                        this.broadcaster.off(event);
+                    }
+                } catch (error) {
+                    console.warn(`Failed to remove listener for ${event}:`, error);
+                }
+            });
+            this.activeListeners = [];
+        }
+        
+        // Hide any open modals/reports
+        const reportOutput = document.getElementById('report-output');
+        if (reportOutput) {
+            reportOutput.classList.add('hidden');
+        }
+        
+        const emailModal = document.getElementById('email-report-modal');
+        if (emailModal) {
+            emailModal.classList.add('hidden');
+        }
+        
+        // Remove any added styles
+        const reportStyles = document.getElementById('report-styles');
+        if (reportStyles) {
+            reportStyles.remove();
+        }
+        
+        const emailStyles = document.getElementById('email-modal-styles');
+        if (emailStyles) {
+            emailStyles.remove();
+        }
+        
+        const highlightStyles = document.getElementById('highlight-animation-style');
+        if (highlightStyles) {
+            highlightStyles.remove();
+        }
+        
+        const notificationStyles = document.getElementById('email-notification-styles');
+        if (notificationStyles) {
+            notificationStyles.remove();
+        }
+        
+        // Reset state
+        this.initialized = false;
+        this.element = null;
+        this.currentReport = null;
+        this.broadcaster = null;
+        this.activeListeners = [];
+        
+        console.log('✅ Reports module unloaded');
     }
 };
 
