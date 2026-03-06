@@ -1854,41 +1854,28 @@ if (window.FarmModules) {
 window.ProductionModule = ProductionModule;
 console.log('✅ Production module loaded and ready with Data Broadcaster');
 
-// Add this right before the final closing brace of IncomeExpensesModule
+// Add this right before the final closing brace of ProductionModule
 unload() {
-    console.log('📦 Unloading Income & Expenses module...');
+    console.log('📦 Unloading Production module...');
     
-    // Stop camera if active
-    this.stopCamera();
-    
-    // Remove event listeners
-    if (this._globalClickHandler) {
-        document.removeEventListener('click', this._globalClickHandler);
-        this._globalClickHandler = null;
-    }
-    if (this._globalChangeHandler) {
-        document.removeEventListener('change', this._globalChangeHandler);
-        this._globalChangeHandler = null;
+    // Clean up any listeners
+    if (this.broadcaster) {
+        // Remove any specific listeners if needed
+        this.broadcaster = null;
     }
     
     // Hide any open modals
-    this.hideAllModals();
-    
-    // Clean up file input if created
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
-        fileInput.remove();
+    const modal = document.getElementById('production-modal');
+    if (modal) {
+        modal.classList.add('hidden');
     }
     
     // Reset state
     this.initialized = false;
     this.element = null;
     this.currentEditingId = null;
-    this.receiptQueue = [];
-    this.cameraStream = null;
-    this.receiptPreview = null;
     
-    console.log('✅ Income & Expenses module unloaded');
+    console.log('✅ Production module unloaded');
 },
 
 // ==================== UNIVERSAL REGISTRATION ====================
