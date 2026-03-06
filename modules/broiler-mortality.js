@@ -1972,6 +1972,29 @@ viewCauseDetails(cause) {
     }
 };
 
+// Add this right before the final closing brace of BroilerMortalityModule
+unload() {
+    console.log('📦 Unloading Broiler Mortality module...');
+    
+    // Clean up
+    if (this.broadcaster) {
+        this.broadcaster = null;
+    }
+    
+    // Hide any open modals
+    const modal = document.getElementById('mortality-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    this.currentEditingId = null;
+    
+    console.log('✅ Broiler Mortality module unloaded');
+},
+
 // ==================== UNIVERSAL REGISTRATION ====================
 
 (function() {
