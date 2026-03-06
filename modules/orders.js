@@ -2274,41 +2274,30 @@ if (window.FarmModules) {
     
 })();
 
-// Add this right before the final closing brace of IncomeExpensesModule
+// In orders.js, inside the OrdersModule object, add:
 unload() {
-    console.log('📦 Unloading Income & Expenses module...');
-    
-    // Stop camera if active
-    this.stopCamera();
+    console.log('📦 Unloading Orders module...');
     
     // Remove event listeners
-    if (this._globalClickHandler) {
-        document.removeEventListener('click', this._globalClickHandler);
-        this._globalClickHandler = null;
+    if (this._clickHandler) {
+        document.removeEventListener('click', this._clickHandler);
+        this._clickHandler = null;
     }
-    if (this._globalChangeHandler) {
-        document.removeEventListener('change', this._globalChangeHandler);
-        this._globalChangeHandler = null;
+    if (this._captureHandler) {
+        document.removeEventListener('click', this._captureHandler, true);
+        this._captureHandler = null;
     }
     
-    // Hide any open modals
-    this.hideAllModals();
-    
-    // Clean up file input if created
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
-        fileInput.remove();
-    }
+    // Hide any open forms
+    this.hideOrderForm();
+    this.hideCustomerForm();
     
     // Reset state
     this.initialized = false;
     this.element = null;
-    this.currentEditingId = null;
-    this.receiptQueue = [];
-    this.cameraStream = null;
-    this.receiptPreview = null;
+    this._orderListenersAttached = false;
     
-    console.log('✅ Income & Expenses module unloaded');
+    console.log('✅ Orders module unloaded');
 },
 
 // At the very end of orders.js, after the module definition
