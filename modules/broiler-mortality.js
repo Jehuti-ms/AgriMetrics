@@ -685,9 +685,55 @@ const BroilerMortalityModule = {
     },
 
     getCurrentStock() {
-        const savedStock = localStorage.getItem('farm-birds-stock');
-        return savedStock ? parseInt(savedStock) : 1000;
-    },
+    // Try multiple sources to get the actual bird count
+    
+    // Method 1: Get from farm-birds-stock (your current storage)
+    const savedStock = localStorage.getItem('farm-birds-stock');
+    if (savedStock) {
+        return parseInt(savedStock);
+    }
+    
+    // Method 2: Calculate from initial stock minus mortality
+    const initialStock = parseInt(localStorage.getItem('farm-initial-stock') || '0');
+    if (initialStock > 0) {
+        const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+        const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        return Math.max(0, initialStock - totalMortality);
+    }
+    
+    // Method 3: Try from production records
+    const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+    const birdProduction = production.filter(p => 
+        p.product?.toLowerCase().includes('bird') || 
+        p.product?.toLowerCase().includes('broiler') ||
+        p.product?.toLowerCase().includes('chicken')
+    );
+    if (birdProduction.length > 0) {
+        return birdProduction.reduce((sum, p) => sum + (p.quantity || 0), 0);
+    }
+    
+    // Method 4: Try from inventory
+    const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+    const birdInventory = inventory.find(item => 
+        item.name?.toLowerCase().includes('bird') || 
+        item.name?.toLowerCase().includes('broiler') ||
+        item.category?.toLowerCase().includes('poultry')
+    );
+    if (birdInventory) {
+        return birdInventory.quantity || 0;
+    }
+    
+    // Method 5: Get from mortality module's own records
+    if (this.records && this.records.length > 0) {
+        const totalMortality = this.records.reduce((sum, record) => sum + (record.quantity || 0), 0);
+        // If we have mortality records but no initial stock, we can't calculate
+        // Return 0 instead of guessing
+        return 0;
+    }
+    
+    // If all else fails, return 0 (NOT 1000) so user knows data is missing
+    return 0;
+},
 
     renderMortalityTable(filter = 'all') {
         let filteredMortality = this.mortalityData;
