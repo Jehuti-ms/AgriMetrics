@@ -5005,7 +5005,7 @@ async generateFeedPDF() {
         } else {
             return "Immediate attention required. Review all aspects of farm operations including finances, production, and inventory. Consider consulting with farm management experts to develop a turnaround strategy.";
         }
-    }
+    },
 
         // ===== ADD THE UNLOAD METHOD HERE =====
     unload() {
