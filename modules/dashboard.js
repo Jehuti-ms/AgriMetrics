@@ -948,6 +948,23 @@ const DashboardModule = {
     }
 };
 
+// Add this right before the final closing brace of DashboardModule
+unload() {
+    console.log('📦 Unloading Dashboard module...');
+    
+    // Clean up any intervals
+    if (this.refreshInterval) {
+        clearInterval(this.refreshInterval);
+        this.refreshInterval = null;
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    
+    console.log('✅ Dashboard module unloaded');
+},
+
 // ==================== STYLES ====================
 const dashboardStyles = `
     .dashboard-container {
@@ -1429,24 +1446,7 @@ const dashboardStyles = `
             opacity: 0;
         }
     }
-`,
-
-// Add this right before the final closing brace of DashboardModule
-unload() {
-    console.log('📦 Unloading Dashboard module...');
-    
-    // Clean up any intervals
-    if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-        this.refreshInterval = null;
-    }
-    
-    // Reset state
-    this.initialized = false;
-    this.element = null;
-    
-    console.log('✅ Dashboard module unloaded');
-},
+`;
 
 // ==================== REGISTRATION ====================
 window.DashboardModule = DashboardModule;
