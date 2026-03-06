@@ -776,12 +776,12 @@ mapOrderItemsToProduct(items) {
     };
     
     return productMap[firstItem.productId] || 'other';
-}
+},
 
 calculateOrderQuantity(items) {
     if (!items || items.length === 0) return 1;
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
-}
+},
 
 // Add this to your orders module initialization to set up the complete button
 setupCompleteOrderButtons() {
