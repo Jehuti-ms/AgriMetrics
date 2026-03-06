@@ -6,7 +6,8 @@ const ReportsModule = {
     initialized: false,
     element: null,
     currentReport: null,
-    broadcaster: null, // ✅ ADDED: Data Broadcaster reference
+    broadcaster: null,  // ✅ ADDED: Data Broadcaster reference
+    activeListeners: [], 
 
     // ✅ ADDED: PDF properties
     pdfReady: false,
