@@ -656,7 +656,30 @@ const FeedRecordModule = {
 if (window.FarmModules) {
     window.FarmModules.registerModule('feed-record', FeedRecordModule);
     console.log('✅ Feed Records module registered');
-}
+},
+
+// Add this right before the final closing brace of FeedModule
+unload() {
+    console.log('📦 Unloading Feed module...');
+    
+    // Clean up
+    if (this.broadcaster) {
+        this.broadcaster = null;
+    }
+    
+    // Hide any open modals
+    const modal = document.getElementById('feed-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    this.currentEditingId = null;
+    
+    console.log('✅ Feed module unloaded');
+},
 
 // ==================== UNIVERSAL REGISTRATION ====================
 
