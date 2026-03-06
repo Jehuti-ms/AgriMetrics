@@ -1400,7 +1400,7 @@ const InventoryCheckModule = {
             style: 'currency',
             currency: 'USD'
         }).format(amount);
-    }
+    },
 
     // Add this right before the final closing brace of IncomeExpensesModule
 unload() {
