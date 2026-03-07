@@ -38,30 +38,55 @@ const BroilerMortalityModule = {
         // You can add theme-specific logic here if needed
     },
 
-   loadData() {
-    const savedData = localStorage.getItem('farm-mortality-records');
-    if (savedData) {
-        try {
-            this.records = JSON.parse(savedData);
-        } catch (e) {
-            this.records = [];
-        }
-    } else {
-        this.records = [];
-    }
+ loadData() {
+    // Clear existing data
+    this.mortalityData = [];
     
-    // ===== ALSO CHECK FARM DATA =====
+    // ===== TRY TO LOAD FROM FARM DATA FIRST =====
     if (window.FarmData && window.FarmData.mortality && window.FarmData.mortality.length > 0) {
         console.log(`📊 Using ${window.FarmData.mortality.length} mortality records from FarmData`);
-        this.records = window.FarmData.mortality;
+        this.mortalityData = window.FarmData.mortality;
     }
     
-    console.log('📊 Loaded mortality data:', this.records.length, 'records');
+    // ===== IF NO FARM DATA, TRY LOCALSTORAGE =====
+    if (this.mortalityData.length === 0) {
+        const savedData = localStorage.getItem('farm-mortality-records');
+        if (savedData) {
+            try {
+                this.mortalityData = JSON.parse(savedData);
+                console.log(`📊 Loaded ${this.mortalityData.length} records from localStorage`);
+            } catch (e) {
+                console.error('Error parsing mortality records:', e);
+                this.mortalityData = [];
+            }
+        }
+    }
+    
+    // ===== IF STILL NO DATA, USE DEMO DATA =====
+    if (this.mortalityData.length === 0) {
+        this.mortalityData = this.getDemoData();
+        console.log('📊 Using demo mortality data');
+    }
+    
+    console.log('✅ Final mortality data count:', this.mortalityData.length);
+    
+    // Update stats after loading
+    setTimeout(() => {
+        this.updateStats();
+    }, 100);
 },
     
     saveData() {
-        localStorage.setItem('farm-mortality-data', JSON.stringify(this.mortalityData));
-    },
+    // Save to localStorage
+    localStorage.setItem('farm-mortality-records', JSON.stringify(this.mortalityData));
+    
+    // Also update FarmData if available
+    if (window.FarmData) {
+        window.FarmData.mortality = this.mortalityData;
+    }
+    
+    console.log('💾 Saved mortality data:', this.mortalityData.length, 'records');
+},
 
     getDemoData() {
         return [
@@ -672,27 +697,28 @@ const BroilerMortalityModule = {
 }, 
     
     updateStats() {
-        const totalLosses = this.mortalityData.reduce((sum, record) => sum + record.quantity, 0);
-        const currentStock = this.getCurrentStock();
-        const mortalityRate = currentStock > 0 ? ((totalLosses / currentStock) * 100).toFixed(2) : '0.00';
+    // Use this.records instead of this.mortalityData
+    const totalLosses = this.records.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    const currentStock = this.getCurrentStock();
+    const mortalityRate = currentStock > 0 ? ((totalLosses / currentStock) * 100).toFixed(2) : '0.00';
 
-        this.updateElement('total-losses', totalLosses.toLocaleString());
-        this.updateElement('mortality-rate', mortalityRate + '%');
-        this.updateElement('current-birds', currentStock.toLocaleString());
-        this.updateElement('records-count', this.mortalityData.length.toLocaleString());
+    this.updateElement('total-losses', totalLosses.toLocaleString());
+    this.updateElement('mortality-rate', mortalityRate + '%');
+    this.updateElement('current-birds', currentStock.toLocaleString());
+    this.updateElement('records-count', this.records.length.toLocaleString());
 
-        // Update mortality rate color based on threshold
-        const mortalityRateElement = document.getElementById('mortality-rate');
-        if (mortalityRateElement) {
-            if (parseFloat(mortalityRate) > 5) {
-                mortalityRateElement.style.color = '#ef4444';
-            } else if (parseFloat(mortalityRate) > 2) {
-                mortalityRateElement.style.color = '#f59e0b';
-            } else {
-                mortalityRateElement.style.color = '#22c55e';
-            }
+    // Update mortality rate color based on threshold
+    const mortalityRateElement = document.getElementById('mortality-rate');
+    if (mortalityRateElement) {
+        if (parseFloat(mortalityRate) > 5) {
+            mortalityRateElement.style.color = '#ef4444';
+        } else if (parseFloat(mortalityRate) > 2) {
+            mortalityRateElement.style.color = '#f59e0b';
+        } else {
+            mortalityRateElement.style.color = '#22c55e';
         }
-    },
+    }
+},
 
 getCurrentStock() {
     // ===== METHOD 1: Try FarmData first (central data store) =====
