@@ -1842,19 +1842,8 @@ const ProductionModule = {
             alert(message); // Fallback
         }
     }
-};
 
-// REGISTER WITH FarmModules FRAMEWORK
-if (window.FarmModules) {
-    window.FarmModules.registerModule('production', ProductionModule);
-    console.log('✅ Production module registered with FarmModules');
-}
-
-// Also make it globally available
-window.ProductionModule = ProductionModule;
-console.log('✅ Production module loaded and ready with Data Broadcaster');
-
-// Add this right before the final closing brace of ProductionModule
+    // Add this right before the final closing brace of ProductionModule
 unload() {
     console.log('📦 Unloading Production module...');
     
@@ -1876,7 +1865,19 @@ unload() {
     this.currentEditingId = null;
     
     console.log('✅ Production module unloaded');
-},
+}
+
+};
+
+// REGISTER WITH FarmModules FRAMEWORK
+if (window.FarmModules) {
+    window.FarmModules.registerModule('production', ProductionModule);
+    console.log('✅ Production module registered with FarmModules');
+}
+
+// Also make it globally available
+window.ProductionModule = ProductionModule;
+console.log('✅ Production module loaded and ready with Data Broadcaster');
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
