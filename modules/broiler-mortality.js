@@ -1969,10 +1969,9 @@ viewCauseDetails(cause) {
             console.log('ℹ️ ' + message);
             alert('ℹ️ ' + message);
         }
-    }
-};
+    },
 
-// Add this right before the final closing brace of BroilerMortalityModule
+    // Add this right before the final closing brace of BroilerMortalityModule
 unload() {
     console.log('📦 Unloading Broiler Mortality module...');
     
@@ -1993,7 +1992,9 @@ unload() {
     this.currentEditingId = null;
     
     console.log('✅ Broiler Mortality module unloaded');
-},
+}
+
+};
 
 // ==================== UNIVERSAL REGISTRATION ====================
 
