@@ -10,6 +10,7 @@ const DashboardModule = {
     autoRefresh: true,
     lastUpdateTime: null,
     eventListeners: [],
+    _eventListeners: [],
 
     // ==================== INITIALIZATION ====================
     initialize() {
@@ -46,6 +47,7 @@ const DashboardModule = {
 },
 
     // Add this method after initialize()
+// Add this method after initialize()
 setupGlobalListeners() {
     console.log('📡 Setting up global listeners for dashboard...');
     
@@ -73,7 +75,7 @@ setupGlobalListeners() {
     
     this._eventListeners = [];
 
-    // Add new listeners
+    // Add new listeners (using standard window events)
     events.forEach(event => {
         const handler = () => {
             console.log(`📡 Dashboard received: ${event}`);
@@ -99,22 +101,64 @@ setupGlobalListeners() {
     window.addEventListener('storage', storageHandler);
     this._eventListeners.push({event: 'storage', handler: storageHandler});
 
-    // Also listen for custom data broadcaster if available
+    // ===== FIXED: Check DataBroadcaster API properly =====
     if (window.DataBroadcaster) {
-        const broadcasterEvents = [
-            'sale-completed', 'expense-recorded', 'income-recorded',
-            'production-created', 'inventory-updated', 'feed-recorded',
-            'mortality-recorded', 'order-created', 'order-completed'
-        ];
+        console.log('📡 DataBroadcaster found, type:', typeof window.DataBroadcaster);
         
-        broadcasterEvents.forEach(event => {
-            window.DataBroadcaster.on(event, () => {
-                console.log(`📡 Dashboard received broadcaster: ${event}`);
-                if (this.initialized) {
-                    setTimeout(() => this.loadAndDisplayStats(), 150);
-                }
+        // Method 1: If it has an 'on' method
+        if (typeof window.DataBroadcaster.on === 'function') {
+            const broadcasterEvents = [
+                'sale-completed', 'expense-recorded', 'income-recorded',
+                'production-created', 'inventory-updated', 'feed-recorded',
+                'mortality-recorded', 'order-created', 'order-completed'
+            ];
+            
+            broadcasterEvents.forEach(event => {
+                window.DataBroadcaster.on(event, () => {
+                    console.log(`📡 Dashboard received broadcaster: ${event}`);
+                    if (this.initialized) {
+                        setTimeout(() => this.loadAndDisplayStats(), 150);
+                    }
+                });
             });
-        });
+        }
+        // Method 2: If it has an 'addEventListener' method
+        else if (typeof window.DataBroadcaster.addEventListener === 'function') {
+            const broadcasterEvents = [
+                'sale-completed', 'expense-recorded', 'income-recorded',
+                'production-created', 'inventory-updated', 'feed-recorded',
+                'mortality-recorded', 'order-created', 'order-completed'
+            ];
+            
+            broadcasterEvents.forEach(event => {
+                window.DataBroadcaster.addEventListener(event, () => {
+                    console.log(`📡 Dashboard received broadcaster: ${event}`);
+                    if (this.initialized) {
+                        setTimeout(() => this.loadAndDisplayStats(), 150);
+                    }
+                });
+            });
+        }
+        // Method 3: If it has a 'subscribe' method
+        else if (typeof window.DataBroadcaster.subscribe === 'function') {
+            const broadcasterEvents = [
+                'sale-completed', 'expense-recorded', 'income-recorded',
+                'production-created', 'inventory-updated', 'feed-recorded',
+                'mortality-recorded', 'order-created', 'order-completed'
+            ];
+            
+            broadcasterEvents.forEach(event => {
+                window.DataBroadcaster.subscribe(event, () => {
+                    console.log(`📡 Dashboard received broadcaster: ${event}`);
+                    if (this.initialized) {
+                        setTimeout(() => this.loadAndDisplayStats(), 150);
+                    }
+                });
+            });
+        }
+        else {
+            console.log('📡 DataBroadcaster exists but no compatible method found');
+        }
     }
 
     // Listen for module activations
