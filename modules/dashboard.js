@@ -627,66 +627,146 @@ setupGlobalListeners() {
         return activities.slice(0, 20);
     },
 
-    getActivitiesFromModules() {
-        const activities = [];
-        const now = new Date();
+ getActivitiesFromModules() {
+    const activities = [];
+    const now = new Date();
+    
+    // Define modules to check
+    const modules = [
+        { name: 'income-expenses', keys: ['farm-transactions', 'farm-income-expenses-data', 'income-expenses-data', 'farm-income-expenses'] },
+        { name: 'inventory-check', keys: ['farm-inventory', 'farm-inventory-data', 'inventory-data'] },
+        { name: 'feed-record', keys: ['farm-feed-records', 'farm-feed-data', 'feed-data'] },
+        { name: 'production', keys: ['farm-production', 'farm-production-data', 'production-data'] },
+        { name: 'sales-record', keys: ['farm-sales', 'farm-sales-data', 'sales-data'] },
+        { name: 'orders', keys: ['farm-orders', 'farm-orders-data', 'orders-data'] },
+        { name: 'broiler-mortality', keys: ['farm-mortality-records', 'farm-mortality-data', 'mortality-data'] }
+    ];
+    
+    modules.forEach(module => {
+        let moduleData = null;
         
-        // Define modules to check
-        const modules = [
-            'income-expenses', 'inventory-check', 'feed-record', 
-            'production', 'sales-record', 'orders', 'broiler-mortality'
-        ];
-        
-        modules.forEach(moduleName => {
+        // Try each possible key for this module
+        for (const key of module.keys) {
             try {
-                // Try different storage keys
-                const storageKeys = [
-                    `farm-${moduleName}-data`,
-                    `${moduleName}-data`,
-                    `${moduleName}Data`,
-                    `farm-${moduleName}`
-                ];
-                
-                let moduleData = null;
-                for (const key of storageKeys) {
-                    const data = localStorage.getItem(key);
-                    if (data) {
-                        try {
-                            moduleData = JSON.parse(data);
-                            break;
-                        } catch (e) {
-                            continue;
-                        }
-                    }
+                const data = localStorage.getItem(key);
+                if (data) {
+                    moduleData = JSON.parse(data);
+                    console.log(`📦 Found data for ${module.name} in ${key}:`, moduleData.length || 'object');
+                    break;
                 }
+            } catch (e) {
+                continue;
+            }
+        }
+        
+        if (moduleData) {
+            // Handle arrays
+            if (Array.isArray(moduleData)) {
+                // Get recent items (last 5)
+                const recentItems = moduleData.slice(-5).reverse();
                 
-                if (moduleData && Array.isArray(moduleData)) {
-                    // Get recent items (last 5)
-                    const recentItems = moduleData.slice(-5).reverse();
-                    
-                    recentItems.forEach((item, index) => {
-                        if (item.date || item.createdAt || item.timestamp || item.time) {
-                            const timestamp = item.date || item.createdAt || item.timestamp || item.time || now.toISOString();
-                            
-                            activities.push({
-                                id: item.id || `act-${moduleName}-${Date.now()}-${index}`,
-                                timestamp: timestamp,
-                                icon: this.getModuleIcon(moduleName),
-                                title: this.getActivityTitle(moduleName, item),
-                                description: this.getActivityDescription(moduleName, item),
-                                module: moduleName,
-                                data: item
-                            });
-                        }
+                recentItems.forEach((item, index) => {
+                    if (item.date || item.createdAt || item.timestamp) {
+                        const timestamp = item.date || item.createdAt || item.timestamp || now.toISOString();
+                        
+                        activities.push({
+                            id: item.id || `act-${module.name}-${Date.now()}-${index}`,
+                            timestamp: timestamp,
+                            icon: this.getModuleIcon(module.name),
+                            title: this.getActivityTitle(module.name, item),
+                            description: this.getActivityDescription(module.name, item),
+                            module: module.name,
+                            data: item
+                        });
+                    }
+                });
+            }
+            // Handle objects (like profile data)
+            else if (typeof moduleData === 'object') {
+                // Try to extract recent items from the object
+                if (moduleData.recentActivities && Array.isArray(moduleData.recentActivities)) {
+                    moduleData.recentActivities.slice(0, 5).forEach(item => {
+                        activities.push({
+                            id: item.id || `act-${module.name}-${Date.now()}`,
+                            timestamp: item.timestamp || now.toISOString(),
+                            icon: item.icon || this.getModuleIcon(module.name),
+                            title: item.title || 'Activity',
+                            description: item.description || '',
+                            module: module.name,
+                            data: item
+                        });
                     });
                 }
-            } catch (error) {
-                console.log(`⚠️ Error getting activities from ${moduleName}:`, error);
             }
-        });
+        }
+    });
+    
+    return activities;
+},
+
+    function showTransactions() {
+    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    console.log('📊 Your 3 transactions:', transactions);
+    
+    // Manually add them to dashboard activities
+    if (window.DashboardModule) {
+        const activities = window.DashboardModule.getActivities();
+        console.log('Dashboard activities before:', activities.length);
         
-        return activities;
-    },
+        // Force dashboard to refresh
+        window.DashboardModule.loadAndDisplayStats();
+        
+        setTimeout(() => {
+            const newActivities = window.DashboardModule.getActivities();
+            console.log('Dashboard activities after:', newActivities.length);
+        }, 500);
+    }
+}
+
+showTransactions();
+
+function createActivitiesFromTransactions() {
+    const transactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+    
+    transactions.forEach(t => {
+        const activity = {
+            id: `act-trans-${t.id}`,
+            timestamp: t.date || new Date().toISOString(),
+            icon: t.type === 'income' ? '💰' : '💸',
+            title: t.type === 'income' ? 'Income Recorded' : 'Expense Recorded',
+            description: `${t.description} - $${t.amount}`,
+            module: 'income-expenses',
+            data: t
+        };
+        
+        // Store in shared app data
+        if (window.FarmModules && window.FarmModules.appData) {
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats) {
+                window.FarmModules.appData.profile.dashboardStats = {};
+            }
+            if (!window.FarmModules.appData.profile.dashboardStats.recentActivities) {
+                window.FarmModules.appData.profile.dashboardStats.recentActivities = [];
+            }
+            
+            window.FarmModules.appData.profile.dashboardStats.recentActivities.unshift(activity);
+            
+            // Keep only last 20
+            if (window.FarmModules.appData.profile.dashboardStats.recentActivities.length > 20) {
+                window.FarmModules.appData.profile.dashboardStats.recentActivities.length = 20;
+            }
+        }
+    });
+    
+    // Trigger dashboard refresh
+    window.DashboardModule?.loadAndDisplayStats();
+    
+    console.log('✅ Activities created from transactions');
+}
+
+createActivitiesFromTransactions();
 
     getModuleIcon(moduleName) {
         const icons = {
