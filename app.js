@@ -20,351 +20,334 @@ class FarmManagementApp {
     }
     
     async initializeApp() {
-    console.log('✅ Initializing app...');
-    
-    // Show loading screen
-    this.showLoading();
-    
-    // Setup Firebase auth listener FIRST
-    await this.setupAuthListener();
-    
-    // Check if user is already authenticated
-    this.checkInitialAuth();
-
-    // Ensure menu starts hidden
-    setTimeout(() => {
-        this.initializeMenuPosition();
-    }, 100);
-
-    // Fix content position
-    setTimeout(() => {
-        this.fixContentPosition();
-    }, 150);
-
-    // Setup responsive form fixes on resize
-    window.addEventListener('resize', () => {
-        setTimeout(() => this.fixOverflowingForms(), 100);
-    });
-}
-
-// This should be a separate method, NOT inside initializeApp()
-fixContentPosition() {
-    console.log('📐 Fixing content position...');
-    
-    const contentArea = document.getElementById('content-area');
-    const navbar = document.querySelector('.navbar');
-    
-    if (contentArea && navbar) {
-        const navbarHeight = navbar.offsetHeight;
-        const isLargeScreen = window.innerWidth >= 1024;
+        console.log('✅ Initializing app...');
         
-        // Different positioning for large vs small screens
-        if (isLargeScreen) {
-            // For large screens - more aggressive positioning
-            contentArea.style.cssText = `
-                margin-top: -10px !important;  /* Negative margin to pull up */
-                padding-top: 0 !important;
-                position: relative;
-                top: -10px !important;
-                min-height: calc(100vh - ${navbarHeight - 10}px);
-            `;
-            
-            // Target specific problematic modules more aggressively
-            const problemModules = ['income', 'profile', 'broiler', 'production'];
-            problemModules.forEach(module => {
-                const elements = contentArea.querySelectorAll(`[class*="${module}"] .module-header`);
-                elements.forEach(el => {
-                    el.style.marginTop = '-15px !important';
-                    el.style.paddingTop = '0 !important';
-                    el.style.position = 'relative';
-                    el.style.top = '-5px !important';
-                });
-            });
-        } else {
-            // For small screens - normal positioning
-            contentArea.style.cssText = `
-                margin-top: 0 !important;
-                padding-top: 0 !important;
-                position: relative;
-                top: 0;
-                min-height: calc(100vh - ${navbarHeight}px);
-            `;
-        }
+        // Show loading screen
+        this.showLoading();
         
-        // Also fix any module headers globally
-        const moduleHeaders = contentArea.querySelectorAll('.module-header');
-        moduleHeaders.forEach(header => {
-            header.style.marginTop = '0';
-            header.style.paddingTop = isLargeScreen ? '0' : '10px';
+        // Setup Firebase auth listener FIRST
+        await this.setupAuthListener();
+        
+        // Check if user is already authenticated
+        this.checkInitialAuth();
+
+        // Ensure menu starts hidden
+        setTimeout(() => {
+            this.initializeMenuPosition();
+        }, 100);
+
+        // Fix content position
+        setTimeout(() => {
+            this.fixContentPosition();
+        }, 150);
+
+        // Setup responsive form fixes on resize
+        window.addEventListener('resize', () => {
+            setTimeout(() => this.fixOverflowingForms(), 100);
         });
     }
-    
-    console.log('✅ Content position fixed for', window.innerWidth >= 1024 ? 'large screen' : 'small screen');
-    
-    // Re-check after a short delay to ensure it sticks
-    setTimeout(() => {
-        this.fixModuleHeaderSpecifics();
-    }, 100);
-}
 
-// NEW METHOD: Fix specific problematic modules
-fixModuleHeaderSpecifics() {
-    const contentArea = document.getElementById('content-area');
-    if (!contentArea) return;
-    
-    // List of problematic module classes/ids
-    const problemSelectors = [
-        '.income-module',
-        '.profile-module', 
-        '.broiler-module',
-        '.production-module',
-        '[class*="income"]',
-        '[class*="profile"]',
-        '[class*="broiler"]',
-        '[class*="production"]'
-    ];
-    
-    problemSelectors.forEach(selector => {
-        const elements = contentArea.querySelectorAll(selector);
-        elements.forEach(element => {
-            // Find headers within these modules
-            const headers = element.querySelectorAll('.module-header, h1, h2.module-title');
-            headers.forEach(header => {
-                // Force position to top
-                header.style.cssText = `
-                    margin-top: 0 !important;
+    fixContentPosition() {
+        console.log('📐 Fixing content position...');
+        
+        const contentArea = document.getElementById('content-area');
+        const navbar = document.querySelector('.navbar');
+        
+        if (contentArea && navbar) {
+            const navbarHeight = navbar.offsetHeight;
+            const isLargeScreen = window.innerWidth >= 1024;
+            
+            if (isLargeScreen) {
+                contentArea.style.cssText = `
+                    margin-top: -10px !important;
                     padding-top: 0 !important;
-                    position: relative !important;
-                    top: 0 !important;
-                    z-index: 100;
+                    position: relative;
+                    top: -10px !important;
+                    min-height: calc(100vh - ${navbarHeight - 10}px);
                 `;
                 
-                // Ensure parent doesn't have padding
-                const parent = header.parentElement;
-                if (parent) {
-                    parent.style.paddingTop = '0 !important';
-                    parent.style.marginTop = '0 !important';
-                }
-            });
+                const problemModules = ['income', 'profile', 'broiler', 'production'];
+                problemModules.forEach(module => {
+                    const elements = contentArea.querySelectorAll(`[class*="${module}"] .module-header`);
+                    elements.forEach(el => {
+                        el.style.marginTop = '-15px !important';
+                        el.style.paddingTop = '0 !important';
+                        el.style.position = 'relative';
+                        el.style.top = '-5px !important';
+                    });
+                });
+            } else {
+                contentArea.style.cssText = `
+                    margin-top: 0 !important;
+                    padding-top: 0 !important;
+                    position: relative;
+                    top: 0;
+                    min-height: calc(100vh - ${navbarHeight}px);
+                `;
+            }
             
-            // Also fix the module container itself
-            element.style.marginTop = '0 !important';
-            element.style.paddingTop = '0 !important';
+            const moduleHeaders = contentArea.querySelectorAll('.module-header');
+            moduleHeaders.forEach(header => {
+                header.style.marginTop = '0';
+                header.style.paddingTop = isLargeScreen ? '0' : '10px';
+            });
+        }
+        
+        console.log('✅ Content position fixed');
+        
+        setTimeout(() => {
+            this.fixModuleHeaderSpecifics();
+        }, 100);
+    }
+
+    fixModuleHeaderSpecifics() {
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        
+        const problemSelectors = [
+            '.income-module',
+            '.profile-module', 
+            '.broiler-module',
+            '.production-module',
+            '[class*="income"]',
+            '[class*="profile"]',
+            '[class*="broiler"]',
+            '[class*="production"]'
+        ];
+        
+        problemSelectors.forEach(selector => {
+            const elements = contentArea.querySelectorAll(selector);
+            elements.forEach(element => {
+                const headers = element.querySelectorAll('.module-header, h1, h2.module-title');
+                headers.forEach(header => {
+                    header.style.cssText = `
+                        margin-top: 0 !important;
+                        padding-top: 0 !important;
+                        position: relative !important;
+                        top: 0 !important;
+                        z-index: 100;
+                    `;
+                    
+                    const parent = header.parentElement;
+                    if (parent) {
+                        parent.style.paddingTop = '0 !important';
+                        parent.style.marginTop = '0 !important';
+                    }
+                });
+                
+                element.style.marginTop = '0 !important';
+                element.style.paddingTop = '0 !important';
+            });
         });
-    });
-}    
+    }    
  
-    // Add this method to your App class
-fixOverflowingForms() {
-    console.log('🔧 Checking for overflowing forms...');
-    
-    // Check all forms and form containers
-    const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
-    
-    forms.forEach(form => {
-        const rect = form.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
+    fixOverflowingForms() {
+        console.log('🔧 Checking for overflowing forms...');
         
-        // If form is wider than viewport
-        if (rect.width > viewportWidth) {
-            console.log('Form overflowing:', form.className);
+        const forms = document.querySelectorAll('form, .form-container, .glass-card, .popout-modal-content');
+        
+        forms.forEach(form => {
+            const rect = form.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
             
-            // Apply fixes
-            form.style.width = '100%';
-            form.style.maxWidth = '100%';
-            form.style.overflowX = 'hidden';
-            form.style.boxSizing = 'border-box';
-            
-            // Also fix all child inputs
-            const inputs = form.querySelectorAll('input, select, textarea, .form-group');
-            inputs.forEach(input => {
-                input.style.width = '100%';
-                input.style.maxWidth = '100%';
-                input.style.boxSizing = 'border-box';
-            });
+            if (rect.width > viewportWidth) {
+                console.log('Form overflowing:', form.className);
+                
+                form.style.width = '100%';
+                form.style.maxWidth = '100%';
+                form.style.overflowX = 'hidden';
+                form.style.boxSizing = 'border-box';
+                
+                const inputs = form.querySelectorAll('input, select, textarea, .form-group');
+                inputs.forEach(input => {
+                    input.style.width = '100%';
+                    input.style.maxWidth = '100%';
+                    input.style.boxSizing = 'border-box';
+                });
+            }
+        });
+    }
+    
+    initializeMenuPosition() {
+        try {
+            const sideMenu = document.getElementById('side-menu');
+            const overlay = document.querySelector('.side-menu-overlay');
+
+            console.log('📐 Initializing menu position...');
+            console.log('Menu element found:', !!sideMenu);
+            console.log('Overlay element found:', !!overlay);
+
+            if (sideMenu) {
+                sideMenu.classList.remove('open');
+                sideMenu.classList.add('closed');
+                sideMenu.style.transform = '';
+            }
+            if (overlay) {
+                overlay.classList.remove('active');
+                overlay.style.display = '';
+            }
+        } catch (error) {
+            console.error('❌ Error initializing menu position:', error);
         }
-    });
-}
-    
-initializeMenuPosition() {
-  try {
-    const sideMenu = document.getElementById('side-menu');
-    const overlay = document.querySelector('.side-menu-overlay');
-
-    console.log('📐 Initializing menu position...');
-    console.log('Menu element found:', !!sideMenu);
-    console.log('Overlay element found:', !!overlay);
-
-    if (sideMenu) {
-      // Start with menu hidden by class
-      sideMenu.classList.remove('open');
-      sideMenu.classList.add('closed');
-      sideMenu.style.transform = ''; // clear inline transform
     }
-    if (overlay) {
-      overlay.classList.remove('active');
-      overlay.style.display = '';
-    }
-  } catch (error) {
-    console.error('❌ Error initializing menu position:', error);
-  }
-}
 
-    
     setupAuthListener() {
-    if (typeof firebase === 'undefined' || !firebase.auth) {
-        console.log('⏳ Waiting for Firebase...');
-        setTimeout(() => this.setupAuthListener(), 100);
-        return;
-    }
-    
-    // Setup auth state listener - USE ARROW FUNCTION TO KEEP 'this' CONTEXT
-    firebase.auth().onAuthStateChanged((user) => {
-        console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.log('⏳ Waiting for Firebase...');
+            setTimeout(() => this.setupAuthListener(), 100);
+            return;
+        }
         
-        if (user) {
-            // Use arrow function to preserve 'this'
-            this.handleUserAuthenticated(user);
-        } else {
-            this.handleNoUser();
-        }
-    });
-}
+        firebase.auth().onAuthStateChanged((user) => {
+            console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+            
+            if (user) {
+                this.handleUserAuthenticated(user);
+            } else {
+                this.handleNoUser();
+            }
+        });
+    }
     
-checkInitialAuth() {
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-        const user = firebase.auth().currentUser;
-        if (user) {
-            console.log('👤 User already signed in:', user.email);
-            // Use arrow function or bind
-            this.handleUserAuthenticated(user);
-        } else {
-            console.log('🔒 No user found initially - showing auth form');
-            this.handleNoUser();
+    checkInitialAuth() {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                console.log('👤 User already signed in:', user.email);
+                this.handleUserAuthenticated(user);
+            } else {
+                console.log('🔒 No user found initially - showing auth form');
+                this.handleNoUser();
+            }
         }
     }
-}
 
-   async initializeAppComponents() {
-    console.log('🚀 Initializing app components...');
-    
-    // ===== CREATE CENTRAL DATA STORE =====
-    window.FarmData = {
-        sales: [],
-        production: [],
-        inventory: [],
-        expenses: [],
-        transactions: [],
-        lastUpdated: null
-    };
-    
-    // Initialize modules
-    this.initializeStyleManager();
-    this.initializeFarmModules();
-    
-    // Load user preferences
-    await this.loadUserPreferences();
-    this.applyUserTheme();
-    this.setupSystemThemeListener();
-    
-    // Setup UI - CREATE NAVIGATION FIRST
-    this.createTopNavigation();
-    
-    // Setup logout handlers AFTER creating navigation
-    this.setupLogoutHandlers();
-    
-    // ===== LOAD ALL DATA FROM MODULES (THEY ALREADY HAVE FIREBASE DATA) =====
-    try {
-        console.log('🔥 Loading all farm data from modules into FarmData...');
+    handleUserAuthenticated(user) {
+        console.log('🎉 User authenticated, showing app...');
+        this.currentUser = user;
+        this.authInitialized = true;
         
-        // Show loading notification
-        if (typeof showAgrimetricsNotification === 'function') {
-            showAgrimetricsNotification('Loading your farm data...', 'info');
+        // Store user info
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userId', user.uid);
+        localStorage.setItem('userAuthenticated', 'true');
+        
+        // Show app
+        this.showApp();
+        
+        // Initialize menu AFTER showing app
+        this.initializeMenu();
+        
+        // Initialize Data Service first
+        if (window.DataService && typeof window.DataService.initialize === 'function') {
+            window.DataService.initialize().then(() => {
+                // Then initialize app components
+                this.initializeAppComponents();
+            });
+        } else {
+            this.initializeAppComponents();
+        }
+    }
+
+    handleNoUser() {
+        console.log('🔒 No user found, showing auth');
+        this.authInitialized = true;
+        
+        const splash = document.getElementById('splash-screen');
+        const authContainer = document.getElementById('auth-container');
+        const signin = document.getElementById('signin-form');
+        const appContainer = document.getElementById('app-container');
+        
+        if (splash) {
+            splash.style.display = 'none';
         }
         
-        // Get current user
-        const user = firebase.auth().currentUser;
-        if (user) {
-            console.log('👤 Loading data for user:', user.uid);
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            authContainer.classList.add('active');
             
-            // ===== GET DATA FROM INCOME-EXPENSES MODULE =====
-            if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
-                const transactions = window.IncomeExpensesModule.transactions;
-                console.log(`📊 Got ${transactions.length} transactions from IncomeExpensesModule`);
-                
-                // Separate into income and expenses
-                window.FarmData.transactions = transactions;
-                window.FarmData.expenses = transactions.filter(t => t.type === 'expense');
-                
-                // Add income to sales for compatibility
-                window.FarmData.sales = transactions.filter(t => t.type === 'income');
+            if (signin) {
+                signin.classList.add('active');
+            }
+        }
+        
+        if (appContainer) {
+            appContainer.style.display = 'none';
+        }
+        
+        document.body.classList.add('auth-visible');
+        document.body.classList.remove('app-active', 'loading');
+        
+        // Hide loading
+        this.hideLoading();
+        
+        // Initialize menu in auth state
+        this.initializeMenu();
+        
+        console.log('✅ Auth screen shown');
+    }
+
+    async initializeAppComponents() {
+        console.log('🚀 Initializing app components...');
+        
+        // Initialize modules
+        this.initializeStyleManager();
+        this.initializeFarmModules();
+        
+        // Load user preferences
+        await this.loadUserPreferences();
+        this.applyUserTheme();
+        this.setupSystemThemeListener();
+        
+        // Setup UI - CREATE NAVIGATION FIRST
+        this.createTopNavigation();
+        
+        // Setup logout handlers AFTER creating navigation
+        this.setupLogoutHandlers();
+        
+        // ===== WAIT FOR DATA SERVICE TO HAVE DATA =====
+        try {
+            console.log('🔥 Waiting for FarmData from Data Service...');
+            
+            // Show loading notification
+            if (typeof showAgrimetricsNotification === 'function') {
+                showAgrimetricsNotification('Loading your farm data...', 'info');
             }
             
-            // ===== GET DATA FROM SALES MODULE =====
-            if (window.SalesRecordModule && window.SalesRecordModule.sales) {
-                const sales = window.SalesRecordModule.sales;
-                console.log(`📊 Got ${sales.length} sales from SalesRecordModule`);
-                
-                // Merge with existing sales (avoid duplicates)
-                const existingIds = new Set(window.FarmData.sales.map(s => s.id));
-                const newSales = sales.filter(s => !existingIds.has(s.id));
-                window.FarmData.sales = [...window.FarmData.sales, ...newSales];
+            // Wait for FarmData to be populated (up to 5 seconds)
+            let attempts = 0;
+            while (!window.FarmData && attempts < 10) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+                console.log(`⏳ Waiting for FarmData... attempt ${attempts}`);
             }
             
-            // ===== GET DATA FROM PRODUCTION MODULE =====
-            if (window.ProductionModule && window.ProductionModule.productionRecords) {
-                window.FarmData.production = window.ProductionModule.productionRecords;
-                console.log(`📊 Got ${window.FarmData.production.length} production records`);
+            // If FarmData still doesn't exist, create empty structure
+            if (!window.FarmData) {
+                console.log('⚠️ FarmData not available, creating empty structure');
+                window.FarmData = {
+                    sales: [],
+                    production: [],
+                    inventory: [],
+                    expenses: [],
+                    transactions: [],
+                    orders: [],
+                    customers: [],
+                    lastUpdated: null
+                };
             }
             
-            // ===== GET DATA FROM INVENTORY MODULE =====
-            if (window.InventoryModule && window.InventoryModule.inventory) {
-                window.FarmData.inventory = window.InventoryModule.inventory;
-                console.log(`📊 Got ${window.FarmData.inventory.length} inventory items`);
-            }
-            
-            // ===== GET DATA FROM ORDERS MODULE =====
-            if (window.OrdersModule && window.OrdersModule.orders) {
-                window.FarmData.orders = window.OrdersModule.orders;
-                console.log(`📊 Got ${window.FarmData.orders.length} orders`);
-            }
-            
-            if (window.OrdersModule && window.OrdersModule.customers) {
-                window.FarmData.customers = window.OrdersModule.customers;
-                console.log(`📊 Got ${window.FarmData.customers.length} customers`);
-            }
-            
-            // Sort transactions by date
-            window.FarmData.transactions.sort((a, b) => 
-                new Date(b.date || 0) - new Date(a.date || 0)
-            );
-            
-            window.FarmData.lastUpdated = new Date().toISOString();
-            
-            // ===== MAKE DATA AVAILABLE GLOBALLY =====
-            // For backward compatibility
-            window.salesData = window.FarmData.sales;
-            window.currentSalesData = window.FarmData.sales;
-            window.productionData = window.FarmData.production;
-            window.inventoryData = window.FarmData.inventory;
-            window.expensesData = window.FarmData.expenses;
+            // Make sure data is available globally for backward compatibility
+            window.salesData = window.FarmData.sales || [];
+            window.currentSalesData = window.FarmData.sales || [];
+            window.productionData = window.FarmData.production || [];
+            window.inventoryData = window.FarmData.inventory || [];
+            window.expensesData = window.FarmData.expenses || [];
             
             // Store in FarmModules for compatibility
             if (!window.FarmModules) window.FarmModules = {};
             if (!window.FarmModules.appData) window.FarmModules.appData = {};
             window.FarmModules.appData = window.FarmData;
-            
-            // Save to localStorage as backup
-            localStorage.setItem('farmData', JSON.stringify({
-                sales: window.FarmData.sales,
-                production: window.FarmData.production,
-                inventory: window.FarmData.inventory,
-                expenses: window.FarmData.expenses,
-                transactions: window.FarmData.transactions,
-                orders: window.FarmData.orders,
-                customers: window.FarmData.customers,
-                lastUpdated: window.FarmData.lastUpdated
-            }));
             
             // Update last sync time
             localStorage.setItem('agrimetricsLastSync', new Date().toISOString());
@@ -374,176 +357,62 @@ checkInitialAuth() {
                 detail: window.FarmData 
             }));
             
-            console.log('✅ All module data loaded into FarmData:', {
-                sales: window.FarmData.sales.length,
-                production: window.FarmData.production.length,
-                inventory: window.FarmData.inventory.length,
-                expenses: window.FarmData.expenses.length,
-                transactions: window.FarmData.transactions.length,
+            console.log('✅ Data Service ready. FarmData contains:', {
+                sales: window.FarmData.sales?.length || 0,
+                production: window.FarmData.production?.length || 0,
+                inventory: window.FarmData.inventory?.length || 0,
+                expenses: window.FarmData.expenses?.length || 0,
+                transactions: window.FarmData.transactions?.length || 0,
                 orders: window.FarmData.orders?.length || 0,
                 customers: window.FarmData.customers?.length || 0
             });
             
-            // Show success
+            // Show success notification
             if (typeof showAgrimetricsNotification === 'function') {
-                showAgrimetricsNotification(`Loaded ${window.FarmData.transactions.length} transactions!`, 'success');
+                const transactionCount = window.FarmData.transactions?.length || 0;
+                showAgrimetricsNotification(`Loaded ${transactionCount} transactions!`, 'success');
             }
             if (typeof updateAgrimetricsSyncStatus === 'function') {
                 updateAgrimetricsSyncStatus('✅ Synced', '#4CAF50');
             }
             
-        } else {
-            console.log('⚠️ No user logged in, skipping data load');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error loading farm data:', error);
-        if (typeof showAgrimetricsNotification === 'function') {
-            showAgrimetricsNotification('Error loading data', 'error');
-        }
-    }
-    
-    // Continue with UI setup
-    setTimeout(() => {
-        this.setupHamburgerMenu();
-        this.setupEventListeners(); 
-        this.setupDarkMode();
-        this.showSection(this.currentSection);
-        this.hideLoading();
-        console.log('✅ App fully initialized with FarmData');
-    }, 100);
-}
-
-// ===== ADD THESE HELPER METHODS =====
-
-async loadSalesData(user) {
-    try {
-        const salesSnapshot = await db.collection('sales').doc(user.uid).collection('records').get();
-        console.log(`📊 Found ${salesSnapshot.size} sales periods`);
-        
-        let allSales = [];
-        salesSnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.entries && data.entries.length > 0) {
-                allSales = allSales.concat(data.entries);
-            } else if (data.sales && data.sales.length > 0) {
-                allSales = allSales.concat(data.sales);
-            } else if (Array.isArray(data) && data.length > 0) {
-                allSales = allSales.concat(data);
+        } catch (error) {
+            console.error('❌ Error waiting for Data Service:', error);
+            if (typeof showAgrimetricsNotification === 'function') {
+                showAgrimetricsNotification('Error loading data', 'error');
             }
-        });
-        
-        window.FarmData.sales = allSales;
-        console.log(`✅ Loaded ${allSales.length} sales records`);
-    } catch (e) {
-        console.log('Error loading sales:', e);
-        window.FarmData.sales = [];
-    }
-}
-
-async loadProductionData(user) {
-    try {
-        const productionSnapshot = await db.collection('production').doc(user.uid).collection('records').get();
-        console.log(`📊 Found ${productionSnapshot.size} production periods`);
-        
-        let allProduction = [];
-        productionSnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.entries && data.entries.length > 0) {
-                allProduction = allProduction.concat(data.entries);
-            } else if (Array.isArray(data) && data.length > 0) {
-                allProduction = allProduction.concat(data);
-            }
-        });
-        
-        window.FarmData.production = allProduction;
-        console.log(`✅ Loaded ${allProduction.length} production records`);
-    } catch (e) {
-        console.log('Error loading production:', e);
-        window.FarmData.production = [];
-    }
-}
-
-async loadInventoryData(user) {
-    try {
-        const inventoryDoc = await db.collection('inventory').doc(user.uid).get();
-        if (inventoryDoc.exists) {
-            const data = inventoryDoc.data();
-            window.FarmData.inventory = data.items || data.inventory || [];
-            console.log(`✅ Loaded ${window.FarmData.inventory.length} inventory items`);
-        } else {
-            console.log('ℹ️ No inventory data found');
-            window.FarmData.inventory = [];
         }
-    } catch (e) {
-        console.log('Error loading inventory:', e);
-        window.FarmData.inventory = [];
+        
+        // Continue with UI setup
+        setTimeout(() => {
+            this.setupHamburgerMenu();
+            this.setupEventListeners(); 
+            this.setupDarkMode();
+            this.showSection(this.currentSection);
+            this.hideLoading();
+            console.log('✅ App fully initialized with FarmData from Data Service');
+        }, 100);
     }
-}
 
-async loadExpensesData(user) {
-    try {
-        const expensesSnapshot = await db.collection('expenses').doc(user.uid).collection('records').get();
-        console.log(`📊 Found ${expensesSnapshot.size} expense periods`);
+    showApp() {
+        const authContainer = document.getElementById('auth-container');
+        const appContainer = document.getElementById('app-container');
         
-        let allExpenses = [];
-        expensesSnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.entries && data.entries.length > 0) {
-                allExpenses = allExpenses.concat(data.entries);
-            } else if (Array.isArray(data) && data.length > 0) {
-                allExpenses = allExpenses.concat(data);
-            }
-        });
-        
-        window.FarmData.expenses = allExpenses;
-        console.log(`✅ Loaded ${allExpenses.length} expense records`);
-    } catch (e) {
-        console.log('Error loading expenses:', e);
-        window.FarmData.expenses = [];
-    }
-}
-    
-  handleNoUser() {
-    console.log('🔒 No user found, showing auth');
-    this.authInitialized = true;
-    
-    const splash = document.getElementById('splash-screen');
-    const authContainer = document.getElementById('auth-container');
-    const signin = document.getElementById('signin-form');
-    const appContainer = document.getElementById('app-container');
-    
-    // Hide splash
-    if (splash) {
-        splash.style.display = 'none';
-    }
-    
-    // Show auth container
-    if (authContainer) {
-        authContainer.style.display = 'block';
-        authContainer.classList.add('active');
-        
-        // Reset to signin form
-        if (signin) {
-            signin.classList.add('active');
+        if (authContainer) {
+            authContainer.style.display = 'none';
+            authContainer.classList.remove('active');
         }
+        if (appContainer) {
+            appContainer.style.display = 'block';
+            appContainer.classList.remove('hidden');
+        }
+        
+        document.body.classList.add('app-active');
+        document.body.classList.remove('auth-visible', 'loading');
+        
+        console.log('🏠 App container shown');
     }
-    
-    // Hide app container
-    if (appContainer) {
-        appContainer.style.display = 'none';
-    }
-    
-    // CRITICAL: Update body classes
-    document.body.classList.add('auth-visible');
-    document.body.classList.remove('app-active', 'loading');
-    
-    // Hide loading
-    this.hideLoading();
-    
-    console.log('✅ Auth screen shown');
-}
-    
+
     showLoading() {
         if (!document.getElementById('app-loading')) {
             const loadingDiv = document.createElement('div');
@@ -583,7 +452,7 @@ async loadExpensesData(user) {
             loadingDiv.style.display = 'none';
         }
     }
-    
+
     initializeStyleManager() {
         if (window.StyleManager && typeof StyleManager.init === 'function') {
             StyleManager.init();
@@ -622,205 +491,167 @@ async loadExpensesData(user) {
         };
     }
 
-applyUserTheme() {
-  const theme = this.userPreferences.theme || 'auto';
+    applyUserTheme() {
+        const theme = this.userPreferences.theme || 'auto';
 
-  // Clear both classes first
-  document.body.classList.remove('dark-mode', 'light-mode');
+        document.body.classList.remove('dark-mode', 'light-mode');
 
-  if (theme === 'dark') {
-    document.body.classList.add('dark-mode');
-  } else if (theme === 'light') {
-    document.body.classList.add('light-mode');
-  } else {
-    // Auto mode: follow system preference
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+        } else if (theme === 'light') {
+            document.body.classList.add('light-mode');
+        } else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const hasSavedPrefs = localStorage.getItem('farm-user-preferences');
+            if (!hasSavedPrefs) {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
+            }
+        }
 
-    // ✅ Force light mode on first run if no saved preference
-    const hasSavedPrefs = localStorage.getItem('farm-user-preferences');
-    if (!hasSavedPrefs) {
-      document.body.classList.add('light-mode');
-    } else {
-      document.body.classList.add(prefersDark ? 'dark-mode' : 'light-mode');
-    }
-  }
-
-  this.updateThemeToggleIcon();
-}
-
-     setupDarkMode() {
-  // Wait for navigation to be created
-  setTimeout(() => {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (!darkModeToggle) {
-      console.error('❌ Dark mode toggle button not found');
-      return;
+        this.updateThemeToggleIcon();
     }
 
-    // Remove existing listeners safely
-    const newToggle = darkModeToggle.cloneNode(true);
-    darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+    setupDarkMode() {
+        setTimeout(() => {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            if (!darkModeToggle) {
+                console.error('❌ Dark mode toggle button not found');
+                return;
+            }
 
-    // Attach click handler
-    newToggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      this.toggleDarkMode();
-    });
+            const newToggle = darkModeToggle.cloneNode(true);
+            darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
 
-    // Apply current theme and update icon
-    this.applyUserTheme();   // ensures body class matches saved preference
-    this.updateThemeToggleIcon();
+            newToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleDarkMode();
+            });
 
-    console.log('✅ Theme toggle button initialized');
-  }, 200); // Give time for navigation to render
-}
-    
-toggleDarkMode() {
-  // Flip between dark and light explicitly
-  if (document.body.classList.contains('dark-mode')) {
-    this.userPreferences.theme = 'light';
-  } else {
-    this.userPreferences.theme = 'dark';
-  }
+            this.applyUserTheme();
+            this.updateThemeToggleIcon();
 
-  this.applyUserTheme();
-}
-
-updateThemeToggleIcon() {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    if (!darkModeToggle) return;
-    
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    const iconSpan = darkModeToggle.querySelector('span');
-    
-    if (iconSpan) {
-        iconSpan.textContent = isDarkMode ? '☀️' : '🌙';
-        darkModeToggle.title = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
+            console.log('✅ Theme toggle button initialized');
+        }, 200);
     }
-}
+    
+    toggleDarkMode() {
+        if (document.body.classList.contains('dark-mode')) {
+            this.userPreferences.theme = 'light';
+        } else {
+            this.userPreferences.theme = 'dark';
+        }
+        this.applyUserTheme();
+    }
+
+    updateThemeToggleIcon() {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (!darkModeToggle) return;
+        
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const iconSpan = darkModeToggle.querySelector('span');
+        
+        if (iconSpan) {
+            iconSpan.textContent = isDarkMode ? '☀️' : '🌙';
+            darkModeToggle.title = isDarkMode ? 'Switch to light mode' : 'Switch to dark mode';
+        }
+    }
 
     setupSystemThemeListener() {
-  // Listen for OS theme changes
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  mediaQuery.addEventListener('change', e => {
-    if (this.userPreferences.theme === 'auto') {
-      document.body.classList.toggle('dark-mode', e.matches);
-      this.updateThemeToggleIcon();
-      console.log('🔄 System theme changed, auto mode updated');
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', e => {
+            if (this.userPreferences.theme === 'auto') {
+                document.body.classList.toggle('dark-mode', e.matches);
+                this.updateThemeToggleIcon();
+                console.log('🔄 System theme changed, auto mode updated');
+            }
+        });
     }
-  });
-}
 
-setupEventListeners() {
-  document.addEventListener('click', (e) => {
-    // Handle nav items
-    if (e.target.closest('.nav-item')) {
-      const navItem = e.target.closest('.nav-item');
-      const view = navItem.getAttribute('data-view');
-      if (view) {
-        e.preventDefault();
-        this.showSection(view);
-      }
+    setupEventListeners() {
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-item')) {
+                const navItem = e.target.closest('.nav-item');
+                const view = navItem.getAttribute('data-view');
+                if (view) {
+                    e.preventDefault();
+                    this.showSection(view);
+                }
+            }
+              
+            if (e.target.closest('.side-menu-item')) {
+                const menuItem = e.target.closest('.side-menu-item');
+                const section = menuItem.getAttribute('data-section');
+                if (section) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const sideMenu = document.getElementById('side-menu');
+                    const overlay = document.querySelector('.side-menu-overlay');
+
+                    if (sideMenu) {
+                        sideMenu.classList.remove('open');
+                        sideMenu.classList.add('closed');
+                    }
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                    }
+
+                    setTimeout(() => {
+                        this.showSection(section);
+                    }, 300);
+
+                    console.log(`📱 Navigated to ${section}, menu closed`);
+                }
+            }
+        });
     }
-      
-    // Handle side menu items
-    if (e.target.closest('.side-menu-item')) {
-      const menuItem = e.target.closest('.side-menu-item');
-      const section = menuItem.getAttribute('data-section');
-      if (section) {
-        e.preventDefault();
-        e.stopPropagation();
 
+    openSideMenu() {
+        const sideMenu = document.getElementById('side-menu');
+        const overlay = document.querySelector('.side-menu-overlay');
+        
+        if (sideMenu) {
+            sideMenu.classList.remove('closed');
+            sideMenu.classList.add('open');
+        }
+        if (overlay) {
+            overlay.classList.add('active');
+        }
+    }
+
+    closeSideMenu() {
+        const sideMenu = document.getElementById('side-menu');
+        const overlay = document.querySelector('.side-menu-overlay');
+        
+        if (sideMenu) {
+            sideMenu.classList.remove('open');
+            sideMenu.classList.add('closed');
+        }
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    }
+
+    initializeMenu() {
         const sideMenu = document.getElementById('side-menu');
         const overlay = document.querySelector('.side-menu-overlay');
 
         if (sideMenu) {
-          sideMenu.classList.remove('open');
-          sideMenu.classList.add('closed');
+            sideMenu.classList.remove('open');
+            sideMenu.classList.add('closed');
+            sideMenu.style.transform = '';
+            sideMenu.style.left = '';
+            sideMenu.style.right = '';
         }
+
         if (overlay) {
-          overlay.classList.remove('active');
+            overlay.classList.remove('active');
+            overlay.style.display = '';
         }
-
-        setTimeout(() => {
-          this.showSection(section);
-        }, 300);
-
-        console.log(`📱 Navigated to ${section}, menu closed`);
-      }
     }
-  });
-}
-
-// Add this method to your App class
-openSideMenu() {
-  const sideMenu = document.getElementById('side-menu');
-  const overlay = document.querySelector('.side-menu-overlay');
-  
-  if (sideMenu) {
-    sideMenu.classList.remove('closed');
-    sideMenu.classList.add('open');
-  }
-  if (overlay) {
-    overlay.classList.add('active');
-  }
-}
-
-closeSideMenu() {
-  const sideMenu = document.getElementById('side-menu');
-  const overlay = document.querySelector('.side-menu-overlay');
-  
-  if (sideMenu) {
-    sideMenu.classList.remove('open');
-    sideMenu.classList.add('closed');
-  }
-  if (overlay) {
-    overlay.classList.remove('active');
-  }
-}
-
-// Add this to initialize the menu in the correct state 
-initializeMenu() {
-  const sideMenu = document.getElementById('side-menu');
-  const overlay = document.querySelector('.side-menu-overlay');
-
-  if (sideMenu) {
-    // Ensure it starts hidden by class only
-    sideMenu.classList.remove('open');
-    sideMenu.classList.add('closed');
-
-    // Clear any leftover inline styles
-    sideMenu.style.transform = '';
-    sideMenu.style.left = '';
-    sideMenu.style.right = ''; // let CSS handle positioning
-  }
-
-  if (overlay) {
-    overlay.classList.remove('active');
-    overlay.style.display = ''; // let CSS handle display
-  }
-}
-
-   showApp() {
-    const authContainer = document.getElementById('auth-container');
-    const appContainer = document.getElementById('app-container');
-    
-    if (authContainer) {
-        authContainer.style.display = 'none';
-        authContainer.classList.remove('active');
-    }
-    if (appContainer) {
-        appContainer.style.display = 'block';
-        appContainer.classList.remove('hidden');
-    }
-    
-    // CRITICAL: Update body classes
-    document.body.classList.add('app-active');
-    document.body.classList.remove('auth-visible', 'loading');
-    
-    console.log('🏠 App container shown');
-}
     
     createTopNavigation() {
         const appContainer = document.getElementById('app-container');
@@ -834,58 +665,50 @@ initializeMenu() {
 
         header.innerHTML = `
             <nav class="top-nav">
-                <!-- Brand/logo -->
                 <div class="nav-brand">
                     <img src="icons/icon-96x96_a.png" alt="AgriMetrics">
                     <span class="brand-text">AgriMetrics</span>
                     <span class="brand-subtitle">Farm Management System</span>
                 </div>
                 
-                    <!-- Scrollable icons section -->
                 <div class="nav-items-scroll">
-                <div class="nav-items">
-                    <button class="nav-item" data-view="dashboard" title="Dashboard">
-                        <span>📊</span>
-                        <span class="nav-label">Dashboard</span>
+                    <div class="nav-items">
+                        <button class="nav-item" data-view="dashboard" title="Dashboard">
+                            <span>📊</span>
+                            <span class="nav-label">Dashboard</span>
+                        </button>
+                        <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
+                            <span>💰</span>
+                            <span class="nav-label">Income</span>
+                        </button>
+                        <button class="nav-item" data-view="inventory-check" title="Inventory">
+                            <span>📦</span>
+                            <span class="nav-label">Inventory</span>
+                        </button>
+                        <button class="nav-item" data-view="orders" title="Orders">
+                            <span>📋</span>
+                            <span class="nav-label">Orders</span>
+                        </button>
+                        <button class="nav-item" data-view="sales-record" title="Sales">
+                            <span>🛒</span>
+                            <span class="nav-label">Sales</span>
+                        </button>
+                        <button class="nav-item" data-view="profile" title="Profile">
+                            <span>👤</span>
+                            <span class="nav-label">Profile</span>
+                        </button>
+                        <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
+                            <span>🌙</span>
+                            <span class="nav-label">Theme</span>
+                        </button>
+                    </div>
+                </div> 
+                
+                <div class="nav-actions">
+                    <button type="button" id="navbar-logout-btn" class="logout-btn nav-item" title="Logout"> 
+                        <span>🚪</span> <span class="nav-label">Logout</span> 
                     </button>
-
-                    <button class="nav-item" data-view="income-expenses" title="Income & Expenses">
-                        <span>💰</span>
-                        <span class="nav-label">Income</span>
-                    </button>
-
-                    <button class="nav-item" data-view="inventory-check" title="Inventory">
-                        <span>📦</span>
-                        <span class="nav-label">Inventory</span>
-                    </button>
-
-                    <button class="nav-item" data-view="orders" title="Orders">
-                        <span>📋</span>
-                        <span class="nav-label">Orders</span>
-                    </button>
-
-                    <button class="nav-item" data-view="sales-record" title="Sales">
-                        <span>🛒</span>
-                        <span class="nav-label">Sales</span>
-                    </button>
-
-                    <button class="nav-item" data-view="profile" title="Profile">
-                        <span>👤</span>
-                        <span class="nav-label">Profile</span>
-                    </button>
-
-                    <button class="nav-item dark-mode-toggle" id="dark-mode-toggle" title="Toggle Dark Mode">
-                        <span>🌙</span>
-                        <span class="nav-label">Theme</span>
-                    </button>
-                </div>
-            </div> 
-                <!-- Fixed right controls --> 
-                 <div class="nav-actions">
-                  <button type="button" id="navbar-logout-btn" class="logout-btn nav-item" title="Logout"> 
-                    <span>🚪</span> <span class="nav-label">Logout</span> 
-                  </button>
-                  <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
+                    <button class="nav-item hamburger-menu" id="hamburger-menu" title="Farm Operations">
                         <span>☰</span>
                         <span class="nav-label">More</span>
                     </button>
@@ -893,129 +716,116 @@ initializeMenu() {
             </nav>
         `;
          
-        // ADD THIS DEBUG LOG
         console.log('🔍 Navbar logout button created:', document.getElementById('navbar-logout-btn'));
     }
 
-setupHamburgerMenu() {
-  console.log('🎯 Setting up hamburger menu (class-based version)');
+    setupHamburgerMenu() {
+        console.log('🎯 Setting up hamburger menu (class-based version)');
 
-  const hamburger = document.getElementById('hamburger-menu');
-  const sideMenu = document.getElementById('side-menu');
+        const hamburger = document.getElementById('hamburger-menu');
+        const sideMenu = document.getElementById('side-menu');
 
-  if (!hamburger || !sideMenu) {
-    console.log('❌ Hamburger or side menu not found');
-    return;
-  }
+        if (!hamburger || !sideMenu) {
+            console.log('❌ Hamburger or side menu not found');
+            return;
+        }
 
-  // Skip if already setup
-  if (hamburger.dataset.menuSetup === 'true') {
-    console.log('⚠️ Menu already setup, skipping...');
-    return;
-  }
-  hamburger.dataset.menuSetup = 'true';
+        if (hamburger.dataset.menuSetup === 'true') {
+            console.log('⚠️ Menu already setup, skipping...');
+            return;
+        }
+        hamburger.dataset.menuSetup = 'true';
 
-  // Ensure menu starts closed
-  sideMenu.classList.add('closed');
+        sideMenu.classList.add('closed');
 
-  // Create overlay if missing
-  let overlay = document.querySelector('.side-menu-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.className = 'side-menu-overlay';
-    document.body.appendChild(overlay);
-  }
+        let overlay = document.querySelector('.side-menu-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'side-menu-overlay';
+            document.body.appendChild(overlay);
+        }
 
-  // Clone hamburger to remove old listeners
-  const newHamburger = hamburger.cloneNode(true);
-  hamburger.parentNode.replaceChild(newHamburger, hamburger);
+        const newHamburger = hamburger.cloneNode(true);
+        hamburger.parentNode.replaceChild(newHamburger, hamburger);
 
-  // State
-  let isMenuOpen = false;
+        let isMenuOpen = false;
 
-  // Click handler
-  newHamburger.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Before click:', sideMenu.className, overlay.className);
-      
-    if (!isMenuOpen) {
-      sideMenu.classList.remove('closed');
-      sideMenu.classList.add('open');
-      overlay.classList.add('active');
-      isMenuOpen = true;
-      console.log('✅ Menu opened');
-    } else {
-      sideMenu.classList.remove('open');
-      sideMenu.classList.add('closed');
-      overlay.classList.remove('active');
-      isMenuOpen = false;
-      console.log('✅ Menu closed');
+        newHamburger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+              
+            if (!isMenuOpen) {
+                sideMenu.classList.remove('closed');
+                sideMenu.classList.add('open');
+                overlay.classList.add('active');
+                isMenuOpen = true;
+                console.log('✅ Menu opened');
+            } else {
+                sideMenu.classList.remove('open');
+                sideMenu.classList.add('closed');
+                overlay.classList.remove('active');
+                isMenuOpen = false;
+                console.log('✅ Menu closed');
+            }
+        });
+
+        overlay.addEventListener('click', () => {
+            sideMenu.classList.remove('open');
+            sideMenu.classList.add('closed');
+            overlay.classList.remove('active');
+            isMenuOpen = false;
+            console.log('✅ Menu closed via overlay');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isMenuOpen) {
+                sideMenu.classList.remove('open');
+                sideMenu.classList.add('closed');
+                overlay.classList.remove('active');
+                isMenuOpen = false;
+                console.log('✅ Menu closed with ESC key');
+            }
+        });
     }
-      console.log('After click:', sideMenu.className, overlay.className);
-  });
-
-  // Overlay click closes menu
-  overlay.addEventListener('click', () => {
-    sideMenu.classList.remove('open');
-    sideMenu.classList.add('closed');
-    overlay.classList.remove('active');
-    isMenuOpen = false;
-    console.log('✅ Menu closed via overlay');
-  });
-
-  // ESC key closes menu
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isMenuOpen) {
-      sideMenu.classList.remove('open');
-      sideMenu.classList.add('closed');
-      overlay.classList.remove('active');
-      isMenuOpen = false;
-      console.log('✅ Menu closed with ESC key');
-    }
-  });
-}
     
     showSection(sectionId) {
-    console.log(`🔄 Switching to section: ${sectionId}`);
-    
-    const contentArea = document.getElementById('content-area');
-    if (!contentArea) return;
-    
-    const cleanSectionId = sectionId.replace('.js', '');
-    this.currentSection = cleanSectionId;
-    this.setActiveMenuItem(cleanSectionId);
-    
-    contentArea.innerHTML = `
-        <div style="padding: 40px; text-align: center;">
-            <div style="
-                width: 40px;
-                height: 40px;
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #4CAF50;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-            "></div>
-            <p>Loading ${cleanSectionId}...</p>
-        </div>
-    `;
-   
-    // Load module
-    setTimeout(() => {
-        if (FarmModules && FarmModules.renderModule) {
-            FarmModules.renderModule(cleanSectionId, contentArea);
-        } else {
-            this.loadFallbackContent(cleanSectionId);
-        }
+        console.log(`🔄 Switching to section: ${sectionId}`);
         
-        // After module loads, fix positions
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        
+        const cleanSectionId = sectionId.replace('.js', '');
+        this.currentSection = cleanSectionId;
+        this.setActiveMenuItem(cleanSectionId);
+        
+        contentArea.innerHTML = `
+            <div style="padding: 40px; text-align: center;">
+                <div style="
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #4CAF50;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 20px;
+                "></div>
+                <p>Loading ${cleanSectionId}...</p>
+            </div>
+        `;
+       
         setTimeout(() => {
-            this.fixContentPosition();
-            this.fixOverflowingForms();
-        }, 300);
-    }, 100);
-}
+            if (FarmModules && FarmModules.renderModule) {
+                FarmModules.renderModule(cleanSectionId, contentArea);
+            } else {
+                this.loadFallbackContent(cleanSectionId);
+            }
+            
+            setTimeout(() => {
+                this.fixContentPosition();
+                this.fixOverflowingForms();
+            }, 300);
+        }, 100);
+    }
    
     setActiveMenuItem(sectionId) {
         document.querySelectorAll('.nav-item, .side-menu-item').forEach(item => {
@@ -1067,199 +877,145 @@ setupHamburgerMenu() {
     }
 
     setupLogoutHandlers() {
-    console.log('🔧 Setting up logout handlers for all buttons...');
-    
-    // Method 1: Direct attachment for navbar button (when it exists)
-    const attachNavbarLogout = () => {
-        const navbarLogout = document.getElementById('navbar-logout-btn');
-        if (navbarLogout && !navbarLogout.dataset.listenerAttached) {
-            console.log('✅ Attaching direct listener to navbar logout button');
-            navbarLogout.addEventListener('click', (e) => {
+        console.log('🔧 Setting up logout handlers for all buttons...');
+        
+        const attachNavbarLogout = () => {
+            const navbarLogout = document.getElementById('navbar-logout-btn');
+            if (navbarLogout && !navbarLogout.dataset.listenerAttached) {
+                console.log('✅ Attaching direct listener to navbar logout button');
+                navbarLogout.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🖱️ Navbar logout button clicked directly');
+                    this.performLogout();
+                });
+                navbarLogout.dataset.listenerAttached = 'true';
+            }
+        };
+        
+        document.addEventListener('click', (e) => {
+            const logoutBtn = e.target.closest('.logout-btn');
+            if (logoutBtn) {
+                console.log('🎯 Event delegation caught logout click');
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🖱️ Navbar logout button clicked directly');
                 this.performLogout();
-            });
-            navbarLogout.dataset.listenerAttached = 'true';
-        }
-    };
-    
-    // Method 2: Event delegation for any logout button
-    document.addEventListener('click', (e) => {
-        const logoutBtn = e.target.closest('.logout-btn');
-        if (logoutBtn) {
-            console.log('🎯 Event delegation caught logout click:', {
-                id: logoutBtn.id,
-                className: logoutBtn.className,
-                tagName: logoutBtn.tagName
-            });
-            e.preventDefault();
-            e.stopPropagation();
-            this.performLogout();
-        }
-    });
-    
-    // Method 3: Listen for custom logout events
-    document.addEventListener('user-logout', () => {
-        console.log('📢 Received custom logout event');
-        this.performLogout();
-    });
-    
-    // Try attaching to navbar button immediately and periodically
-    attachNavbarLogout();
-    
-    // Keep trying to attach for a few seconds (in case nav loads later)
-    let attempts = 0;
-    const maxAttempts = 10;
-    const interval = setInterval(() => {
-        attempts++;
-        attachNavbarLogout();
-        
-        if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            console.log('⏱️ Stopped trying to attach navbar listener');
-        }
-    }, 300);
-}
-    
-   async performLogout() {
-    console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
-    
-    try {
-        // Show loading immediately
-        this.showLoading();
-        
-        // 1. Close side menu if open
-        this.closeSideMenu();
-        
-        // 2. Check if we should preserve remember me email
-        const rememberEmail = localStorage.getItem('farm_system_remember_email');
-        const rememberCheckbox = document.getElementById('remember-me');
-        
-        // Clear MOST local storage but KEEP remember me email if checkbox is checked
-        const itemsToPreserve = {};
-        
-        if (rememberEmail && rememberCheckbox && rememberCheckbox.checked) {
-            itemsToPreserve.farm_system_remember_email = rememberEmail;
-            console.log('💾 Preserving remember me email');
-        }
-        
-        // Clear all localStorage
-        localStorage.clear();
-        
-        // Restore items we want to preserve
-        Object.keys(itemsToPreserve).forEach(key => {
-            localStorage.setItem(key, itemsToPreserve[key]);
+            }
         });
         
-        // 3. Sign out from Firebase
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            console.log('🔥 Signing out from Firebase...');
-            await firebase.auth().signOut();
-            console.log('✅ Firebase signout successful');
+        document.addEventListener('user-logout', () => {
+            console.log('📢 Received custom logout event');
+            this.performLogout();
+        });
+        
+        attachNavbarLogout();
+        
+        let attempts = 0;
+        const maxAttempts = 10;
+        const interval = setInterval(() => {
+            attempts++;
+            attachNavbarLogout();
             
-            // IMPORTANT: Wait for Firebase to complete signout
-            await new Promise(resolve => setTimeout(resolve, 500));
-        } else {
-            console.log('⚠️ Firebase not available, proceeding anyway');
-        }
-        
-        // 4. Reset app state
-        this.currentUser = null;
-        this.authInitialized = false;
-        
-        // 5. Force UI update - SIMPLIFY THIS
-        console.log('🔄 Forcing UI to auth screen...');
-        
-        // Hide everything app-related
-        const appContainer = document.getElementById('app-container');
-        const authContainer = document.getElementById('auth-container');
-        const splash = document.getElementById('splash-screen');
-        
-        if (appContainer) {
-            appContainer.style.display = 'none';
-            console.log('📦 App container hidden');
-        }
-        
-        if (splash) {
-            splash.style.display = 'none';
-        }
-        
-        if (authContainer) {
-            authContainer.style.display = 'block';
-            // Reset to signin form
-            const signin = document.getElementById('signin-form');
-            const signup = document.getElementById('signup-form');
-            const forgot = document.getElementById('forgot-password-form');
-            if (signin) signin.classList.add('active');
-            if (signup) signup.classList.remove('active');
-            if (forgot) forgot.classList.remove('active');
-            console.log('🔐 Auth container shown');
-        }
-        
-        // Clear content area
-        const contentArea = document.getElementById('content-area');
-        if (contentArea) {
-            contentArea.innerHTML = '';
-        }
-        
-        // Also reset the top navigation
-        const header = document.querySelector('header');
-        if (header) {
-            header.remove();
-        }
-        
-        // Reset body classes
-        document.body.classList.remove('dark-mode', 'light-mode');
-        
-        // Hide loading
-        this.hideLoading();
-        
-        console.log('🎉 Logout sequence complete!');
-        
-    } catch (error) {
-        console.error('❌ Logout error:', error);
-        this.hideLoading();
-        
-        // Fallback: force auth screen
-        const appContainer = document.getElementById('app-container');
-        const authContainer = document.getElementById('auth-container');
-        if (appContainer) appContainer.style.display = 'none';
-        if (authContainer) authContainer.style.display = 'block';
+            if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                console.log('⏱️ Stopped trying to attach navbar listener');
+            }
+        }, 300);
     }
-}
-}
     
-// Reacts to Firebase auth state changes
-firebase.auth().onAuthStateChanged(user => {
-  const dashboard = document.getElementById("dashboard-container");
-  const authContainer = document.getElementById("auth-container");
-
-  if (user) {
-    if (dashboard) dashboard.style.display = "block";
-    if (authContainer) authContainer.style.display = "none";
-    window.app.initializeMenu();  // <-- Call app method
-    console.log("🎉 User authenticated, showing app...");
-  } else {
-    if (dashboard) dashboard.style.display = "none";
-    if (authContainer) authContainer.style.display = "block";
-    window.app.initializeMenu();  // <-- Call app method
-    console.log("🔒 No user, showing sign-in form...");
-  }
-});
-
- // Force re-initialization after everything else loads
-setTimeout(() => {
-    if (typeof this.setupHamburgerMenu === 'function') {
-        console.log('🔄 Forcing hamburger menu re-initialization...');
-        this.setupHamburgerMenu();
+    async performLogout() {
+        console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
+        
+        try {
+            this.showLoading();
+            
+            this.closeSideMenu();
+            
+            const rememberEmail = localStorage.getItem('farm_system_remember_email');
+            const rememberCheckbox = document.getElementById('remember-me');
+            
+            const itemsToPreserve = {};
+            
+            if (rememberEmail && rememberCheckbox && rememberCheckbox.checked) {
+                itemsToPreserve.farm_system_remember_email = rememberEmail;
+                console.log('💾 Preserving remember me email');
+            }
+            
+            localStorage.clear();
+            
+            Object.keys(itemsToPreserve).forEach(key => {
+                localStorage.setItem(key, itemsToPreserve[key]);
+            });
+            
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                console.log('🔥 Signing out from Firebase...');
+                await firebase.auth().signOut();
+                console.log('✅ Firebase signout successful');
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } else {
+                console.log('⚠️ Firebase not available, proceeding anyway');
+            }
+            
+            this.currentUser = null;
+            this.authInitialized = false;
+            
+            console.log('🔄 Forcing UI to auth screen...');
+            
+            const appContainer = document.getElementById('app-container');
+            const authContainer = document.getElementById('auth-container');
+            const splash = document.getElementById('splash-screen');
+            
+            if (appContainer) {
+                appContainer.style.display = 'none';
+                console.log('📦 App container hidden');
+            }
+            
+            if (splash) {
+                splash.style.display = 'none';
+            }
+            
+            if (authContainer) {
+                authContainer.style.display = 'block';
+                const signin = document.getElementById('signin-form');
+                const signup = document.getElementById('signup-form');
+                const forgot = document.getElementById('forgot-password-form');
+                if (signin) signin.classList.add('active');
+                if (signup) signup.classList.remove('active');
+                if (forgot) forgot.classList.remove('active');
+                console.log('🔐 Auth container shown');
+            }
+            
+            const contentArea = document.getElementById('content-area');
+            if (contentArea) {
+                contentArea.innerHTML = '';
+            }
+            
+            const header = document.querySelector('header');
+            if (header) {
+                header.remove();
+            }
+            
+            document.body.classList.remove('dark-mode', 'light-mode');
+            
+            this.hideLoading();
+            
+            console.log('🎉 Logout sequence complete!');
+            
+        } catch (error) {
+            console.error('❌ Logout error:', error);
+            this.hideLoading();
+            
+            const appContainer = document.getElementById('app-container');
+            const authContainer = document.getElementById('auth-container');
+            if (appContainer) appContainer.style.display = 'none';
+            if (authContainer) authContainer.style.display = 'block';
+        }
     }
-}, 2000);
+}
 
 // ==================== AGRIMETRICS SYNC MANAGER ====================
 let agrimetricsSyncWorker = null;
 
-// Initialize Agrimetrics sync
 async function initAgrimetricsSync() {
     console.log('🌾 Initializing Agrimetrics sync...');
     
@@ -1272,7 +1028,6 @@ async function initAgrimetricsSync() {
             
             navigator.serviceWorker.addEventListener('message', handleAgrimetricsSWMessage);
             
-            // Register periodic sync
             if ('periodicSync' in registration) {
                 const status = await navigator.permissions.query({
                     name: 'periodic-background-sync',
@@ -1280,7 +1035,7 @@ async function initAgrimetricsSync() {
                 
                 if (status.state === 'granted') {
                     await registration.periodicSync.register('agrimetrics-periodic-sync', {
-                        minInterval: 60 * 60 * 1000 // 1 hour
+                        minInterval: 60 * 60 * 1000
                     });
                     console.log('Agrimetrics periodic sync registered');
                 }
@@ -1288,10 +1043,8 @@ async function initAgrimetricsSync() {
             
             agrimetricsSyncWorker = registration;
             
-            // Initial sync
             triggerAgrimetricsSync();
             
-            // Online/offline listeners
             window.addEventListener('online', () => {
                 console.log('📶 Agrimetrics back online - syncing');
                 triggerAgrimetricsSync();
@@ -1307,7 +1060,6 @@ async function initAgrimetricsSync() {
     return false;
 }
 
-// Handle messages from Service Worker
 function handleAgrimetricsSWMessage(event) {
     const { type, timestamp, success, error, data } = event.data;
     
@@ -1341,7 +1093,6 @@ function handleAgrimetricsSWMessage(event) {
     }
 }
 
-// Trigger Agrimetrics background sync
 async function triggerAgrimetricsSync() {
     if (!agrimetricsSyncWorker || !agrimetricsSyncWorker.sync) {
         console.log('Agrimetrics background sync not available');
@@ -1354,7 +1105,6 @@ async function triggerAgrimetricsSync() {
         
         const user = JSON.parse(userData);
         
-        // Get current farm/production data
         const syncData = {
             userId: user.uid,
             farmId: localStorage.getItem('currentFarmId'),
@@ -1387,7 +1137,6 @@ async function triggerAgrimetricsSync() {
     }
 }
 
-// Update sync status in UI
 function updateAgrimetricsSyncStatus(message, color) {
     const statusElement = document.getElementById('agrimetrics-sync-status');
     if (statusElement) {
@@ -1395,7 +1144,6 @@ function updateAgrimetricsSyncStatus(message, color) {
     }
 }
 
-// Update last sync display
 function updateAgrimetricsLastSync() {
     const lastSync = localStorage.getItem('agrimetricsLastSync');
     const element = document.getElementById('agrimetrics-last-sync');
@@ -1406,7 +1154,6 @@ function updateAgrimetricsLastSync() {
     }
 }
 
-// Show notification
 function showAgrimetricsNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `agrimetrics-notification ${type}`;
@@ -1433,7 +1180,6 @@ function showAgrimetricsNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Add CSS animations
 const agrimetricsStyle = document.createElement('style');
 agrimetricsStyle.textContent = `
     @keyframes agrimetricsSlideIn {
@@ -1471,7 +1217,6 @@ async function loadAllFarmDataFromFirebase() {
         
         console.log('👤 Loading ALL data for user:', user.uid);
         
-        // Show loading notification
         showAgrimetricsNotification('Loading your farm data...', 'info');
         
         // ===== 1. LOAD SALES RECORDS =====
@@ -1551,7 +1296,6 @@ async function loadAllFarmDataFromFirebase() {
             console.log('Error loading expenses:', e);
         }
         
-        // Show success
         showAgrimetricsNotification('All farm data loaded!', 'success');
         updateAgrimetricsSyncStatus('✅ Synced', '#4CAF50');
         
@@ -1561,18 +1305,15 @@ async function loadAllFarmDataFromFirebase() {
     }
 }
 
-   // Helper to get current sales data (add this near your other global functions)
 function getSalesData() {
     return window.salesData || window.currentSalesData || [];
 }
 
-// Helper to refresh data from Firebase
 async function refreshAllData() {
     console.log('🔄 Refreshing all data from Firebase...');
     await window.app.initializeAppComponents();
 }
 
-// Run this in console to SEE what's in Firebase
 async function checkMyFirebaseData() {
     const user = firebase.auth().currentUser;
     if (!user) {
@@ -1603,8 +1344,10 @@ async function checkMyFirebaseData() {
     }
 }
 
-// Run it
-checkMyFirebaseData();
-
 // Initialize the app
 window.app = new FarmManagementApp();
+
+// Initialize sync after app is ready
+setTimeout(() => {
+    initAgrimetricsSync();
+}, 1000);
