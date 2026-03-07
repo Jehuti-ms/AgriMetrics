@@ -13,35 +13,126 @@ const DashboardModule = {
 
     // ==================== INITIALIZATION ====================
     initialize() {
-        console.log('📊 Initializing Dashboard...');
+    console.log('📊 Initializing Dashboard...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('❌ Content area not found');
+        return false;
+    }
+
+    // Register with StyleManager if available
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    // Initialize with empty state first
+    this.initialized = true;
+    
+    // Render dashboard
+    this.renderDashboard();
+    
+    // Load data asynchronously
+    setTimeout(() => {
+        this.loadAndDisplayStats();
+        this.startRealTimeUpdates();
+    }, 100);
+    
+    // ===== ADD THIS: Listen for data changes from all modules =====
+    this.setupGlobalListeners();
+    
+    console.log('✅ Dashboard initialized with real-time updates');
+    return true;
+},
+
+    // Add this method after initialize()
+setupGlobalListeners() {
+    console.log('📡 Setting up global listeners for dashboard...');
+    
+    // Listen for events from other modules
+    const events = [
+        'sale-completed', 
+        'expense-recorded', 
+        'income-recorded',
+        'production-created', 
+        'inventory-updated', 
+        'feed-recorded',
+        'mortality-recorded', 
+        'order-created', 
+        'order-completed',
+        'customer-added',
+        'stock-updated'
+    ];
+
+    // Remove existing listeners first (to avoid duplicates)
+    if (this._eventListeners) {
+        this._eventListeners.forEach(({event, handler}) => {
+            window.removeEventListener(event, handler);
+        });
+    }
+    
+    this._eventListeners = [];
+
+    // Add new listeners
+    events.forEach(event => {
+        const handler = () => {
+            console.log(`📡 Dashboard received: ${event}`);
+            if (this.initialized) {
+                setTimeout(() => this.loadAndDisplayStats(), 200);
+            }
+        };
         
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('❌ Content area not found');
-            return false;
+        window.addEventListener(event, handler);
+        this._eventListeners.push({event, handler});
+    });
+
+    // Listen for storage changes (for cross-tab sync)
+    const storageHandler = (e) => {
+        if (e.key && (e.key.includes('farm-') || e.key.includes('FarmModules'))) {
+            console.log('📡 Storage change detected:', e.key);
+            if (this.initialized) {
+                setTimeout(() => this.loadAndDisplayStats(), 300);
+            }
         }
+    };
+    
+    window.addEventListener('storage', storageHandler);
+    this._eventListeners.push({event: 'storage', handler: storageHandler});
 
-        // Register with StyleManager if available
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
+    // Also listen for custom data broadcaster if available
+    if (window.DataBroadcaster) {
+        const broadcasterEvents = [
+            'sale-completed', 'expense-recorded', 'income-recorded',
+            'production-created', 'inventory-updated', 'feed-recorded',
+            'mortality-recorded', 'order-created', 'order-completed'
+        ];
+        
+        broadcasterEvents.forEach(event => {
+            window.DataBroadcaster.on(event, () => {
+                console.log(`📡 Dashboard received broadcaster: ${event}`);
+                if (this.initialized) {
+                    setTimeout(() => this.loadAndDisplayStats(), 150);
+                }
+            });
+        });
+    }
+
+    // Listen for module activations
+    const moduleActivatedHandler = (e) => {
+        if (e.detail && e.detail.module) {
+            console.log(`📡 Module activated: ${e.detail.module}`);
+            if (this.initialized) {
+                setTimeout(() => this.loadAndDisplayStats(), 200);
+            }
         }
+    };
+    
+    document.addEventListener('moduleActivated', moduleActivatedHandler);
+    this._eventListeners.push({event: 'moduleActivated', handler: moduleActivatedHandler});
 
-        // Initialize with empty state first
-        this.initialized = true;
-        
-        // Render dashboard
-        this.renderDashboard();
-        
-        // Load data asynchronously
-        setTimeout(() => {
-            this.loadAndDisplayStats();
-            this.startRealTimeUpdates();
-        }, 100);
-        
-        console.log('✅ Dashboard initialized with real-time updates');
-        return true;
-    },
-
+    console.log(`✅ Dashboard listening to ${events.length} events`);
+},
+    
     onThemeChange(theme) {
         console.log(`🎨 Dashboard updating for theme: ${theme}`);
         // Apply theme-specific styles if needed
@@ -689,37 +780,110 @@ const DashboardModule = {
         this.updateLastUpdatedTime();
     },
 
-    getProfileStats() {
-        // Default stats
-        let stats = {
-            totalIncome: 0,
-            totalExpenses: 0,
-            netProfit: 0,
-            totalInventoryItems: 0,
-            totalBirds: 0,
-            totalOrders: 0,
-            totalRevenue: 0,
-            totalCustomers: 0,
-            totalProducts: 0,
-            monthlyRevenue: 0,
-            completedOrders: 0
-        };
+   getProfileStats() {
+    // Default stats
+    let stats = {
+        totalIncome: 0,
+        totalExpenses: 0,
+        netProfit: 0,
+        totalInventoryItems: 0,
+        totalBirds: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalCustomers: 0,
+        totalProducts: 0,
+        monthlyRevenue: 0,
+        completedOrders: 0
+    };
 
-        // Try to get from shared FarmModules data
-        if (window.FarmModules && window.FarmModules.appData) {
-            const sharedStats = window.FarmModules.appData.profile?.dashboardStats;
-            if (sharedStats) {
-                Object.assign(stats, sharedStats);
-            }
+    // ===== GET REAL DATA FROM MODULES =====
+    
+    // 1. Get from Income-Expenses module
+    if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+        const transactions = window.IncomeExpensesModule.transactions;
+        stats.totalIncome = transactions
+            .filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        stats.totalExpenses = transactions
+            .filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+    }
+
+    // 2. Get from Sales module
+    if (window.SalesRecordModule && window.SalesRecordModule.sales) {
+        const sales = window.SalesRecordModule.sales;
+        stats.totalRevenue = sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+        stats.totalProducts = sales.length;
+        
+        // Calculate monthly revenue (last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        stats.monthlyRevenue = sales
+            .filter(s => new Date(s.date || s.createdAt) > thirtyDaysAgo)
+            .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+    }
+
+    // 3. Get from Inventory module
+    if (window.InventoryModule && window.InventoryModule.inventory) {
+        stats.totalInventoryItems = window.InventoryModule.inventory.length;
+    } else {
+        // Try localStorage
+        try {
+            const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+            stats.totalInventoryItems = inventory.length;
+        } catch (e) {}
+    }
+
+    // 4. Get from Broiler Mortality module
+    if (window.BroilerMortalityModule) {
+        if (typeof window.BroilerMortalityModule.getCurrentStock === 'function') {
+            stats.totalBirds = window.BroilerMortalityModule.getCurrentStock();
+        } else if (window.BroilerMortalityModule.currentStock) {
+            stats.totalBirds = window.BroilerMortalityModule.currentStock;
         }
+    }
+    
+    // Try localStorage as fallback
+    if (stats.totalBirds === 0) {
+        try {
+            const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
+            const initialStock = parseInt(localStorage.getItem('farm-initial-stock') || '0');
+            const totalMortality = mortalityRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
+            stats.totalBirds = Math.max(0, initialStock - totalMortality);
+        } catch (e) {}
+    }
 
-        // Calculate from localStorage if needed
-        if (stats.totalIncome === 0 && stats.totalExpenses === 0) {
-            this.calculateStatsFromStorage(stats);
+    // 5. Get from Orders module
+    if (window.OrdersModule && window.OrdersModule.orders) {
+        stats.totalOrders = window.OrdersModule.orders.length;
+        stats.completedOrders = window.OrdersModule.orders
+            .filter(o => o.status === 'completed').length;
+    }
+
+    // 6. Get from Customers (via Orders module)
+    if (window.OrdersModule && window.OrdersModule.customers) {
+        stats.totalCustomers = window.OrdersModule.customers.length;
+    }
+
+    // 7. Calculate net profit
+    stats.netProfit = (stats.totalRevenue || stats.totalIncome) - stats.totalExpenses;
+
+    // Save to shared app data for other modules
+    if (window.FarmModules && window.FarmModules.appData) {
+        if (!window.FarmModules.appData.profile) {
+            window.FarmModules.appData.profile = {};
         }
+        if (!window.FarmModules.appData.profile.dashboardStats) {
+            window.FarmModules.appData.profile.dashboardStats = {};
+        }
+        Object.assign(window.FarmModules.appData.profile.dashboardStats, stats);
+    }
 
-        return stats;
-    },
+    // Save to localStorage as backup
+    localStorage.setItem('farm-dashboard-stats', JSON.stringify(stats));
+
+    return stats;
+},
 
     calculateStatsFromStorage(targetStats) {
         // Calculate from income-expenses module
@@ -947,14 +1111,22 @@ const DashboardModule = {
         console.log('✅ Dashboard module cleaned up');
     },
 
-    // Add this right before the final closing brace of DashboardModule
+  // Update your unload method to clean up listeners
 unload() {
     console.log('📦 Unloading Dashboard module...');
     
     // Clean up any intervals
-    if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-        this.refreshInterval = null;
+    if (this.realTimeInterval) {
+        clearInterval(this.realTimeInterval);
+        this.realTimeInterval = null;
+    }
+    
+    // Remove event listeners
+    if (this._eventListeners) {
+        this._eventListeners.forEach(({event, handler}) => {
+            window.removeEventListener(event, handler);
+        });
+        this._eventListeners = [];
     }
     
     // Reset state
@@ -963,7 +1135,7 @@ unload() {
     
     console.log('✅ Dashboard module unloaded');
 }
-
+    
 };
 
 // ==================== STYLES ====================
