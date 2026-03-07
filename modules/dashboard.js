@@ -13,7 +13,7 @@ const DashboardModule = {
     _eventListeners: [],
 
     // ==================== INITIALIZATION ====================
-   initialize() {
+initialize() {
     console.log('📊 Initializing Dashboard...');
     
     this.element = document.getElementById('content-area');
@@ -29,6 +29,9 @@ const DashboardModule = {
 
     // Initialize with empty state first
     this.initialized = true;
+
+    // Check immediately if data is already there
+    this.checkDataServiceReady();
     
     // Show loading state
     this.showLoadingState();
@@ -42,21 +45,17 @@ const DashboardModule = {
         this.startRealTimeUpdates();
     }, 100);
     
-    // ===== ADD THESE DATA LOADING LISTENERS =====
-    
-    // Listen for Data Service load event
+    // ===== LISTEN FOR DATA SERVICE EVENTS =====
     window.addEventListener('farm-data-loaded', () => {
         console.log('📡 Dashboard received farm-data-loaded event');
         this.loadAndDisplayStats();
     });
     
-    // Listen for Data Service update event
     window.addEventListener('farm-data-updated', () => {
         console.log('📡 Dashboard received farm-data-updated event');
         this.loadAndDisplayStats();
     });
     
-    // Listen for storage changes (in case other tabs update data)
     window.addEventListener('storage', (e) => {
         if (e.key && (e.key.includes('farm-') || e.key.includes('FarmData'))) {
             console.log('📡 Storage change detected:', e.key);
@@ -64,8 +63,9 @@ const DashboardModule = {
         }
     });
     
-    // Also check every second for the first 5 seconds for data
+    // ===== INCREASED TIMEOUT TO 10 SECONDS =====
     let attempts = 0;
+    const maxAttempts = 10; // Increased from 5 to 10
     const checkInterval = setInterval(() => {
         attempts++;
         
@@ -75,27 +75,58 @@ const DashboardModule = {
             this.loadAndDisplayStats();
             clearInterval(checkInterval);
         }
-        
         // Check if any of the module data is available
-        if (window.salesData?.length > 0 || window.expensesData?.length > 0) {
+        else if (window.FarmData && (
+            window.FarmData.sales?.length > 0 || 
+            window.FarmData.expenses?.length > 0 ||
+            window.FarmData.transactions?.length > 0
+        )) {
             console.log(`📊 Module data found after ${attempts}s, updating dashboard`);
             this.loadAndDisplayStats();
             clearInterval(checkInterval);
         }
+        // Also check localStorage directly as fallback
+        else {
+            try {
+                const transactions = localStorage.getItem('farm-transactions');
+                if (transactions && JSON.parse(transactions).length > 0) {
+                    console.log(`📊 localStorage data found after ${attempts}s`);
+                    this.loadAndDisplayStats();
+                    clearInterval(checkInterval);
+                }
+            } catch (e) {}
+        }
         
-        // Stop after 5 seconds
-        if (attempts >= 5) {
+        // Stop after 10 seconds
+        if (attempts >= maxAttempts) {
             console.log('⏱️ Data check timeout - showing whatever we have');
             this.loadAndDisplayStats();
             clearInterval(checkInterval);
         }
-    }, 1000);
+    }, 1000); // Check every second
     
-    // ===== EXISTING LISTENERS =====
+    // ===== IMMEDIATE REFRESH AFTER DATA SERVICE INIT =====
+    // Check if Data Service is already initialized
+    if (window.DataService && window.DataService.data) {
+        setTimeout(() => this.loadAndDisplayStats(), 500);
+    }
+    
     this.setupGlobalListeners();
     
     console.log('✅ Dashboard initialized with real-time updates and data loading');
     return true;
+},
+
+    checkDataServiceReady() {
+    if (window.DataService && window.DataService.data) {
+        const data = window.DataService.data;
+        if (data.transactions?.length > 0 || data.sales?.length > 0) {
+            console.log('✅ Data Service already has data');
+            this.loadAndDisplayStats();
+            return true;
+        }
+    }
+    return false;
 },
 
 // Add this helper method if you don't have it
