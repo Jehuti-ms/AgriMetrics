@@ -2271,34 +2271,38 @@ if (window.FarmModules) {
     });
     
     console.log('✅ Complete orders & customers edit fix loaded');
+
+    // ===== ADD THE UNLOAD METHOD HERE =====
+    OrdersModule.unload = function() {
+        console.log('📦 Unloading Orders module...');
+        
+        // Remove event listeners
+        if (this._clickHandler) {
+            document.removeEventListener('click', this._clickHandler);
+            this._clickHandler = null;
+        }
+        if (this._captureHandler) {
+            document.removeEventListener('click', this._captureHandler, true);
+            this._captureHandler = null;
+        }
+        
+        // Hide any open forms
+        if (typeof this.hideOrderForm === 'function') {
+            this.hideOrderForm();
+        }
+        if (typeof this.hideCustomerForm === 'function') {
+            this.hideCustomerForm();
+        }
+        
+        // Reset state
+        this.initialized = false;
+        this.element = null;
+        this._orderListenersAttached = false;
+        
+        console.log('✅ Orders module unloaded');
+    };
     
 })();
-
-// In orders.js, inside the OrdersModule object, add:
-unload() {
-    console.log('📦 Unloading Orders module...');
-    
-    // Remove event listeners
-    if (this._clickHandler) {
-        document.removeEventListener('click', this._clickHandler);
-        this._clickHandler = null;
-    }
-    if (this._captureHandler) {
-        document.removeEventListener('click', this._captureHandler, true);
-        this._captureHandler = null;
-    }
-    
-    // Hide any open forms
-    this.hideOrderForm();
-    this.hideCustomerForm();
-    
-    // Reset state
-    this.initialized = false;
-    this.element = null;
-    this._orderListenersAttached = false;
-    
-    console.log('✅ Orders module unloaded');
-},
 
 // At the very end of orders.js, after the module definition
 if (window.FarmModules) {
