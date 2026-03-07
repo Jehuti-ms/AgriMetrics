@@ -3630,7 +3630,7 @@ updateProductionFromSale(saleData) {
             }
         }
     }
-},
+}
     
     // ========== CRITICAL: COMMUNICATE WITH INCOME MODULE ==========
     
@@ -3721,7 +3721,7 @@ updateProductionFromSale(saleData) {
         isNew: isNewSale,
         incomeTransaction: incomeTransaction
     });
-},
+}
 
     updateProductionAfterSale(productionId, saleData) {
         const productionModule = window.FarmModules.Production;
@@ -3743,7 +3743,7 @@ updateProductionFromSale(saleData) {
                 product: saleData.product
             });
         }
-    },
+    }
 
     deleteSale() {
         const saleIdInput = document.getElementById('sale-id');
@@ -3755,7 +3755,7 @@ updateProductionFromSale(saleData) {
         if (confirm('Are you sure you want to delete this sale?')) {
             this.deleteSaleRecord(saleId);
         }
-    },
+    }
 
     deleteSaleRecord(saleId) {
         console.log('🗑️ Deleting sale:', saleId);
@@ -3792,7 +3792,7 @@ updateProductionFromSale(saleData) {
         
         // Show notification
         this.showNotification('Sale deleted successfully!', 'success');
-    },
+    }
     
     editSale(saleId) {
         console.log('✏️ Editing sale:', saleId);
@@ -3893,7 +3893,7 @@ updateProductionFromSale(saleData) {
         if (modal) {
             modal.classList.remove('hidden');
         }
-    },
+    }
 
     addSale(saleData) {
         if (!saleData.id) {
