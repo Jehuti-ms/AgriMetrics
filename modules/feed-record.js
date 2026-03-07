@@ -650,7 +650,31 @@ const FeedRecordModule = {
         localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
         localStorage.setItem('farm-feed-inventory', JSON.stringify(this.feedInventory));
         localStorage.setItem('farm-birds-stock', this.birdsStock.toString());
+    },
+
+    // Add this right before the final closing brace of FeedModule
+unload() {
+    console.log('📦 Unloading Feed module...');
+    
+    // Clean up
+    if (this.broadcaster) {
+        this.broadcaster = null;
     }
+    
+    // Hide any open modals
+    const modal = document.getElementById('feed-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    this.currentEditingId = null;
+    
+    console.log('✅ Feed module unloaded');
+}
+
 };
 
 if (window.FarmModules) {
