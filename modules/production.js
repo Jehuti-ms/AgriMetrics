@@ -1841,7 +1841,7 @@ const ProductionModule = {
         } else {
             alert(message); // Fallback
         }
-    }
+    },
 
     // Add this right before the final closing brace of ProductionModule
 unload() {
