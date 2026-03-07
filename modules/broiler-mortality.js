@@ -5,8 +5,10 @@ const BroilerMortalityModule = {
     name: 'broiler-mortality',
     initialized: false,
     element: null,
-    mortalityData: [],
+    mortalityData: [],  
+    records: [],        // ← Keep for backward compatibility
     currentRecordId: null,
+    broadcaster: null,
 
     initialize() {
         console.log('😔 Initializing Broiler Health & Mortality...');
@@ -38,18 +40,18 @@ const BroilerMortalityModule = {
         // You can add theme-specific logic here if needed
     },
 
- loadData() {
-    // Clear existing data
-    this.mortalityData = [];
+loadData() {
+    // Initialize if undefined
+    if (!this.mortalityData) {
+        this.mortalityData = [];
+    }
     
-    // ===== TRY TO LOAD FROM FARM DATA FIRST =====
+    // Try FarmData first
     if (window.FarmData && window.FarmData.mortality && window.FarmData.mortality.length > 0) {
         console.log(`📊 Using ${window.FarmData.mortality.length} mortality records from FarmData`);
         this.mortalityData = window.FarmData.mortality;
-    }
-    
-    // ===== IF NO FARM DATA, TRY LOCALSTORAGE =====
-    if (this.mortalityData.length === 0) {
+    } else {
+        // Try localStorage
         const savedData = localStorage.getItem('farm-mortality-records');
         if (savedData) {
             try {
@@ -59,21 +61,14 @@ const BroilerMortalityModule = {
                 console.error('Error parsing mortality records:', e);
                 this.mortalityData = [];
             }
+        } else {
+            // Use demo data
+            this.mortalityData = this.getDemoData();
+            console.log('📊 Using demo mortality data');
         }
     }
     
-    // ===== IF STILL NO DATA, USE DEMO DATA =====
-    if (this.mortalityData.length === 0) {
-        this.mortalityData = this.getDemoData();
-        console.log('📊 Using demo mortality data');
-    }
-    
     console.log('✅ Final mortality data count:', this.mortalityData.length);
-    
-    // Update stats after loading
-    setTimeout(() => {
-        this.updateStats();
-    }, 100);
 },
     
     saveData() {
@@ -696,16 +691,22 @@ const BroilerMortalityModule = {
     this.setupEventListeners();
 }, 
     
-    updateStats() {
-    // Use this.records instead of this.mortalityData
-    const totalLosses = this.records.reduce((sum, record) => sum + (record.quantity || 0), 0);
-    const currentStock = this.getCurrentStock();
+   updateStats() {
+    // Make sure mortalityData exists
+    if (!this.mortalityData) {
+        console.warn('⚠️ mortalityData is undefined, initializing empty array');
+        this.mortalityData = [];
+    }
+    
+    // Use optional chaining and default values
+    const totalLosses = this.mortalityData.reduce((sum, record) => sum + (record.quantity || 0), 0);
+    const currentStock = this.getCurrentStock() || 0;
     const mortalityRate = currentStock > 0 ? ((totalLosses / currentStock) * 100).toFixed(2) : '0.00';
 
     this.updateElement('total-losses', totalLosses.toLocaleString());
     this.updateElement('mortality-rate', mortalityRate + '%');
     this.updateElement('current-birds', currentStock.toLocaleString());
-    this.updateElement('records-count', this.records.length.toLocaleString());
+    this.updateElement('records-count', this.mortalityData.length.toLocaleString());
 
     // Update mortality rate color based on threshold
     const mortalityRateElement = document.getElementById('mortality-rate');
@@ -719,7 +720,7 @@ const BroilerMortalityModule = {
         }
     }
 },
-
+    
 getCurrentStock() {
     // ===== METHOD 1: Try FarmData first (central data store) =====
     if (window.FarmData) {
