@@ -327,20 +327,101 @@ setupGlobalListeners() {
     },
 
     handleRefreshStats() {
-        if (!this.initialized) return;
-        
+    if (!this.initialized) return;
+    
+    // Show syncing state
+    const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+    if (refreshBtn) {
+        refreshBtn.innerHTML = '🔄 Syncing...';
+        refreshBtn.disabled = true;
+    }
+    
+    // First, sync all modules with Firebase
+    this.syncAllModulesWithFirebase().then(() => {
+        // Then refresh the display
         this.loadAndDisplayStats();
-        this.showNotification('Stats refreshed!', 'success');
         
-        // Add visual feedback
-        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+        // Reset button
         if (refreshBtn) {
+            refreshBtn.innerHTML = '🔄 Refresh Now';
+            refreshBtn.disabled = false;
             refreshBtn.classList.add('refreshing-animation');
             setTimeout(() => {
                 refreshBtn.classList.remove('refreshing-animation');
             }, 1000);
         }
-    },
+        
+        this.showNotification('Dashboard synced with cloud!', 'success');
+    });
+},
+
+    async syncAllModulesWithFirebase() {
+    console.log('☁️ Syncing all modules with Firebase...');
+    
+    const syncPromises = [];
+    
+    // Income-Expenses module
+    if (window.IncomeExpensesModule) {
+        if (typeof window.IncomeExpensesModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.IncomeExpensesModule.loadFromFirebase());
+        } else if (typeof window.IncomeExpensesModule.syncFromCloud === 'function') {
+            syncPromises.push(window.IncomeExpensesModule.syncFromCloud());
+        }
+    }
+    
+    // Sales module
+    if (window.SalesRecordModule) {
+        if (typeof window.SalesRecordModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.SalesRecordModule.loadFromFirebase());
+        }
+    }
+    
+    // Orders module
+    if (window.OrdersModule) {
+        if (typeof window.OrdersModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.OrdersModule.loadFromFirebase());
+        }
+    }
+    
+    // Production module
+    if (window.ProductionModule) {
+        if (typeof window.ProductionModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.ProductionModule.loadFromFirebase());
+        }
+    }
+    
+    // Inventory module
+    if (window.InventoryModule) {
+        if (typeof window.InventoryModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.InventoryModule.loadFromFirebase());
+        }
+    }
+    
+    // Feed module
+    if (window.FeedModule) {
+        if (typeof window.FeedModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.FeedModule.loadFromFirebase());
+        }
+    }
+    
+    // Broiler Mortality module
+    if (window.BroilerMortalityModule) {
+        if (typeof window.BroilerMortalityModule.loadFromFirebase === 'function') {
+            syncPromises.push(window.BroilerMortalityModule.loadFromFirebase());
+        }
+    }
+    
+    // Wait for all modules to sync
+    await Promise.all(syncPromises);
+    
+    console.log(`✅ Synced ${syncPromises.length} modules with Firebase`);
+    
+    // Update last sync time
+    this.lastSyncTime = new Date().toISOString();
+    localStorage.setItem('dashboard-last-sync', this.lastSyncTime);
+    
+    return syncPromises.length;
+},
 
     // ==================== DASHBOARD RENDERING ====================
     renderDashboard() {
@@ -499,16 +580,16 @@ setupGlobalListeners() {
                     </div>
                 </div>
 
-                <!-- Refresh Button -->
-                <div class="refresh-section">
-                    <button id="refresh-stats-btn" 
-                            data-action="refresh-stats"
-                            class="${this.autoRefresh ? 'refreshing' : ''}">
-                        🔄 Refresh Now
-                    </button>
-                    ${this.autoRefresh ? '<div class="auto-refresh-status">Auto-refresh enabled (every 30s)</div>' : ''}
-                    ${this.lastUpdateTime ? `<div class="last-updated">Last updated: ${this.formatTimeAgo(this.lastUpdateTime)}</div>` : ''}
-                </div>
+                <!-- In renderDashboard(), update the refresh section -->
+            <div class="refresh-section">
+                <button id="refresh-stats-btn" 
+                        data-action="refresh-stats"
+                        class="${this.autoRefresh ? 'refreshing' : ''}">
+                    🔄 Refresh & Sync
+                </button>
+                ${this.autoRefresh ? '<div class="auto-refresh-status">Auto-refresh enabled (every 30s)</div>' : ''}
+                ${this.lastUpdateTime ? `<div class="last-updated">Last updated: ${this.formatTimeAgo(this.lastUpdateTime)}</div>` : ''}
+                <div class="last-sync-time"></div>
             </div>
         `;
 
@@ -631,77 +712,118 @@ setupGlobalListeners() {
     const activities = [];
     const now = new Date();
     
-    // Define modules to check
-    const modules = [
-        { name: 'income-expenses', keys: ['farm-transactions', 'farm-income-expenses-data', 'income-expenses-data', 'farm-income-expenses'] },
-        { name: 'inventory-check', keys: ['farm-inventory', 'farm-inventory-data', 'inventory-data'] },
-        { name: 'feed-record', keys: ['farm-feed-records', 'farm-feed-data', 'feed-data'] },
-        { name: 'production', keys: ['farm-production', 'farm-production-data', 'production-data'] },
-        { name: 'sales-record', keys: ['farm-sales', 'farm-sales-data', 'sales-data'] },
-        { name: 'orders', keys: ['farm-orders', 'farm-orders-data', 'orders-data'] },
-        { name: 'broiler-mortality', keys: ['farm-mortality-records', 'farm-mortality-data', 'mortality-data'] }
-    ];
-    
-    modules.forEach(module => {
-        let moduleData = null;
-        
-        // Try each possible key for this module
-        for (const key of module.keys) {
-            try {
-                const data = localStorage.getItem(key);
-                if (data) {
-                    moduleData = JSON.parse(data);
-                    console.log(`📦 Found data for ${module.name} in ${key}:`, moduleData.length || 'object');
-                    break;
-                }
-            } catch (e) {
-                continue;
-            }
-        }
-        
-        if (moduleData) {
-            // Handle arrays
-            if (Array.isArray(moduleData)) {
-                // Get recent items (last 5)
-                const recentItems = moduleData.slice(-5).reverse();
-                
-                recentItems.forEach((item, index) => {
-                    if (item.date || item.createdAt || item.timestamp) {
-                        const timestamp = item.date || item.createdAt || item.timestamp || now.toISOString();
-                        
-                        activities.push({
-                            id: item.id || `act-${module.name}-${Date.now()}-${index}`,
-                            timestamp: timestamp,
-                            icon: this.getModuleIcon(module.name),
-                            title: this.getActivityTitle(module.name, item),
-                            description: this.getActivityDescription(module.name, item),
-                            module: module.name,
-                            data: item
-                        });
-                    }
+    // Get transactions from IncomeExpensesModule (Firebase data)
+    if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+        const transactions = window.IncomeExpensesModule.transactions;
+        transactions.slice(-5).reverse().forEach((t, index) => {
+            if (t.date || t.createdAt) {
+                activities.push({
+                    id: t.id || `act-ie-${Date.now()}-${index}`,
+                    timestamp: t.date || t.createdAt || now.toISOString(),
+                    icon: t.type === 'income' ? '💰' : '💸',
+                    title: t.type === 'income' ? 'Income Recorded' : 'Expense Recorded',
+                    description: `${t.description || 'Transaction'} - $${t.amount || 0}`,
+                    module: 'income-expenses',
+                    data: t
                 });
             }
-            // Handle objects (like profile data)
-            else if (typeof moduleData === 'object') {
-                // Try to extract recent items from the object
-                if (moduleData.recentActivities && Array.isArray(moduleData.recentActivities)) {
-                    moduleData.recentActivities.slice(0, 5).forEach(item => {
-                        activities.push({
-                            id: item.id || `act-${module.name}-${Date.now()}`,
-                            timestamp: item.timestamp || now.toISOString(),
-                            icon: item.icon || this.getModuleIcon(module.name),
-                            title: item.title || 'Activity',
-                            description: item.description || '',
-                            module: module.name,
-                            data: item
-                        });
-                    });
-                }
-            }
-        }
-    });
+        });
+    }
+    
+    // Get sales from SalesRecordModule (Firebase data)
+    if (window.SalesRecordModule && window.SalesRecordModule.sales) {
+        const sales = window.SalesRecordModule.sales;
+        sales.slice(-5).reverse().forEach((s, index) => {
+            activities.push({
+                id: s.id || `act-sales-${Date.now()}-${index}`,
+                timestamp: s.date || s.createdAt || now.toISOString(),
+                icon: '🛒',
+                title: 'Sale Completed',
+                description: `${s.customerName || 'Customer'} - $${s.totalAmount || 0}`,
+                module: 'sales-record',
+                data: s
+            });
+        });
+    }
+    
+    // Get production from ProductionModule (Firebase data)
+    if (window.ProductionModule && window.ProductionModule.productionRecords) {
+        const production = window.ProductionModule.productionRecords;
+        production.slice(-5).reverse().forEach((p, index) => {
+            activities.push({
+                id: p.id || `act-prod-${Date.now()}-${index}`,
+                timestamp: p.date || p.createdAt || now.toISOString(),
+                icon: '🚜',
+                title: 'Production Recorded',
+                description: `${p.product || 'Product'} - ${p.quantity || 0} units`,
+                module: 'production',
+                data: p
+            });
+        });
+    }
+    
+    // Get orders from OrdersModule (Firebase data)
+    if (window.OrdersModule && window.OrdersModule.orders) {
+        const orders = window.OrdersModule.orders;
+        orders.slice(-5).reverse().forEach((o, index) => {
+            activities.push({
+                id: o.id || `act-order-${Date.now()}-${index}`,
+                timestamp: o.date || o.createdAt || now.toISOString(),
+                icon: o.status === 'completed' ? '✅' : '📋',
+                title: o.status === 'completed' ? 'Order Completed' : 'New Order',
+                description: `Order #${o.id || ''} - ${o.customerName || 'Customer'} - $${o.total || 0}`,
+                module: 'orders',
+                data: o
+            });
+        });
+    }
+    
+    // Get mortality records (Firebase data)
+    if (window.BroilerMortalityModule && window.BroilerMortalityModule.records) {
+        const mortality = window.BroilerMortalityModule.records;
+        mortality.slice(-5).reverse().forEach((m, index) => {
+            activities.push({
+                id: m.id || `act-mort-${Date.now()}-${index}`,
+                timestamp: m.date || m.createdAt || now.toISOString(),
+                icon: '😔',
+                title: 'Mortality Recorded',
+                description: `${m.quantity || 0} birds - ${m.cause || 'Unknown cause'}`,
+                module: 'broiler-mortality',
+                data: m
+            });
+        });
+    }
+    
+    // Sort by timestamp (newest first)
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     
     return activities;
+},
+
+    async syncWithFirebase() {
+    console.log('🔄 Syncing dashboard with Firebase...');
+    
+    // Refresh all modules that have Firebase data
+    if (window.IncomeExpensesModule && window.IncomeExpensesModule.loadFromFirebase) {
+        await window.IncomeExpensesModule.loadFromFirebase();
+    }
+    
+    if (window.SalesRecordModule && window.SalesRecordModule.loadFromFirebase) {
+        await window.SalesRecordModule.loadFromFirebase();
+    }
+    
+    if (window.OrdersModule && window.OrdersModule.loadFromFirebase) {
+        await window.OrdersModule.loadFromFirebase();
+    }
+    
+    if (window.ProductionModule && window.ProductionModule.loadFromFirebase) {
+        await window.ProductionModule.loadFromFirebase();
+    }
+    
+    // Reload dashboard stats
+    this.loadAndDisplayStats();
+    
+    console.log('✅ Dashboard synced with Firebase');
 },
 
     function showTransactions() {
@@ -893,18 +1015,32 @@ createActivitiesFromTransactions();
     },
 
     // ==================== STATS MANAGEMENT ====================
-    loadAndDisplayStats() {
-        if (!this.initialized) return;
-        
-        const profileStats = this.getProfileStats();
-        this.updateDashboardDisplay(profileStats);
-        this.updateRecentActivity();
-        
-        this.lastUpdateTime = new Date().toISOString();
-        this.updateLastUpdatedTime();
-    },
+   loadAndDisplayStats() {
+    if (!this.initialized) return;
+    
+    // Load stats from modules (which now have fresh Firebase data)
+    const stats = this.getProfileStats();
+    this.updateDashboardDisplay(stats);
+    this.updateRecentActivity();
+    
+    this.lastUpdateTime = new Date().toISOString();
+    this.updateLastUpdatedTime();
+    
+    // Also show last sync time if available
+    this.updateLastSyncTime();
+},
 
-   getProfileStats() {
+updateLastSyncTime() {
+    const lastSync = localStorage.getItem('dashboard-last-sync');
+    if (!lastSync) return;
+    
+    const lastSyncEl = this.element?.querySelector('.last-sync-time');
+    if (lastSyncEl) {
+        lastSyncEl.textContent = `Last cloud sync: ${this.formatTimeAgo(lastSync)}`;
+    }
+},
+
+  getProfileStats() {
     // Default stats
     let stats = {
         totalIncome: 0,
@@ -920,9 +1056,9 @@ createActivitiesFromTransactions();
         completedOrders: 0
     };
 
-    // ===== GET REAL DATA FROM MODULES =====
+    // ===== LOAD FROM FIREBASE FIRST =====
     
-    // 1. Get from Income-Expenses module
+    // 1. Get from Income-Expenses module (which loads from Firebase)
     if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
         const transactions = window.IncomeExpensesModule.transactions;
         stats.totalIncome = transactions
@@ -933,7 +1069,7 @@ createActivitiesFromTransactions();
             .reduce((sum, t) => sum + (t.amount || 0), 0);
     }
 
-    // 2. Get from Sales module
+    // 2. Get from Sales module (loads from Firebase)
     if (window.SalesRecordModule && window.SalesRecordModule.sales) {
         const sales = window.SalesRecordModule.sales;
         stats.totalRevenue = sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
@@ -950,12 +1086,6 @@ createActivitiesFromTransactions();
     // 3. Get from Inventory module
     if (window.InventoryModule && window.InventoryModule.inventory) {
         stats.totalInventoryItems = window.InventoryModule.inventory.length;
-    } else {
-        // Try localStorage
-        try {
-            const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
-            stats.totalInventoryItems = inventory.length;
-        } catch (e) {}
     }
 
     // 4. Get from Broiler Mortality module
@@ -965,16 +1095,6 @@ createActivitiesFromTransactions();
         } else if (window.BroilerMortalityModule.currentStock) {
             stats.totalBirds = window.BroilerMortalityModule.currentStock;
         }
-    }
-    
-    // Try localStorage as fallback
-    if (stats.totalBirds === 0) {
-        try {
-            const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
-            const initialStock = parseInt(localStorage.getItem('farm-initial-stock') || '0');
-            const totalMortality = mortalityRecords.reduce((sum, r) => sum + (r.quantity || 0), 0);
-            stats.totalBirds = Math.max(0, initialStock - totalMortality);
-        } catch (e) {}
     }
 
     // 5. Get from Orders module
@@ -991,20 +1111,6 @@ createActivitiesFromTransactions();
 
     // 7. Calculate net profit
     stats.netProfit = (stats.totalRevenue || stats.totalIncome) - stats.totalExpenses;
-
-    // Save to shared app data for other modules
-    if (window.FarmModules && window.FarmModules.appData) {
-        if (!window.FarmModules.appData.profile) {
-            window.FarmModules.appData.profile = {};
-        }
-        if (!window.FarmModules.appData.profile.dashboardStats) {
-            window.FarmModules.appData.profile.dashboardStats = {};
-        }
-        Object.assign(window.FarmModules.appData.profile.dashboardStats, stats);
-    }
-
-    // Save to localStorage as backup
-    localStorage.setItem('farm-dashboard-stats', JSON.stringify(stats));
 
     return stats;
 },
