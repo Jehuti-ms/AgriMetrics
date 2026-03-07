@@ -684,24 +684,78 @@ const BroilerMortalityModule = {
         }
     },
 
-    getCurrentStock() {
-    // Try multiple sources to get the actual bird count
-    
-    // Method 1: Get from farm-birds-stock (your current storage)
-    const savedStock = localStorage.getItem('farm-birds-stock');
-    if (savedStock) {
-        return parseInt(savedStock);
+getCurrentStock() {
+    // ===== METHOD 1: Try FarmData first (central data store) =====
+    if (window.FarmData) {
+        // Try from inventory in FarmData
+        if (window.FarmData.inventory && Array.isArray(window.FarmData.inventory)) {
+            const birdItem = window.FarmData.inventory.find(item => 
+                item.name?.toLowerCase().includes('bird') || 
+                item.name?.toLowerCase().includes('broiler') ||
+                item.name?.toLowerCase().includes('chicken') ||
+                item.category?.toLowerCase().includes('poultry')
+            );
+            
+            if (birdItem && birdItem.quantity) {
+                const stock = parseInt(birdItem.quantity) || 0;
+                if (stock > 0) {
+                    console.log(`🐔 Got bird count from FarmData inventory: ${stock}`);
+                    return stock;
+                }
+            }
+        }
+        
+        // Try from production in FarmData
+        if (window.FarmData.production && Array.isArray(window.FarmData.production)) {
+            const birdProduction = window.FarmData.production.filter(p => 
+                p.product?.toLowerCase().includes('bird') || 
+                p.product?.toLowerCase().includes('broiler') ||
+                p.product?.toLowerCase().includes('chicken')
+            );
+            
+            if (birdProduction.length > 0) {
+                const total = birdProduction.reduce((sum, p) => sum + (p.quantity || 0), 0);
+                if (total > 0) {
+                    console.log(`🐔 Got bird count from FarmData production: ${total}`);
+                    return total;
+                }
+            }
+        }
+        
+        // Try from mortality in FarmData (if you store it)
+        if (window.FarmData.mortality && window.FarmData.mortality.initialStock) {
+            const initialStock = window.FarmData.mortality.initialStock;
+            const totalMortality = (window.FarmData.mortality.records || [])
+                .reduce((sum, record) => sum + (record.quantity || 0), 0);
+            const calculated = Math.max(0, initialStock - totalMortality);
+            if (calculated > 0) {
+                console.log(`🐔 Got bird count from FarmData mortality: ${calculated}`);
+                return calculated;
+            }
+        }
     }
     
-    // Method 2: Calculate from initial stock minus mortality
+    // ===== METHOD 2: Get from farm-birds-stock =====
+    const savedStock = localStorage.getItem('farm-birds-stock');
+    if (savedStock) {
+        const stock = parseInt(savedStock);
+        console.log(`🐔 Got bird count from farm-birds-stock: ${stock}`);
+        return stock;
+    }
+    
+    // ===== METHOD 3: Calculate from initial stock minus mortality =====
     const initialStock = parseInt(localStorage.getItem('farm-initial-stock') || '0');
     if (initialStock > 0) {
         const mortalityRecords = JSON.parse(localStorage.getItem('farm-mortality-records') || '[]');
         const totalMortality = mortalityRecords.reduce((sum, record) => sum + (record.quantity || 0), 0);
-        return Math.max(0, initialStock - totalMortality);
+        const calculated = Math.max(0, initialStock - totalMortality);
+        if (calculated > 0) {
+            console.log(`🐔 Calculated from initial stock: ${calculated}`);
+            return calculated;
+        }
     }
     
-    // Method 3: Try from production records
+    // ===== METHOD 4: Try from production records =====
     const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
     const birdProduction = production.filter(p => 
         p.product?.toLowerCase().includes('bird') || 
@@ -709,10 +763,14 @@ const BroilerMortalityModule = {
         p.product?.toLowerCase().includes('chicken')
     );
     if (birdProduction.length > 0) {
-        return birdProduction.reduce((sum, p) => sum + (p.quantity || 0), 0);
+        const total = birdProduction.reduce((sum, p) => sum + (p.quantity || 0), 0);
+        if (total > 0) {
+            console.log(`🐔 Got from production records: ${total}`);
+            return total;
+        }
     }
     
-    // Method 4: Try from inventory
+    // ===== METHOD 5: Try from inventory =====
     const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
     const birdInventory = inventory.find(item => 
         item.name?.toLowerCase().includes('bird') || 
@@ -720,18 +778,22 @@ const BroilerMortalityModule = {
         item.category?.toLowerCase().includes('poultry')
     );
     if (birdInventory) {
-        return birdInventory.quantity || 0;
+        const stock = birdInventory.quantity || 0;
+        if (stock > 0) {
+            console.log(`🐔 Got from inventory: ${stock}`);
+            return stock;
+        }
     }
     
-    // Method 5: Get from mortality module's own records
+    // ===== METHOD 6: Use mortality module's own records =====
     if (this.records && this.records.length > 0) {
-        const totalMortality = this.records.reduce((sum, record) => sum + (record.quantity || 0), 0);
         // If we have mortality records but no initial stock, we can't calculate
-        // Return 0 instead of guessing
+        console.log('⚠️ Have mortality records but no initial stock');
         return 0;
     }
     
-    // If all else fails, return 0 (NOT 1000) so user knows data is missing
+    // ===== If all else fails, return 0 =====
+    console.log('ℹ️ No bird count found, returning 0');
     return 0;
 },
 
