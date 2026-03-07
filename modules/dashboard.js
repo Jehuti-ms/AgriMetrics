@@ -976,81 +976,35 @@ updateLastSyncTime() {
     }
 },
 
-  getProfileStats() {
-    // Default stats
-    let stats = {
-        totalIncome: 0,
-        totalExpenses: 0,
-        netProfit: 0,
-        totalInventoryItems: 0,
-        totalBirds: 0,
-        totalOrders: 0,
-        totalRevenue: 0,
-        totalCustomers: 0,
-        totalProducts: 0,
-        monthlyRevenue: 0,
-        completedOrders: 0
-    };
-
-    // ===== LOAD FROM FIREBASE FIRST =====
-    
-    // 1. Get from Income-Expenses module (which loads from Firebase)
-    if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
-        const transactions = window.IncomeExpensesModule.transactions;
-        stats.totalIncome = transactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + (t.amount || 0), 0);
-        stats.totalExpenses = transactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + (t.amount || 0), 0);
-    }
-
-    // 2. Get from Sales module (loads from Firebase)
-    if (window.SalesRecordModule && window.SalesRecordModule.sales) {
-        const sales = window.SalesRecordModule.sales;
-        stats.totalRevenue = sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
-        stats.totalProducts = sales.length;
+ getProfileStats() {
+    // Use FarmData if available
+    if (window.FarmData) {
+        const data = window.FarmData;
         
-        // Calculate monthly revenue (last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        stats.monthlyRevenue = sales
-            .filter(s => new Date(s.date || s.createdAt) > thirtyDaysAgo)
-            .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+        // Calculate from transactions
+        const income = data.transactions.filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        const expenses = data.transactions.filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + (t.amount || 0), 0);
+        
+        return {
+            totalRevenue: income,
+            totalExpenses: expenses,
+            netProfit: income - expenses,
+            totalInventoryItems: data.inventory.length,
+            totalBirds: this.getBirdCount(data),
+            totalOrders: 0, // Add when orders module is ready
+            totalCustomers: 0,
+            totalProducts: data.sales.length,
+            monthlyRevenue: this.getMonthlyRevenue(data.sales),
+            completedOrders: 0
+        };
     }
-
-    // 3. Get from Inventory module
-    if (window.InventoryModule && window.InventoryModule.inventory) {
-        stats.totalInventoryItems = window.InventoryModule.inventory.length;
-    }
-
-    // 4. Get from Broiler Mortality module
-    if (window.BroilerMortalityModule) {
-        if (typeof window.BroilerMortalityModule.getCurrentStock === 'function') {
-            stats.totalBirds = window.BroilerMortalityModule.getCurrentStock();
-        } else if (window.BroilerMortalityModule.currentStock) {
-            stats.totalBirds = window.BroilerMortalityModule.currentStock;
-        }
-    }
-
-    // 5. Get from Orders module
-    if (window.OrdersModule && window.OrdersModule.orders) {
-        stats.totalOrders = window.OrdersModule.orders.length;
-        stats.completedOrders = window.OrdersModule.orders
-            .filter(o => o.status === 'completed').length;
-    }
-
-    // 6. Get from Customers (via Orders module)
-    if (window.OrdersModule && window.OrdersModule.customers) {
-        stats.totalCustomers = window.OrdersModule.customers.length;
-    }
-
-    // 7. Calculate net profit
-    stats.netProfit = (stats.totalRevenue || stats.totalIncome) - stats.totalExpenses;
-
-    return stats;
+    
+    // Fallback to old method
+    return this.calculateStatsFromLocalStorage();
 },
-
+    
     calculateStatsFromStorage(targetStats) {
         // Calculate from income-expenses module
         try {
