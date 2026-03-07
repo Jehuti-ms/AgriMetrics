@@ -38,17 +38,27 @@ const BroilerMortalityModule = {
         // You can add theme-specific logic here if needed
     },
 
-    loadData() {
-        const savedData = localStorage.getItem('farm-mortality-data');
-        if (savedData) {
-            this.mortalityData = JSON.parse(savedData);
-        } else {
-            this.mortalityData = this.getDemoData();
-            this.saveData();
+   loadData() {
+    const savedData = localStorage.getItem('farm-mortality-records');
+    if (savedData) {
+        try {
+            this.records = JSON.parse(savedData);
+        } catch (e) {
+            this.records = [];
         }
-        console.log('📊 Loaded mortality data:', this.mortalityData.length, 'records');
-    },
-
+    } else {
+        this.records = [];
+    }
+    
+    // ===== ALSO CHECK FARM DATA =====
+    if (window.FarmData && window.FarmData.mortality && window.FarmData.mortality.length > 0) {
+        console.log(`📊 Using ${window.FarmData.mortality.length} mortality records from FarmData`);
+        this.records = window.FarmData.mortality;
+    }
+    
+    console.log('📊 Loaded mortality data:', this.records.length, 'records');
+},
+    
     saveData() {
         localStorage.setItem('farm-mortality-data', JSON.stringify(this.mortalityData));
     },
