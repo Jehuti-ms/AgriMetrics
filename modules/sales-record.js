@@ -3254,6 +3254,7 @@ const SalesRecordModule = {
 },
 
 // ===== NEW METHOD: Update inventory from sale =====
+// ===== UPDATED: Update inventory from sale with Firebase =====
 updateInventoryFromSale(saleData) {
     console.log('📦 Updating inventory from sale:', saleData);
     
@@ -3264,9 +3265,8 @@ updateInventoryFromSale(saleData) {
     const soldQty = saleData.quantity || saleData.animalCount || 0;
     if (soldQty <= 0) return;
     
-    // Try to update InventoryModule
+    // ===== UPDATE INVENTORY MODULE =====
     if (window.InventoryModule) {
-        // Make sure inventory exists
         if (!window.InventoryModule.inventory) {
             window.InventoryModule.inventory = [];
         }
@@ -3284,27 +3284,16 @@ updateInventoryFromSale(saleData) {
             const oldQty = inventoryItem.quantity || 0;
             inventoryItem.quantity = Math.max(0, oldQty - soldQty);
             
-            // Save inventory
+            // Save inventory module
             if (typeof window.InventoryModule.saveData === 'function') {
                 window.InventoryModule.saveData();
             }
             
-            console.log(`✅ Inventory updated: ${inventoryItem.name} from ${oldQty} to ${inventoryItem.quantity}`);
-            
-            // Broadcast inventory update
-            if (window.DataBroadcaster) {
-                window.DataBroadcaster.emit('inventory-updated', {
-                    item: inventoryItem,
-                    soldQty: soldQty,
-                    saleId: saleData.id
-                });
-            }
-        } else {
-            console.log('ℹ️ No matching inventory item found for:', saleData.product);
+            console.log(`✅ InventoryModule updated: ${inventoryItem.name} from ${oldQty} to ${inventoryItem.quantity}`);
         }
     }
     
-    // Also update FarmData if available
+    // ===== UPDATE FARM DATA =====
     if (window.FarmData && window.FarmData.inventory) {
         const productLower = saleData.product.toLowerCase();
         const farmDataItem = window.FarmData.inventory.find(item => 
@@ -3318,31 +3307,246 @@ updateInventoryFromSale(saleData) {
         }
     }
     
-    // Also update localStorage directly as fallback
+    // ===== UPDATE LOCALSTORAGE =====
     this.updateInventoryLocalStorage(saleData.product, soldQty);
+    
+    // ===== 🔥 NEW: UPDATE FIREBASE =====
+    this.updateInventoryFirebase(saleData.product, soldQty);
 },
 
-// ===== NEW METHOD: Update localStorage inventory =====
+// ===== NEW: Update Firebase inventory =====
+async updateInventoryFirebase(product, soldQty) {
+    console.log('☁️ Updating Firebase inventory...');
+    
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            console.log('⚠️ No user logged in, skipping Firebase update');
+            return;
+        }
+        
+        // Get current inventory from Firebase
+        const inventoryRef = db.collection('inventory').doc(user.uid);
+        const inventoryDoc = await inventoryRef.get();
+        
+        if (inventoryDoc.exists) {
+            const data = inventoryDoc.data();
+            let inventory = data.items || data.inventory || [];
+            
+            // Find matching item
+            const productLower = product.toLowerCase();
+            let updated = false;
+            
+            inventory = inventory.map(item => {
+                if (item.name?.toLowerCase().includes(productLower) ||
+                    item.category?.toLowerCase().includes(productLower)) {
+                    const oldQty = item.quantity || 0;
+                    item.quantity = Math.max(0, oldQty - soldQty);
+                    updated = true;
+                    console.log(`✅ Firebase inventory: ${item.name} from ${oldQty} to ${item.quantity}`);
+                }
+                return item;
+            });
+            
+            if (updated) {
+                // Save back to Firebase
+                await inventoryRef.set({
+                    items: inventory,
+                    lastUpdated: new Date().toISOString(),
+                    userId: user.uid
+                }, { merge: true });
+                
+                console.log('✅ Firebase inventory updated successfully');
+                
+                // Also update any sales records in Firebase
+                await this.updateSalesFirebase(product, soldQty);
+            } else {
+                console.log('ℹ️ No matching inventory item found in Firebase');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error updating Firebase inventory:', error);
+    }
+},
+
+// ===== NEW: Update sales records in Firebase =====
+async updateSalesFirebase(product, soldQty) {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        
+        const today = new Date();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+        const period = `${month}-${year}`;
+        
+        // You might want to update a sales summary in Firebase
+        const salesSummaryRef = db.collection('salesSummary').doc(user.uid).collection('months').doc(period);
+        
+        await salesSummaryRef.set({
+            lastSaleProduct: product,
+            lastSaleQuantity: soldQty,
+            lastSaleDate: today.toISOString(),
+            updatedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log('✅ Sales summary updated in Firebase');
+        
+    } catch (error) {
+        console.error('❌ Error updating sales summary:', error);
+    }
+},
+
+// ===== UPDATE: Production with Firebase =====
+updateProductionFromSale(saleData) {
+    console.log('🚜 Updating production from sale:', saleData);
+    
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    
+    if (!meatProducts.includes(saleData.product)) {
+        console.log('ℹ️ Not a meat product, skipping production update');
+        return;
+    }
+    
+    const soldQty = saleData.animalCount || saleData.quantity || 0;
+    if (soldQty <= 0) return;
+    
+    // Update ProductionModule
+    if (window.ProductionModule) {
+        if (!window.ProductionModule.productionRecords) {
+            window.ProductionModule.productionRecords = [];
+        }
+        
+        const productRecords = window.ProductionModule.productionRecords
+            .filter(r => r.product === saleData.product && !r.fullySold)
+            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        
+        let remainingToSell = soldQty;
+        
+        for (const record of productRecords) {
+            if (remainingToSell <= 0) break;
+            
+            const available = record.quantity || 0;
+            const soldSoFar = record.sold || 0;
+            const canSell = available - soldSoFar;
+            
+            if (canSell > 0) {
+                const sellNow = Math.min(canSell, remainingToSell);
+                record.sold = (record.sold || 0) + sellNow;
+                remainingToSell -= sellNow;
+                
+                if (record.sold >= available) {
+                    record.fullySold = true;
+                }
+            }
+        }
+        
+        if (typeof window.ProductionModule.saveData === 'function') {
+            window.ProductionModule.saveData();
+        }
+    }
+    
+    // Update FarmData
+    if (window.FarmData && window.FarmData.production) {
+        const records = [...window.FarmData.production]
+            .filter(r => r.product === saleData.product && !r.fullySold)
+            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        
+        let remaining = soldQty;
+        
+        for (const record of records) {
+            if (remaining <= 0) break;
+            
+            const available = record.quantity || 0;
+            const soldSoFar = record.sold || 0;
+            const canSell = available - soldSoFar;
+            
+            if (canSell > 0) {
+                const sellNow = Math.min(canSell, remaining);
+                record.sold = (record.sold || 0) + sellNow;
+                remaining -= sellNow;
+            }
+        }
+    }
+    
+    // ===== 🔥 NEW: Update production in Firebase =====
+    this.updateProductionFirebase(saleData.product, soldQty);
+},
+
+// ===== NEW: Update production in Firebase =====
+async updateProductionFirebase(product, soldQty) {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        
+        const productionRef = db.collection('production').doc(user.uid).collection('records');
+        const snapshot = await productionRef.get();
+        
+        let remainingToSell = soldQty;
+        const updates = [];
+        
+        snapshot.forEach(doc => {
+            if (remainingToSell <= 0) return;
+            
+            const data = doc.data();
+            if (data.product === product && !data.fullySold) {
+                const available = data.quantity || 0;
+                const soldSoFar = data.sold || 0;
+                const canSell = available - soldSoFar;
+                
+                if (canSell > 0) {
+                    const sellNow = Math.min(canSell, remainingToSell);
+                    const newSold = soldSoFar + sellNow;
+                    const fullySold = newSold >= available;
+                    
+                    updates.push(
+                        productionRef.doc(doc.id).update({
+                            sold: newSold,
+                            fullySold: fullySold,
+                            lastSoldDate: new Date().toISOString()
+                        })
+                    );
+                    
+                    remainingToSell -= sellNow;
+                }
+            }
+        });
+        
+        if (updates.length > 0) {
+            await Promise.all(updates);
+            console.log(`✅ Updated ${updates.length} production records in Firebase`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error updating production in Firebase:', error);
+    }
+},
+
+// ===== EXISTING: Update localStorage (keep as fallback) =====
 updateInventoryLocalStorage(product, soldQty) {
     try {
         const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
         const productLower = product.toLowerCase();
         
-        const itemIndex = inventory.findIndex(item => 
-            item.name?.toLowerCase().includes(productLower) ||
-            item.category?.toLowerCase().includes(productLower)
-        );
+        let updated = false;
+        const newInventory = inventory.map(item => {
+            if (item.name?.toLowerCase().includes(productLower) ||
+                item.category?.toLowerCase().includes(productLower)) {
+                item.quantity = Math.max(0, (item.quantity || 0) - soldQty);
+                updated = true;
+            }
+            return item;
+        });
         
-        if (itemIndex !== -1) {
-            inventory[itemIndex].quantity = Math.max(0, (inventory[itemIndex].quantity || 0) - soldQty);
-            localStorage.setItem('farm-inventory', JSON.stringify(inventory));
+        if (updated) {
+            localStorage.setItem('farm-inventory', JSON.stringify(newInventory));
             console.log(`✅ localStorage inventory updated`);
         }
     } catch (e) {
         console.warn('⚠️ Error updating localStorage inventory:', e);
     }
 },
-
+    
 // ===== NEW METHOD: Update production from sale =====
 updateProductionFromSale(saleData) {
     console.log('🚜 Updating production from sale:', saleData);
@@ -3427,6 +3631,7 @@ updateProductionFromSale(saleData) {
         }
     }
 },
+    
     // ========== CRITICAL: COMMUNICATE WITH INCOME MODULE ==========
     
     // Create income transaction from sale
