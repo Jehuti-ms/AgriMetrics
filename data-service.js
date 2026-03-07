@@ -169,24 +169,7 @@ async syncLocalToFirebase() {
     }
 },
 
-// Also make sure saveToLocalStorage exists
-saveToLocalStorage() {
-    try {
-        localStorage.setItem('farm-transactions', JSON.stringify(this.data.transactions));
-        localStorage.setItem('farm-sales', JSON.stringify(this.data.sales));
-        localStorage.setItem('farm-inventory', JSON.stringify(this.data.inventory));
-        localStorage.setItem('farm-production', JSON.stringify(this.data.production));
-        localStorage.setItem('farm-feed-records', JSON.stringify(this.data.feed));
-        localStorage.setItem('farm-mortality-records', JSON.stringify(this.data.mortality));
-        localStorage.setItem('farm-orders', JSON.stringify(this.data.orders));
-        localStorage.setItem('farm-customers', JSON.stringify(this.data.customers));
-        console.log('💾 Saved all data to localStorage');
-    } catch (e) {
-        console.warn('⚠️ Error saving to localStorage:', e);
-    }
-},
-    
-// Add this method to save data to localStorage
+// Add this method to save data to localStorage (KEEP THIS ONE)
 saveToLocalStorage() {
     try {
         localStorage.setItem('farm-transactions', JSON.stringify(this.data.transactions));
