@@ -656,7 +656,7 @@ const FeedRecordModule = {
 if (window.FarmModules) {
     window.FarmModules.registerModule('feed-record', FeedRecordModule);
     console.log('✅ Feed Records module registered');
-},
+}
 
 // Add this right before the final closing brace of FeedModule
 unload() {
