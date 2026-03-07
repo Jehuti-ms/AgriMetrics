@@ -464,7 +464,7 @@ async loadProductionData(user) {
         console.log('Error loading production:', e);
         window.FarmData.production = [];
     }
-},
+}
 
 async loadInventoryData(user) {
     try {
@@ -481,7 +481,7 @@ async loadInventoryData(user) {
         console.log('Error loading inventory:', e);
         window.FarmData.inventory = [];
     }
-},
+}
 
 async loadExpensesData(user) {
     try {
@@ -504,7 +504,7 @@ async loadExpensesData(user) {
         console.log('Error loading expenses:', e);
         window.FarmData.expenses = [];
     }
-},
+}
     
   handleNoUser() {
     console.log('🔒 No user found, showing auth');
