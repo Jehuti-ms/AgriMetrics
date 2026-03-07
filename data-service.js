@@ -21,66 +21,179 @@ const DataService = {
     
     // Initialize - call after login
     async initialize() {
-        console.log('🚀 Initializing Data Service...');
-        this.isLoading = true;
+    console.log('🚀 Initializing Data Service...');
+    this.isLoading = true;
+    
+    this._dispatchEvent('data-loading-started');
+    
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            console.warn('⚠️ No user logged in');
+            this.isLoading = false;
+            return false;
+        }
         
-        // Dispatch loading event
-        this._dispatchEvent('data-loading-started');
+        console.log(`👤 Loading data for user: ${user.uid}`);
         
-        try {
-            const user = firebase.auth().currentUser;
-            if (!user) {
-                console.warn('⚠️ No user logged in');
-                this.isLoading = false;
-                return false;
-            }
-            
-            console.log(`👤 Loading data for user: ${user.uid}`);
-            
-            // Load all data in parallel
-            await Promise.allSettled([
-                this.loadTransactions(user.uid),
-                this.loadSales(user.uid),
-                this.loadInventory(user.uid),
-                this.loadProduction(user.uid),
-                this.loadFeed(user.uid),
-                this.loadMortality(user.uid),
-                this.loadOrders(user.uid),
-                this.loadCustomers(user.uid)
-            ]);
-            
-            // Also load from localStorage as fallback/backup
-            this.loadFromLocalStorage();
-            
+        // ===== LOAD FROM LOCALSTORAGE FIRST (IMMEDIATE DATA) =====
+        console.log('💾 Loading from localStorage for immediate data...');
+        this.loadFromLocalStorage();
+        
+        // Make data available immediately
+        window.FarmData = this.data;
+        
+        // Dispatch event that we have localStorage data
+        this._dispatchEvent('data-loaded', this.data);
+        
+        // ===== SYNC LOCAL DATA TO FIREBASE =====
+        // This will upload any localStorage data to Firebase
+        if (this.data.transactions.length > 0 || this.data.sales.length > 0) {
+            console.log('📤 Found localStorage data, syncing to Firebase...');
+            await this.syncLocalToFirebase();
+        }
+        
+        // ===== THEN LOAD FROM FIREBASE (background refresh) =====
+        console.log('☁️ Loading from Firebase in background...');
+        
+        // Load all data in parallel
+        Promise.allSettled([
+            this.loadTransactions(user.uid),
+            this.loadSales(user.uid),
+            this.loadInventory(user.uid),
+            this.loadProduction(user.uid),
+            this.loadFeed(user.uid),
+            this.loadMortality(user.uid),
+            this.loadOrders(user.uid),
+            this.loadCustomers(user.uid)
+        ]).then(() => {
             this.lastLoadTime = new Date().toISOString();
             this.isLoading = false;
             
-            // Make data globally available
+            // Update FarmData with Firebase data
             window.FarmData = this.data;
             
-            // Update FarmModules for compatibility
-            if (!window.FarmModules) window.FarmModules = {};
-            if (!window.FarmModules.appData) window.FarmModules.appData = {};
-            window.FarmModules.appData = this.data;
+            // Save to localStorage as backup
+            this.saveToLocalStorage();
             
             console.log('✅ Data Service initialized with:', this.getStats());
-            
-            // Dispatch loaded event
             this._dispatchEvent('data-loaded', this.data);
-            
-            // Set up real-time listeners
             this.setupRealtimeListeners(user.uid);
-            
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Data Service initialization error:', error);
-            this.isLoading = false;
-            this._dispatchEvent('data-error', error);
-            return false;
-        }
-    },
+        });
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Data Service initialization error:', error);
+        this.isLoading = false;
+        this._dispatchEvent('data-error', error);
+        return false;
+    }
+},
+
+// Add this method to sync localStorage to Firebase
+async syncLocalToFirebase() {
+    console.log('🔄 Syncing localStorage data to Firebase...');
     
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    
+    const today = new Date();
+    const month = today.getMonth();
+    const year = today.getFullYear();
+    const period = `${month}-${year}`;
+    
+    // Sync transactions to income collection
+    if (this.data.transactions.length > 0) {
+        console.log(`📤 Uploading ${this.data.transactions.length} transactions to Firebase...`);
+        
+        try {
+            await db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
+                entries: this.data.transactions,
+                totalAmount: this.data.transactions
+                    .filter(t => t.type === 'income')
+                    .reduce((sum, t) => sum + (t.amount || 0), 0),
+                lastUpdated: new Date().toISOString(),
+                userId: user.uid,
+                syncedFrom: 'localStorage'
+            }, { merge: true });
+            
+            console.log('✅ Transactions synced to Firebase');
+        } catch (e) {
+            console.error('❌ Error syncing transactions:', e);
+        }
+    }
+    
+    // Sync sales to sales collection
+    if (this.data.sales.length > 0) {
+        console.log(`📤 Uploading ${this.data.sales.length} sales to Firebase...`);
+        
+        try {
+            await db.collection('sales').doc(user.uid).collection('records').doc(period).set({
+                entries: this.data.sales,
+                totalAmount: this.data.sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0),
+                lastUpdated: new Date().toISOString(),
+                userId: user.uid,
+                syncedFrom: 'localStorage'
+            }, { merge: true });
+            
+            console.log('✅ Sales synced to Firebase');
+        } catch (e) {
+            console.error('❌ Error syncing sales:', e);
+        }
+    }
+    
+    // Sync inventory if needed
+    if (this.data.inventory.length > 0) {
+        try {
+            await db.collection('inventory').doc(user.uid).set({
+                items: this.data.inventory,
+                lastUpdated: new Date().toISOString(),
+                userId: user.uid,
+                syncedFrom: 'localStorage'
+            }, { merge: true });
+            
+            console.log('✅ Inventory synced to Firebase');
+        } catch (e) {
+            console.error('❌ Error syncing inventory:', e);
+        }
+    }
+},
+
+// Also make sure saveToLocalStorage exists
+saveToLocalStorage() {
+    try {
+        localStorage.setItem('farm-transactions', JSON.stringify(this.data.transactions));
+        localStorage.setItem('farm-sales', JSON.stringify(this.data.sales));
+        localStorage.setItem('farm-inventory', JSON.stringify(this.data.inventory));
+        localStorage.setItem('farm-production', JSON.stringify(this.data.production));
+        localStorage.setItem('farm-feed-records', JSON.stringify(this.data.feed));
+        localStorage.setItem('farm-mortality-records', JSON.stringify(this.data.mortality));
+        localStorage.setItem('farm-orders', JSON.stringify(this.data.orders));
+        localStorage.setItem('farm-customers', JSON.stringify(this.data.customers));
+        console.log('💾 Saved all data to localStorage');
+    } catch (e) {
+        console.warn('⚠️ Error saving to localStorage:', e);
+    }
+},
+    
+// Add this method to save data to localStorage
+saveToLocalStorage() {
+    try {
+        localStorage.setItem('farm-transactions', JSON.stringify(this.data.transactions));
+        localStorage.setItem('farm-sales', JSON.stringify(this.data.sales));
+        localStorage.setItem('farm-inventory', JSON.stringify(this.data.inventory));
+        localStorage.setItem('farm-production', JSON.stringify(this.data.production));
+        localStorage.setItem('farm-feed-records', JSON.stringify(this.data.feed));
+        localStorage.setItem('farm-mortality-records', JSON.stringify(this.data.mortality));
+        localStorage.setItem('farm-orders', JSON.stringify(this.data.orders));
+        localStorage.setItem('farm-customers', JSON.stringify(this.data.customers));
+        console.log('💾 Saved all data to localStorage');
+    } catch (e) {
+        console.warn('⚠️ Error saving to localStorage:', e);
+    }
+},
+   
     // ===== FIREBASE LOADERS =====
     
     async loadTransactions(userId) {
