@@ -414,7 +414,7 @@ checkInitialAuth() {
         this.hideLoading();
         console.log('✅ App fully initialized with FarmData');
     }, 100);
-},
+}
 
 // ===== ADD THESE HELPER METHODS =====
 
