@@ -20,7 +20,7 @@ const DataService = {
     listeners: [],
     
     // Initialize - call after login
-    async initialize() {
+   async initialize() {
     console.log('🚀 Initializing Data Service...');
     this.isLoading = true;
     
@@ -36,7 +36,7 @@ const DataService = {
         
         console.log(`👤 Loading data for user: ${user.uid}`);
         
-        // ===== LOAD FROM LOCALSTORAGE FIRST (IMMEDIATE DATA) =====
+        // ===== LOAD FROM LOCALSTORAGE FIRST =====
         console.log('💾 Loading from localStorage for immediate data...');
         this.loadFromLocalStorage();
         
@@ -46,17 +46,29 @@ const DataService = {
         // Dispatch event that we have localStorage data
         this._dispatchEvent('data-loaded', this.data);
         
+        // ===== CHECK MODULES FOR DATA =====
+        // Give modules time to load
+        setTimeout(() => {
+            // Check if modules have data we don't have
+            if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+                if (window.IncomeExpensesModule.transactions.length > this.data.transactions.length) {
+                    console.log('📦 IncomeExpensesModule has more transactions, updating...');
+                    this.data.transactions = window.IncomeExpensesModule.transactions;
+                    window.FarmData = this.data;
+                    this._dispatchEvent('data-updated', this.data);
+                }
+            }
+        }, 2000);
+        
         // ===== SYNC LOCAL DATA TO FIREBASE =====
-        // This will upload any localStorage data to Firebase
         if (this.data.transactions.length > 0 || this.data.sales.length > 0) {
             console.log('📤 Found localStorage data, syncing to Firebase...');
             await this.syncLocalToFirebase();
         }
         
-        // ===== THEN LOAD FROM FIREBASE (background refresh) =====
+        // ===== THEN LOAD FROM FIREBASE =====
         console.log('☁️ Loading from Firebase in background...');
         
-        // Load all data in parallel
         Promise.allSettled([
             this.loadTransactions(user.uid),
             this.loadSales(user.uid),
@@ -70,10 +82,7 @@ const DataService = {
             this.lastLoadTime = new Date().toISOString();
             this.isLoading = false;
             
-            // Update FarmData with Firebase data
             window.FarmData = this.data;
-            
-            // Save to localStorage as backup
             this.saveToLocalStorage();
             
             console.log('✅ Data Service initialized with:', this.getStats());
@@ -400,32 +409,61 @@ saveToLocalStorage() {
     },
     
     // ===== LOCAL STORAGE FALLBACK =====
-    
     loadFromLocalStorage() {
-        console.log('💾 Loading localStorage fallback data...');
-        
-        const localStorageKeys = {
-            transactions: 'farm-transactions',
-            sales: 'farm-sales',
-            inventory: 'farm-inventory',
-            production: 'farm-production',
-            feed: 'farm-feed-records',
-            mortality: 'farm-mortality-records',
-            orders: 'farm-orders'
-        };
-        
-        Object.entries(localStorageKeys).forEach(([key, storageKey]) => {
-            try {
-                const data = localStorage.getItem(storageKey);
-                if (data && (!this.data[key] || this.data[key].length === 0)) {
-                    this.data[key] = JSON.parse(data);
-                    console.log(`  ✅ Loaded ${key} from localStorage`);
-                }
-            } catch (e) {
-                // Ignore
+    console.log('💾 Loading localStorage fallback data...');
+    
+    const localStorageKeys = {
+        transactions: 'farm-transactions',
+        sales: 'farm-sales',
+        inventory: 'farm-inventory',
+        production: 'farm-production',
+        feed: 'farm-feed-records',
+        mortality: 'farm-mortality-records',
+        orders: 'farm-orders',
+        customers: 'farm-customers'
+    };
+    
+    // Load from localStorage
+    Object.entries(localStorageKeys).forEach(([key, storageKey]) => {
+        try {
+            const data = localStorage.getItem(storageKey);
+            if (data) {
+                this.data[key] = JSON.parse(data);
+                console.log(`  ✅ Loaded ${key} from localStorage: ${this.data[key].length} items`);
             }
-        });
-    },
+        } catch (e) {
+            console.warn(`  ⚠️ Error loading ${key} from localStorage:`, e);
+        }
+    });
+    
+    // ===== NEW: Also get data from modules if they're already loaded =====
+    if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+        const moduleTransactions = window.IncomeExpensesModule.transactions;
+        if (moduleTransactions.length > 0) {
+            console.log(`  ✅ Got ${moduleTransactions.length} transactions from IncomeExpensesModule`);
+            this.data.transactions = moduleTransactions;
+        }
+    }
+    
+    if (window.SalesRecordModule && window.SalesRecordModule.sales) {
+        const moduleSales = window.SalesRecordModule.sales;
+        if (moduleSales.length > 0) {
+            console.log(`  ✅ Got ${moduleSales.length} sales from SalesRecordModule`);
+            this.data.sales = moduleSales;
+        }
+    }
+    
+    console.log('✅ localStorage load complete. Current data:', {
+        transactions: this.data.transactions.length,
+        sales: this.data.sales.length,
+        inventory: this.data.inventory.length,
+        production: this.data.production.length,
+        feed: this.data.feed.length,
+        mortality: this.data.mortality.length,
+        orders: this.data.orders.length,
+        customers: this.data.customers.length
+    });
+},
     
     // ===== REAL-TIME LISTENERS =====
     
