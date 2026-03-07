@@ -977,7 +977,7 @@ updateLastSyncTime() {
 },
 
  getProfileStats() {
-    // Use FarmData if available
+    // Use FarmData if available (from Data Service)
     if (window.FarmData) {
         const data = window.FarmData;
         
@@ -987,22 +987,76 @@ updateLastSyncTime() {
         const expenses = data.transactions.filter(t => t.type === 'expense')
             .reduce((sum, t) => sum + (t.amount || 0), 0);
         
+        // Get bird count from inventory or broiler module
+        let totalBirds = 0;
+        
+        // Try to get from inventory
+        const birdItem = data.inventory.find(item => 
+            item.name?.toLowerCase().includes('bird') || 
+            item.name?.toLowerCase().includes('broiler') ||
+            item.category?.toLowerCase().includes('poultry')
+        );
+        
+        if (birdItem) {
+            totalBirds = birdItem.quantity || 0;
+        }
+        
+        // Try from mortality module if available
+        if (window.BroilerMortalityModule && window.BroilerMortalityModule.getCurrentStock) {
+            totalBirds = window.BroilerMortalityModule.getCurrentStock() || totalBirds;
+        }
+        
         return {
             totalRevenue: income,
             totalExpenses: expenses,
             netProfit: income - expenses,
             totalInventoryItems: data.inventory.length,
             totalBirds: this.getBirdCount(data),
-            totalOrders: 0, // Add when orders module is ready
-            totalCustomers: 0,
+            totalOrders: data.orders?.length || 0,
+            totalCustomers: data.customers?.length || 0,
             totalProducts: data.sales.length,
             monthlyRevenue: this.getMonthlyRevenue(data.sales),
-            completedOrders: 0
+            completedOrders: data.orders?.filter(o => o.status === 'completed').length || 0
         };
     }
     
-    // Fallback to old method
+    // Fallback to old method if FarmData not available
     return this.calculateStatsFromLocalStorage();
+},
+
+    getMonthlyRevenue(sales) {
+    if (!sales || sales.length === 0) return 0;
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return sales
+        .filter(s => new Date(s.date || s.createdAt || 0) > thirtyDaysAgo)
+        .reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+},
+
+    getBirdCount(data) {
+    if (!data) return 0;
+    
+    // Try from inventory
+    const birdItem = data.inventory.find(item => 
+        item.name?.toLowerCase().includes('bird') || 
+        item.name?.toLowerCase().includes('broiler') ||
+        item.category?.toLowerCase().includes('poultry')
+    );
+    
+    if (birdItem) {
+        return birdItem.quantity || 0;
+    }
+    
+    // Try from mortality module
+    if (window.BroilerMortalityModule) {
+        if (typeof window.BroilerMortalityModule.getCurrentStock === 'function') {
+            return window.BroilerMortalityModule.getCurrentStock();
+        }
+    }
+    
+    return 0;
 },
     
     calculateStatsFromStorage(targetStats) {
