@@ -441,7 +441,7 @@ async loadSalesData(user) {
         console.log('Error loading sales:', e);
         window.FarmData.sales = [];
     }
-},
+}
 
 async loadProductionData(user) {
     try {
