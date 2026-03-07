@@ -409,51 +409,72 @@ saveToLocalStorage() {
     },
     
     // ===== LOCAL STORAGE FALLBACK =====
-    loadFromLocalStorage() {
-    console.log('💾 Loading localStorage fallback data...');
+   loadFromLocalStorage() {
+    console.log('💾 Loading data from all sources...');
     
-    const localStorageKeys = {
-        transactions: 'farm-transactions',
-        sales: 'farm-sales',
-        inventory: 'farm-inventory',
-        production: 'farm-production',
-        feed: 'farm-feed-records',
-        mortality: 'farm-mortality-records',
-        orders: 'farm-orders',
-        customers: 'farm-customers'
-    };
-    
-    // Load from localStorage
-    Object.entries(localStorageKeys).forEach(([key, storageKey]) => {
-        try {
-            const data = localStorage.getItem(storageKey);
-            if (data) {
-                this.data[key] = JSON.parse(data);
-                console.log(`  ✅ Loaded ${key} from localStorage: ${this.data[key].length} items`);
-            }
-        } catch (e) {
-            console.warn(`  ⚠️ Error loading ${key} from localStorage:`, e);
-        }
-    });
-    
-    // ===== NEW: Also get data from modules if they're already loaded =====
+    // ===== FIRST: Try to get from modules (they have the freshest data) =====
     if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
-        const moduleTransactions = window.IncomeExpensesModule.transactions;
-        if (moduleTransactions.length > 0) {
-            console.log(`  ✅ Got ${moduleTransactions.length} transactions from IncomeExpensesModule`);
-            this.data.transactions = moduleTransactions;
-        }
+        this.data.transactions = window.IncomeExpensesModule.transactions;
+        console.log(`  ✅ Got ${this.data.transactions.length} transactions from IncomeExpensesModule`);
     }
     
     if (window.SalesRecordModule && window.SalesRecordModule.sales) {
-        const moduleSales = window.SalesRecordModule.sales;
-        if (moduleSales.length > 0) {
-            console.log(`  ✅ Got ${moduleSales.length} sales from SalesRecordModule`);
-            this.data.sales = moduleSales;
-        }
+        this.data.sales = window.SalesRecordModule.sales;
+        console.log(`  ✅ Got ${this.data.sales.length} sales from SalesRecordModule`);
     }
     
-    console.log('✅ localStorage load complete. Current data:', {
+    if (window.InventoryModule && window.InventoryModule.inventory) {
+        this.data.inventory = window.InventoryModule.inventory;
+        console.log(`  ✅ Got ${this.data.inventory.length} inventory items from InventoryModule`);
+    }
+    
+    if (window.ProductionModule && window.ProductionModule.productionRecords) {
+        this.data.production = window.ProductionModule.productionRecords;
+        console.log(`  ✅ Got ${this.data.production.length} production records from ProductionModule`);
+    }
+    
+    if (window.FeedModule && window.FeedModule.feedRecords) {
+        this.data.feed = window.FeedModule.feedRecords;
+        console.log(`  ✅ Got ${this.data.feed.length} feed records from FeedModule`);
+    }
+    
+    if (window.BroilerMortalityModule && window.BroilerMortalityModule.records) {
+        this.data.mortality = window.BroilerMortalityModule.records;
+        console.log(`  ✅ Got ${this.data.mortality.length} mortality records from BroilerMortalityModule`);
+    }
+    
+    if (window.OrdersModule && window.OrdersModule.orders) {
+        this.data.orders = window.OrdersModule.orders;
+        console.log(`  ✅ Got ${this.data.orders.length} orders from OrdersModule`);
+    }
+    
+    if (window.OrdersModule && window.OrdersModule.customers) {
+        this.data.customers = window.OrdersModule.customers;
+        console.log(`  ✅ Got ${this.data.customers.length} customers from OrdersModule`);
+    }
+    
+    // ===== SECOND: Fallback to localStorage if modules don't have data =====
+    if (this.data.transactions.length === 0) {
+        try {
+            const localData = localStorage.getItem('farm-transactions');
+            if (localData) {
+                this.data.transactions = JSON.parse(localData);
+                console.log(`  📁 Fallback: Got ${this.data.transactions.length} transactions from localStorage`);
+            }
+        } catch (e) {}
+    }
+    
+    if (this.data.sales.length === 0) {
+        try {
+            const localData = localStorage.getItem('farm-sales');
+            if (localData) {
+                this.data.sales = JSON.parse(localData);
+                console.log(`  📁 Fallback: Got ${this.data.sales.length} sales from localStorage`);
+            }
+        } catch (e) {}
+    }
+    
+    console.log('✅ Data load complete. Final counts:', {
         transactions: this.data.transactions.length,
         sales: this.data.sales.length,
         inventory: this.data.inventory.length,
