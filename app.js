@@ -245,24 +245,7 @@ checkInitialAuth() {
     }
 }
 
-    handleUserAuthenticated(user) {
-        console.log('🎉 User authenticated, showing app...');
-        this.currentUser = user;
-        this.authInitialized = true;
-        
-        // Store user info
-        localStorage.setItem('userEmail', user.email);
-        localStorage.setItem('userId', user.uid);
-        localStorage.setItem('userAuthenticated', 'true');
-        
-        // Show app
-        this.showApp();
-        
-        // Initialize app components
-        this.initializeAppComponents();
-    }
-    
-        async initializeAppComponents() {
+   async initializeAppComponents() {
     console.log('🚀 Initializing app components...');
     
     // ===== CREATE CENTRAL DATA STORE =====
@@ -290,9 +273,9 @@ checkInitialAuth() {
     // Setup logout handlers AFTER creating navigation
     this.setupLogoutHandlers();
     
-    // ===== LOAD ALL DATA FROM FIREBASE =====
+    // ===== LOAD ALL DATA FROM MODULES (THEY ALREADY HAVE FIREBASE DATA) =====
     try {
-        console.log('🔥 Loading all farm data into FarmData...');
+        console.log('🔥 Loading all farm data from modules into FarmData...');
         
         // Show loading notification
         if (typeof showAgrimetricsNotification === 'function') {
@@ -304,41 +287,52 @@ checkInitialAuth() {
         if (user) {
             console.log('👤 Loading data for user:', user.uid);
             
-            // Load all data in parallel for better performance
-            await Promise.all([
-                this.loadSalesData(user),
-                this.loadProductionData(user),
-                this.loadInventoryData(user),
-                this.loadExpensesData(user)
-            ]);
+            // ===== GET DATA FROM INCOME-EXPENSES MODULE =====
+            if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+                const transactions = window.IncomeExpensesModule.transactions;
+                console.log(`📊 Got ${transactions.length} transactions from IncomeExpensesModule`);
+                
+                // Separate into income and expenses
+                window.FarmData.transactions = transactions;
+                window.FarmData.expenses = transactions.filter(t => t.type === 'expense');
+                
+                // Add income to sales for compatibility
+                window.FarmData.sales = transactions.filter(t => t.type === 'income');
+            }
             
-            // ===== COMBINE INTO TRANSACTIONS =====
-            // Add sales as income transactions
-            window.FarmData.sales.forEach(sale => {
-                window.FarmData.transactions.push({
-                    id: sale.id,
-                    date: sale.date,
-                    type: 'income',
-                    category: 'sales',
-                    amount: sale.totalAmount || 0,
-                    description: `Sale: ${sale.product || 'Product'}`,
-                    customer: sale.customer,
-                    originalData: sale
-                });
-            });
+            // ===== GET DATA FROM SALES MODULE =====
+            if (window.SalesRecordModule && window.SalesRecordModule.sales) {
+                const sales = window.SalesRecordModule.sales;
+                console.log(`📊 Got ${sales.length} sales from SalesRecordModule`);
+                
+                // Merge with existing sales (avoid duplicates)
+                const existingIds = new Set(window.FarmData.sales.map(s => s.id));
+                const newSales = sales.filter(s => !existingIds.has(s.id));
+                window.FarmData.sales = [...window.FarmData.sales, ...newSales];
+            }
             
-            // Add expenses as expense transactions
-            window.FarmData.expenses.forEach(expense => {
-                window.FarmData.transactions.push({
-                    id: expense.id,
-                    date: expense.date,
-                    type: 'expense',
-                    category: expense.category || 'other',
-                    amount: expense.amount || 0,
-                    description: expense.description || 'Expense',
-                    originalData: expense
-                });
-            });
+            // ===== GET DATA FROM PRODUCTION MODULE =====
+            if (window.ProductionModule && window.ProductionModule.productionRecords) {
+                window.FarmData.production = window.ProductionModule.productionRecords;
+                console.log(`📊 Got ${window.FarmData.production.length} production records`);
+            }
+            
+            // ===== GET DATA FROM INVENTORY MODULE =====
+            if (window.InventoryModule && window.InventoryModule.inventory) {
+                window.FarmData.inventory = window.InventoryModule.inventory;
+                console.log(`📊 Got ${window.FarmData.inventory.length} inventory items`);
+            }
+            
+            // ===== GET DATA FROM ORDERS MODULE =====
+            if (window.OrdersModule && window.OrdersModule.orders) {
+                window.FarmData.orders = window.OrdersModule.orders;
+                console.log(`📊 Got ${window.FarmData.orders.length} orders`);
+            }
+            
+            if (window.OrdersModule && window.OrdersModule.customers) {
+                window.FarmData.customers = window.OrdersModule.customers;
+                console.log(`📊 Got ${window.FarmData.customers.length} customers`);
+            }
             
             // Sort transactions by date
             window.FarmData.transactions.sort((a, b) => 
@@ -367,6 +361,8 @@ checkInitialAuth() {
                 inventory: window.FarmData.inventory,
                 expenses: window.FarmData.expenses,
                 transactions: window.FarmData.transactions,
+                orders: window.FarmData.orders,
+                customers: window.FarmData.customers,
                 lastUpdated: window.FarmData.lastUpdated
             }));
             
@@ -378,12 +374,14 @@ checkInitialAuth() {
                 detail: window.FarmData 
             }));
             
-            console.log('✅ All Firebase data loaded into FarmData:', {
+            console.log('✅ All module data loaded into FarmData:', {
                 sales: window.FarmData.sales.length,
                 production: window.FarmData.production.length,
                 inventory: window.FarmData.inventory.length,
                 expenses: window.FarmData.expenses.length,
-                transactions: window.FarmData.transactions.length
+                transactions: window.FarmData.transactions.length,
+                orders: window.FarmData.orders?.length || 0,
+                customers: window.FarmData.customers?.length || 0
             });
             
             // Show success
