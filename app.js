@@ -211,35 +211,35 @@ initializeMenuPosition() {
 }
 
     
-    async setupAuthListener() {
-        if (typeof firebase === 'undefined' || !firebase.auth) {
-            console.log('⏳ Waiting for Firebase...');
-            setTimeout(() => this.setupAuthListener(), 100);
-            return;
-        }
-        
-        // Setup auth state listener
-        firebase.auth().onAuthStateChanged((user) => {
-            console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
-            
-            if (user) {
-                this.handleUserAuthenticated(user);
-            } else {
-                this.handleNoUser();
-            }
-            
-        });
+    setupAuthListener() {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        console.log('⏳ Waiting for Firebase...');
+        setTimeout(() => this.setupAuthListener(), 100);
+        return;
     }
+    
+    // Setup auth state listener - USE ARROW FUNCTION TO KEEP 'this' CONTEXT
+    firebase.auth().onAuthStateChanged((user) => {
+        console.log('🔥 Auth state changed:', user ? `User: ${user.email}` : 'No user');
+        
+        if (user) {
+            // Use arrow function to preserve 'this'
+            this.handleUserAuthenticated(user);
+        } else {
+            this.handleNoUser();
+        }
+    });
+}
     
 checkInitialAuth() {
     if (typeof firebase !== 'undefined' && firebase.auth) {
         const user = firebase.auth().currentUser;
         if (user) {
             console.log('👤 User already signed in:', user.email);
+            // Use arrow function or bind
             this.handleUserAuthenticated(user);
         } else {
             console.log('🔒 No user found initially - showing auth form');
-            // Show auth form IMMEDIATELY, don't wait
             this.handleNoUser();
         }
     }
