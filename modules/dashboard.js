@@ -13,7 +13,7 @@ const DashboardModule = {
     _eventListeners: [],
 
     // ==================== INITIALIZATION ====================
-    initialize() {
+   initialize() {
     console.log('📊 Initializing Dashboard...');
     
     this.element = document.getElementById('content-area');
@@ -30,6 +30,9 @@ const DashboardModule = {
     // Initialize with empty state first
     this.initialized = true;
     
+    // Show loading state
+    this.showLoadingState();
+    
     // Render dashboard
     this.renderDashboard();
     
@@ -39,15 +42,69 @@ const DashboardModule = {
         this.startRealTimeUpdates();
     }, 100);
     
-    // ===== ADD THIS: Listen for data changes from all modules =====
+    // ===== ADD THESE DATA LOADING LISTENERS =====
+    
+    // Listen for Data Service load event
+    window.addEventListener('farm-data-loaded', () => {
+        console.log('📡 Dashboard received farm-data-loaded event');
+        this.loadAndDisplayStats();
+    });
+    
+    // Listen for Data Service update event
+    window.addEventListener('farm-data-updated', () => {
+        console.log('📡 Dashboard received farm-data-updated event');
+        this.loadAndDisplayStats();
+    });
+    
+    // Listen for storage changes (in case other tabs update data)
+    window.addEventListener('storage', (e) => {
+        if (e.key && (e.key.includes('farm-') || e.key.includes('FarmData'))) {
+            console.log('📡 Storage change detected:', e.key);
+            setTimeout(() => this.loadAndDisplayStats(), 300);
+        }
+    });
+    
+    // Also check every second for the first 5 seconds for data
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
+        attempts++;
+        
+        // Check if FarmData has transactions
+        if (window.FarmData && window.FarmData.transactions?.length > 0) {
+            console.log(`📊 Data found after ${attempts}s, updating dashboard`);
+            this.loadAndDisplayStats();
+            clearInterval(checkInterval);
+        }
+        
+        // Check if any of the module data is available
+        if (window.salesData?.length > 0 || window.expensesData?.length > 0) {
+            console.log(`📊 Module data found after ${attempts}s, updating dashboard`);
+            this.loadAndDisplayStats();
+            clearInterval(checkInterval);
+        }
+        
+        // Stop after 5 seconds
+        if (attempts >= 5) {
+            console.log('⏱️ Data check timeout - showing whatever we have');
+            this.loadAndDisplayStats();
+            clearInterval(checkInterval);
+        }
+    }, 1000);
+    
+    // ===== EXISTING LISTENERS =====
     this.setupGlobalListeners();
     
-    console.log('✅ Dashboard initialized with real-time updates');
+    console.log('✅ Dashboard initialized with real-time updates and data loading');
     return true;
 },
 
-    // Add this method after initialize()
-// Add this method after initialize()
+// Add this helper method if you don't have it
+showLoadingState() {
+    // Optional: Show a loading spinner or message
+    console.log('⏳ Dashboard waiting for data...');
+},
+    
+ // Add this method after initialize()
 setupGlobalListeners() {
     console.log('📡 Setting up global listeners for dashboard...');
     
@@ -75,7 +132,27 @@ setupGlobalListeners() {
     
     this._eventListeners = [];
 
-    // Add new listeners (using standard window events)
+    // ===== DATA SERVICE EVENTS (UPDATED WITH PROPER CLEANUP) =====
+    const dataEvents = [
+        'farm-data-loaded',
+        'farm-data-updated',
+        'farm-transactions-updated',
+        'farm-sales-updated'
+    ];
+    
+    dataEvents.forEach(event => {
+        const handler = () => {
+            console.log(`📡 Dashboard received: ${event}`);
+            if (this.initialized) {
+                setTimeout(() => this.loadAndDisplayStats(), 200);
+            }
+        };
+        
+        window.addEventListener(event, handler);
+        this._eventListeners.push({event, handler}); // ← NOW PROPERLY ADDED
+    });
+
+    // Add module event listeners (using standard window events)
     events.forEach(event => {
         const handler = () => {
             console.log(`📡 Dashboard received: ${event}`);
@@ -114,6 +191,7 @@ setupGlobalListeners() {
             ];
             
             broadcasterEvents.forEach(event => {
+                // Note: DataBroadcaster might need special cleanup
                 window.DataBroadcaster.on(event, () => {
                     console.log(`📡 Dashboard received broadcaster: ${event}`);
                     if (this.initialized) {
@@ -131,12 +209,15 @@ setupGlobalListeners() {
             ];
             
             broadcasterEvents.forEach(event => {
-                window.DataBroadcaster.addEventListener(event, () => {
+                const handler = () => {
                     console.log(`📡 Dashboard received broadcaster: ${event}`);
                     if (this.initialized) {
                         setTimeout(() => this.loadAndDisplayStats(), 150);
                     }
-                });
+                };
+                
+                window.DataBroadcaster.addEventListener(event, handler);
+                // Note: Can't easily add to _eventListeners if DataBroadcaster has different cleanup
             });
         }
         // Method 3: If it has a 'subscribe' method
@@ -174,7 +255,7 @@ setupGlobalListeners() {
     document.addEventListener('moduleActivated', moduleActivatedHandler);
     this._eventListeners.push({event: 'moduleActivated', handler: moduleActivatedHandler});
 
-    console.log(`✅ Dashboard listening to ${events.length} events`);
+    console.log(`✅ Dashboard listening to ${events.length + dataEvents.length} events`);
 },
     
     onThemeChange(theme) {
@@ -954,16 +1035,25 @@ setupGlobalListeners() {
    loadAndDisplayStats() {
     if (!this.initialized) return;
     
-    // Load stats from modules (which now have fresh Firebase data)
+    console.log('📊 Loading and displaying stats...');
+    
     const stats = this.getProfileStats();
+    
+    // Check if we actually have data
+    if (stats.totalRevenue > 0 || stats.totalExpenses > 0) {
+        console.log('✅ Stats have data:', stats);
+    } else {
+        console.log('⚠️ Stats are empty, waiting for data...');
+    }
+    
     this.updateDashboardDisplay(stats);
     this.updateRecentActivity();
     
     this.lastUpdateTime = new Date().toISOString();
     this.updateLastUpdatedTime();
     
-    // Also show last sync time if available
-    this.updateLastSyncTime();
+    // Dispatch event that dashboard updated
+    window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: stats }));
 },
 
 updateLastSyncTime() {
