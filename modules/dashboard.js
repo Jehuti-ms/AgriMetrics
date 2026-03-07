@@ -945,10 +945,9 @@ const DashboardModule = {
         this.element = null;
         
         console.log('✅ Dashboard module cleaned up');
-    }
-};
+    },
 
-// Add this right before the final closing brace of DashboardModule
+    // Add this right before the final closing brace of DashboardModule
 unload() {
     console.log('📦 Unloading Dashboard module...');
     
@@ -963,7 +962,9 @@ unload() {
     this.element = null;
     
     console.log('✅ Dashboard module unloaded');
-},
+}
+
+};
 
 // ==================== STYLES ====================
 const dashboardStyles = `
