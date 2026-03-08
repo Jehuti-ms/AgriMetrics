@@ -1054,7 +1054,7 @@ button[type="submit"],
     }
 
 
-/* ===== SPECIFIC FIX FOR SALES MODAL AND ALL POPOUT MODALS ===== */
+/* ===== UNIVERSAL MODAL FOOTER FIX - FOR ALL MODALS ===== */
 .popout-modal-footer {
     display: flex !important;
     flex-wrap: wrap !important;
@@ -1062,18 +1062,22 @@ button[type="submit"],
     justify-content: flex-end !important;
     align-items: center !important;
     margin-top: 24px !important;
-    padding-top: 20px !important;
+    padding: 20px 0 0 0 !important;
     border-top: 2px solid var(--primary-100, #dcfce7) !important;
     width: 100% !important;
     min-height: 80px !important;
 }
 
-/* Target buttons with btn class inside modal footer */
-.popout-modal-footer .btn {
+/* Target ALL buttons in modal footers */
+.popout-modal-footer button,
+.popout-modal-footer .btn,
+.popout-modal-footer .btn-primary,
+.popout-modal-footer .btn-outline,
+.popout-modal-footer .btn-danger {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 12px 28px !important;
+    padding: 12px 24px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     border-radius: var(--radius-lg, 12px) !important;
@@ -1081,64 +1085,87 @@ button[type="submit"],
     min-height: 48px !important;
     margin: 0 !important;
     cursor: pointer !important;
-    transition: var(--transition-normal, all 0.3s) !important;
+    transition: all 0.3s ease !important;
     line-height: 1 !important;
     white-space: nowrap !important;
-    flex: 0 1 auto !important;
     border: none !important;
+    gap: 8px !important;
 }
 
-/* Primary button */
-.popout-modal-footer .btn.btn-primary {
+/* Primary buttons (Save, Close when primary) */
+.popout-modal-footer .btn-primary,
+.popout-modal-footer button[id*="save"],
+.popout-modal-footer button[id*="Save"],
+.popout-modal-footer button[id*="submit"],
+.popout-modal-footer button[class*="primary"] {
     background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
     color: white !important;
-    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+    order: 3 !important; /* Push to right */
 }
 
-/* Outline button */
-.popout-modal-footer .btn.btn-outline {
+/* Outline buttons (Cancel, Print, Close when secondary) */
+.popout-modal-footer .btn-outline,
+.popout-modal-footer button[id*="cancel"],
+.popout-modal-footer button[id*="print"],
+.popout-modal-footer button[id*="close"]:not([id*="save"]),
+.popout-modal-footer button[class*="outline"] {
     background: transparent !important;
     color: var(--text-primary, #111827) !important;
     border: 2px solid var(--primary-500, #22c55e) !important;
+    order: 2 !important; /* Middle */
 }
 
-/* Danger button */
-.popout-modal-footer .btn.btn-danger {
-    background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626)) !important;
+/* Danger buttons (Delete) */
+.popout-modal-footer .btn-danger,
+.popout-modal-footer button[id*="delete"],
+.popout-modal-footer button[class*="danger"] {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
     color: white !important;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    order: 1 !important; /* Leftmost when visible */
 }
 
-/* Hidden class handling */
-.popout-modal-footer .btn.hidden,
+/* Hover effects */
+.popout-modal-footer .btn-primary:hover,
+.popout-modal-footer button[id*="save"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4) !important;
+}
+
+.popout-modal-footer .btn-outline:hover,
+.popout-modal-footer button[id*="cancel"]:hover,
+.popout-modal-footer button[id*="print"]:hover,
+.popout-modal-footer button[id*="close"]:hover {
+    background: var(--primary-500, #22c55e) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+}
+
+.popout-modal-footer .btn-danger:hover,
+.popout-modal-footer button[id*="delete"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Hidden state for delete buttons */
+.popout-modal-footer .btn-danger[style*="display: none"],
+.popout-modal-footer button[id*="delete"][style*="display: none"],
 .popout-modal-footer .hidden {
     display: none !important;
 }
 
-/* Hover states */
-.popout-modal-footer .btn.btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
+/* When delete button is visible, reorder buttons */
+.popout-modal-footer .btn-danger:not([style*="display: none"]):not(.hidden) {
+    display: inline-flex !important;
 }
 
-.popout-modal-footer .btn.btn-outline:hover {
-    background: var(--primary-500, #22c55e) !important;
-    color: white !important;
-    transform: translateY(-2px) !important;
-    border-color: var(--primary-500, #22c55e) !important;
+/* Special handling for modals with 2 buttons (Print + Close) */
+.popout-modal-footer .btn-outline + .btn-primary {
+    margin-left: auto !important;
 }
 
-.popout-modal-footer .btn.btn-danger:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
-}
-
-/* Active states */
-.popout-modal-footer .btn:active {
-    transform: translateY(0) !important;
-}
-
-/* Mobile responsiveness */
+/* ===== MOBILE RESPONSIVENESS ===== */
 @media (max-width: 768px) {
     .popout-modal-footer {
         flex-direction: column !important;
@@ -1146,694 +1173,73 @@ button[type="submit"],
         min-height: auto !important;
     }
     
-    .popout-modal-footer .btn {
-        width: 100% !important;
-        flex: 1 1 100% !important;
-        min-width: 100% !important;
-        white-space: normal !important;
-        word-break: break-word !important;
-        padding: 14px 20px !important;
-    }
-    
-    /* Stack order: Save on top, Cancel middle, Delete bottom */
-    .popout-modal-footer .btn.btn-primary {
-        order: 1 !important;
-    }
-    
-    .popout-modal-footer .btn.btn-outline {
-        order: 2 !important;
-    }
-    
-    .popout-modal-footer .btn.btn-danger {
-        order: 3 !important;
-    }
-}
-
-/* Small mobile screens */
-@media (max-width: 480px) {
-    .popout-modal-footer .btn {
-        padding: 12px 16px !important;
-        font-size: 13px !important;
-    }
-}
-
-/* When delete button becomes visible */
-.popout-modal-footer .btn.btn-danger:not(.hidden) {
-    display: inline-flex !important;
-}
-
-/* Ensure proper spacing when delete is hidden */
-.popout-modal-footer .btn.btn-primary,
-.popout-modal-footer .btn.btn-outline {
-    margin: 0 !important;
-}
-
-/* ===== PRODUCTION REPORT MODAL FIX ===== */
-.production-report-modal,
-.report-modal,
-[class*="production-report"],
-[class*="report-modal"] {
-    max-width: 600px !important;
-    width: 90% !important;
-    margin: 20px auto !important;
-    background: var(--card-bg, white) !important;
-    border-radius: var(--radius-xl, 16px) !important;
-    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1)) !important;
-    padding: 24px !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-}
-
-/* Production report header */
-.production-report-modal .modal-header,
-.report-modal .modal-header,
-.production-report-modal h2,
-.production-report-modal h3 {
-    color: var(--text-primary, #111827) !important;
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
-    margin-bottom: 20px !important;
-    padding-bottom: 16px !important;
-    border-bottom: 2px solid var(--primary-100, #dcfce7) !important;
-}
-
-/* Production report body */
-.production-report-modal .modal-body,
-.report-modal .report-content {
-    margin-bottom: 20px !important;
-    padding: 8px 0 !important;
-}
-
-/* ===== PRODUCTION REPORT MODAL FOOTER FIX ===== */
-#production-report-modal .popout-modal-footer,
-.production-report-modal .popout-modal-footer,
-div[id*="production-report"] .popout-modal-footer {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 12px !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    margin-top: 24px !important;
-    padding-top: 20px !important;
-    border-top: 2px solid var(--primary-100, #dcfce7) !important;
-    width: 100% !important;
-    min-height: 80px !important;
-}
-
-/* Style the print button (outline) */
-#production-report-modal .btn-outline,
-.production-report-modal .btn-outline {
-    background: transparent !important;
-    color: var(--text-primary, #111827) !important;
-    border: 2px solid var(--primary-500, #22c55e) !important;
-    padding: 12px 24px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    border-radius: var(--radius-lg, 12px) !important;
-    min-width: 100px !important;
-    min-height: 48px !important;
-    cursor: pointer !important;
-    transition: var(--transition-normal, all 0.3s) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-}
-
-/* Style the close button (primary) */
-#production-report-modal .btn-primary,
-.production-report-modal .btn-primary {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    color: white !important;
-    border: none !important;
-    padding: 12px 24px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    border-radius: var(--radius-lg, 12px) !important;
-    min-width: 100px !important;
-    min-height: 48px !important;
-    cursor: pointer !important;
-    transition: var(--transition-normal, all 0.3s) !important;
-    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-}
-
-/* Hover effects */
-#production-report-modal .btn-outline:hover,
-.production-report-modal .btn-outline:hover {
-    background: var(--primary-500, #22c55e) !important;
-    color: white !important;
-    transform: translateY(-2px) !important;
-    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)) !important;
-}
-
-#production-report-modal .btn-primary:hover,
-.production-report-modal .btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    #production-report-modal .popout-modal-footer,
-    .production-report-modal .popout-modal-footer {
-        flex-direction: column !important;
-        gap: 8px !important;
-        min-height: auto !important;
-    }
-    
-    #production-report-modal .btn-outline,
-    #production-report-modal .btn-primary,
-    .production-report-modal .btn-outline,
-    .production-report-modal .btn-primary {
-        width: 100% !important;
-        min-width: 100% !important;
-        white-space: normal !important;
-        word-break: break-word !important;
-        padding: 14px 20px !important;
-    }
-    
-    /* Stack order: Print on top, Close below */
-    #production-report-modal .btn-outline,
-    .production-report-modal .btn-outline {
-        order: 1 !important;
-    }
-    
-    #production-report-modal .btn-primary,
-    .production-report-modal .btn-primary {
-        order: 2 !important;
-    }
-}
-
-/* Small mobile screens */
-@media (max-width: 480px) {
-    #production-report-modal .btn-outline,
-    #production-report-modal .btn-primary,
-    .production-report-modal .btn-outline,
-    .production-report-modal .btn-primary {
-        padding: 12px 16px !important;
-        font-size: 13px !important;
-    }
-}
-
-/* Animation for modal appearance */
-#production-report-modal,
-.production-report-modal {
-    animation: modalFadeIn 0.3s ease-out !important;
-}
-
-/* ===== ULTIMATE POPOUT MODAL BUTTON FIX - FOR ALL MODULES ===== */
-/* This forces ALL modal buttons to be visible and properly styled */
-
-/* Target any popout modal in any module */
-.popout-modal,
-.popout-modal-content,
-.modal-content,
-.report-modal,
-[class*="popout-modal"],
-[class*="modal-content"],
-[class*="report-modal"],
-[class*="dialog"] {
-    background: var(--card-bg, white) !important;
-    border-radius: var(--radius-xl, 16px) !important;
-    padding: 24px !important;
-    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1)) !important;
-    z-index: 10000 !important;
-}
-
-/* FORCE ALL MODAL FOOTERS TO DISPLAY PROPERLY */
-.popout-modal-footer,
-.modal-footer,
-.report-footer,
-[class*="modal-footer"],
-[class*="dialog-footer"] {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 12px !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    margin-top: 24px !important;
-    padding-top: 20px !important;
-    border-top: 2px solid var(--primary-100, #dcfce7) !important;
-    width: 100% !important;
-    min-height: 80px !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-/* FORCE ALL MODAL BUTTONS TO BE VISIBLE */
-.popout-modal-footer button,
-.modal-footer button,
-.report-footer button,
-[class*="modal-footer"] button,
-[class*="dialog-footer"] button,
-.popout-modal-footer .btn,
-.modal-footer .btn,
-.report-footer .btn,
-.popout-modal-footer .btn-outline,
-.modal-footer .btn-outline,
-.report-footer .btn-outline,
-.popout-modal-footer .btn-primary,
-.modal-footer .btn-primary,
-.report-footer .btn-primary,
-.popout-modal-footer .btn-danger,
-.modal-footer .btn-danger,
-.report-footer .btn-danger {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 12px 24px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    border-radius: var(--radius-lg, 12px) !important;
-    min-width: 100px !important;
-    min-height: 48px !important;
-    margin: 0 !important;
-    cursor: pointer !important;
-    transition: var(--transition-normal, all 0.3s) !important;
-    line-height: 1 !important;
-    white-space: nowrap !important;
-    border: none !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    z-index: 10001 !important;
-}
-
-/* PRIMARY BUTTON STYLES */
-.popout-modal-footer .btn-primary,
-.modal-footer .btn-primary,
-.report-footer .btn-primary,
-.popout-modal-footer .btn.btn-primary,
-button.btn-primary {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    color: white !important;
-    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
-}
-
-/* OUTLINE BUTTON STYLES */
-.popout-modal-footer .btn-outline,
-.modal-footer .btn-outline,
-.report-footer .btn-outline,
-.popout-modal-footer .btn.btn-outline,
-button.btn-outline {
-    background: transparent !important;
-    color: var(--text-primary, #111827) !important;
-    border: 2px solid var(--primary-500, #22c55e) !important;
-}
-
-/* DANGER BUTTON STYLES */
-.popout-modal-footer .btn-danger,
-.modal-footer .btn-danger,
-.report-footer .btn-danger,
-.popout-modal-footer .btn.btn-danger,
-button.btn-danger {
-    background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626)) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
-}
-
-/* HOVER STATES */
-.popout-modal-footer .btn-primary:hover,
-.modal-footer .btn-primary:hover,
-.report-footer .btn-primary:hover,
-button.btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
-}
-
-.popout-modal-footer .btn-outline:hover,
-.modal-footer .btn-outline:hover,
-.report-footer .btn-outline:hover,
-button.btn-outline:hover {
-    background: var(--primary-500, #22c55e) !important;
-    color: white !important;
-    transform: translateY(-2px) !important;
-}
-
-.popout-modal-footer .btn-danger:hover,
-.modal-footer .btn-danger:hover,
-.report-footer .btn-danger:hover,
-button.btn-danger:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
-}
-
-/* ===== SPECIFIC MODULE FIXES ===== */
-
-/* PRODUCTION MODULE FIX */
-#production-report-modal .popout-modal-footer,
-.production-report-modal .popout-modal-footer,
-div[id*="production"] .popout-modal-footer {
-    display: flex !important;
-    justify-content: flex-end !important;
-}
-
-#production-report-modal .btn-outline,
-.production-report-modal .btn-outline,
-button#print-production-report {
-    background: transparent !important;
-    color: var(--text-primary, #111827) !important;
-    border: 2px solid var(--primary-500, #22c55e) !important;
-}
-
-#production-report-modal .btn-primary,
-.production-report-modal .btn-primary,
-button#close-production-report-btn {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    color: white !important;
-}
-
-/* SALES MODULE FIX */
-#sales-modal .popout-modal-footer,
-.sales-modal .popout-modal-footer,
-div[id*="sale"] .popout-modal-footer {
-    display: flex !important;
-}
-
-#sales-modal .btn-outline,
-button#cancel-sale {
-    background: transparent !important;
-    border: 2px solid var(--primary-500, #22c55e) !important;
-}
-
-#sales-modal .btn-primary,
-button#save-sale {
-    background: var(--gradient-primary) !important;
-    color: white !important;
-}
-
-#sales-modal .btn-danger,
-button#delete-sale {
-    background: var(--gradient-danger) !important;
-    color: white !important;
-}
-
-/* INVENTORY MODULE FIX */
-#inventory-modal .popout-modal-footer,
-.inventory-modal .popout-modal-footer,
-button#close-inventory-report-btn {
-    background: var(--gradient-primary) !important;
-    color: white !important;
-}
-
-/* ORDERS MODULE FIX */
-#order-modal .popout-modal-footer,
-.orders-modal .popout-modal-footer,
-button#cancel-order,
-button#cancel-order-form {
-    background: transparent !important;
-    border: 2px solid var(--primary-500, #22c55e) !important;
-}
-
-button#save-order,
-button#create-order,
-button#update-order {
-    background: var(--gradient-primary) !important;
-    color: white !important;
-}
-
-/* FEED MODULE FIX */
-#feed-modal .popout-modal-footer,
-.feed-modal .popout-modal-footer,
-button#cancel-feed,
-button#cancel-feed-form {
-    background: transparent !important;
-    border: 2px solid var(--primary-500, #22c55e) !important;
-}
-
-button#save-feed,
-button#save-feed-record {
-    background: var(--gradient-primary) !important;
-    color: white !important;
-}
-
-/* ===== MOBILE RESPONSIVENESS FOR ALL MODALS ===== */
-@media (max-width: 768px) {
-    .popout-modal-footer,
-    .modal-footer,
-    .report-footer,
-    [class*="modal-footer"],
-    [class*="dialog-footer"] {
-        flex-direction: column !important;
-        gap: 8px !important;
-        min-height: auto !important;
-    }
-    
     .popout-modal-footer button,
-    .modal-footer button,
-    .report-footer button,
-    [class*="modal-footer"] button,
     .popout-modal-footer .btn,
-    .modal-footer .btn,
-    .report-footer .btn {
+    .popout-modal-footer .btn-primary,
+    .popout-modal-footer .btn-outline,
+    .popout-modal-footer .btn-danger {
         width: 100% !important;
         min-width: 100% !important;
         white-space: normal !important;
         word-break: break-word !important;
         padding: 14px 20px !important;
+        margin: 0 !important;
     }
     
-    /* Universal stacking order: Primary first, then outline, then danger */
+    /* Reset order for mobile */
     .popout-modal-footer .btn-primary,
-    .modal-footer .btn-primary,
-    .report-footer .btn-primary,
-    button[class*="primary"] {
+    .popout-modal-footer .btn-outline,
+    .popout-modal-footer .btn-danger {
+        order: 0 !important;
+    }
+    
+    /* Stack order for 3-button modals (Cancel, Delete, Save) */
+    .popout-modal-footer .btn-primary,
+    .popout-modal-footer button[id*="save"] {
         order: 1 !important;
     }
     
     .popout-modal-footer .btn-outline,
-    .modal-footer .btn-outline,
-    .report-footer .btn-outline,
-    button[class*="outline"] {
+    .popout-modal-footer button[id*="cancel"],
+    .popout-modal-footer button[id*="print"],
+    .popout-modal-footer button[id*="close"] {
         order: 2 !important;
     }
     
     .popout-modal-footer .btn-danger,
-    .modal-footer .btn-danger,
-    .report-footer .btn-danger,
-    button[class*="danger"] {
+    .popout-modal-footer button[id*="delete"] {
         order: 3 !important;
+    }
+    
+    /* For 2-button modals (Print + Close) */
+    .popout-modal-footer .btn-outline + .btn-primary {
+        margin-left: 0 !important;
     }
 }
 
-/* ===== FIX PRODUCTION REPORT MODAL HEADER TEXT COLOR ===== */
-#production-report-modal h3,
-.production-report-modal h3,
-#production-report-modal .modal-header h3,
-.production-report-modal .modal-header h3,
-#production-report-modal .popout-modal-header h3,
-.production-report-modal .popout-modal-header h3,
-div[id*="production-report"] h3 {
-    color: var(--text-primary, #111827) !important;
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
-    margin-bottom: 20px !important;
-    padding-bottom: 16px !important;
-    border-bottom: 2px solid var(--primary-100, #dcfce7) !important;
-    background: transparent !important;
-    text-shadow: none !important;
+/* Small mobile screens */
+@media (max-width: 480px) {
+    .popout-modal-footer button,
+    .popout-modal-footer .btn {
+        padding: 12px 16px !important;
+        font-size: 13px !important;
+    }
 }
 
-/* Also fix any other text in the modal */
-#production-report-modal p,
-#production-report-modal label,
-#production-report-modal span,
-#production-report-modal div:not(.module-header):not(.btn-primary):not(.btn-outline) {
-    color: var(--text-primary, #111827) !important;
+/* Animation */
+.popout-modal-footer button {
+    animation: fadeInUp 0.3s ease-out;
 }
 
-/* Override any module header styles that might be leaking in */
-#production-report-modal .module-header,
-#production-report-modal .module-title,
-#production-report-modal .module-subtitle {
-    all: revert !important;
-    color: var(--text-primary, #111827) !important;
-    background: transparent !important;
-}
-
-/* Ensure the modal content has proper text color */
-#production-report-modal .popout-modal-content,
-.production-report-modal .popout-modal-content {
-    background: var(--card-bg, white) !important;
-    color: var(--text-primary, #111827) !important;
-}
-
-/* Keep button text colors as they should be */
-#production-report-modal .btn-primary,
-#production-report-modal .btn-outline {
-    color: currentColor !important;
-}
-
-#production-report-modal .btn-primary {
-    color: white !important;
-}
-
-#production-report-modal .btn-outline {
-    color: var(--text-primary, #111827) !important;
-}
-
-#production-report-modal .btn-outline:hover {
-    color: white !important;
-}
-
-/* ===== RESTORE PRODUCTION REPORT MODAL GREEN HEADER ===== */
-#production-report-modal .module-header,
-#production-report-modal .popout-modal-header,
-.production-report-modal .module-header,
-.production-report-modal .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    margin: -24px -24px 20px -24px !important; /* Extend to modal edges */
-    padding: 20px 24px !important;
-    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0 !important;
-    color: white !important;
-}
-
-#production-report-modal .module-header h3,
-#production-report-modal .popout-modal-header h3,
-#production-report-modal .module-header .module-title,
-#production-report-modal .popout-modal-header h3,
-.production-report-modal .module-header h3,
-.production-report-modal .popout-modal-header h3 {
-    color: white !important;
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-bottom: none !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-}
-
-/* Remove any bottom border that might have been added */
-#production-report-modal .module-header,
-#production-report-modal .popout-modal-header {
-    border-bottom: none !important;
-}
-
-/* ===== RESTORE GRADIENT GREEN HEADERS FOR ALL POPOUT MODALS ===== */
-.popout-modal .module-header,
-.popout-modal .popout-modal-header,
-.modal-content .module-header,
-.modal-content .popout-modal-header,
-.report-modal .module-header,
-.report-modal .popout-modal-header,
-[class*="modal"] .module-header,
-[class*="modal"] .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    margin: -24px -24px 20px -24px !important; /* Extend to edges of modal */
-    padding: 20px 24px !important;
-    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0 !important;
-    color: white !important;
-    border-bottom: none !important;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
-}
-
-/* Header text - always white */
-.popout-modal .module-header h1,
-.popout-modal .module-header h2,
-.popout-modal .module-header h3,
-.popout-modal .module-header h4,
-.popout-modal .module-header .module-title,
-.popout-modal .module-header .module-subtitle,
-.popout-modal .popout-modal-header h1,
-.popout-modal .popout-modal-header h2,
-.popout-modal .popout-modal-header h3,
-.popout-modal .popout-modal-header h4,
-.modal-content .module-header h1,
-.modal-content .module-header h2,
-.modal-content .module-header h3,
-.modal-content .module-header .module-title,
-.modal-content .popout-modal-header h1,
-.modal-content .popout-modal-header h2,
-.modal-content .popout-modal-header h3,
-.report-modal .module-header h1,
-.report-modal .module-header h2,
-.report-modal .module-header h3,
-.report-modal .popout-modal-header h1,
-.report-modal .popout-modal-header h2,
-.report-modal .popout-modal-header h3 {
-    color: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-bottom: none !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-}
-
-/* Module subtitle in header */
-.popout-modal .module-header .module-subtitle,
-.popout-modal .popout-modal-header p,
-.modal-content .module-header .module-subtitle,
-.modal-content .popout-modal-header p,
-.report-modal .module-header .module-subtitle,
-.report-modal .popout-modal-header p {
-    color: rgba(255, 255, 255, 0.9) !important;
-    margin-top: 4px !important;
-}
-
-/* Modal content background */
-.popout-modal .popout-modal-content,
-.modal-content,
-.report-modal,
-[class*="modal"] {
-    background: var(--card-bg, white) !important;
-    border-radius: var(--radius-xl, 16px) !important;
-    overflow: hidden !important; /* Keeps the header corners rounded */
-    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1)) !important;
-}
-
-/* Modal body text - dark */
-.popout-modal .popout-modal-body,
-.modal-content .modal-body,
-.report-modal .report-content,
-[class*="modal"] .modal-body {
-    color: var(--text-primary, #111827) !important;
-    padding: 0 24px 24px 24px !important;
-}
-
-/* ===== SPECIFIC MODULE MODALS ===== */
-
-/* Production Report Modal */
-#production-report-modal .popout-modal-header,
-.production-report-modal .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-}
-
-#production-report-modal .popout-modal-header h3 {
-    color: white !important;
-}
-
-/* Sales Modal */
-#sales-modal .popout-modal-header,
-.sales-modal .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-}
-
-/* Inventory Modal */
-#inventory-modal .popout-modal-header,
-.inventory-modal .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-}
-
-/* Orders Modal */
-#order-modal .popout-modal-header,
-.orders-modal .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-}
-
-/* Feed Modal */
-#feed-modal .popout-modal-header,
-.feed-modal .popout-modal-header {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-}
-
-/* Ensure footer border matches the green theme */
-.popout-modal .popout-modal-footer,
-.modal-content .modal-footer,
-.report-modal .report-footer {
-    border-top: 2px solid var(--primary-100, #dcfce7) !important;
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 }
         `;
