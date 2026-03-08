@@ -947,10 +947,10 @@ const ProductionModule = {
                             </div>
                         </form>
                     </div>
-                    <div class="popout-modal-footer" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color, #e5e7eb);">
-                        <button type="button" class="btn-outline" id="cancel-production" style="order: 1;">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-production" style="display: none; order: 2;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-production" style="order: 3;">Save Record</button>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn-outline" id="cancel-production">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-production" style="display: none;">Delete</button>
+                        <button type="button" class="btn-primary" id="save-production">Save Record</button>
                     </div>
                 </div>
             </div>
