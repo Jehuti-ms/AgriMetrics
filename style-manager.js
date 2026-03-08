@@ -1053,152 +1053,50 @@ button[type="submit"],
       color: #cbd5e1 !important;
     }
 
+/*============== MODAL FIX ================= */
 
-/* ===== CRITICAL MODAL CONTAINER FIX ===== */
-.popout-modal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 9999 !important;
-    padding: 20px !important;
-    overflow-y: auto !important;
-}
-
-.popout-modal.hidden {
-    display: none !important;
-}
-
+/* ===== MODAL CONTAINER SIZING - ENSURES BUTTONS HAVE ENOUGH SPACE ===== */
 .popout-modal-content {
     background: var(--card-bg, white) !important;
     border-radius: var(--radius-xl, 16px) !important;
     box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1)) !important;
     width: 100% !important;
-    max-width: 600px !important;
+    max-width: 600px !important; /* Wide enough for buttons side by side */
     max-height: 90vh !important;
-    overflow-y: auto !important;
-    position: relative !important;
-    animation: modalFadeIn 0.3s ease-out !important;
-    margin: auto !important;
-}
-
-/* ===== MODAL HEADER FIX ===== */
-.popout-modal-header {
-    padding: 24px 24px 16px 24px !important;
-    border-bottom: 2px solid var(--primary-100, #dcfce7) !important;
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0 !important;
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 10 !important;
-}
-
-.popout-modal-header h3,
-.popout-modal-title {
-    color: white !important;
-    font-size: 1.25rem !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
-}
-
-.popout-modal-close {
-    position: absolute !important;
-    top: 20px !important;
-    right: 20px !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-    border: none !important;
-    color: white !important;
-    font-size: 24px !important;
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 50% !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    transition: all 0.2s !important;
-    line-height: 1 !important;
-    padding: 0 !important;
+    flex-direction: column !important;
+    margin: auto !important;
+    overflow: hidden !important; /* Prevents content from spilling out */
 }
 
-.popout-modal-close:hover {
-    background: rgba(255, 255, 255, 0.3) !important;
-    transform: scale(1.1) !important;
-}
-
-/* ===== MODAL BODY FIX ===== */
 .popout-modal-body {
-    padding: 24px !important;
+    flex: 1 !important;
     overflow-y: auto !important;
-    max-height: calc(90vh - 180px) !important;
-    background: var(--card-bg, white) !important;
+    padding: 24px !important;
 }
 
-/* ===== CRITICAL MODAL FOOTER FIX - THIS IS WHAT YOU NEED ===== */
+/* ===== MODAL FOOTER FIX - SIDE BY SIDE ON DESKTOP, STACK ON MOBILE ===== */
 .popout-modal-footer {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 12px !important;
-    justify-content: space-between !important; /* THIS PUSHES CANCEL LEFT, SAVE RIGHT */
+    justify-content: flex-end !important;
     align-items: center !important;
     padding: 20px 24px !important;
     border-top: 2px solid var(--primary-100, #dcfce7) !important;
     background: var(--card-bg, white) !important;
     border-radius: 0 0 var(--radius-xl, 16px) var(--radius-xl, 16px) !important;
-    position: sticky !important;
-    bottom: 0 !important;
     width: 100% !important;
     min-height: 80px !important;
     box-sizing: border-box !important;
+    flex-shrink: 0 !important; /* Prevents footer from shrinking */
 }
 
-/* Left-aligned buttons (Cancel, Delete) */
+/* Button styling */
 .popout-modal-footer .btn-outline,
+.popout-modal-footer .btn-primary,
 .popout-modal-footer .btn-danger,
-.popout-modal-footer button[id*="cancel"],
-.popout-modal-footer button[id*="delete"],
-#cancel-production,
-#cancel-mortality,
-#cancel-sale,
-#cancel-order-form,
-#cancel-customer-form,
-#cancel-feed-form,
-#delete-production,
-#delete-mortality,
-#delete-sale {
-    margin-right: auto !important; /* Pushes them to the left */
-}
-
-/* Right-aligned buttons (Save, Submit) */
-.popout-modal-footer .btn-primary,
-.popout-modal-footer button[id*="save"],
-.popout-modal-footer button[type="submit"],
-#save-production,
-#save-mortality,
-#save-sale,
-#order-submit-btn,
-#feed-submit-btn {
-    margin-left: auto !important; /* Pushes them to the right */
-}
-
-/* When both cancel and delete are present, group them left */
-.popout-modal-footer .btn-outline + .btn-danger {
-    margin-left: 0 !important;
-    margin-right: auto !important;
-}
-
-/* Individual button styling */
-.popout-modal-footer button,
-.popout-modal-footer .btn,
-.popout-modal-footer .btn-primary,
-.popout-modal-footer .btn-outline,
-.popout-modal-footer .btn-danger {
+.popout-modal-footer button {
     padding: 12px 24px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
@@ -1207,147 +1105,94 @@ button[type="submit"],
     min-height: 48px !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
-    border: none !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
     white-space: nowrap !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
 }
 
-/* Primary button styling */
-.popout-modal-footer .btn-primary {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    color: white !important;
-}
-
-/* Outline button styling */
-.popout-modal-footer .btn-outline {
-    background: transparent !important;
-    color: var(--text-primary, #111827) !important;
-    border: 2px solid #22c55e !important;
-}
-
-/* Danger button styling */
-.popout-modal-footer .btn-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-    color: white !important;
-}
-
-/* Hover effects */
-.popout-modal-footer .btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4) !important;
-}
-
-.popout-modal-footer .btn-outline:hover {
-    background: #22c55e !important;
-    color: white !important;
-    transform: translateY(-2px) !important;
-}
-
-.popout-modal-footer .btn-danger:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4) !important;
-}
-
-/* ===== REPORT MODAL FOOTER (Print + Close) ===== */
-#production-report-modal .popout-modal-footer,
-#inventory-report-modal .popout-modal-footer,
-#low-stock-report-modal .popout-modal-footer,
-#stock-check-modal .popout-modal-footer,
-#health-report-modal .popout-modal-footer,
-#trend-analysis-modal .popout-modal-footer,
-#cause-analysis-modal .popout-modal-footer {
-    justify-content: flex-end !important; /* Right-align for report modals */
-}
-
-#production-report-modal .btn-outline,
-#inventory-report-modal .btn-outline,
-#low-stock-report-modal .btn-outline,
-#stock-check-modal .btn-outline,
-#health-report-modal .btn-outline,
-#trend-analysis-modal .btn-outline,
-#cause-analysis-modal .btn-outline {
-    margin-left: 0 !important;
-    margin-right: 12px !important;
-}
-
-#production-report-modal .btn-primary,
-#inventory-report-modal .btn-primary,
-#low-stock-report-modal .btn-primary,
-#stock-check-modal .btn-primary,
-#health-report-modal .btn-primary,
-#trend-analysis-modal .btn-primary,
-#cause-analysis-modal .btn-primary {
-    margin-left: 0 !important;
-}
-
-/* ===== MOBILE RESPONSIVENESS ===== */
-@media (max-width: 768px) {
-    .popout-modal-content {
-        max-width: 95% !important;
-        margin: 10px !important;
+/* DESKTOP - Side by side */
+@media (min-width: 769px) {
+    /* Push cancel/delete to left, save to right */
+    .popout-modal-footer .btn-outline,
+    .popout-modal-footer .btn-danger {
+        margin-right: auto !important;
     }
     
+    /* Report modals - both buttons on right */
+    #production-report-modal .popout-modal-footer,
+    #inventory-report-modal .popout-modal-footer,
+    #low-stock-report-modal .popout-modal-footer,
+    #stock-check-modal .popout-modal-footer,
+    #health-report-modal .popout-modal-footer,
+    #trend-analysis-modal .popout-modal-footer,
+    #cause-analysis-modal .popout-modal-footer {
+        justify-content: flex-end !important;
+    }
+    
+    #production-report-modal .popout-modal-footer .btn-outline {
+        margin-right: 12px !important;
+    }
+}
+
+/* MOBILE - Stack vertically */
+@media (max-width: 768px) {
     .popout-modal-footer {
         flex-direction: column !important;
         gap: 8px !important;
         padding: 16px !important;
+        min-height: auto !important;
     }
     
-    .popout-modal-footer button,
-    .popout-modal-footer .btn,
-    .popout-modal-footer .btn-primary,
     .popout-modal-footer .btn-outline,
-    .popout-modal-footer .btn-danger {
+    .popout-modal-footer .btn-primary,
+    .popout-modal-footer .btn-danger,
+    .popout-modal-footer button {
         width: 100% !important;
         min-width: 100% !important;
         margin: 0 !important;
-        white-space: normal !important;
-        word-break: break-word !important;
-    }
-    
-    /* Remove auto margins on mobile */
-    .popout-modal-footer .btn-outline,
-    .popout-modal-footer .btn-danger,
-    .popout-modal-footer .btn-primary,
-    .popout-modal-footer button[id*="cancel"],
-    .popout-modal-footer button[id*="delete"],
-    .popout-modal-footer button[id*="save"] {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
     }
     
     /* Stack order: Save on top, Cancel middle, Delete bottom */
-    .popout-modal-footer .btn-primary,
-    .popout-modal-footer button[id*="save"] {
+    .popout-modal-footer .btn-primary {
         order: 1 !important;
     }
     
-    .popout-modal-footer .btn-outline,
-    .popout-modal-footer button[id*="cancel"] {
+    .popout-modal-footer .btn-outline {
         order: 2 !important;
     }
     
-    .popout-modal-footer .btn-danger,
-    .popout-modal-footer button[id*="delete"] {
+    .popout-modal-footer .btn-danger {
         order: 3 !important;
     }
-}
+    
+    /* Report modals on mobile: Print on top, Close below */
+    #production-report-modal .popout-modal-footer .btn-outline,
+    #inventory-report-modal .popout-modal-footer .btn-outline,
+    #low-stock-report-modal .popout-modal-footer .btn-outline,
+    #stock-check-modal .popout-modal-footer .btn-outline,
+    #health-report-modal .popout-modal-footer .btn-outline,
+    #trend-analysis-modal .popout-modal-footer .btn-outline,
+    #cause-analysis-modal .popout-modal-footer .btn-outline {
+        order: 1 !important;
+    }
+    
+    #production-report-modal .popout-modal-footer .btn-primary,
+    #inventory-report-modal .popout-modal-footer .btn-primary,
+    #low-stock-report-modal .popout-modal-footer .btn-primary,
+    #stock-check-modal .popout-modal-footer .btn-primary,
+    #health-report-modal .popout-modal-footer .btn-primary,
+    #trend-analysis-modal .popout-modal-footer .btn-primary,
+    #cause-analysis-modal .popout-modal-footer .btn-primary {
+        order: 2 !important;
+    }
 
-/* Animation */
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+
+
+
+
 }
         `;
         document.head.appendChild(style);
