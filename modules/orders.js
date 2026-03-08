@@ -883,6 +883,9 @@ const OrdersModule = {
    setupEventListeners() {
     console.log('🔧 Setting up Orders module event listeners...');
     
+    // Store reference to this module for use in handlers
+    const self = this;
+    
     // Remove existing listeners
     if (this._clickHandler) {
         document.removeEventListener('click', this._clickHandler);
@@ -921,7 +924,7 @@ const OrdersModule = {
                 console.log('✅ CAPTURE: Complete order', orderId);
                 if (orderId) {
                     if (confirm('Complete this order? This will create a sale and add to income.')) {
-                        this.completeOrder(orderId);
+                        self.completeOrder(orderId);
                     }
                 }
                 return;
@@ -932,7 +935,7 @@ const OrdersModule = {
                 const customerId = customerDelete.getAttribute('data-id');
                 console.log('🗑️ CAPTURE: Delete customer', customerId);
                 if (customerId) {
-                    this.deleteCustomer(parseInt(customerId));
+                    self.deleteCustomer(parseInt(customerId));
                 }
                 return;
             }
@@ -942,7 +945,7 @@ const OrdersModule = {
                 const customerId = customerEdit.getAttribute('data-id');
                 console.log('👤 CAPTURE: Edit customer', customerId);
                 if (customerId) {
-                    this.editCustomer(parseInt(customerId));
+                    self.editCustomer(parseInt(customerId));
                 }
                 return;
             }
@@ -953,7 +956,7 @@ const OrdersModule = {
                 console.log('🗑️ CAPTURE: Delete order', orderId);
                 if (orderId) {
                     if (confirm('Are you sure you want to delete this order?')) {
-                        this.deleteOrder(parseInt(orderId));
+                        self.deleteOrder(parseInt(orderId));
                     }
                 }
                 return;
@@ -964,12 +967,124 @@ const OrdersModule = {
                 const orderId = orderEdit.getAttribute('data-id');
                 console.log('✏️ CAPTURE: Edit order', orderId);
                 if (orderId) {
-                    this.editOrder(parseInt(orderId));
+                    self.editOrder(parseInt(orderId));
                 }
                 return;
             }
         }
     };
+    
+    // ===== BUBBLE PHASE HANDLER =====
+    this._clickHandler = (e) => {
+        const target = e.target;
+        
+        // ===== BUTTON HANDLERS (by ID) =====
+        const button = target.closest('button');
+        if (!button) return;
+        
+        const buttonId = button.id;
+        if (!buttonId) return;
+        
+        console.log(`Button clicked: ${buttonId}`);
+        
+        switch(buttonId) {
+            case 'create-order-btn':
+            case 'show-order-form':
+                self.showOrderForm();
+                break;
+            case 'manage-customers-btn':
+                self.showCustomersSection();
+                break;
+            case 'view-orders-btn':
+                self.showAllOrders();
+                break;
+            case 'add-customer-btn':
+            case 'show-customer-form':
+                self.showCustomerForm();
+                break;
+            case 'cancel-order-form':
+                self.hideOrderForm();
+                break;
+            case 'cancel-customer-form':
+                self.hideCustomerForm();
+                break;
+            case 'add-item-btn':
+                self.addOrderItem();
+                break;
+            case 'export-orders-btn':
+                self.exportOrders();
+                break;
+            case 'quick-add-customer':
+            case 'quick-add-customer-empty':
+                self.showCustomerForm();
+                // Ensure we scroll to the form and focus
+                setTimeout(() => {
+                    self.ensureCustomerFormVisible();
+                }, 100);
+                break;
+        }
+    };
+    
+    // Attach capture phase handler
+    document.addEventListener('click', this._captureHandler, true);
+    
+    // Attach bubble phase handler
+    document.addEventListener('click', this._clickHandler);
+    
+    // Form submissions
+    const orderForm = document.getElementById('order-form');
+    if (orderForm) {
+        // Remove old listener to avoid duplicates
+        orderForm.removeEventListener('submit', this._orderSubmitHandler);
+        this._orderSubmitHandler = (e) => self.handleOrderSubmit(e);
+        orderForm.addEventListener('submit', this._orderSubmitHandler);
+    }
+    
+    const customerForm = document.getElementById('customer-form');
+    if (customerForm) {
+        customerForm.removeEventListener('submit', this._customerSubmitHandler);
+        this._customerSubmitHandler = (e) => self.handleCustomerSubmit(e);
+        customerForm.addEventListener('submit', this._customerSubmitHandler);
+    }
+    
+    // Customer select change handler for "Add New" option
+    const customerSelect = document.getElementById('order-customer');
+    if (customerSelect) {
+        // Remove existing listener to avoid duplicates
+        if (this._customerSelectHandler) {
+            customerSelect.removeEventListener('change', this._customerSelectHandler);
+        }
+        
+        // Create new handler
+        this._customerSelectHandler = (e) => {
+            if (e.target.value === 'add-new') {
+                console.log('➕ Add new customer selected from dropdown');
+                self.showCustomerForm();
+                // Reset the select to default
+                setTimeout(() => {
+                    e.target.value = '';
+                }, 100);
+            }
+        };
+        
+        // Add the listener
+        customerSelect.addEventListener('change', this._customerSelectHandler);
+    }
+    
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    const orderDate = document.getElementById('order-date');
+    if (orderDate) orderDate.value = today;
+    
+    // Calculate total when items change
+    this.setupTotalCalculation();
+    
+    // Hover effects
+    this.setupHoverEffects();
+    
+    this._orderListenersAttached = true;
+    console.log('✅ Orders module event listeners setup complete');
+},
     
 // ===== BUBBLE PHASE HANDLER =====
 this._clickHandler = (e) => {
