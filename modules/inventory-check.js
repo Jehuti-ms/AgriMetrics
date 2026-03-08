@@ -625,7 +625,8 @@ const InventoryCheckModule = {
                     </div>
                     <div class="popout-modal-footer">
                         <button class="btn-outline" id="print-inventory-report">🖨️ Print</button>
-                        <button class="btn-primary" id="close-inventory-report-btn">Close</button>
+                        <button class="btn-outline" id="close-inventory-report-btn">Close Report</button>
+                       <!-- <button class="btn-primary" id="close-inventory-report-btn">Close</button> -->
                     </div>
                 </div>
             </div>
