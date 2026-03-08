@@ -1224,11 +1224,10 @@ button[type="submit"],
     padding: 8px 0 !important;
 }
 
-/* ===== PRODUCTION REPORT FOOTER ===== */
-.production-report-modal .modal-footer,
-.report-modal .report-footer,
+/* ===== PRODUCTION REPORT MODAL FOOTER FIX ===== */
+#production-report-modal .popout-modal-footer,
 .production-report-modal .popout-modal-footer,
-.report-modal .popout-modal-footer {
+div[id*="production-report"] .popout-modal-footer {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 12px !important;
@@ -1241,111 +1240,75 @@ button[type="submit"],
     min-height: 80px !important;
 }
 
-/* Buttons in production report */
-.production-report-modal .btn,
-.report-modal .btn,
-.production-report-modal button,
-.report-modal button {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 12px 28px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    border-radius: var(--radius-lg, 12px) !important;
-    min-width: 120px !important;
-    min-height: 48px !important;
-    margin: 0 !important;
-    cursor: pointer !important;
-    transition: var(--transition-normal, all 0.3s) !important;
-    line-height: 1 !important;
-    white-space: nowrap !important;
-    border: none !important;
-}
-
-/* Primary button in production report */
-.production-report-modal .btn-primary,
-.report-modal .btn-primary {
-    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
-    color: white !important;
-    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
-}
-
-/* Outline button in production report */
-.production-report-modal .btn-outline,
-.report-modal .btn-outline {
+/* Style the print button (outline) */
+#production-report-modal .btn-outline,
+.production-report-modal .btn-outline {
     background: transparent !important;
     color: var(--text-primary, #111827) !important;
     border: 2px solid var(--primary-500, #22c55e) !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-lg, 12px) !important;
+    min-width: 100px !important;
+    min-height: 48px !important;
+    cursor: pointer !important;
+    transition: var(--transition-normal, all 0.3s) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
 }
 
-/* Danger button in production report */
-.production-report-modal .btn-danger,
-.report-modal .btn-danger {
-    background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626)) !important;
+/* Style the close button (primary) */
+#production-report-modal .btn-primary,
+.production-report-modal .btn-primary {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
     color: white !important;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-lg, 12px) !important;
+    min-width: 100px !important;
+    min-height: 48px !important;
+    cursor: pointer !important;
+    transition: var(--transition-normal, all 0.3s) !important;
+    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
 }
 
-/* Hover states */
-.production-report-modal .btn-primary:hover,
-.report-modal .btn-primary:hover {
+/* Hover effects */
+#production-report-modal .btn-outline:hover,
+.production-report-modal .btn-outline:hover {
+    background: var(--primary-500, #22c55e) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)) !important;
+}
+
+#production-report-modal .btn-primary:hover,
+.production-report-modal .btn-primary:hover {
     transform: translateY(-2px) !important;
     box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
 }
 
-.production-report-modal .btn-outline:hover,
-.report-modal .btn-outline:hover {
-    background: var(--primary-500, #22c55e) !important;
-    color: white !important;
-    transform: translateY(-2px) !important;
-}
-
-.production-report-modal .btn-danger:hover,
-.report-modal .btn-danger:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
-}
-
-/* ===== PRODUCTION REPORT SPECIFIC BUTTONS ===== */
-#print-report-btn,
-#export-report-btn,
-#email-report-btn,
-#pdf-report-btn,
-#close-report-btn,
-#generate-report-btn,
-#view-production-btn {
-    min-width: 120px !important;
-}
-
-/* Mobile responsiveness for production report */
+/* Mobile responsiveness */
 @media (max-width: 768px) {
-    .production-report-modal,
-    .report-modal {
-        width: 95% !important;
-        padding: 16px !important;
-    }
-    
-    .production-report-modal .modal-footer,
-    .report-modal .report-footer,
-    .production-report-modal .popout-modal-footer,
-    .report-modal .popout-modal-footer {
+    #production-report-modal .popout-modal-footer,
+    .production-report-modal .popout-modal-footer {
         flex-direction: column !important;
         gap: 8px !important;
         min-height: auto !important;
     }
     
-    .production-report-modal .btn,
-    .report-modal .btn,
-    .production-report-modal button,
-    .report-modal button,
-    #print-report-btn,
-    #export-report-btn,
-    #email-report-btn,
-    #pdf-report-btn,
-    #close-report-btn,
-    #generate-report-btn,
-    #view-production-btn {
+    #production-report-modal .btn-outline,
+    #production-report-modal .btn-primary,
+    .production-report-modal .btn-outline,
+    .production-report-modal .btn-primary {
         width: 100% !important;
         min-width: 100% !important;
         white-space: normal !important;
@@ -1353,53 +1316,34 @@ button[type="submit"],
         padding: 14px 20px !important;
     }
     
-    /* Stack order: Primary actions first */
-    .production-report-modal .btn-primary,
-    .report-modal .btn-primary,
-    #generate-report-btn,
-    #view-production-btn {
+    /* Stack order: Print on top, Close below */
+    #production-report-modal .btn-outline,
+    .production-report-modal .btn-outline {
         order: 1 !important;
     }
     
-    .production-report-modal .btn-outline,
-    .report-modal .btn-outline,
-    #print-report-btn,
-    #export-report-btn,
-    #email-report-btn,
-    #pdf-report-btn {
+    #production-report-modal .btn-primary,
+    .production-report-modal .btn-primary {
         order: 2 !important;
     }
-    
-    .production-report-modal .btn-danger,
-    .report-modal .btn-danger,
-    #close-report-btn {
-        order: 3 !important;
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+    #production-report-modal .btn-outline,
+    #production-report-modal .btn-primary,
+    .production-report-modal .btn-outline,
+    .production-report-modal .btn-primary {
+        padding: 12px 16px !important;
+        font-size: 13px !important;
     }
 }
 
-/* Animation for production report */
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Animation for modal appearance */
+#production-report-modal,
+.production-report-modal {
+    animation: modalFadeIn 0.3s ease-out !important;
 }
-
-.production-report-modal,
-.report-modal {
-    animation: slideInUp 0.3s ease-out !important;
-}
-
-/* Print-specific styles */
-@media print {
-    .production-report-modal .modal-footer,
-    .report-modal .report-footer {
-        display: none !important;
-    }
 }
         `;
         document.head.appendChild(style);
