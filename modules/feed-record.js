@@ -216,26 +216,7 @@ const FeedRecordModule = {
                     <p class="module-subtitle">Track feed usage and inventory</p>
                 </div>
 
-                <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="record-feed-btn">
-                        <div style="font-size: 32px;">📝</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Feed</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log feed usage</span>
-                    </button>
-                    <button class="quick-action-btn" id="add-stock-btn">
-                        <div style="font-size: 32px;">📦</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Stock</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add feed to inventory</span>
-                    </button>
-                    <button class="quick-action-btn" id="adjust-birds-btn">
-                        <div style="font-size: 32px;">🐔</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Adjust Birds</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update bird count</span>
-                    </button>
-                </div>
-
-                <!-- Stats -->
+               <!-- Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">🌾</div>
@@ -252,6 +233,25 @@ const FeedRecordModule = {
                         <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalInventoryValue)}</div>
                         <div style="font-size: 14px; color: var(--text-secondary);">Inventory Value</div>
                     </div>
+                </div>
+
+                 <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="record-feed-btn">
+                        <div style="font-size: 32px;">📝</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Feed</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log feed usage</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-stock-btn">
+                        <div style="font-size: 32px;">📦</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Stock</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add feed to inventory</span>
+                    </button>
+                    <button class="quick-action-btn" id="adjust-birds-btn">
+                        <div style="font-size: 32px;">🐔</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Adjust Birds</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update bird count</span>
+                    </button>
                 </div>
 
                 <!-- Inventory Overview -->
