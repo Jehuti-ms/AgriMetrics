@@ -368,6 +368,147 @@ const StyleManager = {
                 transform: translateY(-2px) !important;
             }
 
+            /* ===== UNIFIED BUTTON CONTAINER STYLES FOR ALL MODULES ===== */
+.form-actions,
+.module-form-actions,
+.quick-action-buttons,
+div[class*="form-actions"],
+div[class*="button-container"],
+div[class*="btn-container"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-top: 20px !important;
+    width: 100% !important;
+}
+
+/* Primary buttons (Save, Create, Add, Update) */
+.form-actions .btn-primary,
+.module-form-actions .btn-primary,
+button[type="submit"],
+#save-production-btn,
+#save-btn,
+#create-btn,
+#add-btn,
+#update-btn,
+.btn-primary[type="submit"] {
+    flex: 1 1 auto !important;
+    min-width: 140px !important;
+    order: 1 !important;
+    background: var(--gradient-primary) !important;
+}
+
+/* Cancel/Secondary buttons */
+.form-actions .btn-outline,
+.module-form-actions .btn-outline,
+#cancel-btn,
+#cancel-production-btn,
+#cancel-order-form,
+#cancel-customer-form,
+#cancel-feed-form,
+#cancel-edit-btn,
+.btn-outline[type="button"] {
+    flex: 0 1 auto !important;
+    min-width: 100px !important;
+    order: 2 !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .form-actions,
+    .module-form-actions,
+    .quick-action-buttons,
+    div[class*="form-actions"],
+    div[class*="button-container"],
+    div[class*="btn-container"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    .form-actions .btn-primary,
+    .module-form-actions .btn-primary,
+    button[type="submit"],
+    .form-actions .btn-outline,
+    .module-form-actions .btn-outline,
+    #save-production-btn, #cancel-production-btn,
+    #save-btn, #cancel-btn,
+    #create-btn, #cancel-order-form,
+    #add-btn, #cancel-customer-form,
+    #update-btn, #cancel-feed-form,
+    #cancel-edit-btn {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure proper stacking order */
+    .form-actions .btn-primary,
+    button[type="submit"],
+    #save-production-btn, #save-btn,
+    #create-btn, #add-btn, #update-btn {
+        order: 1 !important;
+    }
+    
+    .form-actions .btn-outline,
+    #cancel-production-btn, #cancel-btn,
+    #cancel-order-form, #cancel-customer-form,
+    #cancel-feed-form, #cancel-edit-btn {
+        order: 2 !important;
+    }
+}
+
+/* Specific module overrides */
+#order-form .form-actions,
+#customer-form .form-actions,
+#feed-record-form .form-actions,
+#production-form .form-actions,
+#inventory-form .form-actions,
+#sales-form .form-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+    margin-top: 20px !important;
+}
+
+/* Ensure buttons are properly sized */
+.btn-primary, .btn-outline {
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-lg) !important;
+    transition: var(--transition-normal) !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+}
+
+/* Small screen adjustments */
+@media (max-width: 480px) {
+    .btn-primary, .btn-outline {
+        padding: 10px 16px !important;
+        font-size: 13px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+}
+
+/* Hover effects */
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-primary-hover) !important;
+}
+
+.btn-outline:hover {
+    background: var(--primary-500) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+}
+
             /* Modern Stats Grid */
             .stats-grid {
                 display: grid;
