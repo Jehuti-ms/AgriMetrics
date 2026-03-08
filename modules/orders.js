@@ -659,10 +659,10 @@ const OrdersModule = {
                             </div>
                             
                             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                                <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
-                                <button type="submit" class="btn-primary" id="order-submit-btn" ${this.customers.length === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                               <button type="submit" class="btn-primary" id="order-submit-btn" ${this.customers.length === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
                                     Create Order
                                 </button>
+                                 <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
                             </div>
                             
                             ${this.customers.length === 0 ? `
