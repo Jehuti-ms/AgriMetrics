@@ -1585,14 +1585,29 @@ broadcastOrderAsSale(order) {
     
     // Reset order form
 resetOrderForm() {
-    document.getElementById('order-form').reset();
-    document.getElementById('editing-order-id').value = '';
+    console.log('🔄 Resetting order form');
     
-    // Clear items except one
-    const itemsContainer = document.getElementById('order-items');
-    if (itemsContainer) {
-        itemsContainer.innerHTML = '';
-        this.addOrderItem(); // Add one empty item row
+    try {
+        // Reset form fields
+        const form = document.getElementById('order-form');
+        if (form) form.reset();
+        
+        // Clear items
+        const itemsContainer = document.getElementById('order-items');
+        if (itemsContainer) {
+            itemsContainer.innerHTML = '';
+        }
+        
+        // Reset total
+        const totalElement = document.getElementById('order-total');
+        if (totalElement) {
+            totalElement.textContent = '$0.00';
+        }
+        
+        console.log('✅ Order form reset');
+        
+    } catch (error) {
+        console.error('❌ Error resetting order form:', error);
     }
 },
 
@@ -1603,10 +1618,66 @@ hideOrderForm() {
 
 // Show order form
 showOrderForm() {
-    this.resetOrderForm();
-    document.getElementById('order-form-container')?.classList.remove('hidden');
-    document.getElementById('order-form-title').textContent = 'Create New Order';
-    document.getElementById('order-submit-btn').textContent = 'Create Order';
+    console.log('📝 Showing order form');
+    
+    try {
+        // Reset form first
+        this.resetOrderForm();
+        
+        // Show the form container
+        const formContainer = document.getElementById('order-form-container');
+        if (formContainer) {
+            formContainer.classList.remove('hidden');
+        } else {
+            console.error('❌ Order form container not found');
+            return;
+        }
+        
+        // Update form title - SAFELY
+        const titleElement = document.getElementById('order-form-title');
+        if (titleElement) {
+            titleElement.textContent = 'Create New Order';
+        } else {
+            console.warn('⚠️ Order form title element not found');
+        }
+        
+        // Update submit button - SAFELY
+        const submitBtn = document.getElementById('order-submit-btn');
+        if (submitBtn) {
+            submitBtn.textContent = 'Create Order';
+        } else {
+            console.warn('⚠️ Order submit button not found');
+        }
+        
+        // Set today's date if date input exists
+        const dateInput = document.getElementById('order-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        console.log('✅ Order form shown');
+        
+    } catch (error) {
+        console.error('❌ Error showing order form:', error);
+    }
+},
+
+   updateOrderTotal() {
+    const itemsContainer = document.getElementById('order-items');
+    if (!itemsContainer) return;
+    
+    const itemTotals = itemsContainer.querySelectorAll('.item-total');
+    let total = 0;
+    
+    itemTotals.forEach(span => {
+        const text = span.textContent.replace('$', '');
+        total += parseFloat(text) || 0;
+    });
+    
+    const totalElement = document.getElementById('order-total');
+    if (totalElement) {
+        totalElement.textContent = this.formatCurrency(total);
+    }
 },
     
     // ✅ MODIFIED: Enhanced handleCustomerSubmit with broadcasting
