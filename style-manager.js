@@ -1189,7 +1189,35 @@ button[type="submit"],
         order: 2 !important;
     }
 
+/* ===== MORTALITY CAUSE CARDS CENTERING ===== */
+.cause-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 20px !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+}
 
+.cause-item {
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 350px !important; /* Prevents cards from getting too wide */
+}
+
+/* For when there are fewer cards, center them */
+.cause-summary-grid:only-child,
+.cause-summary-grid:first-child:last-child {
+    justify-content: center !important;
+}
+
+/* If you want the cards to be centered in the container */
+#cause-summary {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
 
 
 
