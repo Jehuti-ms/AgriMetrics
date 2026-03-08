@@ -1053,6 +1053,94 @@ button[type="submit"],
       color: #cbd5e1 !important;
     }
 
+    /* Desktop styles */
+    .popout-modal-footer {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 12px !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        margin-top: 20px !important;
+        padding-top: 16px !important;
+        border-top: 1px solid var(--border-color, #e5e7eb) !important;
+    }
+    
+    /* Button base styles */
+    .popout-modal-footer .btn-outline,
+    .popout-modal-footer .btn-danger,
+    .popout-modal-footer .btn-primary {
+        padding: 10px 20px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        border-radius: var(--radius-lg, 12px) !important;
+        transition: var(--transition-normal, all 0.3s) !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        min-width: 100px !important;
+    }
+    
+    /* Mobile styles */
+    @media (max-width: 768px) {
+        .popout-modal-footer {
+            flex-direction: column !important;
+            gap: 8px !important;
+        }
+        
+        .popout-modal-footer .btn-outline,
+        .popout-modal-footer .btn-danger,
+        .popout-modal-footer .btn-primary {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            margin: 0 !important;
+        }
+        
+        /* Reorder buttons for mobile: Save on top, Cancel middle, Delete bottom */
+        .popout-modal-footer #save-production {
+            order: 1 !important;
+        }
+        
+        .popout-modal-footer #cancel-production {
+            order: 2 !important;
+        }
+        
+        .popout-modal-footer #delete-production {
+            order: 3 !important;
+        }
+    }
+    
+    /* Hover effects */
+    .popout-modal-footer .btn-outline:hover {
+        background: var(--primary-500, #22c55e) !important;
+        color: white !important;
+        transform: translateY(-2px) !important;
+        box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1)) !important;
+    }
+    
+    .popout-modal-footer .btn-danger:hover {
+        background: #dc2626 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+    }
+    
+    .popout-modal-footer .btn-primary:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
+    }
+    
+    /* When delete button is hidden */
+    .popout-modal-footer #delete-production[style*="display: none"] {
+        display: none !important;
+    }
+    
+    /* When delete button is visible */
+    .popout-modal-footer #delete-production[style*="display: block"],
+    .popout-modal-footer #delete-production[style*="display: inline-block"] {
+        display: inline-flex !important;
+    }
+
         `;
         document.head.appendChild(style);
     },
