@@ -529,31 +529,7 @@ const OrdersModule = {
                     <h1 class="module-title">Orders Management</h1>
                     <p class="module-subtitle">Manage customer orders and deliveries</p>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="create-order-btn">
-                        <div style="font-size: 32px;">➕</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">New Order</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create new order</span>
-                    </button>
-                    <button class="quick-action-btn" id="manage-customers-btn">
-                        <div style="font-size: 32px;">👥</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
-                    </button>
-                    <button class="quick-action-btn" id="view-orders-btn">
-                        <div style="font-size: 32px;">📋</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">All Orders</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all orders</span>
-                    </button>
-                    <button class="quick-action-btn" id="add-customer-btn">
-                        <div style="font-size: 32px;">👤</div>
-                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Customer</span>
-                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new customer</span>
-                    </button>
-                </div>
-
+               
                 <!-- Order Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -576,6 +552,30 @@ const OrdersModule = {
                         <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.pendingOrders}</div>
                         <div style="font-size: 14px; color: var(--text-secondary);">Pending</div>
                     </div>
+                </div>
+
+                 <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="create-order-btn">
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">New Order</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Create new order</span>
+                    </button>
+                    <button class="quick-action-btn" id="manage-customers-btn">
+                        <div style="font-size: 32px;">👥</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Customers</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Manage customers</span>
+                    </button>
+                    <button class="quick-action-btn" id="view-orders-btn">
+                        <div style="font-size: 32px;">📋</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">All Orders</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View all orders</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-customer-btn">
+                        <div style="font-size: 32px;">👤</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Customer</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new customer</span>
+                    </button>
                 </div>
 
                 <!-- Create Order Form -->
