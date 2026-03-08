@@ -1113,48 +1113,145 @@ setupEventListeners() {
 showOrderForm() {
     console.log('📝 Showing order form');
     
-    const formContainer = document.getElementById('order-form-container');
-    if (!formContainer) {
-        console.error('❌ Order form container not found');
-        return;
+    try {
+        // Hide customers section if it exists
+        const customersSection = document.getElementById('customers-section');
+        if (customersSection) {
+            customersSection.style.display = 'none';
+        }
+        
+        // Hide orders list if it exists
+        const ordersList = document.getElementById('orders-list-container');
+        if (ordersList) {
+            ordersList.style.display = 'none';
+        }
+        
+        // Show order form container
+        const orderFormContainer = document.getElementById('order-form-container');
+        if (!orderFormContainer) {
+            console.error('❌ Order form container not found - creating it');
+            this.createOrderFormContainer();
+            return;
+        }
+        orderFormContainer.style.display = 'block';
+        
+        // Set today's date
+        const dateInput = document.getElementById('order-date');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        // Reset form
+        const form = document.getElementById('order-form');
+        if (form) form.reset();
+        
+        // Clear and add first item
+        const itemsContainer = document.getElementById('order-items');
+        if (itemsContainer) {
+            itemsContainer.innerHTML = '';
+            // Make sure addOrderItem exists
+            if (typeof this.addOrderItem === 'function') {
+                this.addOrderItem();
+            } else {
+                console.error('❌ addOrderItem method not found');
+            }
+        }
+        
+        // Update active states
+        const ordersBtn = document.getElementById('view-orders-btn');
+        if (ordersBtn) ordersBtn.classList.remove('active');
+        
+        const customersBtn = document.getElementById('manage-customers-btn');
+        if (customersBtn) customersBtn.classList.remove('active');
+        
+        console.log('✅ Order form shown successfully');
+        
+    } catch (error) {
+        console.error('❌ Error in showOrderForm:', error);
+        console.log('Stack trace:', error.stack);
+    }
+},
+
+// Add this helper method to create the form if it doesn't exist
+createOrderFormContainer() {
+    console.log('🔧 Creating order form container');
+    
+    const contentArea = document.getElementById('content-area');
+    if (!contentArea) return;
+    
+    const formHTML = `
+        <div id="order-form-container" class="glass-card" style="padding: 24px; margin: 24px 0;">
+            <h3 style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
+            <form id="order-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    <div>
+                        <label class="form-label">Customer</label>
+                        <select class="form-input" id="order-customer" required>
+                            <option value="">Select Customer</option>
+                            ${this.renderCustomerOptions()}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Order Date</label>
+                        <input type="date" class="form-input" id="order-date" required>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label class="form-label">Order Items</label>
+                    <div id="order-items"></div>
+                    <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 10px;">+ Add Item</button>
+                </div>
+                
+                <div style="text-align: right; margin-bottom: 20px;">
+                    <strong style="font-size: 18px;">Total: <span id="order-total">$0.00</span></strong>
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Order</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    contentArea.insertAdjacentHTML('beforeend', formHTML);
+    this.setupOrderFormListeners();
+},
+
+renderCustomerOptions() {
+    if (!this.customers || this.customers.length === 0) {
+        return '<option value="">No customers available</option>';
+    }
+    return this.customers.map(c => 
+        `<option value="${c.id}">${c.name}</option>`
+    ).join('');
+},
+
+setupOrderFormListeners() {
+    const addItemBtn = document.getElementById('add-item-btn');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', () => this.addOrderItem());
     }
     
-    formContainer.classList.remove('hidden');
+    const cancelBtn = document.getElementById('cancel-order-form');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => this.hideOrderForm());
+    }
     
-    // Hide customer form if visible
-    const customerContainer = document.getElementById('customer-form-container');
-    if (customerContainer) customerContainer.classList.add('hidden');
-    
-    // Reset form
     const form = document.getElementById('order-form');
-    if (form) form.reset();
-    
-    // Clear editing ID
-    const editingId = document.getElementById('editing-order-id');
-    if (editingId) editingId.value = '';
-    
-    // Set today's date
-    const today = new Date().toISOString().split('T')[0];
-    const orderDate = document.getElementById('order-date');
-    if (orderDate) orderDate.value = today;
-    
-    // Reset items to one empty item
-    const itemsContainer = document.getElementById('order-items');
-    if (itemsContainer) {
-        itemsContainer.innerHTML = '';
-        this.addOrderItem(); // Add one empty item row
+    if (form) {
+        form.addEventListener('submit', (e) => this.handleOrderSubmit(e));
     }
-    
-    // Update title if it exists
-    const title = document.querySelector('#order-form-container h3');
-    if (title) title.textContent = 'Create New Order';
-    
-    // Update submit button if it exists
-    const submitBtn = document.querySelector('#order-form button[type="submit"]');
-    if (submitBtn) submitBtn.textContent = 'Create Order';
-    
-    // Scroll to form
-    formContainer.scrollIntoView({ behavior: 'smooth' });
+},
+
+hideOrderForm() {
+    console.log('❌ Hiding order form');
+    const orderForm = document.getElementById('order-form-container');
+    if (orderForm) {
+        orderForm.style.display = 'none';
+    }
+    this.showAllOrders();
 },
 
 // Fix hideOrderForm
