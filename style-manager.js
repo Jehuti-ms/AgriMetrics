@@ -1219,7 +1219,18 @@ button[type="submit"],
     width: 100% !important;
 }
 
+/* Alternative centering approach */
+#cause-summary .cause-summary-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 20px !important;
+}
 
+#cause-summary .cause-item {
+    flex: 0 1 300px !important; /* Fixed width but can shrink */
+    margin: 0 !important;
+}
 
 }
         `;
