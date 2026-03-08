@@ -1712,6 +1712,129 @@ div[id*="production-report"] h3 {
 #production-report-modal .popout-modal-header {
     border-bottom: none !important;
 }
+
+/* ===== RESTORE GRADIENT GREEN HEADERS FOR ALL POPOUT MODALS ===== */
+.popout-modal .module-header,
+.popout-modal .popout-modal-header,
+.modal-content .module-header,
+.modal-content .popout-modal-header,
+.report-modal .module-header,
+.report-modal .popout-modal-header,
+[class*="modal"] .module-header,
+[class*="modal"] .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+    margin: -24px -24px 20px -24px !important; /* Extend to edges of modal */
+    padding: 20px 24px !important;
+    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0 !important;
+    color: white !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+}
+
+/* Header text - always white */
+.popout-modal .module-header h1,
+.popout-modal .module-header h2,
+.popout-modal .module-header h3,
+.popout-modal .module-header h4,
+.popout-modal .module-header .module-title,
+.popout-modal .module-header .module-subtitle,
+.popout-modal .popout-modal-header h1,
+.popout-modal .popout-modal-header h2,
+.popout-modal .popout-modal-header h3,
+.popout-modal .popout-modal-header h4,
+.modal-content .module-header h1,
+.modal-content .module-header h2,
+.modal-content .module-header h3,
+.modal-content .module-header .module-title,
+.modal-content .popout-modal-header h1,
+.modal-content .popout-modal-header h2,
+.modal-content .popout-modal-header h3,
+.report-modal .module-header h1,
+.report-modal .module-header h2,
+.report-modal .module-header h3,
+.report-modal .popout-modal-header h1,
+.report-modal .popout-modal-header h2,
+.report-modal .popout-modal-header h3 {
+    color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+}
+
+/* Module subtitle in header */
+.popout-modal .module-header .module-subtitle,
+.popout-modal .popout-modal-header p,
+.modal-content .module-header .module-subtitle,
+.modal-content .popout-modal-header p,
+.report-modal .module-header .module-subtitle,
+.report-modal .popout-modal-header p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-top: 4px !important;
+}
+
+/* Modal content background */
+.popout-modal .popout-modal-content,
+.modal-content,
+.report-modal,
+[class*="modal"] {
+    background: var(--card-bg, white) !important;
+    border-radius: var(--radius-xl, 16px) !important;
+    overflow: hidden !important; /* Keeps the header corners rounded */
+    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1)) !important;
+}
+
+/* Modal body text - dark */
+.popout-modal .popout-modal-body,
+.modal-content .modal-body,
+.report-modal .report-content,
+[class*="modal"] .modal-body {
+    color: var(--text-primary, #111827) !important;
+    padding: 0 24px 24px 24px !important;
+}
+
+/* ===== SPECIFIC MODULE MODALS ===== */
+
+/* Production Report Modal */
+#production-report-modal .popout-modal-header,
+.production-report-modal .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+}
+
+#production-report-modal .popout-modal-header h3 {
+    color: white !important;
+}
+
+/* Sales Modal */
+#sales-modal .popout-modal-header,
+.sales-modal .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+}
+
+/* Inventory Modal */
+#inventory-modal .popout-modal-header,
+.inventory-modal .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+}
+
+/* Orders Modal */
+#order-modal .popout-modal-header,
+.orders-modal .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+}
+
+/* Feed Modal */
+#feed-modal .popout-modal-header,
+.feed-modal .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+}
+
+/* Ensure footer border matches the green theme */
+.popout-modal .popout-modal-footer,
+.modal-content .modal-footer,
+.report-modal .report-footer {
+    border-top: 2px solid var(--primary-100, #dcfce7) !important;
+}
 }
         `;
         document.head.appendChild(style);
