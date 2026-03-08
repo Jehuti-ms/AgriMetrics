@@ -971,59 +971,64 @@ const OrdersModule = {
         }
     };
     
-    // ===== BUBBLE PHASE HANDLER =====
-    this._clickHandler = (e) => {
-        const target = e.target;
-        
-        // Log for debugging
-        console.log('🔍 BUBBLE PHASE - Click detected:', {
-            target: target.tagName,
-            classes: target.className,
-            id: target.id
-        });
-        
-        // ===== BUTTON HANDLERS (by ID) =====
-        const button = target.closest('button');
-        if (!button) return;
-        
-        const buttonId = button.id;
-        if (!buttonId) return;
-        
-        console.log(`Button clicked: ${buttonId}`);
-        
-        switch(buttonId) {
-            case 'create-order-btn':
-            case 'show-order-form':
-                this.showOrderForm();
-                break;
-            case 'manage-customers-btn':
-                this.showCustomersSection();
-                break;
-            case 'view-orders-btn':
-                this.showAllOrders();
-                break;
-            case 'add-customer-btn':
-            case 'show-customer-form':
-                this.showCustomerForm();
-                break;
-            case 'cancel-order-form':
-                this.hideOrderForm();
-                break;
-            case 'cancel-customer-form':
-                this.hideCustomerForm();
-                break;
-            case 'add-item-btn':
-                this.addOrderItem();
-                break;
-            case 'export-orders-btn':
-                this.exportOrders();
-                break;
-            case 'quick-add-customer':
-            case 'quick-add-customer-empty':
-                this.showCustomerForm();
-                break;
-        }
-    };
+// ===== BUBBLE PHASE HANDLER =====
+this._clickHandler = (e) => {
+    const target = e.target;
+    
+    // Log for debugging
+    console.log('🔍 BUBBLE PHASE - Click detected:', {
+        target: target.tagName,
+        classes: target.className,
+        id: target.id
+    });
+    
+    // ===== BUTTON HANDLERS (by ID) =====
+    const button = target.closest('button');
+    if (!button) return;
+    
+    const buttonId = button.id;
+    if (!buttonId) return;
+    
+    console.log(`Button clicked: ${buttonId}`);
+    
+    switch(buttonId) {
+        case 'create-order-btn':
+        case 'show-order-form':
+            this.showOrderForm();
+            break;
+        case 'manage-customers-btn':
+            this.showCustomersSection();
+            break;
+        case 'view-orders-btn':
+            this.showAllOrders();
+            break;
+        case 'add-customer-btn':
+        case 'show-customer-form':
+            this.showCustomerForm();
+            break;
+        case 'cancel-order-form':
+            this.hideOrderForm();
+            break;
+        case 'cancel-customer-form':
+            this.hideCustomerForm();
+            break;
+        case 'add-item-btn':
+            this.addOrderItem();
+            break;
+        case 'export-orders-btn':
+            this.exportOrders();
+            break;
+        // ADD THESE TWO LINES FOR THE QUICK-ADD BUTTONS
+        case 'quick-add-customer':
+        case 'quick-add-customer-empty':
+            this.showCustomerForm();
+            // Ensure we scroll to the form and focus
+            setTimeout(() => {
+                this.ensureCustomerFormVisible();
+            }, 100);
+            break;
+    }
+};
     
     // Attach capture phase handler
     document.addEventListener('click', this._captureHandler, true);
@@ -1270,42 +1275,89 @@ const OrdersModule = {
     }
 },
     
-    showCustomerForm() {
-        console.log('👤 Showing customer form');
-        
+   showCustomerForm() {
+    console.log('👤 Showing customer form');
+    
+    try {
+        // Get the customer form container
         const customerContainer = document.getElementById('customer-form-container');
         if (!customerContainer) {
             console.error('❌ Customer form container not found');
+            this.showNotification('Customer form not found', 'error');
             return;
         }
         
-        customerContainer.classList.remove('hidden');
-        
         // Hide order form if visible
         const orderContainer = document.getElementById('order-form-container');
-        if (orderContainer) orderContainer.classList.add('hidden');
+        if (orderContainer) {
+            orderContainer.classList.add('hidden');
+        }
+        
+        // Hide customers section temporarily for better focus
+        const customersSection = document.getElementById('customers-section');
+        if (customersSection) {
+            customersSection.style.display = 'none';
+        }
+        
+        // Show the customer form
+        customerContainer.classList.remove('hidden');
+        customerContainer.style.display = 'block';
+        
+        // Force a reflow to ensure scrolling works
+        customerContainer.offsetHeight;
+        
+        // Scroll to the form with smooth behavior
+        customerContainer.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+        });
         
         // Reset form
         const form = document.getElementById('customer-form');
-        if (form) form.reset();
+        if (form) {
+            form.reset();
+            
+            // Focus on the first input after a short delay (after scroll completes)
+            setTimeout(() => {
+                const nameInput = document.getElementById('customer-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 500);
+        }
         
         // Update title
         const title = document.querySelector('#customer-form-container h3');
-        if (title) title.textContent = 'Add New Customer';
+        if (title) {
+            title.textContent = 'Add New Customer';
+        }
         
         // Update submit button
         const submitBtn = document.querySelector('#customer-form button[type="submit"]');
-        if (submitBtn) submitBtn.textContent = 'Add Customer';
-    },
-
-    hideCustomerForm() {
-        console.log('🙈 Hiding customer form');
-        const customerContainer = document.getElementById('customer-form-container');
-        if (customerContainer) {
-            customerContainer.classList.add('hidden');
+        if (submitBtn) {
+            submitBtn.textContent = 'Add Customer';
         }
-    },
-
+        
+        // Remove any cancel edit buttons
+        document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+        
+        // Add visual highlight
+        customerContainer.style.transition = 'all 0.3s ease';
+        customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+        
+        setTimeout(() => {
+            customerContainer.style.boxShadow = 'none';
+        }, 2000);
+        
+        console.log('✅ Customer form shown and scrolled into view');
+        
+    } catch (error) {
+        console.error('❌ Error in showCustomerForm:', error);
+        this.showNotification('Error showing customer form', 'error');
+    }
+},
+    
     showCustomersSection() {
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
@@ -1529,7 +1581,7 @@ const OrdersModule = {
         this.renderModule();
     },
 
-   handleCustomerSubmit(e) {
+  handleCustomerSubmit(e) {
     e.preventDefault();
     
     const customerData = {
@@ -1547,7 +1599,10 @@ const OrdersModule = {
     this.broadcastCustomerAdded(customerData);
     
     // Refresh the customer dropdown if the order form is visible
-    if (!document.getElementById('order-form-container').classList.contains('hidden')) {
+    const orderFormContainer = document.getElementById('order-form-container');
+    const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
+    
+    if (wasOrderFormVisible) {
         this.refreshCustomerDropdown();
     }
     
@@ -1558,12 +1613,57 @@ const OrdersModule = {
     this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
     
     // If order form was visible, show it again and select the new customer
-    const orderFormContainer = document.getElementById('order-form-container');
-    if (!orderFormContainer.classList.contains('hidden')) {
+    if (wasOrderFormVisible) {
+        // Small delay to ensure render is complete
         setTimeout(() => {
+            // Show order form again
+            this.showOrderForm();
+            
+            // Select the new customer
             const customerSelect = document.getElementById('order-customer');
             if (customerSelect) {
                 customerSelect.value = customerData.id;
+                
+                // Trigger change event to update any dependent fields
+                const event = new Event('change', { bubbles: true });
+                customerSelect.dispatchEvent(event);
+            }
+            
+            // Show a confirmation message
+            this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
+        }, 300);
+    }
+},
+
+    ensureCustomerFormVisible() {
+    const customerContainer = document.getElementById('customer-form-container');
+    if (!customerContainer) return;
+    
+    // Check if the form is in the viewport
+    const rect = customerContainer.getBoundingClientRect();
+    const isInViewport = rect.top >= 0 && 
+                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+    
+    if (!isInViewport) {
+        // Scroll to the form
+        customerContainer.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+        
+        // Add a slight delay and then focus
+        setTimeout(() => {
+            const nameInput = document.getElementById('customer-name');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 500);
+    } else {
+        // Already in viewport, just focus
+        setTimeout(() => {
+            const nameInput = document.getElementById('customer-name');
+            if (nameInput) {
+                nameInput.focus();
             }
         }, 100);
     }
