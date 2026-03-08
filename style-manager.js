@@ -1679,6 +1679,39 @@ div[id*="production-report"] h3 {
 #production-report-modal .btn-outline:hover {
     color: white !important;
 }
+
+/* ===== RESTORE PRODUCTION REPORT MODAL GREEN HEADER ===== */
+#production-report-modal .module-header,
+#production-report-modal .popout-modal-header,
+.production-report-modal .module-header,
+.production-report-modal .popout-modal-header {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+    margin: -24px -24px 20px -24px !important; /* Extend to modal edges */
+    padding: 20px 24px !important;
+    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0 !important;
+    color: white !important;
+}
+
+#production-report-modal .module-header h3,
+#production-report-modal .popout-modal-header h3,
+#production-report-modal .module-header .module-title,
+#production-report-modal .popout-modal-header h3,
+.production-report-modal .module-header h3,
+.production-report-modal .popout-modal-header h3 {
+    color: white !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+}
+
+/* Remove any bottom border that might have been added */
+#production-report-modal .module-header,
+#production-report-modal .popout-modal-header {
+    border-bottom: none !important;
+}
 }
         `;
         document.head.appendChild(style);
