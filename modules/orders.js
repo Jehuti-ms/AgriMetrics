@@ -557,80 +557,7 @@ renderModule() {
 
     this.setupEventListeners();
     this.calculateTotal(); // Initialize total
-}
-
-renderOrdersList() {
-    if (this.orders.length === 0) {
-        return `
-            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
-                <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
-            </div>
-        `;
-    }
-
-    return `
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            ${this.orders.map(order => {
-                const customer = this.customers.find(c => c.id === order.customerId);
-                const isPending = order.status === 'pending' || order.status === 'draft';
-                return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"
-                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'"
-                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary); font-size: 16px; margin-bottom: 4px;">
-                                Order #${order.id} - ${customer?.name || 'Unknown Customer'}
-                            </div>
-                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
-                                <span>📅 ${order.date}</span>
-                                <span>📦 ${order.items.length} item${order.items.length > 1 ? 's' : ''}</span>
-                            </div>
-                            ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.02); border-radius: 4px;">📝 ${order.notes}</div>` : ''}
-                        </div>
-                        <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
-                            <div>
-                                <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">${this.formatCurrency(order.totalAmount)}</div>
-                                <div style="font-size: 12px; padding: 4px 12px; border-radius: 20px; background: ${this.getStatusColor(order.status)}15; color: ${this.getStatusColor(order.status)}; margin-top: 4px; font-weight: 500; display: inline-block;">
-                                    ${this.formatStatus(order.status)}
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                ${isPending ? `
-                                    <button class="complete-order-btn" data-order-id="${order.id}" 
-                                            style="background: var(--success-color, #10b981); border: none; cursor: pointer; padding: 8px 12px; border-radius: 8px; color: white; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" 
-                                            title="Complete Order"
-                                            onmouseover="this.style.background='var(--success-hover, #059669)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'"
-                                            onmouseout="this.style.background='var(--success-color, #10b981)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
-                                        <span style="font-size: 16px;">✅</span> Complete
-                                    </button>
-                                ` : ''}
-                                <button class="edit-order" data-id="${order.id}" 
-                                        style="background: var(--primary-color, #10b981); border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: white; font-size: 16px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"
-                                        title="Edit Order"
-                                        onmouseover="this.style.background='var(--primary-hover, #059669)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'"
-                                        onmouseout="this.style.background='var(--primary-color, #10b981)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
-                                    ✏️
-                                </button>
-                                <button class="delete-order" data-id="${order.id}" 
-                                        style="background: #ef4444; border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: white; font-size: 16px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"
-                                        title="Delete Order"
-                                        onmouseover="this.style.background='#dc2626'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(239, 68, 68, 0.3)'"
-                                        onmouseout="this.style.background='#ef4444'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(239, 68, 68, 0.2)'">
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-
-        this.setupEventListeners();
-        this.calculateTotal(); // Initialize total
-    },
+},
 
     // Add this to your orders module
 completeOrder(orderId) {
@@ -884,7 +811,7 @@ setupCompleteOrderButtons() {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
-   renderOrdersList() {
+  renderOrdersList() {
     if (this.orders.length === 0) {
         return `
             <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
@@ -901,35 +828,48 @@ setupCompleteOrderButtons() {
                 const customer = this.customers.find(c => c.id === order.customerId);
                 const isPending = order.status === 'pending' || order.status === 'draft';
                 return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'">
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary);">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 16px; margin-bottom: 4px;">
                                 Order #${order.id} - ${customer?.name || 'Unknown Customer'}
                             </div>
-                            <div style="font-size: 14px; color: var(--text-secondary);">
-                                ${order.date} • ${order.items.length} item${order.items.length > 1 ? 's' : ''}
+                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
+                                <span>📅 ${order.date}</span>
+                                <span>📦 ${order.items.length} item${order.items.length > 1 ? 's' : ''}</span>
                             </div>
-                            ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${order.notes}</div>` : ''}
+                            ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.02); border-radius: 4px;">📝 ${order.notes}</div>` : ''}
                         </div>
-                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                        <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
                             <div>
-                                <div style="font-weight: bold; color: var(--text-primary);">${this.formatCurrency(order.totalAmount)}</div>
-                                <div style="font-size: 12px; padding: 2px 8px; border-radius: 8px; background: ${this.getStatusColor(order.status)}20; color: ${this.getStatusColor(order.status)}; margin-top: 4px;">
+                                <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">${this.formatCurrency(order.totalAmount)}</div>
+                                <div style="font-size: 12px; padding: 4px 12px; border-radius: 20px; background: ${this.getStatusColor(order.status)}15; color: ${this.getStatusColor(order.status)}; margin-top: 4px; font-weight: 500; display: inline-block;">
                                     ${this.formatStatus(order.status)}
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 4px;">
+                            <div style="display: flex; gap: 8px;">
                                 ${isPending ? `
-                                    <button class="btn-icon complete-order-btn" data-order-id="${order.id}" 
-                                            style="background: #4CAF50; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px; display: flex; align-items: center; gap: 4px;" 
-                                            title="Complete Order">
-                                        ✅ Complete
+                                    <button class="complete-order-btn" data-order-id="${order.id}" 
+                                            style="background: var(--success-color, #10b981); border: none; cursor: pointer; padding: 8px 12px; border-radius: 8px; color: white; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" 
+                                            title="Complete Order"
+                                            onmouseover="this.style.background='var(--success-hover, #059669)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'"
+                                            onmouseout="this.style.background='var(--success-color, #10b981)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
+                                        <span style="font-size: 16px;">✅</span> Complete
                                     </button>
                                 ` : ''}
-                                <button class="btn-icon edit-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Edit Order">
+                                <button class="edit-order" data-id="${order.id}" 
+                                        style="background: var(--primary-color, #10b981); border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: white; font-size: 16px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"
+                                        title="Edit Order"
+                                        onmouseover="this.style.background='var(--primary-hover, #059669)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'"
+                                        onmouseout="this.style.background='var(--primary-color, #10b981)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
                                     ✏️
                                 </button>
-                                <button class="btn-icon delete-order" data-id="${order.id}" style="background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: var(--text-secondary);" title="Delete Order">
+                                <button class="delete-order" data-id="${order.id}" 
+                                        style="background: #ef4444; border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: white; font-size: 16px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"
+                                        title="Delete Order"
+                                        onmouseover="this.style.background='#dc2626'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(239, 68, 68, 0.3)'"
+                                        onmouseout="this.style.background='#ef4444'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(239, 68, 68, 0.2)'">
                                     🗑️
                                 </button>
                             </div>
@@ -939,7 +879,7 @@ setupCompleteOrderButtons() {
             }).join('')}
         </div>
     `;
-},
+}
 
     renderCustomersList() {
         if (this.customers.length === 0) {
