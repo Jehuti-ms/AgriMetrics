@@ -1239,6 +1239,12 @@ const OrdersModule = {
         if (orderFormContainer) {
             orderFormContainer.classList.add('hidden');
         }
+        
+        // Show customers section again
+        const customersSection = document.getElementById('customers-section');
+        if (customersSection) {
+            customersSection.style.display = 'block';
+        }
     },
 
     showCustomerForm() {
@@ -1329,6 +1335,12 @@ const OrdersModule = {
         const customerContainer = document.getElementById('customer-form-container');
         if (customerContainer) {
             customerContainer.classList.add('hidden');
+        }
+        
+        // Show customers section again
+        const customersSection = document.getElementById('customers-section');
+        if (customersSection) {
+            customersSection.style.display = 'block';
         }
     },
 
