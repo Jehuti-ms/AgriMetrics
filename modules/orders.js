@@ -1003,57 +1003,96 @@ const OrdersModule = {
         console.log('✅ Orders module event listeners setup complete');
     },
 
-    showOrderForm() {
-        console.log('📝 Showing order form');
-        
-        try {
-            // Hide customers section if it exists
-            const customersSection = document.getElementById('customers-section');
-            if (customersSection) {
-                customersSection.style.display = 'none';
-            }
-            
-            // Show order form container
-            const orderFormContainer = document.getElementById('order-form-container');
-            if (!orderFormContainer) {
-                console.error('❌ Order form container not found - creating it');
-                this.createOrderFormContainer();
-                return;
-            }
-            orderFormContainer.classList.remove('hidden');
-            
-            // Set today's date
-            const dateInput = document.getElementById('order-date');
-            if (dateInput) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
-            
-            // Reset form
-            const form = document.getElementById('order-form');
-            if (form) form.reset();
-            
-            // Clear and add first item
-            const itemsContainer = document.getElementById('order-items');
-            if (itemsContainer) {
-                itemsContainer.innerHTML = '';
-                this.addOrderItem();
-            }
-            
-            console.log('✅ Order form shown successfully');
-            
-        } catch (error) {
-            console.error('❌ Error in showOrderForm:', error);
-        }
-    },
-
-    hideOrderForm() {
-        console.log('🙈 Hiding order form');
+   showOrderForm() {
+    console.log('📝 Showing order form');
+    
+    try {
+        // Get the order form container
         const orderFormContainer = document.getElementById('order-form-container');
-        if (orderFormContainer) {
-            orderFormContainer.classList.add('hidden');
+        if (!orderFormContainer) {
+            console.error('❌ Order form container not found');
+            this.showNotification('Order form not found', 'error');
+            return;
         }
-    },
-
+        
+        // Hide customers section temporarily
+        const customersSection = document.getElementById('customers-section');
+        if (customersSection) {
+            customersSection.style.display = 'none';
+        }
+        
+        // Show the form container (remove hidden class)
+        orderFormContainer.classList.remove('hidden');
+        
+        // Make sure it's visible
+        orderFormContainer.style.display = 'block';
+        
+        // Scroll to the form smoothly
+        orderFormContainer.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+        });
+        
+        // Set today's date
+        const dateInput = document.getElementById('order-date');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+        
+        // Reset the form
+        const form = document.getElementById('order-form');
+        if (form) {
+            form.reset();
+            
+            // Clear editing ID if it exists
+            const editingId = document.getElementById('editing-order-id');
+            if (editingId) {
+                editingId.value = '';
+            }
+        }
+        
+        // Clear and add first item
+        const itemsContainer = document.getElementById('order-items');
+        if (itemsContainer) {
+            itemsContainer.innerHTML = '';
+            this.addOrderItem(); // Add one empty item row
+        }
+        
+        // Reset total
+        const totalInput = document.getElementById('order-total');
+        if (totalInput) {
+            totalInput.value = '0.00';
+        }
+        
+        // Update form title
+        const title = document.querySelector('#order-form-container h3');
+        if (title) {
+            title.textContent = 'Create New Order';
+        }
+        
+        // Update submit button
+        const submitBtn = document.querySelector('#order-form button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Create Order';
+        }
+        
+        // Add a visual highlight effect
+        orderFormContainer.style.transition = 'all 0.3s ease';
+        orderFormContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+        
+        setTimeout(() => {
+            orderFormContainer.style.boxShadow = 'none';
+        }, 2000);
+        
+        console.log('✅ Order form shown successfully');
+        
+    } catch (error) {
+        console.error('❌ Error in showOrderForm:', error);
+        this.showNotification('Error showing order form', 'error');
+    }
+},
+    
     showCustomerForm() {
         console.log('👤 Showing customer form');
         
