@@ -1084,7 +1084,7 @@ const OrdersModule = {
     
     this._orderListenersAttached = true;
     console.log('✅ Orders module event listeners setup complete');
-},
+}
     
 // ===== BUBBLE PHASE HANDLER =====
 this._clickHandler = (e) => {
