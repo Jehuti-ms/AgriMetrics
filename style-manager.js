@@ -1053,12 +1053,9 @@ button[type="submit"],
       color: #cbd5e1 !important;
     }
 
- /* ===== UNIVERSAL MODAL FOOTER STYLES ===== */
-.modal-footer,
-.popout-modal-footer,
-.report-modal-footer,
-div[class*="modal-footer"],
-div[class*="dialog-footer"] {
+
+/* ===== SPECIFIC FIX FOR SALES MODAL AND ALL POPOUT MODALS ===== */
+.popout-modal-footer {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 12px !important;
@@ -1066,102 +1063,129 @@ div[class*="dialog-footer"] {
     align-items: center !important;
     margin-top: 24px !important;
     padding-top: 20px !important;
-    border-top: 1px solid var(--border-color, #e5e7eb) !important;
+    border-top: 2px solid var(--primary-100, #dcfce7) !important;
     width: 100% !important;
+    min-height: 80px !important;
 }
 
-/* Button container for modals that need left-aligned buttons */
-.modal-footer-left {
-    justify-content: flex-start !important;
-}
-
-.modal-footer-center {
+/* Target buttons with btn class inside modal footer */
+.popout-modal-footer .btn {
+    display: inline-flex !important;
+    align-items: center !important;
     justify-content: center !important;
-}
-
-.modal-footer-space-between {
-    justify-content: space-between !important;
-}
-
-/* All buttons in modal footers */
-.modal-footer .btn-primary,
-.modal-footer .btn-outline,
-.modal-footer .btn-danger,
-.popout-modal-footer .btn-primary,
-.popout-modal-footer .btn-outline,
-.popout-modal-footer .btn-danger,
-.report-modal-footer .btn-primary,
-.report-modal-footer .btn-outline,
-.report-modal-footer .btn-danger {
-    padding: 12px 24px !important;
+    padding: 12px 28px !important;
     font-size: 14px !important;
     font-weight: 600 !important;
     border-radius: var(--radius-lg, 12px) !important;
     min-width: 100px !important;
-    white-space: nowrap !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
     transition: var(--transition-normal, all 0.3s) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    flex: 0 1 auto !important;
+    border: none !important;
+}
+
+/* Primary button */
+.popout-modal-footer .btn.btn-primary {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+    color: white !important;
+    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
+}
+
+/* Outline button */
+.popout-modal-footer .btn.btn-outline {
+    background: transparent !important;
+    color: var(--text-primary, #111827) !important;
+    border: 2px solid var(--primary-500, #22c55e) !important;
+}
+
+/* Danger button */
+.popout-modal-footer .btn.btn-danger {
+    background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626)) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Hidden class handling */
+.popout-modal-footer .btn.hidden,
+.popout-modal-footer .hidden {
+    display: none !important;
+}
+
+/* Hover states */
+.popout-modal-footer .btn.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
+}
+
+.popout-modal-footer .btn.btn-outline:hover {
+    background: var(--primary-500, #22c55e) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+    border-color: var(--primary-500, #22c55e) !important;
+}
+
+.popout-modal-footer .btn.btn-danger:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Active states */
+.popout-modal-footer .btn:active {
+    transform: translateY(0) !important;
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-    .modal-footer,
-    .popout-modal-footer,
-    .report-modal-footer,
-    div[class*="modal-footer"],
-    div[class*="dialog-footer"] {
+    .popout-modal-footer {
         flex-direction: column !important;
         gap: 8px !important;
+        min-height: auto !important;
     }
     
-    .modal-footer .btn-primary,
-    .modal-footer .btn-outline,
-    .modal-footer .btn-danger,
-    .popout-modal-footer .btn-primary,
-    .popout-modal-footer .btn-outline,
-    .popout-modal-footer .btn-danger,
-    .report-modal-footer .btn-primary,
-    .report-modal-footer .btn-outline,
-    .report-modal-footer .btn-danger {
+    .popout-modal-footer .btn {
         width: 100% !important;
+        flex: 1 1 100% !important;
         min-width: 100% !important;
         white-space: normal !important;
         word-break: break-word !important;
+        padding: 14px 20px !important;
     }
     
-    /* Stack order: Primary first, then outline, then danger */
-    .modal-footer .btn-primary,
-    .popout-modal-footer .btn-primary,
-    .report-modal-footer .btn-primary {
+    /* Stack order: Save on top, Cancel middle, Delete bottom */
+    .popout-modal-footer .btn.btn-primary {
         order: 1 !important;
     }
     
-    .modal-footer .btn-outline,
-    .popout-modal-footer .btn-outline,
-    .report-modal-footer .btn-outline {
+    .popout-modal-footer .btn.btn-outline {
         order: 2 !important;
     }
     
-    .modal-footer .btn-danger,
-    .popout-modal-footer .btn-danger,
-    .report-modal-footer .btn-danger {
+    .popout-modal-footer .btn.btn-danger {
         order: 3 !important;
     }
 }
 
 /* Small mobile screens */
 @media (max-width: 480px) {
-    .modal-footer .btn-primary,
-    .modal-footer .btn-outline,
-    .modal-footer .btn-danger,
-    .popout-modal-footer .btn-primary,
-    .popout-modal-footer .btn-outline,
-    .popout-modal-footer .btn-danger,
-    .report-modal-footer .btn-primary,
-    .report-modal-footer .btn-outline,
-    .report-modal-footer .btn-danger {
-        padding: 10px 16px !important;
+    .popout-modal-footer .btn {
+        padding: 12px 16px !important;
         font-size: 13px !important;
     }
+}
+
+/* When delete button becomes visible */
+.popout-modal-footer .btn.btn-danger:not(.hidden) {
+    display: inline-flex !important;
+}
+
+/* Ensure proper spacing when delete is hidden */
+.popout-modal-footer .btn.btn-primary,
+.popout-modal-footer .btn.btn-outline {
+    margin: 0 !important;
 }
 
         `;
