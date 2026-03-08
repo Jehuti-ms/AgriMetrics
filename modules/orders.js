@@ -15,7 +15,7 @@ const OrdersModule = {
     ],
     element: null,
     broadcaster: null,
-
+    
     // Event handler properties
     _captureHandler: null,
     _clickHandler: null,
@@ -321,6 +321,12 @@ const OrdersModule = {
         this.orders = savedOrders ? JSON.parse(savedOrders) : this.getDemoOrders();
         this.customers = savedCustomers ? JSON.parse(savedCustomers) : this.getDemoCustomers();
         
+        // Always ensure we have at least the demo customers if none exist
+        if (this.customers.length === 0) {
+            this.customers = this.getDemoCustomers();
+            this.saveData();
+        }
+        
         // Broadcast data loaded
         if (this.broadcaster) {
             this.broadcaster.broadcast('orders-data-loaded', {
@@ -572,104 +578,104 @@ const OrdersModule = {
                     </div>
                 </div>
 
-               <!-- Create Order Form -->
-                    <div id="order-form-container" class="hidden">
-                        <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                            <h3 id="order-form-title" style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
-                            <form id="order-form">
-                                <input type="hidden" id="editing-order-id" value="">
-                                
-                                <div style="margin-bottom: 16px;">
-                                    <div style="display: flex; gap: 8px; align-items: flex-end;">
-                                        <div style="flex: 1;">
-                                            <label class="form-label">Customer</label>
-                                            ${this.customers.length === 0 ? `
-                                                <div style="margin-bottom: 8px; padding: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 4px; color: #f59e0b; font-size: 14px;">
-                                                    ⚠️ No customers found. Please add a customer first.
-                                                </div>
+                <!-- Create Order Form -->
+                <div id="order-form-container" class="hidden">
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                        <h3 id="order-form-title" style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
+                        <form id="order-form">
+                            <input type="hidden" id="editing-order-id" value="">
+                            
+                            <div style="margin-bottom: 16px;">
+                                <div style="display: flex; gap: 8px; align-items: flex-end;">
+                                    <div style="flex: 1;">
+                                        <label class="form-label">Customer</label>
+                                        ${this.customers.length === 0 ? `
+                                            <div style="margin-bottom: 8px; padding: 8px; background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 4px; color: #f59e0b; font-size: 14px;">
+                                                ⚠️ No customers found. Please add a customer first.
+                                            </div>
+                                        ` : ''}
+                                        <select class="form-input" id="order-customer" required ${this.customers.length === 0 ? 'disabled' : ''}>
+                                            <option value="">${this.customers.length === 0 ? 'No customers available' : 'Select Customer'}</option>
+                                            ${this.customers.map(customer => `
+                                                <option value="${customer.id}">${customer.name}${customer.contact ? ` (${customer.contact})` : ''}</option>
+                                            `).join('')}
+                                            ${this.customers.length > 0 ? `
+                                                <option value="add-new" style="color: #10b981; font-weight: bold; border-top: 1px solid var(--border-color);">➕ Add New Customer...</option>
                                             ` : ''}
-                                            <select class="form-input" id="order-customer" required ${this.customers.length === 0 ? 'disabled' : ''}>
-                                                <option value="">${this.customers.length === 0 ? 'No customers available' : 'Select Customer'}</option>
-                                                ${this.customers.map(customer => `
-                                                    <option value="${customer.id}">${customer.name}${customer.contact ? ` (${customer.contact})` : ''}</option>
-                                                `).join('')}
-                                                ${this.customers.length > 0 ? `
-                                                    <option value="add-new" style="color: #10b981; font-weight: bold; border-top: 1px solid var(--border-color);">➕ Add New Customer...</option>
-                                                ` : ''}
-                                            </select>
-                                        </div>
-                                        <button type="button" class="btn-outline" id="quick-add-customer" 
-                                                style="padding: 10px 16px; margin-bottom: ${this.customers.length === 0 ? '0' : '2px'}; white-space: nowrap; display: flex; align-items: center; gap: 4px;" 
-                                                title="Add New Customer">
-                                            <span style="font-size: 16px;">➕</span>
-                                            <span style="font-size: 13px;">Add</span>
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                    <div>
-                                        <label class="form-label">Order Date</label>
-                                        <input type="date" class="form-input" id="order-date" required>
-                                    </div>
-                                    <div>
-                                        <label class="form-label">Status</label>
-                                        <select class="form-input" id="order-status">
-                                            <option value="pending">Pending</option>
-                                            <option value="confirmed">Confirmed</option>
-                                            <option value="shipped">Shipped</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
                                         </select>
                                     </div>
-                                </div>
-                                
-                                <div style="margin-bottom: 16px;">
-                                    <label class="form-label">Order Items</label>
-                                    <div id="order-items">
-                                        <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
-                                            <select class="form-input product-select" required>
-                                                <option value="">Select Product</option>
-                                                ${this.products.map(product => `
-                                                    <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
-                                                `).join('')}
-                                            </select>
-                                            <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
-                                            <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
-                                            <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
-                                </div>
-                                
-                                <div style="margin-bottom: 20px;">
-                                    <label class="form-label">Total Amount</label>
-                                    <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly style="font-weight: bold; font-size: 16px; background: rgba(16, 185, 129, 0.05);">
-                                </div>
-                                
-                                <div style="margin-bottom: 20px;">
-                                    <label class="form-label">Notes</label>
-                                    <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes, special instructions..."></textarea>
-                                </div>
-                                
-                                <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                                    <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
-                                    <button type="submit" class="btn-primary" id="order-submit-btn" ${this.customers.length === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
-                                        Create Order
+                                    <button type="button" class="btn-outline" id="quick-add-customer" 
+                                            style="padding: 10px 16px; margin-bottom: ${this.customers.length === 0 ? '0' : '2px'}; white-space: nowrap; display: flex; align-items: center; gap: 4px;" 
+                                            title="Add New Customer">
+                                        <span style="font-size: 16px;">➕</span>
+                                        <span style="font-size: 13px;">Add</span>
                                     </button>
                                 </div>
-                                
-                                ${this.customers.length === 0 ? `
-                                    <div style="margin-top: 16px; text-align: center; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
-                                        <p style="color: var(--text-primary); margin-bottom: 8px;">👋 Get started by adding a customer</p>
-                                        <button type="button" class="btn-primary" id="quick-add-customer-empty" style="background: var(--primary-color, #10b981);">
-                                            ➕ Add Your First Customer
-                                        </button>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Order Date</label>
+                                    <input type="date" class="form-input" id="order-date" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Status</label>
+                                    <select class="form-input" id="order-status">
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Order Items</label>
+                                <div id="order-items">
+                                    <div class="order-item" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; margin-bottom: 12px;">
+                                        <select class="form-input product-select" required>
+                                            <option value="">Select Product</option>
+                                            ${this.products.map(product => `
+                                                <option value="${product.id}" data-price="${product.price}">${product.name} - ${this.formatCurrency(product.price)}</option>
+                                            `).join('')}
+                                        </select>
+                                        <input type="number" class="form-input quantity-input" placeholder="Qty" min="1" value="1" required>
+                                        <input type="number" class="form-input price-input" placeholder="Price" step="0.01" min="0" required>
+                                        <button type="button" class="btn-outline remove-item" style="padding: 8px 12px;">✕</button>
                                     </div>
-                                ` : ''}
-                            </form>
-                        </div>
+                                </div>
+                                <button type="button" class="btn-outline" id="add-item-btn" style="margin-top: 8px;">+ Add Item</button>
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Total Amount</label>
+                                <input type="number" class="form-input" id="order-total" step="0.01" min="0" readonly style="font-weight: bold; font-size: 16px; background: rgba(16, 185, 129, 0.05);">
+                            </div>
+                            
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="order-notes" rows="2" placeholder="Order notes, special instructions..."></textarea>
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                <button type="button" class="btn-outline" id="cancel-order-form">Cancel</button>
+                                <button type="submit" class="btn-primary" id="order-submit-btn" ${this.customers.length === 0 ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>
+                                    Create Order
+                                </button>
+                            </div>
+                            
+                            ${this.customers.length === 0 ? `
+                                <div style="margin-top: 16px; text-align: center; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                                    <p style="color: var(--text-primary); margin-bottom: 8px;">👋 Get started by adding a customer</p>
+                                    <button type="button" class="btn-primary" id="quick-add-customer-empty" style="background: var(--primary-color, #10b981);">
+                                        ➕ Add Your First Customer
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </form>
                     </div>
+                </div>
 
                 <!-- Add Customer Form -->
                 <div id="customer-form-container" class="hidden">
@@ -880,599 +886,508 @@ const OrdersModule = {
         return statuses[status] || status;
     },
 
-   setupEventListeners() {
-    console.log('🔧 Setting up Orders module event listeners...');
-    
-    // Store reference to this module for use in handlers
-    const self = this;
-    
-    // Remove existing listeners
-    if (this._clickHandler) {
-        document.removeEventListener('click', this._clickHandler);
-    }
-    if (this._captureHandler) {
-        document.removeEventListener('click', this._captureHandler, true);
-    }
-    if (this._customerSelectHandler) {
-        const oldSelect = document.getElementById('order-customer');
-        if (oldSelect) {
-            oldSelect.removeEventListener('change', this._customerSelectHandler);
+    setupEventListeners() {
+        console.log('🔧 Setting up Orders module event listeners...');
+        
+        // Store reference to this module for use in handlers
+        const self = this;
+        
+        // Remove existing listeners
+        if (this._clickHandler) {
+            document.removeEventListener('click', this._clickHandler);
         }
-    }
-    
-    // ===== CAPTURE PHASE HANDLER =====
-    this._captureHandler = (e) => {
-        const target = e.target;
-        
-        // Check if this is an order/customer action
-        if (target.closest('.edit-order') || 
-            target.closest('.delete-order') || 
-            target.closest('.edit-customer') || 
-            target.closest('.delete-customer') ||
-            target.closest('.complete-order-btn')) {
-            
-            console.log('🛑 CAPTURE PHASE: Intercepting order/customer action');
-            
-            // Mark this as handled by orders module
-            e.stopPropagation();
-            e.preventDefault();
-            
-            // Handle the action immediately in capture phase
-            const completeBtn = target.closest('.complete-order-btn');
-            if (completeBtn) {
-                const orderId = completeBtn.getAttribute('data-order-id');
-                console.log('✅ CAPTURE: Complete order', orderId);
-                if (orderId) {
-                    if (confirm('Complete this order? This will create a sale and add to income.')) {
-                        self.completeOrder(orderId);
-                    }
-                }
-                return;
-            }
-            
-            const customerDelete = target.closest('.delete-customer');
-            if (customerDelete) {
-                const customerId = customerDelete.getAttribute('data-id');
-                console.log('🗑️ CAPTURE: Delete customer', customerId);
-                if (customerId) {
-                    self.deleteCustomer(parseInt(customerId));
-                }
-                return;
-            }
-            
-            const customerEdit = target.closest('.edit-customer');
-            if (customerEdit) {
-                const customerId = customerEdit.getAttribute('data-id');
-                console.log('👤 CAPTURE: Edit customer', customerId);
-                if (customerId) {
-                    self.editCustomer(parseInt(customerId));
-                }
-                return;
-            }
-            
-            const orderDelete = target.closest('.delete-order');
-            if (orderDelete) {
-                const orderId = orderDelete.getAttribute('data-id');
-                console.log('🗑️ CAPTURE: Delete order', orderId);
-                if (orderId) {
-                    if (confirm('Are you sure you want to delete this order?')) {
-                        self.deleteOrder(parseInt(orderId));
-                    }
-                }
-                return;
-            }
-            
-            const orderEdit = target.closest('.edit-order');
-            if (orderEdit) {
-                const orderId = orderEdit.getAttribute('data-id');
-                console.log('✏️ CAPTURE: Edit order', orderId);
-                if (orderId) {
-                    self.editOrder(parseInt(orderId));
-                }
-                return;
-            }
+        if (this._captureHandler) {
+            document.removeEventListener('click', this._captureHandler, true);
         }
-    };
-    
-    // ===== BUBBLE PHASE HANDLER =====
-    this._clickHandler = (e) => {
-        const target = e.target;
-        
-        // ===== BUTTON HANDLERS (by ID) =====
-        const button = target.closest('button');
-        if (!button) return;
-        
-        const buttonId = button.id;
-        if (!buttonId) return;
-        
-        console.log(`Button clicked: ${buttonId}`);
-        
-        switch(buttonId) {
-            case 'create-order-btn':
-            case 'show-order-form':
-                self.showOrderForm();
-                break;
-            case 'manage-customers-btn':
-                self.showCustomersSection();
-                break;
-            case 'view-orders-btn':
-                self.showAllOrders();
-                break;
-            case 'add-customer-btn':
-            case 'show-customer-form':
-                self.showCustomerForm();
-                break;
-            case 'cancel-order-form':
-                self.hideOrderForm();
-                break;
-            case 'cancel-customer-form':
-                self.hideCustomerForm();
-                break;
-            case 'add-item-btn':
-                self.addOrderItem();
-                break;
-            case 'export-orders-btn':
-                self.exportOrders();
-                break;
-            case 'quick-add-customer':
-            case 'quick-add-customer-empty':
-                self.showCustomerForm();
-                // Ensure we scroll to the form and focus
-                setTimeout(() => {
-                    self.ensureCustomerFormVisible();
-                }, 100);
-                break;
-        }
-    };
-    
-    // Attach capture phase handler
-    document.addEventListener('click', this._captureHandler, true);
-    
-    // Attach bubble phase handler
-    document.addEventListener('click', this._clickHandler);
-    
-    // Form submissions
-    const orderForm = document.getElementById('order-form');
-    if (orderForm) {
-        // Remove old listener to avoid duplicates
-        orderForm.removeEventListener('submit', this._orderSubmitHandler);
-        this._orderSubmitHandler = (e) => self.handleOrderSubmit(e);
-        orderForm.addEventListener('submit', this._orderSubmitHandler);
-    }
-    
-    const customerForm = document.getElementById('customer-form');
-    if (customerForm) {
-        customerForm.removeEventListener('submit', this._customerSubmitHandler);
-        this._customerSubmitHandler = (e) => self.handleCustomerSubmit(e);
-        customerForm.addEventListener('submit', this._customerSubmitHandler);
-    }
-    
-    // Customer select change handler for "Add New" option
-    const customerSelect = document.getElementById('order-customer');
-    if (customerSelect) {
-        // Remove existing listener to avoid duplicates
         if (this._customerSelectHandler) {
-            customerSelect.removeEventListener('change', this._customerSelectHandler);
+            const oldSelect = document.getElementById('order-customer');
+            if (oldSelect) {
+                oldSelect.removeEventListener('change', this._customerSelectHandler);
+            }
         }
         
-        // Create new handler
-        this._customerSelectHandler = (e) => {
-            if (e.target.value === 'add-new') {
-                console.log('➕ Add new customer selected from dropdown');
-                self.showCustomerForm();
-                // Reset the select to default
-                setTimeout(() => {
-                    e.target.value = '';
-                }, 100);
+        // ===== CAPTURE PHASE HANDLER =====
+        this._captureHandler = (e) => {
+            const target = e.target;
+            
+            // Check if this is an order/customer action
+            if (target.closest('.edit-order') || 
+                target.closest('.delete-order') || 
+                target.closest('.edit-customer') || 
+                target.closest('.delete-customer') ||
+                target.closest('.complete-order-btn')) {
+                
+                console.log('🛑 CAPTURE PHASE: Intercepting order/customer action');
+                
+                // Mark this as handled by orders module
+                e.stopPropagation();
+                e.preventDefault();
+                
+                // Handle the action immediately in capture phase
+                const completeBtn = target.closest('.complete-order-btn');
+                if (completeBtn) {
+                    const orderId = completeBtn.getAttribute('data-order-id');
+                    console.log('✅ CAPTURE: Complete order', orderId);
+                    if (orderId) {
+                        if (confirm('Complete this order? This will create a sale and add to income.')) {
+                            self.completeOrder(orderId);
+                        }
+                    }
+                    return;
+                }
+                
+                const customerDelete = target.closest('.delete-customer');
+                if (customerDelete) {
+                    const customerId = customerDelete.getAttribute('data-id');
+                    console.log('🗑️ CAPTURE: Delete customer', customerId);
+                    if (customerId) {
+                        self.deleteCustomer(parseInt(customerId));
+                    }
+                    return;
+                }
+                
+                const customerEdit = target.closest('.edit-customer');
+                if (customerEdit) {
+                    const customerId = customerEdit.getAttribute('data-id');
+                    console.log('👤 CAPTURE: Edit customer', customerId);
+                    if (customerId) {
+                        self.editCustomer(parseInt(customerId));
+                    }
+                    return;
+                }
+                
+                const orderDelete = target.closest('.delete-order');
+                if (orderDelete) {
+                    const orderId = orderDelete.getAttribute('data-id');
+                    console.log('🗑️ CAPTURE: Delete order', orderId);
+                    if (orderId) {
+                        if (confirm('Are you sure you want to delete this order?')) {
+                            self.deleteOrder(parseInt(orderId));
+                        }
+                    }
+                    return;
+                }
+                
+                const orderEdit = target.closest('.edit-order');
+                if (orderEdit) {
+                    const orderId = orderEdit.getAttribute('data-id');
+                    console.log('✏️ CAPTURE: Edit order', orderId);
+                    if (orderId) {
+                        self.editOrder(parseInt(orderId));
+                    }
+                    return;
+                }
             }
         };
         
-        // Add the listener
-        customerSelect.addEventListener('change', this._customerSelectHandler);
-    }
-    
-    // Set today's date
-    const today = new Date().toISOString().split('T')[0];
-    const orderDate = document.getElementById('order-date');
-    if (orderDate) orderDate.value = today;
-    
-    // Calculate total when items change
-    this.setupTotalCalculation();
-    
-    // Hover effects
-    this.setupHoverEffects();
-    
-    this._orderListenersAttached = true;
-    console.log('✅ Orders module event listeners setup complete');
-}
-    
-// ===== BUBBLE PHASE HANDLER =====
-this._clickHandler = (e) => {
-    const target = e.target;
-    
-    // Log for debugging
-    console.log('🔍 BUBBLE PHASE - Click detected:', {
-        target: target.tagName,
-        classes: target.className,
-        id: target.id
-    });
-    
-    // ===== BUTTON HANDLERS (by ID) =====
-    const button = target.closest('button');
-    if (!button) return;
-    
-    const buttonId = button.id;
-    if (!buttonId) return;
-    
-    console.log(`Button clicked: ${buttonId}`);
-    
-    switch(buttonId) {
-        case 'create-order-btn':
-        case 'show-order-form':
-            this.showOrderForm();
-            break;
-        case 'manage-customers-btn':
-            this.showCustomersSection();
-            break;
-        case 'view-orders-btn':
-            this.showAllOrders();
-            break;
-        case 'add-customer-btn':
-        case 'show-customer-form':
-            this.showCustomerForm();
-            break;
-        case 'cancel-order-form':
-            this.hideOrderForm();
-            break;
-        case 'cancel-customer-form':
-            this.hideCustomerForm();
-            break;
-        case 'add-item-btn':
-            this.addOrderItem();
-            break;
-        case 'export-orders-btn':
-            this.exportOrders();
-            break;
-        // ADD THESE TWO LINES FOR THE QUICK-ADD BUTTONS
-        case 'quick-add-customer':
-        case 'quick-add-customer-empty':
-            this.showCustomerForm();
-            // Ensure we scroll to the form and focus
-            setTimeout(() => {
-                this.ensureCustomerFormVisible();
-            }, 100);
-            break;
-    }
-};
-    
-    // Attach capture phase handler
-    document.addEventListener('click', this._captureHandler, true);
-    
-    // Attach bubble phase handler
-    document.addEventListener('click', this._clickHandler);
-    
-    // Form submissions
-    const orderForm = document.getElementById('order-form');
-    if (orderForm) {
-        // Remove old listener to avoid duplicates
-        orderForm.removeEventListener('submit', this._orderSubmitHandler);
-        this._orderSubmitHandler = (e) => this.handleOrderSubmit(e);
-        orderForm.addEventListener('submit', this._orderSubmitHandler);
-    }
-    
-    const customerForm = document.getElementById('customer-form');
-    if (customerForm) {
-        customerForm.removeEventListener('submit', this._customerSubmitHandler);
-        this._customerSubmitHandler = (e) => this.handleCustomerSubmit(e);
-        customerForm.addEventListener('submit', this._customerSubmitHandler);
-    }
-    
-    // Customer select change handler for "Add New" option
-    const customerSelect = document.getElementById('order-customer');
-    if (customerSelect) {
-        // Remove existing listener to avoid duplicates
-        if (this._customerSelectHandler) {
-            customerSelect.removeEventListener('change', this._customerSelectHandler);
-        }
-        
-        // Create new handler
-        this._customerSelectHandler = (e) => {
-            if (e.target.value === 'add-new') {
-                console.log('➕ Add new customer selected from dropdown');
-                this.showCustomerForm();
-                // Reset the select to default
-                setTimeout(() => {
-                    e.target.value = '';
-                }, 100);
+        // ===== BUBBLE PHASE HANDLER =====
+        this._clickHandler = (e) => {
+            const target = e.target;
+            
+            // ===== BUTTON HANDLERS (by ID) =====
+            const button = target.closest('button');
+            if (!button) return;
+            
+            const buttonId = button.id;
+            if (!buttonId) return;
+            
+            console.log(`Button clicked: ${buttonId}`);
+            
+            switch(buttonId) {
+                case 'create-order-btn':
+                case 'show-order-form':
+                    self.showOrderForm();
+                    break;
+                case 'manage-customers-btn':
+                    self.showCustomersSection();
+                    break;
+                case 'view-orders-btn':
+                    self.showAllOrders();
+                    break;
+                case 'add-customer-btn':
+                case 'show-customer-form':
+                    self.showCustomerForm();
+                    break;
+                case 'cancel-order-form':
+                    self.hideOrderForm();
+                    break;
+                case 'cancel-customer-form':
+                    self.hideCustomerForm();
+                    break;
+                case 'add-item-btn':
+                    self.addOrderItem();
+                    break;
+                case 'export-orders-btn':
+                    self.exportOrders();
+                    break;
+                case 'quick-add-customer':
+                case 'quick-add-customer-empty':
+                    self.showCustomerForm();
+                    // Ensure we scroll to the form and focus
+                    setTimeout(() => {
+                        self.ensureCustomerFormVisible();
+                    }, 100);
+                    break;
             }
         };
         
-        // Add the listener
-        customerSelect.addEventListener('change', this._customerSelectHandler);
-    }
-    
-    // Set today's date
-    const today = new Date().toISOString().split('T')[0];
-    const orderDate = document.getElementById('order-date');
-    if (orderDate) orderDate.value = today;
-    
-    // Calculate total when items change
-    this.setupTotalCalculation();
-    
-    // Hover effects
-    this.setupHoverEffects();
-    
-    this._orderListenersAttached = true;
-    console.log('✅ Orders module event listeners setup complete');
-},
-
-   showOrderForm() {
-    console.log('📝 Showing order form');
-    
-    try {
-        // Check if there are any customers
-        if (this.customers.length === 0) {
-            console.log('⚠️ No customers found');
-            
-            // Ask user if they want to add a customer first
-            if (confirm('No customers found. Would you like to add a customer first?')) {
-                this.showCustomerForm();
-                return;
-            } else {
-                // If they decline, still show the form but with a message
-                this.showNotification('Please add a customer first', 'warning');
-                return;
+        // Attach capture phase handler
+        document.addEventListener('click', this._captureHandler, true);
+        
+        // Attach bubble phase handler
+        document.addEventListener('click', this._clickHandler);
+        
+        // Form submissions
+        const orderForm = document.getElementById('order-form');
+        if (orderForm) {
+            // Remove old listener to avoid duplicates
+            orderForm.removeEventListener('submit', this._orderSubmitHandler);
+            this._orderSubmitHandler = (e) => self.handleOrderSubmit(e);
+            orderForm.addEventListener('submit', this._orderSubmitHandler);
+        }
+        
+        const customerForm = document.getElementById('customer-form');
+        if (customerForm) {
+            customerForm.removeEventListener('submit', this._customerSubmitHandler);
+            this._customerSubmitHandler = (e) => self.handleCustomerSubmit(e);
+            customerForm.addEventListener('submit', this._customerSubmitHandler);
+        }
+        
+        // Customer select change handler for "Add New" option
+        const customerSelect = document.getElementById('order-customer');
+        if (customerSelect) {
+            // Remove existing listener to avoid duplicates
+            if (this._customerSelectHandler) {
+                customerSelect.removeEventListener('change', this._customerSelectHandler);
             }
+            
+            // Create new handler
+            this._customerSelectHandler = (e) => {
+                if (e.target.value === 'add-new') {
+                    console.log('➕ Add new customer selected from dropdown');
+                    self.showCustomerForm();
+                    // Reset the select to default
+                    setTimeout(() => {
+                        e.target.value = '';
+                    }, 100);
+                }
+            };
+            
+            // Add the listener
+            customerSelect.addEventListener('change', this._customerSelectHandler);
         }
-        
-        // Get the order form container
-        const orderFormContainer = document.getElementById('order-form-container');
-        if (!orderFormContainer) {
-            console.error('❌ Order form container not found');
-            this.showNotification('Order form not found', 'error');
-            return;
-        }
-        
-        // Hide customers section temporarily
-        const customersSection = document.getElementById('customers-section');
-        if (customersSection) {
-            customersSection.style.display = 'none';
-        }
-        
-        // Show the form container
-        orderFormContainer.classList.remove('hidden');
-        orderFormContainer.style.display = 'block';
-        
-        // Scroll to the form
-        orderFormContainer.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start'
-        });
-        
-        // Refresh customer dropdown
-        this.refreshCustomerDropdown();
         
         // Set today's date
-        const dateInput = document.getElementById('order-date');
-        if (dateInput) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
-        }
+        const today = new Date().toISOString().split('T')[0];
+        const orderDate = document.getElementById('order-date');
+        if (orderDate) orderDate.value = today;
         
-        // Reset the form
-        const form = document.getElementById('order-form');
-        if (form) {
-            form.reset();
-            
-            // Clear editing ID if it exists
-            const editingId = document.getElementById('editing-order-id');
-            if (editingId) {
-                editingId.value = '';
-            }
-        }
+        // Calculate total when items change
+        this.setupTotalCalculation();
         
-        // Clear and add first item
-        const itemsContainer = document.getElementById('order-items');
-        if (itemsContainer) {
-            itemsContainer.innerHTML = '';
-            this.addOrderItem();
-        }
+        // Hover effects
+        this.setupHoverEffects();
         
-        // Reset total
-        const totalInput = document.getElementById('order-total');
-        if (totalInput) {
-            totalInput.value = '0.00';
-        }
-        
-        // Update form title
-        const title = document.querySelector('#order-form-container h3');
-        if (title) {
-            title.textContent = 'Create New Order';
-        }
-        
-        // Update submit button
-        const submitBtn = document.querySelector('#order-form button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.textContent = 'Create Order';
-        }
-        
-        // Add visual highlight
-        orderFormContainer.style.transition = 'all 0.3s ease';
-        orderFormContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
-        
-        setTimeout(() => {
-            orderFormContainer.style.boxShadow = 'none';
-        }, 2000);
-        
-        console.log('✅ Order form shown successfully');
-        
-    } catch (error) {
-        console.error('❌ Error in showOrderForm:', error);
-        this.showNotification('Error showing order form', 'error');
-    }
-},
+        this._orderListenersAttached = true;
+        console.log('✅ Orders module event listeners setup complete');
+    },
 
-    refreshCustomerDropdown() {
-    const customerSelect = document.getElementById('order-customer');
-    if (!customerSelect) return;
-    
-    // Clear current options
-    customerSelect.innerHTML = '';
-    
-    // Add default option
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = 'Select Customer';
-    customerSelect.appendChild(defaultOption);
-    
-    // Add customers
-    if (this.customers.length === 0) {
-        // If no customers, add a message and a button to add customer
-        const noCustomerOption = document.createElement('option');
-        noCustomerOption.value = '';
-        noCustomerOption.textContent = '⚠️ No customers found';
-        noCustomerOption.disabled = true;
-        customerSelect.appendChild(noCustomerOption);
-        
-        // Add a quick add customer option
-        const addCustomerOption = document.createElement('option');
-        addCustomerOption.value = 'add-new';
-        addCustomerOption.textContent = '➕ Add New Customer...';
-        addCustomerOption.style.color = '#10b981';
-        addCustomerOption.style.fontWeight = 'bold';
-        customerSelect.appendChild(addCustomerOption);
-        
-        // Add change listener for the add new option
-        customerSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'add-new') {
-                this.showCustomerForm();
-                // Reset the select to default
-                setTimeout(() => {
-                    e.target.value = '';
-                }, 100);
-            }
-        });
-    } else {
-        // Add existing customers
-        this.customers.forEach(customer => {
-            const option = document.createElement('option');
-            option.value = customer.id;
-            option.textContent = customer.name;
-            if (customer.contact) {
-                option.textContent += ` (${customer.contact})`;
-            }
-            customerSelect.appendChild(option);
-        });
-        
-        // Add a separator and add new option
-        const separator = document.createElement('option');
-        separator.disabled = true;
-        separator.textContent = '──────────';
-        customerSelect.appendChild(separator);
-        
-        const addCustomerOption = document.createElement('option');
-        addCustomerOption.value = 'add-new';
-        addCustomerOption.textContent = '➕ Add New Customer...';
-        addCustomerOption.style.color = '#10b981';
-        addCustomerOption.style.fontWeight = 'bold';
-        customerSelect.appendChild(addCustomerOption);
-        
-        // Add change listener for the add new option
-        customerSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'add-new') {
-                this.showCustomerForm();
-                // Reset the select to default
-                setTimeout(() => {
-                    e.target.value = '';
-                }, 100);
-            }
-        });
-    }
-},
-    
-   showCustomerForm() {
-    console.log('👤 Showing customer form');
-    
-    try {
-        // Get the customer form container
+    ensureCustomerFormVisible() {
+        console.log('👁️ Ensuring customer form is visible');
         const customerContainer = document.getElementById('customer-form-container');
-        if (!customerContainer) {
-            console.error('❌ Customer form container not found');
-            this.showNotification('Customer form not found', 'error');
-            return;
-        }
+        if (!customerContainer) return;
         
-        // Hide order form if visible
-        const orderContainer = document.getElementById('order-form-container');
-        if (orderContainer) {
-            orderContainer.classList.add('hidden');
-        }
+        // Check if the form is in the viewport
+        const rect = customerContainer.getBoundingClientRect();
+        const isInViewport = rect.top >= 0 && 
+                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
         
-        // Hide customers section temporarily for better focus
-        const customersSection = document.getElementById('customers-section');
-        if (customersSection) {
-            customersSection.style.display = 'none';
-        }
-        
-        // Show the customer form
-        customerContainer.classList.remove('hidden');
-        customerContainer.style.display = 'block';
-        
-        // Force a reflow to ensure scrolling works
-        customerContainer.offsetHeight;
-        
-        // Scroll to the form with smooth behavior
-        customerContainer.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-        });
-        
-        // Reset form
-        const form = document.getElementById('customer-form');
-        if (form) {
-            form.reset();
+        if (!isInViewport) {
+            // Scroll to the form
+            customerContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
             
-            // Focus on the first input after a short delay (after scroll completes)
+            // Add a slight delay and then focus
             setTimeout(() => {
                 const nameInput = document.getElementById('customer-name');
                 if (nameInput) {
                     nameInput.focus();
                 }
             }, 500);
+        } else {
+            // Already in viewport, just focus
+            setTimeout(() => {
+                const nameInput = document.getElementById('customer-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 100);
         }
+    },
+
+    showOrderForm() {
+        console.log('📝 Showing order form');
         
-        // Update title
-        const title = document.querySelector('#customer-form-container h3');
-        if (title) {
-            title.textContent = 'Add New Customer';
+        try {
+            // Check if there are any customers
+            if (this.customers.length === 0) {
+                console.log('⚠️ No customers found');
+                
+                // Ask user if they want to add a customer first
+                if (confirm('No customers found. Would you like to add a customer first?')) {
+                    this.showCustomerForm();
+                    return;
+                } else {
+                    // If they decline, still show the form but with a message
+                    this.showNotification('Please add a customer first', 'warning');
+                    return;
+                }
+            }
+            
+            // Get the order form container
+            const orderFormContainer = document.getElementById('order-form-container');
+            if (!orderFormContainer) {
+                console.error('❌ Order form container not found');
+                this.showNotification('Order form not found', 'error');
+                return;
+            }
+            
+            // Hide customers section temporarily
+            const customersSection = document.getElementById('customers-section');
+            if (customersSection) {
+                customersSection.style.display = 'none';
+            }
+            
+            // Show the form container
+            orderFormContainer.classList.remove('hidden');
+            orderFormContainer.style.display = 'block';
+            
+            // Scroll to the form
+            orderFormContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+            });
+            
+            // Refresh customer dropdown
+            this.refreshCustomerDropdown();
+            
+            // Set today's date
+            const dateInput = document.getElementById('order-date');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+            
+            // Reset the form
+            const form = document.getElementById('order-form');
+            if (form) {
+                form.reset();
+                
+                // Clear editing ID if it exists
+                const editingId = document.getElementById('editing-order-id');
+                if (editingId) {
+                    editingId.value = '';
+                }
+            }
+            
+            // Clear and add first item
+            const itemsContainer = document.getElementById('order-items');
+            if (itemsContainer) {
+                itemsContainer.innerHTML = '';
+                this.addOrderItem();
+            }
+            
+            // Reset total
+            const totalInput = document.getElementById('order-total');
+            if (totalInput) {
+                totalInput.value = '0.00';
+            }
+            
+            // Update form title
+            const title = document.querySelector('#order-form-container h3');
+            if (title) {
+                title.textContent = 'Create New Order';
+            }
+            
+            // Update submit button
+            const submitBtn = document.querySelector('#order-form button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = 'Create Order';
+            }
+            
+            // Add visual highlight
+            orderFormContainer.style.transition = 'all 0.3s ease';
+            orderFormContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+            
+            setTimeout(() => {
+                orderFormContainer.style.boxShadow = 'none';
+            }, 2000);
+            
+            console.log('✅ Order form shown successfully');
+            
+        } catch (error) {
+            console.error('❌ Error in showOrderForm:', error);
+            this.showNotification('Error showing order form', 'error');
         }
-        
-        // Update submit button
-        const submitBtn = document.querySelector('#customer-form button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.textContent = 'Add Customer';
+    },
+
+    hideOrderForm() {
+        console.log('🙈 Hiding order form');
+        const orderFormContainer = document.getElementById('order-form-container');
+        if (orderFormContainer) {
+            orderFormContainer.classList.add('hidden');
         }
+    },
+
+    showCustomerForm() {
+        console.log('👤 Showing customer form');
         
-        // Remove any cancel edit buttons
-        document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+        try {
+            // Get the customer form container
+            const customerContainer = document.getElementById('customer-form-container');
+            if (!customerContainer) {
+                console.error('❌ Customer form container not found');
+                this.showNotification('Customer form not found', 'error');
+                return;
+            }
+            
+            // Hide order form if visible
+            const orderContainer = document.getElementById('order-form-container');
+            if (orderContainer) {
+                orderContainer.classList.add('hidden');
+            }
+            
+            // Hide customers section temporarily for better focus
+            const customersSection = document.getElementById('customers-section');
+            if (customersSection) {
+                customersSection.style.display = 'none';
+            }
+            
+            // Show the customer form
+            customerContainer.classList.remove('hidden');
+            customerContainer.style.display = 'block';
+            
+            // Force a reflow to ensure scrolling works
+            customerContainer.offsetHeight;
+            
+            // Scroll to the form with smooth behavior
+            customerContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start',
+                inline: 'nearest'
+            });
+            
+            // Reset form
+            const form = document.getElementById('customer-form');
+            if (form) {
+                form.reset();
+                
+                // Focus on the first input after a short delay (after scroll completes)
+                setTimeout(() => {
+                    const nameInput = document.getElementById('customer-name');
+                    if (nameInput) {
+                        nameInput.focus();
+                    }
+                }, 500);
+            }
+            
+            // Update title
+            const title = document.querySelector('#customer-form-container h3');
+            if (title) {
+                title.textContent = 'Add New Customer';
+            }
+            
+            // Update submit button
+            const submitBtn = document.querySelector('#customer-form button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = 'Add Customer';
+            }
+            
+            // Remove any cancel edit buttons
+            document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+            
+            // Add visual highlight
+            customerContainer.style.transition = 'all 0.3s ease';
+            customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+            
+            setTimeout(() => {
+                customerContainer.style.boxShadow = 'none';
+            }, 2000);
+            
+            console.log('✅ Customer form shown and scrolled into view');
+            
+        } catch (error) {
+            console.error('❌ Error in showCustomerForm:', error);
+            this.showNotification('Error showing customer form', 'error');
+        }
+    },
+
+    hideCustomerForm() {
+        console.log('🙈 Hiding customer form');
+        const customerContainer = document.getElementById('customer-form-container');
+        if (customerContainer) {
+            customerContainer.classList.add('hidden');
+        }
+    },
+
+    refreshCustomerDropdown() {
+        const customerSelect = document.getElementById('order-customer');
+        if (!customerSelect) return;
         
-        // Add visual highlight
-        customerContainer.style.transition = 'all 0.3s ease';
-        customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+        // Clear current options
+        customerSelect.innerHTML = '';
         
-        setTimeout(() => {
-            customerContainer.style.boxShadow = 'none';
-        }, 2000);
+        // Add default option
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select Customer';
+        customerSelect.appendChild(defaultOption);
         
-        console.log('✅ Customer form shown and scrolled into view');
-        
-    } catch (error) {
-        console.error('❌ Error in showCustomerForm:', error);
-        this.showNotification('Error showing customer form', 'error');
-    }
-},
-    
+        // Add customers
+        if (this.customers.length === 0) {
+            // If no customers, add a message and a button to add customer
+            const noCustomerOption = document.createElement('option');
+            noCustomerOption.value = '';
+            noCustomerOption.textContent = '⚠️ No customers found';
+            noCustomerOption.disabled = true;
+            customerSelect.appendChild(noCustomerOption);
+            
+            // Add a quick add customer option
+            const addCustomerOption = document.createElement('option');
+            addCustomerOption.value = 'add-new';
+            addCustomerOption.textContent = '➕ Add New Customer...';
+            addCustomerOption.style.color = '#10b981';
+            addCustomerOption.style.fontWeight = 'bold';
+            customerSelect.appendChild(addCustomerOption);
+        } else {
+            // Add existing customers
+            this.customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = customer.name;
+                if (customer.contact) {
+                    option.textContent += ` (${customer.contact})`;
+                }
+                customerSelect.appendChild(option);
+            });
+            
+            // Add a separator and add new option
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '──────────';
+            customerSelect.appendChild(separator);
+            
+            const addCustomerOption = document.createElement('option');
+            addCustomerOption.value = 'add-new';
+            addCustomerOption.textContent = '➕ Add New Customer...';
+            addCustomerOption.style.color = '#10b981';
+            addCustomerOption.style.fontWeight = 'bold';
+            customerSelect.appendChild(addCustomerOption);
+        }
+    },
+
     showCustomersSection() {
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
@@ -1696,94 +1611,60 @@ this._clickHandler = (e) => {
         this.renderModule();
     },
 
-  handleCustomerSubmit(e) {
-    e.preventDefault();
-    
-    const customerData = {
-        id: Date.now(),
-        name: document.getElementById('customer-name').value,
-        contact: document.getElementById('customer-phone').value,
-        email: document.getElementById('customer-email').value,
-        address: document.getElementById('customer-address').value
-    };
-
-    this.customers.push(customerData);
-    this.saveData();
-    
-    // Broadcast customer added
-    this.broadcastCustomerAdded(customerData);
-    
-    // Refresh the customer dropdown if the order form is visible
-    const orderFormContainer = document.getElementById('order-form-container');
-    const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
-    
-    if (wasOrderFormVisible) {
-        this.refreshCustomerDropdown();
-    }
-    
-    this.renderModule();
-    this.hideCustomerForm();
-    
-    // Show success message
-    this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
-    
-    // If order form was visible, show it again and select the new customer
-    if (wasOrderFormVisible) {
-        // Small delay to ensure render is complete
-        setTimeout(() => {
-            // Show order form again
-            this.showOrderForm();
-            
-            // Select the new customer
-            const customerSelect = document.getElementById('order-customer');
-            if (customerSelect) {
-                customerSelect.value = customerData.id;
-                
-                // Trigger change event to update any dependent fields
-                const event = new Event('change', { bubbles: true });
-                customerSelect.dispatchEvent(event);
-            }
-            
-            // Show a confirmation message
-            this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
-        }, 300);
-    }
-},
-
-    ensureCustomerFormVisible() {
-    const customerContainer = document.getElementById('customer-form-container');
-    if (!customerContainer) return;
-    
-    // Check if the form is in the viewport
-    const rect = customerContainer.getBoundingClientRect();
-    const isInViewport = rect.top >= 0 && 
-                        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
-    
-    if (!isInViewport) {
-        // Scroll to the form
-        customerContainer.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-        });
+    handleCustomerSubmit(e) {
+        e.preventDefault();
         
-        // Add a slight delay and then focus
-        setTimeout(() => {
-            const nameInput = document.getElementById('customer-name');
-            if (nameInput) {
-                nameInput.focus();
-            }
-        }, 500);
-    } else {
-        // Already in viewport, just focus
-        setTimeout(() => {
-            const nameInput = document.getElementById('customer-name');
-            if (nameInput) {
-                nameInput.focus();
-            }
-        }, 100);
-    }
-},
-    
+        const customerData = {
+            id: Date.now(),
+            name: document.getElementById('customer-name').value,
+            contact: document.getElementById('customer-phone').value,
+            email: document.getElementById('customer-email').value,
+            address: document.getElementById('customer-address').value
+        };
+
+        this.customers.push(customerData);
+        this.saveData();
+        
+        // Broadcast customer added
+        this.broadcastCustomerAdded(customerData);
+        
+        // Refresh the customer dropdown if the order form is visible
+        const orderFormContainer = document.getElementById('order-form-container');
+        const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
+        
+        if (wasOrderFormVisible) {
+            this.refreshCustomerDropdown();
+        }
+        
+        this.renderModule();
+        this.hideCustomerForm();
+        
+        // Show success message
+        this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
+        
+        // If order form was visible, show it again and select the new customer
+        if (wasOrderFormVisible) {
+            // Small delay to ensure render is complete
+            setTimeout(() => {
+                // Show order form again
+                this.showOrderForm();
+                
+                // Select the new customer
+                const customerSelect = document.getElementById('order-customer');
+                if (customerSelect) {
+                    customerSelect.value = customerData.id;
+                    
+                    // Trigger change event to update any dependent fields
+                    const event = new Event('change', { bubbles: true });
+                    customerSelect.dispatchEvent(event);
+                }
+                
+                // Show a confirmation message
+                this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
+            }, 300);
+        }
+    },
+
     deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
         if (!order) return;
@@ -1958,50 +1839,50 @@ this._clickHandler = (e) => {
     },
 
     // Add the unload method
-unload() {
-    console.log('📦 Unloading Orders module...');
-    
-    // Remove event listeners
-    if (this._clickHandler) {
-        document.removeEventListener('click', this._clickHandler);
-        this._clickHandler = null;
+    unload() {
+        console.log('📦 Unloading Orders module...');
+        
+        // Remove event listeners
+        if (this._clickHandler) {
+            document.removeEventListener('click', this._clickHandler);
+            this._clickHandler = null;
+        }
+        if (this._captureHandler) {
+            document.removeEventListener('click', this._captureHandler, true);
+            this._captureHandler = null;
+        }
+        
+        // Remove form submit handlers
+        const orderForm = document.getElementById('order-form');
+        if (orderForm && this._orderSubmitHandler) {
+            orderForm.removeEventListener('submit', this._orderSubmitHandler);
+            this._orderSubmitHandler = null;
+        }
+        
+        const customerForm = document.getElementById('customer-form');
+        if (customerForm && this._customerSubmitHandler) {
+            customerForm.removeEventListener('submit', this._customerSubmitHandler);
+            this._customerSubmitHandler = null;
+        }
+        
+        // Remove customer select handler
+        const customerSelect = document.getElementById('order-customer');
+        if (customerSelect && this._customerSelectHandler) {
+            customerSelect.removeEventListener('change', this._customerSelectHandler);
+            this._customerSelectHandler = null;
+        }
+        
+        // Hide any open forms
+        this.hideOrderForm();
+        this.hideCustomerForm();
+        
+        // Reset state
+        this.initialized = false;
+        this.element = null;
+        this._orderListenersAttached = false;
+        
+        console.log('✅ Orders module unloaded');
     }
-    if (this._captureHandler) {
-        document.removeEventListener('click', this._captureHandler, true);
-        this._captureHandler = null;
-    }
-    
-    // Remove form submit handlers
-    const orderForm = document.getElementById('order-form');
-    if (orderForm && this._orderSubmitHandler) {
-        orderForm.removeEventListener('submit', this._orderSubmitHandler);
-        this._orderSubmitHandler = null;
-    }
-    
-    const customerForm = document.getElementById('customer-form');
-    if (customerForm && this._customerSubmitHandler) {
-        customerForm.removeEventListener('submit', this._customerSubmitHandler);
-        this._customerSubmitHandler = null;
-    }
-    
-    // Remove customer select handler
-    const customerSelect = document.getElementById('order-customer');
-    if (customerSelect && this._customerSelectHandler) {
-        customerSelect.removeEventListener('change', this._customerSelectHandler);
-        this._customerSelectHandler = null;
-    }
-    
-    // Hide any open forms
-    this.hideOrderForm();
-    this.hideCustomerForm();
-    
-    // Reset state
-    this.initialized = false;
-    this.element = null;
-    this._orderListenersAttached = false;
-    
-    console.log('✅ Orders module unloaded');
-}
 };
 
 // Register with FarmModules
