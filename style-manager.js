@@ -1344,6 +1344,291 @@ div[id*="production-report"] .popout-modal-footer {
 .production-report-modal {
     animation: modalFadeIn 0.3s ease-out !important;
 }
+
+/* ===== ULTIMATE POPOUT MODAL BUTTON FIX - FOR ALL MODULES ===== */
+/* This forces ALL modal buttons to be visible and properly styled */
+
+/* Target any popout modal in any module */
+.popout-modal,
+.popout-modal-content,
+.modal-content,
+.report-modal,
+[class*="popout-modal"],
+[class*="modal-content"],
+[class*="report-modal"],
+[class*="dialog"] {
+    background: var(--card-bg, white) !important;
+    border-radius: var(--radius-xl, 16px) !important;
+    padding: 24px !important;
+    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1)) !important;
+    z-index: 10000 !important;
+}
+
+/* FORCE ALL MODAL FOOTERS TO DISPLAY PROPERLY */
+.popout-modal-footer,
+.modal-footer,
+.report-footer,
+[class*="modal-footer"],
+[class*="dialog-footer"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    margin-top: 24px !important;
+    padding-top: 20px !important;
+    border-top: 2px solid var(--primary-100, #dcfce7) !important;
+    width: 100% !important;
+    min-height: 80px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* FORCE ALL MODAL BUTTONS TO BE VISIBLE */
+.popout-modal-footer button,
+.modal-footer button,
+.report-footer button,
+[class*="modal-footer"] button,
+[class*="dialog-footer"] button,
+.popout-modal-footer .btn,
+.modal-footer .btn,
+.report-footer .btn,
+.popout-modal-footer .btn-outline,
+.modal-footer .btn-outline,
+.report-footer .btn-outline,
+.popout-modal-footer .btn-primary,
+.modal-footer .btn-primary,
+.report-footer .btn-primary,
+.popout-modal-footer .btn-danger,
+.modal-footer .btn-danger,
+.report-footer .btn-danger {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-lg, 12px) !important;
+    min-width: 100px !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    transition: var(--transition-normal, all 0.3s) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    border: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
+}
+
+/* PRIMARY BUTTON STYLES */
+.popout-modal-footer .btn-primary,
+.modal-footer .btn-primary,
+.report-footer .btn-primary,
+.popout-modal-footer .btn.btn-primary,
+button.btn-primary {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+    color: white !important;
+    box-shadow: var(--shadow-primary, 0 4px 12px rgba(34, 197, 94, 0.3)) !important;
+}
+
+/* OUTLINE BUTTON STYLES */
+.popout-modal-footer .btn-outline,
+.modal-footer .btn-outline,
+.report-footer .btn-outline,
+.popout-modal-footer .btn.btn-outline,
+button.btn-outline {
+    background: transparent !important;
+    color: var(--text-primary, #111827) !important;
+    border: 2px solid var(--primary-500, #22c55e) !important;
+}
+
+/* DANGER BUTTON STYLES */
+.popout-modal-footer .btn-danger,
+.modal-footer .btn-danger,
+.report-footer .btn-danger,
+.popout-modal-footer .btn.btn-danger,
+button.btn-danger {
+    background: var(--gradient-danger, linear-gradient(135deg, #ef4444, #dc2626)) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* HOVER STATES */
+.popout-modal-footer .btn-primary:hover,
+.modal-footer .btn-primary:hover,
+.report-footer .btn-primary:hover,
+button.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-primary-hover, 0 6px 20px rgba(34, 197, 94, 0.4)) !important;
+}
+
+.popout-modal-footer .btn-outline:hover,
+.modal-footer .btn-outline:hover,
+.report-footer .btn-outline:hover,
+button.btn-outline:hover {
+    background: var(--primary-500, #22c55e) !important;
+    color: white !important;
+    transform: translateY(-2px) !important;
+}
+
+.popout-modal-footer .btn-danger:hover,
+.modal-footer .btn-danger:hover,
+.report-footer .btn-danger:hover,
+button.btn-danger:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* ===== SPECIFIC MODULE FIXES ===== */
+
+/* PRODUCTION MODULE FIX */
+#production-report-modal .popout-modal-footer,
+.production-report-modal .popout-modal-footer,
+div[id*="production"] .popout-modal-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+#production-report-modal .btn-outline,
+.production-report-modal .btn-outline,
+button#print-production-report {
+    background: transparent !important;
+    color: var(--text-primary, #111827) !important;
+    border: 2px solid var(--primary-500, #22c55e) !important;
+}
+
+#production-report-modal .btn-primary,
+.production-report-modal .btn-primary,
+button#close-production-report-btn {
+    background: var(--gradient-primary, linear-gradient(135deg, #22c55e, #16a34a)) !important;
+    color: white !important;
+}
+
+/* SALES MODULE FIX */
+#sales-modal .popout-modal-footer,
+.sales-modal .popout-modal-footer,
+div[id*="sale"] .popout-modal-footer {
+    display: flex !important;
+}
+
+#sales-modal .btn-outline,
+button#cancel-sale {
+    background: transparent !important;
+    border: 2px solid var(--primary-500, #22c55e) !important;
+}
+
+#sales-modal .btn-primary,
+button#save-sale {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+#sales-modal .btn-danger,
+button#delete-sale {
+    background: var(--gradient-danger) !important;
+    color: white !important;
+}
+
+/* INVENTORY MODULE FIX */
+#inventory-modal .popout-modal-footer,
+.inventory-modal .popout-modal-footer,
+button#close-inventory-report-btn {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+/* ORDERS MODULE FIX */
+#order-modal .popout-modal-footer,
+.orders-modal .popout-modal-footer,
+button#cancel-order,
+button#cancel-order-form {
+    background: transparent !important;
+    border: 2px solid var(--primary-500, #22c55e) !important;
+}
+
+button#save-order,
+button#create-order,
+button#update-order {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+/* FEED MODULE FIX */
+#feed-modal .popout-modal-footer,
+.feed-modal .popout-modal-footer,
+button#cancel-feed,
+button#cancel-feed-form {
+    background: transparent !important;
+    border: 2px solid var(--primary-500, #22c55e) !important;
+}
+
+button#save-feed,
+button#save-feed-record {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+/* ===== MOBILE RESPONSIVENESS FOR ALL MODALS ===== */
+@media (max-width: 768px) {
+    .popout-modal-footer,
+    .modal-footer,
+    .report-footer,
+    [class*="modal-footer"],
+    [class*="dialog-footer"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+        min-height: auto !important;
+    }
+    
+    .popout-modal-footer button,
+    .modal-footer button,
+    .report-footer button,
+    [class*="modal-footer"] button,
+    .popout-modal-footer .btn,
+    .modal-footer .btn,
+    .report-footer .btn {
+        width: 100% !important;
+        min-width: 100% !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        padding: 14px 20px !important;
+    }
+    
+    /* Universal stacking order: Primary first, then outline, then danger */
+    .popout-modal-footer .btn-primary,
+    .modal-footer .btn-primary,
+    .report-footer .btn-primary,
+    button[class*="primary"] {
+        order: 1 !important;
+    }
+    
+    .popout-modal-footer .btn-outline,
+    .modal-footer .btn-outline,
+    .report-footer .btn-outline,
+    button[class*="outline"] {
+        order: 2 !important;
+    }
+    
+    .popout-modal-footer .btn-danger,
+    .modal-footer .btn-danger,
+    .report-footer .btn-danger,
+    button[class*="danger"] {
+        order: 3 !important;
+    }
+}
+
+/* DEBUG HELPER - REMOVE AFTER FIXED */
+/* This will outline all modal buttons in red so you can see if they're being hidden */
+/*
+.popout-modal-footer button {
+    border: 2px solid red !important;
+    background: yellow !important;
+    color: black !important;
+}
+*/
 }
         `;
         document.head.appendChild(style);
