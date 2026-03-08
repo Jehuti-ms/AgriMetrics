@@ -1620,15 +1620,65 @@ button#save-feed-record {
     }
 }
 
-/* DEBUG HELPER - REMOVE AFTER FIXED */
-/* This will outline all modal buttons in red so you can see if they're being hidden */
-/*
-.popout-modal-footer button {
-    border: 2px solid red !important;
-    background: yellow !important;
-    color: black !important;
+/* ===== FIX PRODUCTION REPORT MODAL HEADER TEXT COLOR ===== */
+#production-report-modal h3,
+.production-report-modal h3,
+#production-report-modal .modal-header h3,
+.production-report-modal .modal-header h3,
+#production-report-modal .popout-modal-header h3,
+.production-report-modal .popout-modal-header h3,
+div[id*="production-report"] h3 {
+    color: var(--text-primary, #111827) !important;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 20px !important;
+    padding-bottom: 16px !important;
+    border-bottom: 2px solid var(--primary-100, #dcfce7) !important;
+    background: transparent !important;
+    text-shadow: none !important;
 }
-*/
+
+/* Also fix any other text in the modal */
+#production-report-modal p,
+#production-report-modal label,
+#production-report-modal span,
+#production-report-modal div:not(.module-header):not(.btn-primary):not(.btn-outline) {
+    color: var(--text-primary, #111827) !important;
+}
+
+/* Override any module header styles that might be leaking in */
+#production-report-modal .module-header,
+#production-report-modal .module-title,
+#production-report-modal .module-subtitle {
+    all: revert !important;
+    color: var(--text-primary, #111827) !important;
+    background: transparent !important;
+}
+
+/* Ensure the modal content has proper text color */
+#production-report-modal .popout-modal-content,
+.production-report-modal .popout-modal-content {
+    background: var(--card-bg, white) !important;
+    color: var(--text-primary, #111827) !important;
+}
+
+/* Keep button text colors as they should be */
+#production-report-modal .btn-primary,
+#production-report-modal .btn-outline {
+    color: currentColor !important;
+}
+
+#production-report-modal .btn-primary {
+    color: white !important;
+}
+
+#production-report-modal .btn-outline {
+    color: var(--text-primary, #111827) !important;
+}
+
+#production-report-modal .btn-outline:hover {
+    color: white !important;
+}
 }
         `;
         document.head.appendChild(style);
