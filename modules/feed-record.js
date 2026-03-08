@@ -263,38 +263,39 @@ const FeedRecordModule = {
                 </div>
 
                 <!-- Simple Form -->
-                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="feed-form-title">Record Feed Usage</h3>
-                    <form id="feed-record-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                            <div>
-                                <label class="form-label">Feed Type</label>
-                                <select class="form-input" id="feed-type" required>
-                                    <option value="">Select feed type</option>
-                                    ${this.feedInventory.map(item => `
-                                        <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
-                                            ${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed 
-                                            ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
-                                        </option>
-                                    `).join('')}
-                                </select>
+                    <div class="glass-card" style="padding: 24px; margin: 24px 0;">
+                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="feed-form-title">Record Feed Usage</h3>
+                        <form id="feed-record-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Feed Type</label>
+                                    <select class="form-input" id="feed-type" required>
+                                        <option value="">Select feed type</option>
+                                        ${this.feedInventory.map(item => `
+                                            <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
+                                                ${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed 
+                                                ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Quantity (kg)</label>
+                                    <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
+                                </div>
                             </div>
-                            <div>
-                                <label class="form-label">Quantity (kg)</label>
-                                <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
                             </div>
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
-                        </div>
-                        <div style="display: flex; gap: 12px;">
-                            <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
-                            <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
-                        </div>
-                    </form>
-                </div>
-
+                            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
+                                <button type="button" class="btn-outline" id="cancel-feed-form">Cancel</button>
+                                <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
+                            </div>
+                        </form>
+                    </div>
+                    
                 <!-- Recent Records -->
                 <div class="glass-card" style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -388,29 +389,32 @@ const FeedRecordModule = {
         `).join('');
     },
 
-    setupEventListeners() {
-        // Form submission
-        document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
-        
-        // Quick action buttons
-        document.getElementById('record-feed-btn')?.addEventListener('click', () => this.showFeedForm());
-        document.getElementById('add-stock-btn')?.addEventListener('click', () => this.showAddStockForm());
-        document.getElementById('adjust-birds-btn')?.addEventListener('click', () => this.showAdjustBirdsForm());
-        document.getElementById('export-feed-records')?.addEventListener('click', () => this.exportFeedRecords());
-        document.getElementById('cancel-feed-edit')?.addEventListener('click', () => this.cancelFeedEdit());
-        
-        // Edit/delete buttons (event delegation)
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-feed-record')) {
-                const id = parseInt(e.target.closest('.edit-feed-record').dataset.id);
-                this.editFeedRecord(id);
-            }
-            else if (e.target.closest('.delete-feed-record')) {
-                const id = parseInt(e.target.closest('.delete-feed-record').dataset.id);
-                this.deleteFeedRecord(id);
-            }
-        });
-    },
+   setupEventListeners() {
+    // Form submission
+    document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
+    
+    // Quick action buttons
+    document.getElementById('record-feed-btn')?.addEventListener('click', () => this.showFeedForm());
+    document.getElementById('add-stock-btn')?.addEventListener('click', () => this.showAddStockForm());
+    document.getElementById('adjust-birds-btn')?.addEventListener('click', () => this.showAdjustBirdsForm());
+    document.getElementById('export-feed-records')?.addEventListener('click', () => this.exportFeedRecords());
+    
+    // Cancel buttons
+    document.getElementById('cancel-feed-form')?.addEventListener('click', () => this.cancelFeedForm());
+    document.getElementById('cancel-feed-edit')?.addEventListener('click', () => this.cancelFeedEdit());
+    
+    // Edit/delete buttons (event delegation)
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.edit-feed-record')) {
+            const id = parseInt(e.target.closest('.edit-feed-record').dataset.id);
+            this.editFeedRecord(id);
+        }
+        else if (e.target.closest('.delete-feed-record')) {
+            const id = parseInt(e.target.closest('.delete-feed-record').dataset.id);
+            this.deleteFeedRecord(id);
+        }
+    });
+},
 
     handleFeedRecordSubmit(e) {
         e.preventDefault();
@@ -486,6 +490,25 @@ const FeedRecordModule = {
         this.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
     },
 
+    cancelFeedForm() {
+    console.log('❌ Cancelling feed form');
+    
+    // Reset form
+    document.getElementById('feed-record-form').reset();
+    
+    // Reset form title and button
+    document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
+    const submitBtn = document.getElementById('feed-submit-btn');
+    submitBtn.textContent = 'Save Record';
+    delete submitBtn.dataset.editingId;
+    
+    // Hide edit cancel button
+    document.getElementById('cancel-feed-edit').style.display = 'none';
+    
+    // Scroll back to top of form or hide it? Usually just reset
+    this.showNotification('Form cleared', 'info');
+},
+    
     editFeedRecord(recordId) {
         console.log('🌾 EDITING FEED RECORD:', recordId);
         
@@ -576,21 +599,25 @@ const FeedRecordModule = {
             this.showNotification(`Feed record updated!`, 'success');
         }
     },
-
+   
     cancelFeedEdit() {
-        // Reset form
-        document.getElementById('feed-record-form').reset();
-        
-        // Reset form title and button
-        document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
-        const submitBtn = document.getElementById('feed-submit-btn');
-        submitBtn.textContent = 'Save Record';
-        delete submitBtn.dataset.editingId;
-        
-        // Hide cancel button
-        document.getElementById('cancel-feed-edit').style.display = 'none';
-    },
-
+    console.log('❌ Cancelling feed edit');
+    
+    // Reset form
+    document.getElementById('feed-record-form').reset();
+    
+    // Reset form title and button
+    document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
+    const submitBtn = document.getElementById('feed-submit-btn');
+    submitBtn.textContent = 'Save Record';
+    delete submitBtn.dataset.editingId;
+    
+    // Hide edit cancel button
+    document.getElementById('cancel-feed-edit').style.display = 'none';
+    
+    this.showNotification('Edit cancelled', 'info');
+},
+    
     deleteFeedRecord(recordId) {
         const record = this.feedRecords.find(r => r.id === recordId);
         if (!record) return;
