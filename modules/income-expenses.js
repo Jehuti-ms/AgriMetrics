@@ -23,6 +23,59 @@ const IncomeExpensesModule = {
     lastSwitchClick: 0,
     isOnline: true,
     isDeleting: false,
+
+    // Add this debug method
+debugCameraCapture: function() {
+    console.log('🔍 DEBUG: Camera Capture Diagnostics');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    
+    console.log('Video element:', video);
+    console.log('Canvas element:', canvas);
+    console.log('Camera stream exists:', !!this.cameraStream);
+    
+    if (video) {
+        console.log('Video readyState:', video.readyState);
+        console.log('Video paused:', video.paused);
+        console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+        console.log('Video srcObject:', video.srcObject);
+    }
+    
+    if (this.cameraStream) {
+        const tracks = this.cameraStream.getTracks();
+        console.log('Camera tracks:', tracks.length);
+        tracks.forEach((track, i) => {
+            console.log(`Track ${i}:`, {
+                kind: track.kind,
+                enabled: track.enabled,
+                readyState: track.readyState,
+                settings: track.getSettings ? track.getSettings() : 'N/A'
+            });
+        });
+    }
+    
+    // Check if we can access camera
+    if (navigator.mediaDevices) {
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                console.log('📹 Available cameras:', videoDevices.length);
+                videoDevices.forEach((d, i) => {
+                    console.log(`Camera ${i}:`, d.label || 'Unnamed camera');
+                });
+            })
+            .catch(err => console.error('Error enumerating devices:', err));
+    }
+    
+    return {
+        videoFound: !!video,
+        canvasFound: !!canvas,
+        streamActive: !!this.cameraStream,
+        ready: video ? video.readyState >= 2 : false
+    };
+},
     
    // ==================== INITIALIZATION ====================
 async initialize() {  // ← ADD async
