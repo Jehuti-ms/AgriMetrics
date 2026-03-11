@@ -896,77 +896,88 @@ async saveTransaction(transactionData) {
     },
 
     capturePhoto() {
-        console.log('📸 CAPTURE PHOTO CALLED - NEW VERSION WITH CROPPING');
-        console.trace('Trace to see who called this');
-        
-        const video = document.getElementById('camera-preview');
-        const canvas = document.getElementById('camera-canvas');
-        const status = document.getElementById('camera-status');
-        
-        if (!video || !canvas) {
-            console.error('Video or canvas element not found');
-            this.showNotification('Camera elements missing', 'error');
-            return;
-        }
-        
-        if (!this.cameraStream || video.paused || video.readyState < 2) {
-            console.error('Camera not ready');
-            this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
-            return;
-        }
-        
+    console.log('📸 CAPTURE PHOTO CALLED');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    
+    if (!video || !canvas) {
+        console.error('Video or canvas element not found');
+        this.showNotification('Camera elements missing', 'error');
+        return;
+    }
+    
+    if (!this.cameraStream || video.paused || video.readyState < 2) {
+        console.error('Camera not ready');
+        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+        return;
+    }
+    
+    try {
+        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         
         const context = canvas.getContext('2d');
         
-        try {
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Draw the current video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        if (status) status.textContent = 'Processing photo...';
+        
+        // Visual feedback - flash the video
+        video.style.filter = 'brightness(150%) contrast(120%)';
+        setTimeout(() => {
+            video.style.filter = '';
+        }, 200);
+        
+        // Get image data
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+        
+        if (status) status.textContent = 'Photo captured!';
+        
+        // Process the captured image
+        this.processCapturedImage(imageData);
+        
+    } catch (error) {
+        console.error('❌ Capture error:', error);
+        if (status) status.textContent = 'Error capturing photo';
+        this.showNotification('Failed to capture photo: ' + error.message, 'error');
+    }
+},
+
+// Add this helper method to process the captured image
+processCapturedImage(imageData) {
+    console.log('📸 Processing captured image');
+    
+    // Create a file from the data URL
+    fetch(imageData)
+        .then(res => res.blob())
+        .then(blob => {
+            const file = new File([blob], `receipt_${Date.now()}.jpg`, { 
+                type: 'image/jpeg' 
+            });
             
-            if (status) status.textContent = 'Processing photo...';
+            console.log('✅ Image captured, file created:', file.name, file.size);
             
-            video.style.filter = 'brightness(150%) contrast(120%)';
-            setTimeout(() => {
-                video.style.filter = '';
-            }, 200);
+            // Show success notification
+            this.showNotification('Photo captured successfully!', 'success');
             
-            const dataURL = canvas.toDataURL('image/jpeg', 0.85);
-            
-            if (status) status.textContent = 'Do you want to crop?';
-            
-            // Convert dataURL to file
-            fetch(dataURL)
-                .then(res => res.blob())
-                .then(blob => {
-                    const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                    
-                    console.log('📸 Photo captured, file created:', file.name, file.size);
-                    
-                    // Ask if user wants to crop
-                    if (confirm('Would you like to crop this photo before saving?')) {
-                        console.log('✂️ User chose to crop');
-                        this.currentPhotoFile = file;
-                        this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
-                            console.log('🔄 Crop callback received, saving cropped image');
-                            this.saveCroppedReceipt(croppedFile, croppedImageUrl);
-                        };
-                        this.showReceiptCropperModal(file);
-                    } else {
-                        console.log('💾 User chose to save without cropping');
-                        this.saveReceiptFromFile(file, dataURL);
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error converting photo:', error);
-                    this.showNotification('Error processing photo', 'error');
-                });
-            
-        } catch (error) {
-            console.error('❌ Capture error:', error);
-            if (status) status.textContent = 'Error';
-            this.showNotification('Failed to capture photo', 'error');
-        }
-    },
+            // Here you can either:
+            // Option 1: Show cropping option
+            if (confirm('Would you like to crop this photo?')) {
+                this.showReceiptCropperModal(file);
+            } else {
+                // Option 2: Save directly
+                this.saveReceiptFromFile(file, imageData);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error processing captured image:', error);
+            this.showNotification('Error processing photo', 'error');
+        });
+},
 
     saveCroppedReceipt(file, imageUrl) {
         console.log('💾 Saving cropped receipt:', file.name);
