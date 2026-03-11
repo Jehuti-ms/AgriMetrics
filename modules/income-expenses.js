@@ -720,16 +720,51 @@ async saveTransaction(transactionData) {
     currentPhotoFile: null,
     currentPhotoCallback: null,
 
-   
+   // ===== CROPPER LIBRARY LOADER =====
+loadCropperLibrary() {
+    return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if (window.Cropper) {
+            console.log('✅ Cropper already loaded');
+            resolve(window.Cropper);
+            return;
+        }
+        
+        console.log('📦 Loading Cropper library...');
+        
+        // Load CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css';
+        link.onload = () => console.log('✅ Cropper CSS loaded');
+        link.onerror = (e) => console.warn('⚠️ Cropper CSS load warning:', e);
+        document.head.appendChild(link);
+        
+        // Load JS
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js';
+        script.onload = () => {
+            console.log('✅ Cropper JS loaded');
+            resolve(window.Cropper);
+        };
+        script.onerror = (e) => {
+            console.error('❌ Failed to load Cropper:', e);
+            reject(new Error('Failed to load Cropper'));
+        };
+        document.head.appendChild(script);
+    });
+},
 
-   // ===== RECEIPT PHOTO CROPPING METHODS =====
-async showReceiptCropperModal(file) {
+    async showReceiptCropperModal(file) {
     console.log('🖼️ Showing receipt cropper modal for:', file.name);
     
     try {
+        // Load Cropper library first
+        await this.loadCropperLibrary();
+        
         const reader = new FileReader();
         reader.onload = (e) => {
-            this.showSimpleCropper(e.target.result);
+            this.initializeStandardCropper(e.target.result);
         };
         reader.readAsDataURL(file);
     } catch (error) {
@@ -739,161 +774,35 @@ async showReceiptCropperModal(file) {
     }
 },
 
-showSimpleCropper(imageDataUrl) {
-    console.log('✂️ Showing simple touch cropper');
+    initializeStandardCropper(imageDataUrl) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('receipt-cropper-modal');
+    if (existingModal) existingModal.remove();
     
-    // Create modal HTML with visible capture button
+    // Create modal HTML
     const modalHTML = `
-        <div id="simple-cropper-modal" style="
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 100000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        ">
-            <div style="
-                background: white;
-                width: 95%;
-                max-width: 800px;
-                border-radius: 16px;
-                display: flex;
-                flex-direction: column;
-                max-height: 90vh;
-            ">
-                <div style="
-                    padding: 16px;
-                    background: #22c55e;
-                    color: white;
-                    border-radius: 16px 16px 0 0;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                ">
+        <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 16px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+                
+                <div style="padding: 16px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0; font-size: 18px;">✂️ Crop Receipt</h3>
-                    <button id="close-simple-cropper" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">&times;</button>
+                    <button id="close-receipt-cropper" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">&times;</button>
                 </div>
                 
-                <!-- CROP AREA with visible crop overlay -->
-                <div style="
-                    padding: 16px;
-                    background: #f0f0f0;
-                    min-height: 300px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    position: relative;
-                " id="crop-container">
-                    
-                    <!-- CROP OVERLAY (shows what will be kept) -->
-                    <div style="
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        width: 250px;
-                        height: 250px;
-                        border: 3px solid #4CAF50;
-                        background: rgba(76, 175, 80, 0.1);
-                        box-shadow: 0 0 0 999px rgba(0,0,0,0.7);
-                        pointer-events: none;
-                        z-index: 10;
-                        border-radius: 4px;
-                    "></div>
-                    
-                    <!-- IMAGE (movable) -->
-                    <img src="${imageDataUrl}" id="crop-image" style="
-                        max-width: none;
-                        max-height: 50vh;
-                        width: auto;
-                        height: auto;
-                        display: block;
-                        cursor: move;
-                        transition: transform 0.05s;
-                        position: relative;
-                        z-index: 5;
-                    ">
+                <div style="padding: 16px; min-height: 300px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                    <img id="cropper-image" src="${imageDataUrl}" style="max-width: 100%; max-height: 50vh; display: block;">
                 </div>
                 
-                <!-- CONTROL BUTTONS -->
-                <div style="
-                    padding: 16px;
-                    display: flex;
-                    gap: 10px;
-                    justify-content: center;
-                    flex-wrap: wrap;
-                    border-bottom: 1px solid #eee;
-                ">
-                    <button class="crop-action-btn" data-action="rotate-left" style="
-                        padding: 12px 20px;
-                        background: #f0f0f0;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 20px;
-                        min-width: 60px;
-                        cursor: pointer;
-                    ">↺</button>
-                    <button class="crop-action-btn" data-action="rotate-right" style="
-                        padding: 12px 20px;
-                        background: #f0f0f0;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 20px;
-                        min-width: 60px;
-                        cursor: pointer;
-                    ">↻</button>
-                    <button class="crop-action-btn" data-action="zoom-in" style="
-                        padding: 12px 20px;
-                        background: #f0f0f0;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 20px;
-                        min-width: 60px;
-                        cursor: pointer;
-                    ">🔍+</button>
-                    <button class="crop-action-btn" data-action="zoom-out" style="
-                        padding: 12px 20px;
-                        background: #f0f0f0;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 20px;
-                        min-width: 60px;
-                        cursor: pointer;
-                    ">🔍-</button>
+                <div style="padding: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; border-top: 1px solid #eee;">
+                    <button id="cropper-rotate-left" style="padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; cursor: pointer;">↺</button>
+                    <button id="cropper-rotate-right" style="padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; cursor: pointer;">↻</button>
+                    <button id="cropper-zoom-in" style="padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; cursor: pointer;">🔍+</button>
+                    <button id="cropper-zoom-out" style="padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; cursor: pointer;">🔍-</button>
                 </div>
                 
-                <!-- ACTION BUTTONS (visible) -->
-                <div style="
-                    padding: 16px;
-                    display: flex;
-                    gap: 12px;
-                ">
-                    <button id="cancel-simple-crop" style="
-                        flex: 1;
-                        padding: 14px;
-                        background: #f44336;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        cursor: pointer;
-                    ">Cancel</button>
-                    <button id="apply-simple-crop" style="
-                        flex: 1;
-                        padding: 14px;
-                        background: #4CAF50;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        font-weight: bold;
-                        cursor: pointer;
-                    ">Apply Crop</button>
+                <div style="padding: 16px; display: flex; gap: 12px;">
+                    <button id="cancel-receipt-crop" style="flex: 1; padding: 14px; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">Cancel</button>
+                    <button id="apply-receipt-crop" style="flex: 1; padding: 14px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">Apply Crop</button>
                 </div>
             </div>
         </div>
@@ -901,158 +810,113 @@ showSimpleCropper(imageDataUrl) {
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
-    const img = document.getElementById('crop-image');
-    const cropOverlay = document.querySelector('#crop-container > div:first-child');
-    
-    // Get crop area dimensions
-    const cropSize = 250; // Fixed crop box size
-    
-    let scale = 1;
-    let rotation = 0;
-    let translateX = 0;
-    let translateY = 0;
-    let lastTouchX, lastTouchY;
-    let initialDistance = null;
-    
-    // Wait for image to load to get dimensions
-    img.onload = () => {
-        console.log('Image loaded:', img.naturalWidth, 'x', img.naturalHeight);
-        
-        // Center image initially
-        const container = document.getElementById('crop-container');
-        const containerRect = container.getBoundingClientRect();
-        
-        translateX = (containerRect.width/2) - (img.width/2);
-        translateY = (containerRect.height/2) - (img.height/2);
-        
-        img.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg) scale(${scale})`;
-    };
-    
-    // Touch handlers
-    img.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (e.touches.length === 1) {
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-        } else if (e.touches.length === 2) {
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            initialDistance = Math.sqrt(dx * dx + dy * dy);
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+        const image = document.getElementById('cropper-image');
+        if (!image) {
+            console.error('❌ Image not found');
+            return;
         }
-    });
-    
-    img.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (e.touches.length === 1 && lastTouchX && lastTouchY) {
-            const deltaX = e.touches[0].clientX - lastTouchX;
-            const deltaY = e.touches[0].clientY - lastTouchY;
-            
-            translateX += deltaX;
-            translateY += deltaY;
-            
-            img.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg) scale(${scale})`;
-            
-            lastTouchX = e.touches[0].clientX;
-            lastTouchY = e.touches[0].clientY;
-        } else if (e.touches.length === 2 && initialDistance) {
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            scale *= (distance / initialDistance);
-            scale = Math.min(Math.max(scale, 0.5), 3);
-            
-            img.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg) scale(${scale})`;
-            
-            initialDistance = distance;
-        }
-    });
-    
-    img.addEventListener('touchend', () => {
-        lastTouchX = null;
-        lastTouchY = null;
-        initialDistance = null;
-    });
-    
-    // Button actions
-    document.querySelectorAll('.crop-action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const action = btn.dataset.action;
-            
-            switch(action) {
-                case 'rotate-left':
-                    rotation -= 90;
-                    break;
-                case 'rotate-right':
-                    rotation += 90;
-                    break;
-                case 'zoom-in':
-                    scale = Math.min(scale + 0.2, 3);
-                    break;
-                case 'zoom-out':
-                    scale = Math.max(scale - 0.2, 0.5);
-                    break;
+        
+        console.log('✅ Initializing Cropper...');
+        
+        // Initialize cropper with standard options
+        this.cropper = new Cropper(image, {
+            aspectRatio: NaN, // Free aspect ratio
+            viewMode: 1,
+            dragMode: 'crop',
+            autoCropArea: 0.8,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            minCropBoxWidth: 100,
+            minCropBoxHeight: 100,
+            ready: () => {
+                console.log('✅ Cropper ready');
             }
-            
-            img.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg) scale(${scale})`;
         });
-    });
-    
-    // Cancel button
-    document.getElementById('cancel-simple-crop').addEventListener('click', () => {
-        document.getElementById('simple-cropper-modal').remove();
-    });
-    
-    // Close button
-    document.getElementById('close-simple-cropper').addEventListener('click', () => {
-        document.getElementById('simple-cropper-modal').remove();
-    });
-    
-    // Apply crop - THIS ACTUALLY CROPS THE IMAGE
-    document.getElementById('apply-simple-crop').addEventListener('click', () => {
-        console.log('Applying crop...');
         
-        // Get container and crop area positions
-        const container = document.getElementById('crop-container');
-        const containerRect = container.getBoundingClientRect();
-        const imgRect = img.getBoundingClientRect();
+        // Setup control buttons
+        document.getElementById('cropper-rotate-left').addEventListener('click', () => {
+            if (this.cropper) this.cropper.rotate(-90);
+        });
         
-        // Calculate crop area in image coordinates
-        const cropX = (containerRect.width/2 - cropSize/2 - imgRect.left + imgRect.width/2);
-        const cropY = (containerRect.height/2 - cropSize/2 - imgRect.top + imgRect.height/2);
+        document.getElementById('cropper-rotate-right').addEventListener('click', () => {
+            if (this.cropper) this.cropper.rotate(90);
+        });
         
-        // Create canvas to crop
-        const canvas = document.createElement('canvas');
-        canvas.width = cropSize;
-        canvas.height = cropSize;
-        const ctx = canvas.getContext('2d');
+        document.getElementById('cropper-zoom-in').addEventListener('click', () => {
+            if (this.cropper) this.cropper.zoom(0.1);
+        });
         
-        // Draw cropped portion
-        ctx.drawImage(
-            img, 
-            cropX, cropY, cropSize, cropSize,  // Source rectangle
-            0, 0, cropSize, cropSize           // Destination rectangle
-        );
+        document.getElementById('cropper-zoom-out').addEventListener('click', () => {
+            if (this.cropper) this.cropper.zoom(-0.1);
+        });
         
-        // Save cropped image
-        canvas.toBlob((blob) => {
-            const croppedFile = new File([blob], this.currentPhotoFile.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now()
-            });
-            
-            const croppedImageUrl = URL.createObjectURL(blob);
-            
-            if (this.currentPhotoCallback) {
-                this.currentPhotoCallback(croppedFile, croppedImageUrl);
-            }
-            
-            document.getElementById('simple-cropper-modal').remove();
-            this.showNotification('✅ Image cropped successfully!', 'success');
-            
-        }, 'image/jpeg', 0.95);
-    });
+        // Close button
+        document.getElementById('close-receipt-cropper').addEventListener('click', () => {
+            this.closeReceiptCropperModal();
+        });
+        
+        // Cancel button
+        document.getElementById('cancel-receipt-crop').addEventListener('click', () => {
+            this.closeReceiptCropperModal();
+        });
+        
+        // Apply button
+        document.getElementById('apply-receipt-crop').addEventListener('click', () => {
+            this.applyStandardCrop();
+        });
+        
+    }, 200);
 },
+
+applyStandardCrop() {
+    if (!this.cropper) return;
+    
+    console.log('✂️ Applying crop...');
+    
+    const canvas = this.cropper.getCroppedCanvas({
+        maxWidth: 1200,
+        maxHeight: 1200,
+        fillColor: '#fff',
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+    });
+    
+    canvas.toBlob((blob) => {
+        const croppedFile = new File([blob], this.currentPhotoFile.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now()
+        });
+        
+        const croppedImageUrl = URL.createObjectURL(blob);
+        
+        if (this.currentPhotoCallback) {
+            this.currentPhotoCallback(croppedFile, croppedImageUrl);
+        }
+        
+        this.closeReceiptCropperModal();
+        this.showNotification('✅ Image cropped!', 'success');
+        
+    }, 'image/jpeg', 0.95);
+},
+
+closeReceiptCropperModal() {
+    if (this.cropper) {
+        this.cropper.destroy();
+        this.cropper = null;
+    }
+    
+    const modal = document.getElementById('receipt-cropper-modal');
+    if (modal) modal.remove();
+},
+
+      
     
  // Replace your current capturePhoto with this debug version
 capturePhoto: function() {
