@@ -28,6 +28,10 @@ const IncomeExpensesModule = {
     isOnline: true,
     isDeleting: false,
 
+    // Add this with your other properties
+    isCapturing: false,
+    captureTimeout: null,
+    
     // Add this debug method
 debugCameraCapture: function() {
     console.log('🔍 DEBUG: Camera Capture Diagnostics');
@@ -80,6 +84,9 @@ debugCameraCapture: function() {
         ready: video ? video.readyState >= 2 : false
     };
 },
+    // Add this property near the top of your module with the other properties
+isCapturing: false,
+
     
    // ==================== INITIALIZATION ====================
 async initialize() {  // ← ADD async
@@ -920,119 +927,136 @@ closeReceiptCropperModal() {
     if (modal) modal.remove();
 },
 
-      
+  closeReceiptCropperModal: function() {
+    if (this.cropper) {
+        this.cropper.destroy();
+        this.cropper = null;
+    }
     
- // Replace your current capturePhoto with this debug version
+    const modal = document.getElementById('receipt-cropper-modal');
+    if (modal) modal.remove();
+    
+    // Reset capture state
+    const captureBtn = document.getElementById('capture-photo');
+    this.resetCaptureState(captureBtn);
+},    
+    
+ // Then update your capturePhoto method
 capturePhoto: function() {
-    console.log('📸 ===== CAPTURE PHOTO DEBUG =====');
-    console.log('1. Function called');
+    // Prevent multiple simultaneous captures
+    if (this.isCapturing) {
+        console.log('⏳ Already capturing, please wait...');
+        this.showNotification('Please wait, already capturing...', 'info');
+        return;
+    }
+    
+    // Clear any pending timeout
+    if (this.captureTimeout) {
+        clearTimeout(this.captureTimeout);
+        this.captureTimeout = null;
+    }
+    
+    this.isCapturing = true;
+    console.log('📸 ===== CAPTURE PHOTO =====');
     
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
     const status = document.getElementById('camera-status');
+    const captureBtn = document.getElementById('capture-photo');
     
-    console.log('2. Elements found:', {
-        video: !!video,
-        canvas: !!canvas,
-        status: !!status
-    });
+    // Disable capture button immediately
+    if (captureBtn) {
+        captureBtn.disabled = true;
+        captureBtn.style.opacity = '0.5';
+        captureBtn.style.pointerEvents = 'none';
+    }
     
     if (!video || !canvas) {
         console.error('❌ Elements missing');
         this.showNotification('Camera error', 'error');
+        this.resetCaptureState(captureBtn);
         return;
     }
-    
-    console.log('3. Camera stream:', {
-        exists: !!this.cameraStream,
-        active: this.cameraStream?.active,
-        tracks: this.cameraStream?.getTracks().length
-    });
-    
-    console.log('4. Video state:', {
-        paused: video.paused,
-        readyState: video.readyState,
-        width: video.videoWidth,
-        height: video.videoHeight
-    });
     
     if (!this.cameraStream || !this.cameraStream.active) {
         console.error('❌ Camera stream not active');
         this.showNotification('Camera not initialized', 'error');
         if (status) status.textContent = 'Camera not ready';
-        
-        // Try to restart camera
-        setTimeout(() => this.initializeCamera(), 1000);
+        this.resetCaptureState(captureBtn);
         return;
     }
     
     if (video.paused || video.readyState < 2) {
         console.error('❌ Video not playing');
         this.showNotification('Camera not ready', 'error');
-        
-        // Try to play video
-        video.play().catch(err => {
-            console.error('Play failed:', err);
-        });
+        this.resetCaptureState(captureBtn);
         return;
     }
     
     try {
-        console.log('5. Setting canvas dimensions');
+        console.log('Setting canvas dimensions');
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
         
         const context = canvas.getContext('2d');
-        console.log('6. Got canvas context:', !!context);
-        
-        console.log('7. Drawing video frame');
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         // Flash effect
         video.style.opacity = '0.7';
         setTimeout(() => video.style.opacity = '1', 100);
         
-        console.log('8. Converting to blob');
+        if (status) status.textContent = 'Processing...';
+        
         canvas.toBlob((blob) => {
-            console.log('9. Blob created:', {
-                size: blob.size,
-                type: blob.type
-            });
-            
             const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
             
-            console.log('10. File created:', file.name, file.size);
+            console.log('File created:', file.name, file.size);
             
             if (status) status.textContent = 'Photo captured!';
             this.showNotification('📸 Photo captured!', 'success');
             
-            // Ask about cropping
-            if (confirm('Crop this photo?')) {
-                console.log('11. User chose to crop');
-                this.currentPhotoFile = file;
-                this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
-                    console.log('12. Crop callback received');
-                    this.saveCroppedReceipt(croppedFile, croppedImageUrl);
-                };
-                this.showReceiptCropperModal(file);
-            } else {
-                console.log('11. User chose not to crop');
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    console.log('12. Saving without crop');
-                    this.saveReceiptFromFile(file, e.target.result);
-                };
-                reader.readAsDataURL(blob);
-            }
+            // Ask about cropping with a slight delay
+            this.captureTimeout = setTimeout(() => {
+                if (confirm('Crop this photo?')) {
+                    this.currentPhotoFile = file;
+                    this.currentPhotoCallback = (croppedFile, croppedImageUrl) => {
+                        this.saveCroppedReceipt(croppedFile, croppedImageUrl);
+                        this.resetCaptureState(captureBtn);
+                    };
+                    this.showReceiptCropperModal(file);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.saveReceiptFromFile(file, e.target.result);
+                        this.resetCaptureState(captureBtn);
+                    };
+                    reader.readAsDataURL(blob);
+                }
+            }, 100);
             
         }, 'image/jpeg', 0.9);
         
     } catch (error) {
         console.error('❌ Capture error:', error);
-        console.error('Error stack:', error.stack);
         if (status) status.textContent = 'Error';
         this.showNotification('Failed to capture: ' + error.message, 'error');
+        this.resetCaptureState(captureBtn);
     }
+},
+
+// Add this helper method
+resetCaptureState: function(captureBtn) {
+    // Re-enable capture button
+    if (captureBtn) {
+        captureBtn.disabled = false;
+        captureBtn.style.opacity = '1';
+        captureBtn.style.pointerEvents = 'auto';
+    }
+    
+    // Reset capturing flag after a short delay
+    setTimeout(() => {
+        this.isCapturing = false;
+    }, 500);
 },
     
 // Add this helper method to process the captured image
