@@ -3891,23 +3891,57 @@ processCapturedImage(imageData) {
                                     <label class="form-label">Category *</label>
                                     <select id="transaction-category" class="form-input" required>
                                         <option value="">Select Category</option>
-                                        <optgroup label="Income">
-                                            <option value="sales">Sales</option>
+                                        
+                                        <!-- Income Categories -->
+                                        <optgroup label="💰 Income">
+                                            <option value="broilers-income">Broilers</option>
+                                            <option value="layers-income">Layers</option>
+                                            <option value="ducks-income">Ducks</option>
+                                            <option value="sheep-income">Sheep</option>
+                                            <option value="goats-income">Goats</option>
+                                            <option value="rabbits-income">Rabbits</option>
+                                            <option value="crops">Crops/Produce</option>
+                                            <option value="eggs">Eggs</option>
+                                            <option value="milk">Milk/Dairy</option>
+                                            <option value="wool">Wool/Fiber</option>
+                                            <option value="breeding">Breeding Stock</option>
                                             <option value="services">Services</option>
                                             <option value="grants">Grants/Subsidies</option>
                                             <option value="other-income">Other Income</option>
                                         </optgroup>
-                                        <optgroup label="Expenses">
-                                            <option value="feed">Feed</option>
-                                            <option value="medical">Medical/Vet</option>
+                                        
+                                        <!-- Expense Categories -->
+                                        <optgroup label="💸 Expenses">
+                                            <!-- Animal-specific feed -->
+                                            <option value="feed-broilers">Feed - Broilers</option>
+                                            <option value="feed-layers">Feed - Layers</option>
+                                            <option value="feed-ducks">Feed - Ducks</option>
+                                            <option value="feed-sheep">Feed - Sheep</option>
+                                            <option value="feed-goats">Feed - Goats</option>
+                                            <option value="feed-rabbits">Feed - Rabbits</option>
+                                            
+                                            <!-- Medical/Vet by animal -->
+                                            <option value="medical-broilers">Medical - Broilers</option>
+                                            <option value="medical-layers">Medical - Layers</option>
+                                            <option value="medical-ducks">Medical - Ducks</option>
+                                            <option value="medical-sheep">Medical - Sheep</option>
+                                            <option value="medical-goats">Medical - Goats</option>
+                                            <option value="medical-rabbits">Medical - Rabbits</option>
+                                            
+                                            <!-- General farm expenses -->
+                                            <option value="bedding">Bedding/Litter</option>
                                             <option value="equipment">Equipment</option>
                                             <option value="labor">Labor</option>
                                             <option value="utilities">Utilities</option>
                                             <option value="maintenance">Maintenance</option>
                                             <option value="transport">Transport</option>
                                             <option value="marketing">Marketing</option>
+                                            <option value="fencing">Fencing</option>
+                                            <option value="buildings">Buildings/Shelter</option>
+                                            <option value="water">Water Systems</option>
+                                            <option value="electricity">Electricity</option>
                                             <option value="other-expense">Other Expenses</option>
-                                    </optgroup>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div>
