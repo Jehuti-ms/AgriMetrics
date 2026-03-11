@@ -979,6 +979,34 @@ processCapturedImage(imageData) {
         });
 },
 
+    // Add this temporarily to test camera
+debugCamera() {
+    console.log('🔍 Debugging camera...');
+    
+    if (!navigator.mediaDevices) {
+        console.error('❌ mediaDevices not supported');
+        this.showNotification('Camera API not supported', 'error');
+        return;
+    }
+    
+    navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+            console.log('📹 Available devices:', devices);
+            const videoDevices = devices.filter(d => d.kind === 'videoinput');
+            console.log(`Found ${videoDevices.length} camera(s):`, videoDevices);
+            
+            if (videoDevices.length === 0) {
+                this.showNotification('No camera found', 'error');
+            } else {
+                this.showNotification(`Found ${videoDevices.length} camera(s)`, 'success');
+            }
+        })
+        .catch(err => {
+            console.error('❌ Error enumerating devices:', err);
+            this.showNotification('Error checking camera', 'error');
+        });
+},
+
     saveCroppedReceipt(file, imageUrl) {
         console.log('💾 Saving cropped receipt:', file.name);
         
