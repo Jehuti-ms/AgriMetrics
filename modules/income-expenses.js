@@ -778,90 +778,144 @@ async saveTransaction(transactionData) {
     }
 },
 
-   initializeCropper(imageDataUrl) {
+  initializeCropper(imageDataUrl) {
+    console.log('✂️ Initializing cropper with mobile support');
+    
     // Remove existing modal if any
     const existingModal = document.getElementById('receipt-cropper-modal');
     if (existingModal) existingModal.remove();
     
     // Create modal HTML with mobile-friendly adjustments
     const modalHTML = `
-        <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000;">
-            <div class="popout-modal-content" style="max-width: 800px; width: 95%; margin: 10px auto;">
-                <div class="popout-modal-header" style="background: linear-gradient(135deg, #22c55e, #16a34a); padding: 15px 20px;">
-                    <h3 class="popout-modal-title" style="margin: 0; font-size: 18px;">✂️ Crop Receipt Image</h3>
-                    <button class="popout-modal-close" id="close-receipt-cropper" style="font-size: 24px; background: none; border: none; color: white; cursor: pointer;">&times;</button>
+        <div id="receipt-cropper-modal" class="popout-modal" style="z-index: 100000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 16px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; margin: 10px;">
+                
+                <div style="padding: 16px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 18px;">✂️ Crop Receipt</h3>
+                    <button id="close-receipt-cropper" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer; padding: 0 10px;">&times;</button>
                 </div>
-                <div class="popout-modal-body" style="padding: 15px; max-height: 60vh; overflow: hidden;">
-                    <div style="margin-bottom: 12px; text-align: center; color: var(--text-secondary); font-size: 14px;">
-                        Drag to adjust crop area
-                    </div>
-                    <div style="max-height: 45vh; overflow: hidden; background: #f0f0f0; border-radius: 8px; touch-action: none;">
-                        <img id="receipt-cropper-image" src="${imageDataUrl}" style="max-width: 100%; display: block; touch-action: none;">
-                    </div>
-                    
-                    <div style="display: flex; gap: 8px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
-                        <button type="button" class="btn-outline" id="receipt-rotate-left" style="padding: 10px 15px; min-width: 60px;">↺</button>
-                        <button type="button" class="btn-outline" id="receipt-rotate-right" style="padding: 10px 15px; min-width: 60px;">↻</button>
-                        <button type="button" class="btn-outline" id="receipt-zoom-in" style="padding: 10px 15px; min-width: 60px;">🔍+</button>
-                        <button type="button" class="btn-outline" id="receipt-zoom-out" style="padding: 10px 15px; min-width: 60px;">🔍-</button>
-                        <button type="button" class="btn-outline" id="receipt-reset-crop" style="padding: 10px 15px; min-width: 60px;">🔄</button>
-                    </div>
-                    
-                    <div style="margin-top: 12px; padding: 10px; background: #f0f9ff; border-radius: 8px;">
-                        <p style="margin: 0; font-size: 12px; color: #0369a1; text-align: center;">
-                            💡 Tip: Pinch to zoom, drag to adjust crop area
-                        </p>
-                    </div>
+                
+                <div style="padding: 16px; overflow: hidden; min-height: 300px; touch-action: none;" id="cropper-container">
+                    <img id="receipt-cropper-image" src="${imageDataUrl}" style="max-width: 100%; display: block; touch-action: none; width: 100%;">
                 </div>
-                <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 15px 20px; border-top: 1px solid var(--glass-border);">
-                    <button type="button" class="btn-outline" id="cancel-receipt-crop" style="flex: 1; padding: 12px;">Cancel</button>
-                    <button type="button" class="btn-primary" id="apply-receipt-crop" style="flex: 1; padding: 12px;">Apply Crop</button>
+                
+                <div style="padding: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; border-top: 1px solid #eee;">
+                    <button class="cropper-control-btn" data-action="rotate-left" style="padding: 12px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; min-width: 60px;">↺</button>
+                    <button class="cropper-control-btn" data-action="rotate-right" style="padding: 12px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; min-width: 60px;">↻</button>
+                    <button class="cropper-control-btn" data-action="zoom-in" style="padding: 12px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; min-width: 60px;">🔍+</button>
+                    <button class="cropper-control-btn" data-action="zoom-out" style="padding: 12px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; min-width: 60px;">🔍-</button>
+                    <button class="cropper-control-btn" data-action="reset" style="padding: 12px 20px; background: #f0f0f0; border: none; border-radius: 8px; font-size: 18px; min-width: 60px;">🔄</button>
+                </div>
+                
+                <div style="padding: 16px; display: flex; gap: 12px; border-top: 1px solid #eee;">
+                    <button id="cancel-receipt-crop" style="flex: 1; padding: 14px; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold;">Cancel</button>
+                    <button id="apply-receipt-crop" style="flex: 1; padding: 14px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold;">Apply Crop</button>
                 </div>
             </div>
         </div>
     `;
     
-    // Add modal to page
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
-    // Get modal element
-    this.cropperModal = document.getElementById('receipt-cropper-modal');
-    
-    // Small delay to ensure modal is in DOM
+    // Small delay to ensure DOM is ready
     setTimeout(() => {
         const image = document.getElementById('receipt-cropper-image');
         if (!image) {
-            console.error('❌ Cropper image not found');
+            console.error('❌ Image element not found');
             return;
         }
         
-        // Initialize cropper with mobile-friendly options
-        this.cropper = new Cropper(image, {
-            aspectRatio: NaN,
-            viewMode: 1,
-            dragMode: 'crop',
-            autoCropArea: 1,
-            restore: false,
-            guides: true,
-            center: true,
-            highlight: false,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            toggleDragModeOnDblclick: false,
-            minCropBoxWidth: 100,
-            minCropBoxHeight: 100,
-            responsive: true,
-            checkImageOrigin: false,
-            touchDrag: true,      // Enable touch dragging
-            mouseWheel: true,      // Enable mouse wheel zoom
-            wheelZoom: true        // Enable pinch zoom on mobile
-        });
+        console.log('✅ Image element found, initializing Cropper...');
         
-        console.log('✅ Cropper initialized with touch support');
+        // Make sure image is loaded
+        image.onload = () => {
+            console.log('📸 Image loaded, dimensions:', image.naturalWidth, 'x', image.naturalHeight);
+            
+            // Initialize cropper with mobile-friendly options
+            if (window.Cropper) {
+                this.cropper = new Cropper(image, {
+                    aspectRatio: NaN,
+                    viewMode: 1,
+                    dragMode: 'crop',
+                    autoCropArea: 1,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                    minContainerWidth: 300,
+                    minContainerHeight: 300,
+                    minCropBoxWidth: 100,
+                    minCropBoxHeight: 100,
+                    ready: () => {
+                        console.log('✅ Cropper ready');
+                    },
+                    crop: () => {
+                        // Optional: log crop data
+                    }
+                });
+                
+                console.log('✅ Cropper initialized');
+                
+                // Setup control buttons
+                this.setupCropperControls();
+                
+            } else {
+                console.error('❌ Cropper library not loaded');
+                this.showNotification('Crop tool unavailable', 'error');
+            }
+        };
         
-        // Setup modal event listeners
-        this.setupReceiptCropperEventListeners();
-    }, 200);
+        // Trigger onload if already loaded
+        if (image.complete) {
+            image.onload();
+        }
+        
+    }, 300);
+},
+
+setupCropperControls() {
+    // Rotate left
+    document.querySelector('[data-action="rotate-left"]')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.rotate(-90);
+    });
+    
+    // Rotate right
+    document.querySelector('[data-action="rotate-right"]')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.rotate(90);
+    });
+    
+    // Zoom in
+    document.querySelector('[data-action="zoom-in"]')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.zoom(0.1);
+    });
+    
+    // Zoom out
+    document.querySelector('[data-action="zoom-out"]')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.zoom(-0.1);
+    });
+    
+    // Reset
+    document.querySelector('[data-action="reset"]')?.addEventListener('click', () => {
+        if (this.cropper) this.cropper.reset();
+    });
+    
+    // Close button
+    document.getElementById('close-receipt-cropper')?.addEventListener('click', () => {
+        this.closeReceiptCropperModal();
+    });
+    
+    // Cancel button
+    document.getElementById('cancel-receipt-crop')?.addEventListener('click', () => {
+        this.closeReceiptCropperModal();
+    });
+    
+    // Apply button
+    document.getElementById('apply-receipt-crop')?.addEventListener('click', () => {
+        this.applyReceiptCrop();
+    });
 },
     
     setupReceiptCropperEventListeners() {
@@ -3908,6 +3962,114 @@ debugCamera() {
                     color: #6b7280;
                     margin-bottom: 20px;
                 }
+
+                 /* ==================== ADD THIS CROPPER CSS ==================== */
+    /* Cropper touch interaction fixes */
+    #receipt-cropper-modal {
+        touch-action: none;
+    }
+    
+    #receipt-cropper-image {
+        touch-action: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .cropper-container {
+        touch-action: none !important;
+        max-height: 50vh !important;
+    }
+    
+    .cropper-crop-box,
+    .cropper-drag-box,
+    .cropper-face,
+    .cropper-line,
+    .cropper-point {
+        touch-action: none !important;
+    }
+    
+    .cropper-point {
+        width: 30px !important;
+        height: 30px !important;
+        background: #4CAF50 !important;
+        opacity: 0.8 !important;
+        border: 2px solid white !important;
+        border-radius: 50% !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* Mobile-friendly control buttons */
+    .cropper-control-btn {
+        min-width: 60px;
+        min-height: 44px;
+        font-size: 20px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 4px;
+    }
+    
+    .cropper-control-btn:active {
+        background: #e0e0e0;
+        transform: scale(0.95);
+    }
+    
+    #cancel-receipt-crop, #apply-receipt-crop {
+        min-height: 48px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    #cancel-receipt-crop {
+        background: #f44336;
+        color: white;
+    }
+    
+    #apply-receipt-crop {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    #cancel-receipt-crop:active, #apply-receipt-crop:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .cropper-point {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        .cropper-control-btn {
+            min-width: 70px;
+            min-height: 48px;
+            font-size: 22px;
+        }
+    }
+    
+    /* Cropper container sizing */
+    #cropper-container {
+        touch-action: none;
+        background: #f0f0f0;
+        min-height: 300px;
+        max-height: 50vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
             </style>
 
             <div class="module-container">
