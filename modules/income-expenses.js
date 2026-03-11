@@ -742,7 +742,7 @@ async showReceiptCropperModal(file) {
 showSimpleCropper(imageDataUrl) {
     console.log('✂️ Showing simple touch cropper');
     
-    // Create modal HTML
+    // Create modal HTML with visible capture button
     const modalHTML = `
         <div id="simple-cropper-modal" style="
             position: fixed;
@@ -755,7 +755,6 @@ showSimpleCropper(imageDataUrl) {
             display: flex;
             align-items: center;
             justify-content: center;
-            touch-action: none;
         ">
             <div style="
                 background: white;
@@ -779,6 +778,7 @@ showSimpleCropper(imageDataUrl) {
                     <button id="close-simple-cropper" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">&times;</button>
                 </div>
                 
+                <!-- CROP AREA with visible crop overlay -->
                 <div style="
                     padding: 16px;
                     background: #f0f0f0;
@@ -787,18 +787,39 @@ showSimpleCropper(imageDataUrl) {
                     align-items: center;
                     justify-content: center;
                     position: relative;
-                    touch-action: none;
                 " id="crop-container">
+                    
+                    <!-- CROP OVERLAY (shows what will be kept) -->
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        width: 250px;
+                        height: 250px;
+                        border: 3px solid #4CAF50;
+                        background: rgba(76, 175, 80, 0.1);
+                        box-shadow: 0 0 0 999px rgba(0,0,0,0.7);
+                        pointer-events: none;
+                        z-index: 10;
+                        border-radius: 4px;
+                    "></div>
+                    
+                    <!-- IMAGE (movable) -->
                     <img src="${imageDataUrl}" id="crop-image" style="
-                        max-width: 100%;
+                        max-width: none;
                         max-height: 50vh;
+                        width: auto;
+                        height: auto;
                         display: block;
-                        touch-action: none;
-                        -webkit-user-select: none;
-                        user-select: none;
+                        cursor: move;
+                        transition: transform 0.05s;
+                        position: relative;
+                        z-index: 5;
                     ">
                 </div>
                 
+                <!-- CONTROL BUTTONS -->
                 <div style="
                     padding: 16px;
                     display: flex;
@@ -845,6 +866,7 @@ showSimpleCropper(imageDataUrl) {
                     ">🔍-</button>
                 </div>
                 
+                <!-- ACTION BUTTONS (visible) -->
                 <div style="
                     padding: 16px;
                     display: flex;
@@ -871,7 +893,7 @@ showSimpleCropper(imageDataUrl) {
                         font-size: 16px;
                         font-weight: bold;
                         cursor: pointer;
-                    ">Save Crop</button>
+                    ">Apply Crop</button>
                 </div>
             </div>
         </div>
@@ -880,6 +902,11 @@ showSimpleCropper(imageDataUrl) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
     const img = document.getElementById('crop-image');
+    const cropOverlay = document.querySelector('#crop-container > div:first-child');
+    
+    // Get crop area dimensions
+    const cropSize = 250; // Fixed crop box size
+    
     let scale = 1;
     let rotation = 0;
     let translateX = 0;
@@ -887,7 +914,21 @@ showSimpleCropper(imageDataUrl) {
     let lastTouchX, lastTouchY;
     let initialDistance = null;
     
-    // Touch handlers for panning
+    // Wait for image to load to get dimensions
+    img.onload = () => {
+        console.log('Image loaded:', img.naturalWidth, 'x', img.naturalHeight);
+        
+        // Center image initially
+        const container = document.getElementById('crop-container');
+        const containerRect = container.getBoundingClientRect();
+        
+        translateX = (containerRect.width/2) - (img.width/2);
+        translateY = (containerRect.height/2) - (img.height/2);
+        
+        img.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${rotation}deg) scale(${scale})`;
+    };
+    
+    // Touch handlers
     img.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (e.touches.length === 1) {
@@ -967,22 +1008,33 @@ showSimpleCropper(imageDataUrl) {
         document.getElementById('simple-cropper-modal').remove();
     });
     
-    // Apply crop
+    // Apply crop - THIS ACTUALLY CROPS THE IMAGE
     document.getElementById('apply-simple-crop').addEventListener('click', () => {
+        console.log('Applying crop...');
+        
+        // Get container and crop area positions
+        const container = document.getElementById('crop-container');
+        const containerRect = container.getBoundingClientRect();
+        const imgRect = img.getBoundingClientRect();
+        
+        // Calculate crop area in image coordinates
+        const cropX = (containerRect.width/2 - cropSize/2 - imgRect.left + imgRect.width/2);
+        const cropY = (containerRect.height/2 - cropSize/2 - imgRect.top + imgRect.height/2);
+        
+        // Create canvas to crop
         const canvas = document.createElement('canvas');
+        canvas.width = cropSize;
+        canvas.height = cropSize;
         const ctx = canvas.getContext('2d');
         
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
+        // Draw cropped portion
+        ctx.drawImage(
+            img, 
+            cropX, cropY, cropSize, cropSize,  // Source rectangle
+            0, 0, cropSize, cropSize           // Destination rectangle
+        );
         
-        ctx.translate(canvas.width/2, canvas.height/2);
-        ctx.rotate(rotation * Math.PI / 180);
-        ctx.scale(scale, scale);
-        ctx.translate(-canvas.width/2, -canvas.height/2);
-        ctx.translate(translateX * (img.naturalWidth / img.width), translateY * (img.naturalHeight / img.height));
-        
-        ctx.drawImage(img, 0, 0);
-        
+        // Save cropped image
         canvas.toBlob((blob) => {
             const croppedFile = new File([blob], this.currentPhotoFile.name, {
                 type: 'image/jpeg',
@@ -996,19 +1048,12 @@ showSimpleCropper(imageDataUrl) {
             }
             
             document.getElementById('simple-cropper-modal').remove();
+            this.showNotification('✅ Image cropped successfully!', 'success');
             
         }, 'image/jpeg', 0.95);
     });
 },
-
-closeReceiptCropperModal() {
-    const modal = document.getElementById('simple-cropper-modal');
-    if (modal) modal.remove();
     
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput) fileInput.value = '';
-},
-
  // Replace your current capturePhoto with this debug version
 capturePhoto: function() {
     console.log('📸 ===== CAPTURE PHOTO DEBUG =====');
