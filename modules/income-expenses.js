@@ -720,40 +720,7 @@ async saveTransaction(transactionData) {
     currentPhotoFile: null,
     currentPhotoCallback: null,
 
-    // ===== CROPPER LIBRARY LOADER =====
-    loadCropperLibrary() {
-        return new Promise((resolve, reject) => {
-            // Check if already loaded
-            if (window.Cropper) {
-                console.log('✅ Cropper already loaded');
-                resolve(window.Cropper);
-                return;
-            }
-            
-            console.log('📦 Loading Cropper library...');
-            
-            // Load CSS
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css';
-            link.onload = () => console.log('✅ Cropper CSS loaded');
-            link.onerror = (e) => console.warn('⚠️ Cropper CSS load warning (may be CSP):', e);
-            document.head.appendChild(link);
-            
-            // Load JS
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js';
-            script.onload = () => {
-                console.log('✅ Cropper JS loaded');
-                resolve(window.Cropper);
-            };
-            script.onerror = (e) => {
-                console.error('❌ Failed to load Cropper:', e);
-                reject(new Error('Failed to load Cropper'));
-            };
-            document.head.appendChild(script);
-        });
-    },
+   
 
    // ===== RECEIPT PHOTO CROPPING METHODS =====
 async showReceiptCropperModal(file) {
