@@ -895,90 +895,168 @@ async saveTransaction(transactionData) {
         }, this.currentPhotoFile.type || 'image/jpeg', 0.95);
     },
 
-    capturePhoto() {
+    capturePhoto: function() {
     console.log('📸 CAPTURE PHOTO CALLED');
+    console.trace('Trace to see who called this');
     
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
     const status = document.getElementById('camera-status');
     
-    if (!video || !canvas) {
-        console.error('Video or canvas element not found');
-        this.showNotification('Camera elements missing', 'error');
+    // Extensive validation
+    if (!video) {
+        console.error('❌ Video element not found');
+        this.showNotification('Camera preview element missing', 'error');
         return;
     }
     
-    if (!this.cameraStream || video.paused || video.readyState < 2) {
-        console.error('Camera not ready');
-        this.showNotification('Camera not ready. Please wait for camera to initialize.', 'error');
+    if (!canvas) {
+        console.error('❌ Canvas element not found');
+        this.showNotification('Canvas element missing', 'error');
+        return;
+    }
+    
+    if (!this.cameraStream) {
+        console.error('❌ Camera stream not initialized');
+        this.showNotification('Camera not initialized. Please restart camera.', 'error');
+        
+        // Attempt to reinitialize camera
+        if (status) status.textContent = 'Reinitializing camera...';
+        setTimeout(() => this.initializeCamera(), 1000);
+        return;
+    }
+    
+    // Check if video is actually playing
+    if (video.paused || video.ended || video.readyState < 2) {
+        console.error('❌ Video not playing. State:', {
+            paused: video.paused,
+            ended: video.ended,
+            readyState: video.readyState
+        });
+        
+        this.showNotification('Camera not ready. Please wait.', 'error');
+        
+        // Try to play the video
+        video.play().catch(err => {
+            console.error('Failed to play video:', err);
+        });
         return;
     }
     
     try {
         // Set canvas dimensions to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        
+        console.log(`📐 Canvas dimensions set to: ${canvas.width}x${canvas.height}`);
         
         const context = canvas.getContext('2d');
+        
+        if (!context) {
+            console.error('❌ Could not get canvas context');
+            this.showNotification('Canvas context error', 'error');
+            return;
+        }
         
         // Draw the current video frame to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
+        // Visual feedback
         if (status) status.textContent = 'Processing photo...';
         
-        // Visual feedback - flash the video
+        // Flash effect
         video.style.filter = 'brightness(150%) contrast(120%)';
         setTimeout(() => {
             video.style.filter = '';
         }, 200);
         
-        // Get image data
-        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+        // Get image data - try multiple formats
+        let imageData = null;
+        try {
+            imageData = canvas.toDataURL('image/jpeg', 0.9);
+            console.log('✅ JPEG capture successful, length:', imageData.length);
+        } catch (jpegError) {
+            console.warn('JPEG capture failed, trying PNG:', jpegError);
+            try {
+                imageData = canvas.toDataURL('image/png');
+                console.log('✅ PNG capture successful, length:', imageData.length);
+            } catch (pngError) {
+                console.error('❌ All capture formats failed:', pngError);
+                this.showNotification('Failed to capture image', 'error');
+                return;
+            }
+        }
+        
+        if (!imageData) {
+            console.error('❌ No image data generated');
+            this.showNotification('Failed to generate image', 'error');
+            return;
+        }
         
         if (status) status.textContent = 'Photo captured!';
+        this.showNotification('Photo captured successfully!', 'success');
         
         // Process the captured image
         this.processCapturedImage(imageData);
         
     } catch (error) {
         console.error('❌ Capture error:', error);
+        console.error('Error details:', error.message, error.stack);
+        
         if (status) status.textContent = 'Error capturing photo';
         this.showNotification('Failed to capture photo: ' + error.message, 'error');
     }
 },
 
 // Add this helper method to process the captured image
-processCapturedImage(imageData) {
+processCapturedImage: function(imageData) {
     console.log('📸 Processing captured image');
     
-    // Create a file from the data URL
-    fetch(imageData)
-        .then(res => res.blob())
-        .then(blob => {
-            const file = new File([blob], `receipt_${Date.now()}.jpg`, { 
-                type: 'image/jpeg' 
+    try {
+        // Convert data URL to blob
+        fetch(imageData)
+            .then(res => {
+                if (!res.ok) throw new Error('Network response was not ok');
+                return res.blob();
+            })
+            .then(blob => {
+                const filename = `receipt_${Date.now()}.jpg`;
+                const file = new File([blob], filename, { type: 'image/jpeg' });
+                
+                console.log('✅ Image captured, file created:', {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                });
+                
+                // Show success notification
+                this.showNotification(`📸 Photo captured: ${filename}`, 'success');
+                
+                // Ask user what to do next
+                setTimeout(() => {
+                    if (confirm('Would you like to crop this photo?')) {
+                        this.showReceiptCropperModal(file);
+                    } else {
+                        // Save directly
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.saveReceiptFromFile(file, e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }, 500);
+            })
+            .catch(error => {
+                console.error('❌ Error processing captured image:', error);
+                this.showNotification('Error processing photo: ' + error.message, 'error');
             });
             
-            console.log('✅ Image captured, file created:', file.name, file.size);
-            
-            // Show success notification
-            this.showNotification('Photo captured successfully!', 'success');
-            
-            // Here you can either:
-            // Option 1: Show cropping option
-            if (confirm('Would you like to crop this photo?')) {
-                this.showReceiptCropperModal(file);
-            } else {
-                // Option 2: Save directly
-                this.saveReceiptFromFile(file, imageData);
-            }
-        })
-        .catch(error => {
-            console.error('❌ Error processing captured image:', error);
-            this.showNotification('Error processing photo', 'error');
-        });
+    } catch (error) {
+        console.error('❌ Fatal error in processCapturedImage:', error);
+        this.showNotification('Fatal error processing photo', 'error');
+    }
 },
-
+    
     // Add this temporarily to test camera
 debugCamera() {
     console.log('🔍 Debugging camera...');
