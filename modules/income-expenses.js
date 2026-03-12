@@ -1203,10 +1203,11 @@ showStandardCropper: function(file) {
                         <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:28px; cursor:pointer; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">&times;</button>
                     </div>
                     
-                    <!-- Cropper container - fixed height, centered -->
+                  <!-- Image container - ONLY ONE IMAGE -->
                     <div style="flex:1; min-height:0; background:#f0f0f0; padding:16px; display:flex; align-items:center; justify-content:center;">
                         <div style="width:100%; height:100%; background:#e0e0e0; border-radius:8px; overflow:hidden; position:relative;">
-                            <img id="cropper-image-${modalId}" src="${imageUrl}" style="display:block; max-width:100%; max-height:100%; width:auto; height:auto; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+                            <!-- ONLY ONE IMAGE TAG - the cropper will work with this one -->
+                            <img id="cropper-image-${modalId}" src="${imageUrl}" style="display:block; width:100%; height:100%; object-fit:contain;">
                         </div>
                     </div>
                     
@@ -1268,66 +1269,94 @@ showStandardCropper: function(file) {
                 }
 
                 /* Make crop box more visible */
-.cropper-crop-box {
-    border: 3px solid #22c55e !important;
-    border-radius: 4px !important;
-    box-shadow: 0 0 0 2px rgba(255,255,255,0.5) !important;
-}
-
-.cropper-view-box {
-    outline: 3px solid #22c55e !important;
-    outline-color: rgba(34, 197, 94, 0.75) !important;
-    box-shadow: 0 0 0 2px white !important;
-}
-
-.cropper-point {
-    background-color: #22c55e !important;
-    width: 20px !important;
-    height: 20px !important;
-    border: 3px solid white !important;
-    border-radius: 50% !important;
-    opacity: 1 !important;
-}
-
-/* Make the 8 corner points extra visible */
-.point-se {
-    bottom: -10px !important;
-    right: -10px !important;
-    cursor: se-resize !important;
-}
-
-.point-sw {
-    bottom: -10px !important;
-    left: -10px !important;
-    cursor: sw-resize !important;
-}
-
-.point-ne {
-    top: -10px !important;
-    right: -10px !important;
-    cursor: ne-resize !important;
-}
-
-.point-nw {
-    top: -10px !important;
-    left: -10px !important;
-    cursor: nw-resize !important;
-}
-
-/* Dark overlay outside crop area */
-.cropper-modal {
-    background: rgba(0, 0, 0, 0.6) !important;
-}
-
-/* Make the drag handles bigger */
-.cropper-line {
-    background-color: #22c55e !important;
-    opacity: 0.5 !important;
-}
-
-.cropper-line:hover {
-    opacity: 1 !important;
-}
+                .cropper-crop-box {
+                    border: 3px solid #22c55e !important;
+                    border-radius: 4px !important;
+                    box-shadow: 0 0 0 2px rgba(255,255,255,0.5) !important;
+                }
+                
+                .cropper-view-box {
+                    outline: 3px solid #22c55e !important;
+                    outline-color: rgba(34, 197, 94, 0.75) !important;
+                    box-shadow: 0 0 0 2px white !important;
+                }
+                
+                .cropper-point {
+                    background-color: #22c55e !important;
+                    width: 20px !important;
+                    height: 20px !important;
+                    border: 3px solid white !important;
+                    border-radius: 50% !important;
+                    opacity: 1 !important;
+                }
+                
+                /* Make the 8 corner points extra visible */
+                .point-se {
+                    bottom: -10px !important;
+                    right: -10px !important;
+                    cursor: se-resize !important;
+                }
+                
+                .point-sw {
+                    bottom: -10px !important;
+                    left: -10px !important;
+                    cursor: sw-resize !important;
+                }
+                
+                .point-ne {
+                    top: -10px !important;
+                    right: -10px !important;
+                    cursor: ne-resize !important;
+                }
+                
+                .point-nw {
+                    top: -10px !important;
+                    left: -10px !important;
+                    cursor: nw-resize !important;
+                }
+                
+                /* Dark overlay outside crop area */
+                .cropper-modal {
+                    background: rgba(0, 0, 0, 0.6) !important;
+                }
+                
+                /* Make the drag handles bigger */
+                .cropper-line {
+                    background-color: #22c55e !important;
+                    opacity: 0.5 !important;
+                }
+                
+                .cropper-line:hover {
+                    opacity: 1 !important;
+                }
+                
+                /* Force cropper to only show one image */
+                .cropper-container img {
+                    display: block !important;
+                    max-width: none !important;
+                    max-height: none !important;
+                }
+                
+                /* Hide any potential duplicate backgrounds */
+                .cropper-canvas {
+                    background: transparent !important;
+                }
+                
+                /* Make sure the original image doesn't show through */
+                .cropper-modal {
+                    background: rgba(0, 0, 0, 0.6) !important;
+                    z-index: 1 !important;
+                }
+                
+                .cropper-view-box {
+                    outline: 3px solid #22c55e !important;
+                    background: transparent !important;
+                }
+                
+                /* Ensure the crop box is above everything */
+                .cropper-crop-box {
+                    z-index: 2 !important;
+                }
             </style>
         `;
         
