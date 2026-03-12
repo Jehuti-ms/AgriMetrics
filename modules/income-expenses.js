@@ -1053,13 +1053,15 @@ switchCamera: function() {
 */
 
     // Capture photo standard cropper using library
-    capturePhoto: function() {
+   // Update your capturePhoto function to hide camera when cropping
+capturePhoto: function() {
     console.log('📸 Capture photo');
     
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
     const status = document.getElementById('camera-status');
     const captureBtn = document.getElementById('capture-photo');
+    const cameraSection = document.getElementById('camera-section');
     
     if (!video || !video.srcObject) {
         this.showNotification('Camera not ready', 'error');
@@ -1104,6 +1106,13 @@ switchCamera: function() {
         // Ask if user wants to crop
         setTimeout(() => {
             if (confirm('Would you like to crop this photo?')) {
+                // HIDE CAMERA SECTION BEFORE SHOWING CROPPER
+                if (cameraSection) {
+                    cameraSection.style.display = 'none';
+                }
+                // Stop camera to free resources
+                this.stopCamera();
+                
                 this.showStandardCropper(file);
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
@@ -1112,6 +1121,44 @@ switchCamera: function() {
         }, 200);
         
     }, 'image/jpeg', 0.9);
+},
+
+// Also update handleFileUpload to hide any active camera
+handleFileUpload: function(files) {
+    console.log('🎯 ========== handleFileUpload START ==========');
+    console.log('📁 Number of files:', files.length);
+    
+    if (!files || files.length === 0) {
+        console.log('❌ No files');
+        return;
+    }
+    
+    // Hide camera if it's showing
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection && cameraSection.style.display !== 'none') {
+        cameraSection.style.display = 'none';
+        this.stopCamera();
+    }
+    
+    // Process each file
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`📄 Processing file ${i+1}:`, file.name);
+        
+        // For images, offer cropping
+        if (file.type.startsWith('image/')) {
+            setTimeout(() => {
+                if (confirm(`Crop "${file.name}"?`)) {
+                    this.showStandardCropper(file);
+                } else {
+                    this.processReceiptFile(file);
+                }
+            }, i * 500); // Delay for multiple files
+        } else {
+            // For non-images (PDFs), process directly
+            this.processReceiptFile(file);
+        }
+    }
 },
 
    // ==================== MOBILE-FRIENDLY CROPPER ====================
