@@ -1114,12 +1114,12 @@ switchCamera: function() {
     }, 'image/jpeg', 0.9);
 },
 
-    // ==================== STANDARD CROPPER WITH PROPER SIZING ====================
+   // ==================== MOBILE-FRIENDLY CROPPER ====================
 cropperInstance: null,
 currentImageFile: null,
 
 showStandardCropper: function(file) {
-    console.log('🔧 Opening standard cropper for:', file.name);
+    console.log('🔧 Opening mobile-friendly cropper for:', file.name);
     
     this.currentImageFile = file;
     
@@ -1127,55 +1127,61 @@ showStandardCropper: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
-        // Create modal with proper sizing
-        const modalId = 'standard-cropper-modal-' + Date.now();
+        // Create modal with proper mobile sizing
+        const modalId = 'mobile-cropper-modal-' + Date.now();
         
         const modalHTML = `
-            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center; padding:10px; box-sizing:border-box;">
-                <div style="background:white; width:100%; max-width:900px; height:90vh; border-radius:16px; overflow:hidden; display:flex; flex-direction:column;">
+            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:flex-start; justify-content:center; padding:0; box-sizing:border-box; overflow-y:auto;">
+                <div style="background:white; width:100%; max-width:600px; margin:0 auto; border-radius:0; overflow:visible; display:flex; flex-direction:column;">
                     
-                    <!-- Header -->
-                    <div style="background:#22c55e; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-                        <h3 style="margin:0; font-size:18px;">✂️ Crop Receipt</h3>
-                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:28px; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    <!-- Header - Sticky -->
+                    <div style="background:#22c55e; color:white; padding:16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:10;">
+                        <h3 style="margin:0; font-size:18px; font-weight:600;">✂️ Crop Receipt</h3>
+                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:28px; cursor:pointer; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">&times;</button>
                     </div>
                     
-                    <!-- Cropper Container - FIXED HEIGHT WITH SCROLL -->
-                    <div style="flex:1; min-height:0; padding:16px; background:#f0f0f0; overflow:auto;">
-                        <div style="min-height:300px; height:100%; display:flex; align-items:center; justify-content:center;">
+                    <!-- ALL CONTENT WRAPPED IN SCROLLABLE AREA -->
+                    <div style="padding:16px; background:#f0f0f0;">
+                        
+                        <!-- Image Container - Fixed height for cropper -->
+                        <div style="height:350px; background:#e0e0e0; border-radius:8px; overflow:hidden; margin-bottom:16px; position:relative;">
                             <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; display:block;">
                         </div>
-                    </div>
-                    
-                    <!-- Controls - SCROLLABLE ON MOBILE -->
-                    <div style="padding:16px; background:white; border-top:1px solid #ddd; flex-shrink:0; overflow-x:auto;">
-                        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; min-width:min-content;">
-                            <button class="crop-btn" id="zoom-in-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">🔍+ Zoom In</button>
-                            <button class="crop-btn" id="zoom-out-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">🔍- Zoom Out</button>
-                            <button class="crop-btn" id="rotate-left-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">↺ Rotate Left</button>
-                            <button class="crop-btn" id="rotate-right-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">↻ Rotate Right</button>
-                            <button class="crop-btn" id="reset-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">🔄 Reset</button>
+                        
+                        <!-- Control Buttons - Grid layout for mobile -->
+                        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:16px;">
+                            <button id="zoom-in-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">🔍+ Zoom In</button>
+                            <button id="zoom-out-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">🔍- Zoom Out</button>
+                            <button id="rotate-left-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">↺ Rotate Left</button>
+                            <button id="rotate-right-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">↻ Rotate Right</button>
+                            <button id="reset-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; grid-column:span 2;">🔄 Reset</button>
                         </div>
-                    </div>
-                    
-                    <!-- Aspect Ratio - SCROLLABLE -->
-                    <div style="padding:0 16px 16px 16px; background:white; flex-shrink:0; overflow-x:auto;">
-                        <div style="display:flex; gap:16px; align-items:center; min-width:min-content;">
-                            <span style="color:#666; font-size:14px; white-space:nowrap;">Aspect Ratio:</span>
-                            <select id="aspect-ratio-${modalId}" style="padding:10px; border-radius:8px; border:1px solid #ddd; font-size:14px;">
-                                <option value="NaN">Free (Receipt)</option>
-                                <option value="1">1:1 (Square)</option>
+                        
+                        <!-- Aspect Ratio Selector -->
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block; margin-bottom:8px; color:#374151; font-weight:600;">Aspect Ratio:</label>
+                            <select id="aspect-ratio-${modalId}" style="width:100%; padding:14px; border-radius:8px; border:1px solid #ddd; font-size:16px; background:white;">
+                                <option value="NaN">Free (Best for receipts)</option>
+                                <option value="1">1:1 Square</option>
                                 <option value="4/3">4:3</option>
                                 <option value="3/4">3:4</option>
                                 <option value="16/9">16:9</option>
                             </select>
                         </div>
+                        
+                        <!-- Tip Box -->
+                        <div style="background:#e8f5e9; border-left:4px solid #22c55e; padding:12px; margin-bottom:16px; border-radius:4px;">
+                            <p style="margin:0; color:#2e7d32; font-size:14px;">
+                                <strong>💡 Tip:</strong> Drag the corners of the crop box to adjust. Focus on the receipt amount and date.
+                            </p>
+                        </div>
+                        
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div style="padding:16px; display:flex; gap:12px; border-top:1px solid #ddd; background:white; flex-shrink:0;">
-                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Cancel</button>
-                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Apply Crop & Save</button>
+                    <!-- Action Buttons - Sticky Bottom -->
+                    <div style="padding:16px; display:flex; gap:12px; border-top:1px solid #ddd; background:white; position:sticky; bottom:0; z-index:10;">
+                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:16px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Cancel</button>
+                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:16px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Apply Crop</button>
                     </div>
                 </div>
             </div>
@@ -1183,6 +1189,7 @@ showStandardCropper: function(file) {
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
+        const modal = document.getElementById(modalId);
         const image = document.getElementById(`cropper-image-${modalId}`);
         
         // Initialize cropper after image loads
@@ -1194,12 +1201,12 @@ showStandardCropper: function(file) {
                 this.cropperInstance.destroy();
             }
             
-            // Initialize new cropper with responsive options
+            // Initialize new cropper with mobile-friendly options
             this.cropperInstance = new Cropper(image, {
                 aspectRatio: NaN,
                 viewMode: 1,
                 dragMode: 'crop',
-                autoCropArea: 1,
+                autoCropArea: 0.8,
                 restore: false,
                 guides: true,
                 center: true,
@@ -1250,7 +1257,7 @@ showStandardCropper: function(file) {
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
             }
-            document.getElementById(modalId).remove();
+            modal.remove();
             
             // Ask to save without crop
             setTimeout(() => {
@@ -1296,12 +1303,21 @@ showStandardCropper: function(file) {
                     this.cropperInstance.destroy();
                     this.cropperInstance = null;
                 }
-                document.getElementById(modalId).remove();
+                modal.remove();
                 
                 this.showNotification('✅ Image cropped and saved!', 'success');
                 
             }, 'image/jpeg', 0.95);
         };
+        
+        // Make modal scrollable by tapping outside content
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                // Don't close on outside click - let user scroll instead
+                // If you want to close, uncomment below:
+                // modal.remove();
+            }
+        });
     };
     
     reader.readAsDataURL(file);
