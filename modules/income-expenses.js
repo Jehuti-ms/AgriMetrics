@@ -4,7 +4,7 @@ console.log('💰 Loading Income & Expenses module...');
 const Broadcaster = window.DataBroadcaster || {
     recordCreated: () => {},
     recordUpdated: () => {},
-    recordDeleted: () => {}F
+    recordDeleted: () => {},
 };
 
 // Add these properties (replace your existing ones)
