@@ -1266,6 +1266,68 @@ showStandardCropper: function(file) {
                 .cropper-view-box {
                     outline: 2px solid #22c55e;
                 }
+
+                /* Make crop box more visible */
+.cropper-crop-box {
+    border: 3px solid #22c55e !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.5) !important;
+}
+
+.cropper-view-box {
+    outline: 3px solid #22c55e !important;
+    outline-color: rgba(34, 197, 94, 0.75) !important;
+    box-shadow: 0 0 0 2px white !important;
+}
+
+.cropper-point {
+    background-color: #22c55e !important;
+    width: 20px !important;
+    height: 20px !important;
+    border: 3px solid white !important;
+    border-radius: 50% !important;
+    opacity: 1 !important;
+}
+
+/* Make the 8 corner points extra visible */
+.point-se {
+    bottom: -10px !important;
+    right: -10px !important;
+    cursor: se-resize !important;
+}
+
+.point-sw {
+    bottom: -10px !important;
+    left: -10px !important;
+    cursor: sw-resize !important;
+}
+
+.point-ne {
+    top: -10px !important;
+    right: -10px !important;
+    cursor: ne-resize !important;
+}
+
+.point-nw {
+    top: -10px !important;
+    left: -10px !important;
+    cursor: nw-resize !important;
+}
+
+/* Dark overlay outside crop area */
+.cropper-modal {
+    background: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Make the drag handles bigger */
+.cropper-line {
+    background-color: #22c55e !important;
+    opacity: 0.5 !important;
+}
+
+.cropper-line:hover {
+    opacity: 1 !important;
+}
             </style>
         `;
         
