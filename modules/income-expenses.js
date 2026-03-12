@@ -1054,7 +1054,7 @@ switchCamera: function() {
 
     // Capture photo standard cropper using library
    // Update your capturePhoto function to hide camera when cropping
-capturePhoto: function() {
+capturePhoto: async function() {
     console.log('📸 Capture photo');
     
     const video = document.getElementById('camera-preview');
@@ -1090,7 +1090,7 @@ capturePhoto: function() {
     setTimeout(() => video.style.opacity = '1', 100);
     
     // Get image data
-    canvas.toBlob((blob) => {
+    canvas.toBlob(async (blob) => {
         const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
         const imageUrl = URL.createObjectURL(blob);
         
@@ -1104,7 +1104,7 @@ capturePhoto: function() {
         }
         
         // Ask if user wants to crop
-        setTimeout(() => {
+        setTimeout(async () => {
             if (confirm('Would you like to crop this photo?')) {
                 // HIDE CAMERA SECTION BEFORE SHOWING CROPPER
                 if (cameraSection) {
@@ -1113,7 +1113,15 @@ capturePhoto: function() {
                 // Stop camera to free resources
                 this.stopCamera();
                 
-                this.showStandardCropper(file);
+                // Load cropper library first
+                try {
+                    await this.loadCropperLibrary();
+                    this.showStandardCropper(file);
+                } catch (error) {
+                    console.error('Failed to load cropper:', error);
+                    this.showNotification('Cropper unavailable, saving directly', 'warning');
+                    this.saveReceiptFromFile(file, imageUrl);
+                }
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
             }
@@ -1124,7 +1132,7 @@ capturePhoto: function() {
 },
 
 // Also update handleFileUpload to hide any active camera
-handleFileUpload: function(files) {
+handleFileUpload: async function(files) {
     console.log('🎯 ========== handleFileUpload START ==========');
     console.log('📁 Number of files:', files.length);
     
@@ -1147,9 +1155,15 @@ handleFileUpload: function(files) {
         
         // For images, offer cropping
         if (file.type.startsWith('image/')) {
-            setTimeout(() => {
+            setTimeout(async () => {
                 if (confirm(`Crop "${file.name}"?`)) {
-                    this.showStandardCropper(file);
+                    try {
+                        await this.loadCropperLibrary();
+                        this.showStandardCropper(file);
+                    } catch (error) {
+                        console.error('Failed to load cropper:', error);
+                        this.processReceiptFile(file);
+                    }
                 } else {
                     this.processReceiptFile(file);
                 }
@@ -1164,6 +1178,7 @@ handleFileUpload: function(files) {
 // ==================== CROPPER WITH DEBUGGING ====================
 cropperInstance: null,
 currentImageFile: null,
+cropperLibraryLoaded: false,
 
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
@@ -1491,6 +1506,145 @@ showStandardCropper: function(file) {
     
     reader.readAsDataURL(file);
 },
+
+    // Function to load Cropper library with CSP compliance
+loadCropperLibrary: function() {
+    return new Promise((resolve, reject) => {
+        if (this.cropperLibraryLoaded) {
+            resolve();
+            return;
+        }
+        
+        console.log('📦 Loading Cropper library...');
+        
+        // Check if already loaded
+        if (window.Cropper) {
+            console.log('✅ Cropper already loaded');
+            this.cropperLibraryLoaded = true;
+            resolve();
+            return;
+        }
+        
+        // Try to load from CDN (it might still work despite CSP warning)
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js';
+        script.onload = () => {
+            console.log('✅ Cropper JS loaded');
+            
+            // Try to load CSS - if CSP blocks it, we'll use inline styles
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css';
+            link.onload = () => {
+                console.log('✅ Cropper CSS loaded');
+                this.cropperLibraryLoaded = true;
+                resolve();
+            };
+            link.onerror = () => {
+                console.warn('⚠️ Cropper CSS blocked by CSP, using inline styles');
+                // Inject critical cropper styles inline
+                this.injectCropperStyles();
+                this.cropperLibraryLoaded = true;
+                resolve();
+            };
+            document.head.appendChild(link);
+        };
+        script.onerror = () => {
+            console.error('❌ Failed to load Cropper JS');
+            reject(new Error('Failed to load Cropper library'));
+        };
+        document.head.appendChild(script);
+    });
+},
+
+// Inject critical cropper styles inline (CSP compliant)
+injectCropperStyles: function() {
+    const styleId = 'cropper-inline-styles';
+    if (document.getElementById(styleId)) return;
+    
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        .cropper-container {
+            direction: ltr;
+            font-size: 0;
+            line-height: 0;
+            position: relative !important;
+            width: 100% !important;
+            height: 100% !important;
+            touch-action: none;
+            user-select: none;
+        }
+        .cropper-wrap-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+        .cropper-canvas {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: #e0e0e0;
+        }
+        .cropper-drag-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.2);
+        }
+        .cropper-crop-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+        .cropper-modal {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.5);
+        }
+        .cropper-view-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            outline: 2px solid #22c55e;
+            outline-color: rgba(34,197,94,0.75);
+        }
+        .cropper-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(255,255,255,0.1);
+        }
+        .cropper-line {
+            position: absolute;
+            background: #22c55e;
+        }
+        .cropper-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('✅ Injected inline cropper styles');
+},
+
     
 // Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
@@ -2716,46 +2870,41 @@ showReceiptCropperModal: function(file) {
         }, 100);
     },
 
-    showCameraInterface() {
-        console.log('📷 Showing camera interface...');
+   showCameraInterface: function() {
+    console.log('📷 Showing camera interface...');
+    
+    const cameraSection = document.getElementById('camera-section');
+    const uploadSection = document.getElementById('upload-section');
+    const recentSection = document.getElementById('recent-section');
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    
+    if (uploadSection) uploadSection.style.display = 'none';
+    if (quickActionsSection) quickActionsSection.style.display = 'none';
+    if (cameraSection) {
+        cameraSection.style.display = 'block';
         
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        if (uploadSection) uploadSection.style.display = 'none';
-        if (quickActionsSection) quickActionsSection.style.display = 'none';
-        if (cameraSection) {
-            cameraSection.style.display = 'block';
+        // Quick check if camera might be available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const status = document.getElementById('camera-status');
+            if (status) status.textContent = 'Camera not supported';
+            this.showNotification('Camera not supported in this browser', 'warning');
             
-            // Quick check if camera might be available
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                const status = document.getElementById('camera-status');
-                if (status) status.textContent = 'Camera not supported';
-                this.showNotification('Camera not supported in this browser', 'warning');
-                
-                // Show upload option after 3 seconds
-                setTimeout(() => {
-                    if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                        this.showUploadInterface();
-                    }
-                }, 3000);
-            } else {
-                this.initializeCamera();
-            }
-            
-            // Add crop button after camera is initialized
+            // Show upload option after 3 seconds
             setTimeout(() => {
-                if (document.getElementById('camera-section')?.style.display === 'block') {
-                    this.addCropButtonToCamera();
+                if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                    this.showUploadInterface();
                 }
-            }, 1000);
+            }, 3000);
+        } else {
+            this.initializeCamera();
         }
-        if (recentSection) recentSection.style.display = 'block';
         
-        console.log('✅ Camera interface shown');
-    },
+        // REMOVE THIS LINE: this.addCropButtonToCamera();
+    }
+    if (recentSection) recentSection.style.display = 'block';
+    
+    console.log('✅ Camera interface shown');
+},
 
     checkCameraAvailability() {
         return new Promise((resolve) => {
