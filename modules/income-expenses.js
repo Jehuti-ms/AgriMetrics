@@ -1180,9 +1180,16 @@ cropperInstance: null,
 currentImageFile: null,
 cropperLibraryLoaded: false,
 
-// ==================== FIXED CROPPER WITH PROPER VISIBILITY ====================
+// ==================== WORKING CROPPER VERSION ====================
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
+    
+    // Make sure camera is completely hidden
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+    }
+    this.stopCamera();
     
     this.currentImageFile = file;
     
@@ -1190,192 +1197,56 @@ showStandardCropper: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
-        // Create modal with proper layout
+        // Create modal
         const modalId = 'cropper-modal-' + Date.now();
         
         const modalHTML = `
-            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center; padding:0; margin:0; box-sizing:border-box;">
-                <div style="background:white; width:100%; max-width:600px; height:95vh; display:flex; flex-direction:column; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:100000; display:flex; align-items:center; justify-content:center; padding:10px; box-sizing:border-box;">
+                <div style="background:white; width:100%; max-width:600px; height:90vh; border-radius:16px; display:flex; flex-direction:column; overflow:hidden;">
                     
-                    <!-- Header - fixed -->
-                    <div style="background:#22c55e; color:white; padding:16px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
-                        <h3 style="margin:0; font-size:18px; font-weight:600;">✂️ Crop Receipt</h3>
-                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:28px; cursor:pointer; width:44px; height:44px; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    <!-- Header -->
+                    <div style="background:#22c55e; color:white; padding:16px; display:flex; justify-content:space-between;">
+                        <h3 style="margin:0;">✂️ Crop Receipt</h3>
+                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px;">&times;</button>
                     </div>
                     
-                  <!-- Image container - ONLY ONE IMAGE -->
-                    <div style="flex:1; min-height:0; background:#f0f0f0; padding:16px; display:flex; align-items:center; justify-content:center;">
-                        <div style="width:100%; height:100%; background:#e0e0e0; border-radius:8px; overflow:hidden; position:relative;">
-                            <!-- ONLY ONE IMAGE TAG - the cropper will work with this one -->
-                            <img id="cropper-image-${modalId}" src="${imageUrl}" style="display:block; width:100%; height:100%; object-fit:contain;">
+                    <!-- Image Container - THIS IS THE CAPTURED IMAGE -->
+                    <div style="flex:1; background:#333; padding:10px; display:flex; align-items:center; justify-content:center;">
+                        <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:100%; display:block;">
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div style="padding:16px; background:white; border-top:1px solid #ccc;">
+                        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px;">
+                            <button id="zoom-in-${modalId}" style="padding:12px; background:#22c55e; color:white; border:none; border-radius:8px;">🔍+ Zoom In</button>
+                            <button id="zoom-out-${modalId}" style="padding:12px; background:#22c55e; color:white; border:none; border-radius:8px;">🔍- Zoom Out</button>
+                            <button id="rotate-left-${modalId}" style="padding:12px; background:#22c55e; color:white; border:none; border-radius:8px;">↺ Rotate</button>
+                            <button id="rotate-right-${modalId}" style="padding:12px; background:#22c55e; color:white; border:none; border-radius:8px;">↻ Rotate</button>
+                            <button id="reset-${modalId}" style="padding:12px; background:#22c55e; color:white; border:none; border-radius:8px; grid-column:span 2;">🔄 Reset</button>
                         </div>
-                    </div>
-                    
-                    <!-- Controls - scrollable if needed -->
-                    <div style="flex-shrink:0; background:white; border-top:1px solid #eee; max-height:40%; overflow-y:auto;">
-                        <div style="padding:16px;">
-                            <!-- Control buttons grid -->
-                            <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-bottom:16px;">
-                                <button id="zoom-in-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">🔍+ Zoom In</button>
-                                <button id="zoom-out-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">🔍- Zoom Out</button>
-                                <button id="rotate-left-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">↺ Rotate</button>
-                                <button id="rotate-right-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;">↻ Rotate</button>
-                                <button id="reset-${modalId}" style="padding:14px; background:#22c55e; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; grid-column:span 2;">🔄 Reset</button>
-                            </div>
-                            
-                            <!-- Aspect ratio -->
-                            <div style="margin-bottom:16px;">
-                                <label style="display:block; margin-bottom:8px; color:#374151; font-weight:600;">Aspect Ratio:</label>
-                                <select id="aspect-ratio-${modalId}" style="width:100%; padding:14px; border-radius:8px; border:1px solid #ddd; font-size:16px; background:white;">
-                                    <option value="NaN">Free (Best for receipts)</option>
-                                    <option value="1">1:1 Square</option>
-                                    <option value="4/3">4:3</option>
-                                    <option value="3/4">3:4</option>
-                                    <option value="16/9">16:9</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Instructions -->
-                            <div style="background:#e8f5e9; border-left:4px solid #22c55e; padding:12px; border-radius:4px;">
-                                <p style="margin:0; color:#2e7d32; font-size:14px;">
-                                    <strong>💡 How to crop:</strong><br>
-                                    1. Drag the crop box corners to select what to KEEP<br>
-                                    2. Use zoom buttons to magnify details<br>
-                                    3. Drag the image to reposition it
-                                </p>
-                            </div>
+                        
+                        <div style="display:flex; gap:12px;">
+                            <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold;">Cancel</button>
+                            <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold;">Apply Crop</button>
                         </div>
-                    </div>
-                    
-                    <!-- Action buttons - fixed -->
-                    <div style="flex-shrink:0; padding:16px; display:flex; gap:12px; border-top:1px solid #ddd; background:white;">
-                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Cancel</button>
-                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Apply Crop</button>
                     </div>
                 </div>
             </div>
-            
-            <style>
-                /* Ensure cropper takes full container */
-                .cropper-container {
-                    width: 100% !important;
-                    height: 100% !important;
-                }
-                .cropper-crop-box {
-                    border: 2px solid #22c55e;
-                }
-                .cropper-view-box {
-                    outline: 2px solid #22c55e;
-                }
-
-                /* Make crop box more visible */
-                .cropper-crop-box {
-                    border: 3px solid #22c55e !important;
-                    border-radius: 4px !important;
-                    box-shadow: 0 0 0 2px rgba(255,255,255,0.5) !important;
-                }
-                
-                .cropper-view-box {
-                    outline: 3px solid #22c55e !important;
-                    outline-color: rgba(34, 197, 94, 0.75) !important;
-                    box-shadow: 0 0 0 2px white !important;
-                }
-                
-                .cropper-point {
-                    background-color: #22c55e !important;
-                    width: 20px !important;
-                    height: 20px !important;
-                    border: 3px solid white !important;
-                    border-radius: 50% !important;
-                    opacity: 1 !important;
-                }
-                
-                /* Make the 8 corner points extra visible */
-                .point-se {
-                    bottom: -10px !important;
-                    right: -10px !important;
-                    cursor: se-resize !important;
-                }
-                
-                .point-sw {
-                    bottom: -10px !important;
-                    left: -10px !important;
-                    cursor: sw-resize !important;
-                }
-                
-                .point-ne {
-                    top: -10px !important;
-                    right: -10px !important;
-                    cursor: ne-resize !important;
-                }
-                
-                .point-nw {
-                    top: -10px !important;
-                    left: -10px !important;
-                    cursor: nw-resize !important;
-                }
-                
-                /* Dark overlay outside crop area */
-                .cropper-modal {
-                    background: rgba(0, 0, 0, 0.6) !important;
-                }
-                
-                /* Make the drag handles bigger */
-                .cropper-line {
-                    background-color: #22c55e !important;
-                    opacity: 0.5 !important;
-                }
-                
-                .cropper-line:hover {
-                    opacity: 1 !important;
-                }
-                
-                /* Force cropper to only show one image */
-                .cropper-container img {
-                    display: block !important;
-                    max-width: none !important;
-                    max-height: none !important;
-                }
-                
-                /* Hide any potential duplicate backgrounds */
-                .cropper-canvas {
-                    background: transparent !important;
-                }
-                
-                /* Make sure the original image doesn't show through */
-                .cropper-modal {
-                    background: rgba(0, 0, 0, 0.6) !important;
-                    z-index: 1 !important;
-                }
-                
-                .cropper-view-box {
-                    outline: 3px solid #22c55e !important;
-                    background: transparent !important;
-                }
-                
-                /* Ensure the crop box is above everything */
-                .cropper-crop-box {
-                    z-index: 2 !important;
-                }
-            </style>
         `;
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        const modal = document.getElementById(modalId);
         const image = document.getElementById(`cropper-image-${modalId}`);
         
-        // Initialize cropper after image loads
+        // Wait for image to load
         image.onload = () => {
             console.log('✅ Image loaded, initializing cropper');
             
             setTimeout(() => {
-                // Destroy previous instance if exists
                 if (this.cropperInstance) {
                     this.cropperInstance.destroy();
                 }
                 
-                // Initialize cropper
                 this.cropperInstance = new Cropper(image, {
                     aspectRatio: NaN,
                     viewMode: 1,
@@ -1385,17 +1256,14 @@ showStandardCropper: function(file) {
                     center: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                    background: false,
-                    modal: true,
                     ready: function() {
                         console.log('✅ Cropper ready');
                     }
                 });
-            }, 100);
+            }, 200);
         };
         
-        // Setup controls (same as before)
+        // Setup buttons
         document.getElementById(`zoom-in-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.zoom(0.1);
         };
@@ -1416,20 +1284,13 @@ showStandardCropper: function(file) {
             if (this.cropperInstance) this.cropperInstance.reset();
         };
         
-        document.getElementById(`aspect-ratio-${modalId}`).onchange = (e) => {
-            if (this.cropperInstance) {
-                const value = e.target.value;
-                this.cropperInstance.setAspectRatio(value === 'NaN' ? NaN : parseFloat(value));
-            }
-        };
-        
-        // Cancel button
+        // Cancel
         document.querySelector(`.crop-cancel[data-modal="${modalId}"]`).onclick = () => {
             if (this.cropperInstance) {
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
             }
-            modal.remove();
+            document.getElementById(modalId).remove();
             
             setTimeout(() => {
                 if (confirm('Save without cropping?')) {
@@ -1438,42 +1299,27 @@ showStandardCropper: function(file) {
             }, 100);
         };
         
-        // Save button
+        // Save
         document.querySelector(`.crop-save[data-modal="${modalId}"]`).onclick = () => {
-            if (!this.cropperInstance) {
-                alert('Cropper not ready');
-                return;
-            }
+            if (!this.cropperInstance) return;
             
-            try {
-                const croppedCanvas = this.cropperInstance.getCroppedCanvas({
-                    maxWidth: 1200,
-                    maxHeight: 1200,
-                    fillColor: '#fff',
-                });
+            const croppedCanvas = this.cropperInstance.getCroppedCanvas({
+                maxWidth: 1200,
+                maxHeight: 1200
+            });
+            
+            croppedCanvas.toBlob((blob) => {
+                const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
+                const croppedUrl = URL.createObjectURL(blob);
                 
-                croppedCanvas.toBlob((blob) => {
-                    const croppedFile = new File([blob], this.currentImageFile.name, {
-                        type: 'image/jpeg',
-                    });
-                    
-                    const croppedUrl = URL.createObjectURL(blob);
-                    
-                    this.saveCroppedReceipt(croppedFile, croppedUrl);
-                    
-                    if (this.cropperInstance) {
-                        this.cropperInstance.destroy();
-                        this.cropperInstance = null;
-                    }
-                    modal.remove();
-                    
-                    this.showNotification('✅ Image cropped and saved!', 'success');
-                    
-                }, 'image/jpeg', 0.95);
-            } catch (error) {
-                console.error('Cropping error:', error);
-                this.showNotification('Error cropping image', 'error');
-            }
+                this.saveCroppedReceipt(croppedFile, croppedUrl);
+                
+                this.cropperInstance.destroy();
+                this.cropperInstance = null;
+                document.getElementById(modalId).remove();
+                
+                this.showNotification('✅ Image cropped and saved!', 'success');
+            }, 'image/jpeg', 0.95);
         };
     };
     
