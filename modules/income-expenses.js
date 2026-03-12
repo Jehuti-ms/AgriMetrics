@@ -1570,19 +1570,14 @@ saveReceiptFromFile: function(file, dataURL) {
         return;
     }
     
-    // For first file, offer cropping
-    const file = files[0];
-    console.log('📄 Processing file:', file.name);
-    
-    // Show cropping option for images
-    if (file.type.startsWith('image/')) {
-        this.showReceiptCropperModal(file); // ← Now this will work!
-    } else {
-        // For non-images (PDFs), process directly
+    // Process each file directly without cropping
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`📄 Processing file ${i+1}:`, file.name);
         this.processReceiptFile(file);
     }
 },
-
+    
     // Add this function before processCroppedReceipt
 showReceiptCropperModal: function(file) {
     console.log('✂️ Simple image viewer for:', file.name);
