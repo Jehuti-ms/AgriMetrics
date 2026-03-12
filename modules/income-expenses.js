@@ -1180,7 +1180,7 @@ cropperInstance: null,
 currentImageFile: null,
 cropperLibraryLoaded: false,
 
-// ==================== WORKING CROPPER VERSION ====================
+// ==================== FIXED - NO DOUBLE IMAGES ====================
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
     
@@ -1210,9 +1210,9 @@ showStandardCropper: function(file) {
                         <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px;">&times;</button>
                     </div>
                     
-                    <!-- Image Container - THIS IS THE CAPTURED IMAGE -->
-                    <div style="flex:1; background:#333; padding:10px; display:flex; align-items:center; justify-content:center;">
-                        <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:100%; display:block;">
+                    <!-- Image Container - FIXED SIZE -->
+                    <div style="height:50vh; background:#333; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                        <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:100%; width:auto; height:auto; display:block;">
                     </div>
                     
                     <!-- Controls -->
@@ -1232,6 +1232,47 @@ showStandardCropper: function(file) {
                     </div>
                 </div>
             </div>
+            
+            <style>
+                /* Hide any extra images created by cropper */
+                .cropper-container {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                
+                .cropper-canvas {
+                    background: transparent !important;
+                }
+                
+                .cropper-modal {
+                    background: rgba(0,0,0,0.5) !important;
+                }
+                
+                /* Make the crop box visible */
+                .cropper-crop-box {
+                    border: 3px solid #22c55e !important;
+                }
+                
+                .cropper-view-box {
+                    outline: 3px solid #22c55e !important;
+                    outline-color: rgba(34,197,94,0.75) !important;
+                }
+                
+                .cropper-point {
+                    background: #22c55e !important;
+                    width: 20px !important;
+                    height: 20px !important;
+                    border: 2px solid white !important;
+                    border-radius: 50% !important;
+                    opacity: 1 !important;
+                }
+                
+                /* Position points at corners */
+                .point-se { bottom: -10px !important; right: -10px !important; }
+                .point-sw { bottom: -10px !important; left: -10px !important; }
+                .point-ne { top: -10px !important; right: -10px !important; }
+                .point-nw { top: -10px !important; left: -10px !important; }
+            </style>
         `;
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
@@ -1256,6 +1297,8 @@ showStandardCropper: function(file) {
                     center: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
+                    background: false, // This prevents the background image
+                    modal: true,
                     ready: function() {
                         console.log('✅ Cropper ready');
                     }
@@ -1263,7 +1306,7 @@ showStandardCropper: function(file) {
             }, 200);
         };
         
-        // Setup buttons
+        // Setup buttons (same as before)
         document.getElementById(`zoom-in-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.zoom(0.1);
         };
@@ -1291,12 +1334,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             document.getElementById(modalId).remove();
-            
-            setTimeout(() => {
-                if (confirm('Save without cropping?')) {
-                    this.processReceiptFile(this.currentImageFile);
-                }
-            }, 100);
         };
         
         // Save
