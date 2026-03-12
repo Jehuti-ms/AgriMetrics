@@ -826,7 +826,7 @@ switchCamera: function() {
 },
 
 // Capture photo - SIMPLE VERSION
-capturePhoto: function() {
+/*capturePhoto: function() {
     console.log('📸 Capture photo');
     
     // Prevent multiple captures
@@ -891,10 +891,73 @@ capturePhoto: function() {
         }, 200);
         
     }, 'image/jpeg', 0.9);
-},
+}, */
 
-// Simple crop (no external library)
-showSimpleCrop: function(file, imageUrl) {
+    // No asking about cropping
+/*    capturePhoto: function() {
+    console.log('📸 Capture photo');
+    
+    // Prevent multiple captures
+    if (this.isCapturing) {
+        console.log('⏳ Already capturing');
+        return;
+    }
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    const captureBtn = document.getElementById('capture-photo');
+    
+    if (!video || !video.srcObject) {
+        this.showNotification('Camera not ready', 'error');
+        return;
+    }
+    
+    // Disable button
+    this.isCapturing = true;
+    if (captureBtn) {
+        captureBtn.disabled = true;
+        captureBtn.style.opacity = '0.5';
+    }
+    
+    if (status) status.textContent = 'Capturing...';
+    
+    // Set canvas size
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    // Draw video frame
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Flash effect
+    video.style.opacity = '0.7';
+    setTimeout(() => video.style.opacity = '1', 100);
+    
+    // Get image data
+    canvas.toBlob((blob) => {
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        if (status) status.textContent = 'Photo captured!';
+        this.showNotification('📸 Photo captured!', 'success');
+        
+        // Re-enable button
+        if (captureBtn) {
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '1';
+        }
+        
+        // SAVE DIRECTLY - NO CROP DIALOG
+        this.saveReceiptFromFile(file, imageUrl);
+        this.isCapturing = false;
+        
+    }, 'image/jpeg', 0.9);
+},
+*/
+
+    // Simple crop (no external library)
+/*showSimpleCrop: function(file, imageUrl) {
     console.log('✂️ Simple crop mode');
     
     const modalId = 'crop-modal-' + Date.now();
@@ -987,7 +1050,250 @@ showSimpleCrop: function(file, imageUrl) {
         }, 'image/jpeg', 0.9);
     };
 },
+*/
 
+    // Capture photo standard cropper using library
+    capturePhoto: function() {
+    console.log('📸 Capture photo');
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    const captureBtn = document.getElementById('capture-photo');
+    
+    if (!video || !video.srcObject) {
+        this.showNotification('Camera not ready', 'error');
+        return;
+    }
+    
+    // Disable button
+    this.isCapturing = true;
+    if (captureBtn) {
+        captureBtn.disabled = true;
+        captureBtn.style.opacity = '0.5';
+    }
+    
+    if (status) status.textContent = 'Capturing...';
+    
+    // Set canvas size
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    // Draw video frame
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Flash effect
+    video.style.opacity = '0.7';
+    setTimeout(() => video.style.opacity = '1', 100);
+    
+    // Get image data
+    canvas.toBlob((blob) => {
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
+        
+        if (status) status.textContent = 'Photo captured!';
+        this.showNotification('📸 Photo captured!', 'success');
+        
+        // Re-enable button
+        if (captureBtn) {
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '1';
+        }
+        
+        // Ask if user wants to crop
+        setTimeout(() => {
+            if (confirm('Would you like to crop this photo?')) {
+                this.showStandardCropper(file);
+            } else {
+                this.saveReceiptFromFile(file, imageUrl);
+            }
+            this.isCapturing = false;
+        }, 200);
+        
+    }, 'image/jpeg', 0.9);
+},
+
+    // ==================== STANDARD CROPPER IMPLEMENTATION ====================
+cropperInstance: null,
+currentImageFile: null,
+
+showStandardCropper: function(file) {
+    console.log('🔧 Opening standard cropper for:', file.name);
+    
+    this.currentImageFile = file;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const imageUrl = e.target.result;
+        
+        // Create modal with cropper
+        const modalId = 'standard-cropper-modal-' + Date.now();
+        
+        const modalHTML = `
+            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center;">
+                <div style="background:white; width:95%; max-width:800px; border-radius:16px; overflow:hidden;">
+                    <div style="background:#22c55e; color:white; padding:16px; display:flex; justify-content:space-between;">
+                        <h3 style="margin:0;">✂️ Crop Receipt</h3>
+                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+                    </div>
+                    <div style="padding:16px; background:#f0f0f0; max-height:60vh; overflow:hidden;">
+                        <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; display:block;">
+                    </div>
+                    
+                    <!-- Cropper Controls -->
+                    <div style="padding:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; border-top:1px solid #ddd;">
+                        <button class="cropper-control-btn" id="zoom-in-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">🔍+ Zoom In</button>
+                        <button class="cropper-control-btn" id="zoom-out-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">🔍- Zoom Out</button>
+                        <button class="cropper-control-btn" id="rotate-left-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">↺ Rotate Left</button>
+                        <button class="cropper-control-btn" id="rotate-right-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">↻ Rotate Right</button>
+                        <button class="cropper-control-btn" id="reset-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">🔄 Reset</button>
+                    </div>
+                    
+                    <!-- Aspect Ratio Selector -->
+                    <div style="padding:0 16px 16px 16px; display:flex; gap:16px; justify-content:center; align-items:center;">
+                        <span style="color:#666;">Aspect Ratio:</span>
+                        <select id="aspect-ratio-${modalId}" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
+                            <option value="NaN">Free (Receipt)</option>
+                            <option value="1">1:1 (Square)</option>
+                            <option value="4/3">4:3</option>
+                            <option value="3/4">3:4</option>
+                            <option value="16/9">16:9</option>
+                        </select>
+                    </div>
+                    
+                    <div style="padding:16px; display:flex; gap:12px; border-top:1px solid #ddd;">
+                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cancel</button>
+                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Apply Crop & Save</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        const image = document.getElementById(`cropper-image-${modalId}`);
+        
+        // Initialize cropper after image loads
+        image.onload = () => {
+            console.log('✅ Image loaded, initializing cropper');
+            
+            // Destroy previous instance if exists
+            if (this.cropperInstance) {
+                this.cropperInstance.destroy();
+            }
+            
+            // Initialize new cropper
+            this.cropperInstance = new Cropper(image, {
+                aspectRatio: NaN,
+                viewMode: 1,
+                dragMode: 'crop',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100,
+                ready: function() {
+                    console.log('✅ Cropper ready');
+                }
+            });
+        };
+        
+        // Setup controls
+        document.getElementById(`zoom-in-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.zoom(0.1);
+        };
+        
+        document.getElementById(`zoom-out-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.zoom(-0.1);
+        };
+        
+        document.getElementById(`rotate-left-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.rotate(-90);
+        };
+        
+        document.getElementById(`rotate-right-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.rotate(90);
+        };
+        
+        document.getElementById(`reset-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.reset();
+        };
+        
+        document.getElementById(`aspect-ratio-${modalId}`).onchange = (e) => {
+            if (this.cropperInstance) {
+                const value = e.target.value;
+                this.cropperInstance.setAspectRatio(value === 'NaN' ? NaN : parseFloat(value));
+            }
+        };
+        
+        // Cancel button
+        document.querySelector(`.crop-cancel[data-modal="${modalId}"]`).onclick = () => {
+            if (this.cropperInstance) {
+                this.cropperInstance.destroy();
+                this.cropperInstance = null;
+            }
+            document.getElementById(modalId).remove();
+            
+            // Ask to save without crop
+            setTimeout(() => {
+                if (confirm('Save without cropping?')) {
+                    this.processReceiptFile(this.currentImageFile);
+                }
+            }, 100);
+        };
+        
+        // Save button
+        document.querySelector(`.crop-save[data-modal="${modalId}"]`).onclick = () => {
+            if (!this.cropperInstance) {
+                alert('Cropper not initialized');
+                return;
+            }
+            
+            // Get cropped canvas
+            const croppedCanvas = this.cropperInstance.getCroppedCanvas({
+                maxWidth: 1200,
+                maxHeight: 1200,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            // Convert to blob
+            croppedCanvas.toBlob((blob) => {
+                const croppedFile = new File([blob], this.currentImageFile.name, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                });
+                
+                const croppedUrl = URL.createObjectURL(blob);
+                
+                // Save the cropped image
+                this.saveCroppedReceipt(croppedFile, croppedUrl);
+                
+                // Clean up
+                if (this.cropperInstance) {
+                    this.cropperInstance.destroy();
+                    this.cropperInstance = null;
+                }
+                document.getElementById(modalId).remove();
+                
+                this.showNotification('✅ Image cropped and saved!', 'success');
+                
+            }, 'image/jpeg', 0.95);
+        };
+    };
+    
+    reader.readAsDataURL(file);
+},
+    
+
+    
 // Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
     console.log('💾 Saving receipt:', file.name);
@@ -1561,7 +1867,7 @@ saveReceiptFromFile: function(file, dataURL) {
     },
 
     // ==================== FILE UPLOAD ====================
-    handleFileUpload: function(files) {
+   /* handleFileUpload: function(files) {
     console.log('🎯 ========== handleFileUpload START ==========');
     console.log('📁 Number of files:', files.length);
     
@@ -1575,6 +1881,39 @@ saveReceiptFromFile: function(file, dataURL) {
         const file = files[i];
         console.log(`📄 Processing file ${i+1}:`, file.name);
         this.processReceiptFile(file);
+    }
+},
+
+*/
+
+    // Handle file upload cropper library edition
+    handleFileUpload: function(files) {
+    console.log('🎯 ========== handleFileUpload START ==========');
+    console.log('📁 Number of files:', files.length);
+    
+    if (!files || files.length === 0) {
+        console.log('❌ No files');
+        return;
+    }
+    
+    // Process each file
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        console.log(`📄 Processing file ${i+1}:`, file.name);
+        
+        // For images, offer cropping
+        if (file.type.startsWith('image/')) {
+            setTimeout(() => {
+                if (confirm(`Crop "${file.name}"?`)) {
+                    this.showStandardCropper(file);
+                } else {
+                    this.processReceiptFile(file);
+                }
+            }, i * 500); // Delay for multiple files
+        } else {
+            // For non-images (PDFs), process directly
+            this.processReceiptFile(file);
+        }
     }
 },
     
