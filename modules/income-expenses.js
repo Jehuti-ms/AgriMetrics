@@ -1585,14 +1585,16 @@ saveReceiptFromFile: function(file, dataURL) {
 
     // Add this function before processCroppedReceipt
 showReceiptCropperModal: function(file) {
-    console.log('✂️ Showing cropper for:', file.name);
+    console.log('✂️ Opening crop tool for:', file.name);
     
     const reader = new FileReader();
+    
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
-        // Create modal first
-        const modalId = 'receipt-cropper-modal-' + Date.now();
+        // Create a simple modal with the image
+        const modalId = 'crop-modal-' + Date.now();
+        
         const modalHTML = `
             <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center;">
                 <div style="background:white; width:95%; max-width:600px; border-radius:16px; overflow:hidden;">
@@ -1600,8 +1602,8 @@ showReceiptCropperModal: function(file) {
                         <h3 style="margin:0;">✂️ Crop Receipt</h3>
                         <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
                     </div>
-                    <div style="padding:16px; max-height:60vh; overflow:auto; text-align:center; background:#f0f0f0;" id="cropper-container-${modalId}">
-                        <img id="crop-img-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:400px; display:block; margin:0 auto;">
+                    <div style="padding:16px; max-height:60vh; overflow:auto; text-align:center; background:#f0f0f0;">
+                        <img id="crop-img-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:400px; transition:transform 0.1s;">
                     </div>
                     <div style="padding:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                         <button class="crop-rotate" data-modal="${modalId}" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">↻ Rotate</button>
@@ -1618,118 +1620,71 @@ showReceiptCropperModal: function(file) {
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        // Get image element and wait for it to load
         const img = document.getElementById(`crop-img-${modalId}`);
-        
-        // Show loading indicator
-        const container = document.getElementById(`cropper-container-${modalId}`);
-        if (container) {
-            container.innerHTML = '<div style="padding:40px; text-align:center;">Loading image...</div>';
-            container.appendChild(img);
-        }
+        let scale = 1;
+        let rotation = 0;
         
         // Wait for image to load
         img.onload = () => {
             console.log('✅ Image loaded:', img.naturalWidth, 'x', img.naturalHeight);
-            
-            // Clear loading message
-            if (container) {
-                container.innerHTML = '';
-                container.appendChild(img);
-            }
-            
-            let scale = 1;
-            let rotation = 0;
-            
-            // Remove old listeners and add new ones
-            const zoomInBtn = document.querySelector(`.crop-zoom-in[data-modal="${modalId}"]`);
-            const zoomOutBtn = document.querySelector(`.crop-zoom-out[data-modal="${modalId}"]`);
-            const rotateBtn = document.querySelector(`.crop-rotate[data-modal="${modalId}"]`);
-            const cancelBtn = document.querySelector(`.crop-cancel[data-modal="${modalId}"]`);
-            const saveBtn = document.querySelector(`.crop-save[data-modal="${modalId}"]`);
-            
-            if (zoomInBtn) {
-                zoomInBtn.onclick = () => {
-                    scale = Math.min(scale + 0.2, 3);
-                    img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-                };
-            }
-            
-            if (zoomOutBtn) {
-                zoomOutBtn.onclick = () => {
-                    scale = Math.max(scale - 0.2, 0.5);
-                    img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-                };
-            }
-            
-            if (rotateBtn) {
-                rotateBtn.onclick = () => {
-                    rotation = (rotation + 90) % 360;
-                    img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-                };
-            }
-            
-            if (cancelBtn) {
-                cancelBtn.onclick = () => {
-                    document.getElementById(modalId).remove();
-                    setTimeout(() => {
-                        if (confirm('Save without cropping?')) {
-                            this.processReceiptFile(file);
-                        }
-                    }, 100);
-                };
-            }
-            
-            if (saveBtn) {
-                saveBtn.onclick = () => {
-                    // Create canvas with current transforms
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth;
-                    canvas.height = img.naturalHeight;
-                    
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Clear canvas
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Apply transforms
-                    ctx.translate(canvas.width/2, canvas.height/2);
-                    ctx.rotate(rotation * Math.PI/180);
-                    ctx.scale(scale, scale);
-                    ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2, img.naturalWidth, img.naturalHeight);
-                    
-                    // Save
-                    canvas.toBlob((blob) => {
-                        const croppedFile = new File([blob], file.name, { type: 'image/jpeg' });
-                        const croppedUrl = URL.createObjectURL(blob);
-                        
-                        this.processCroppedReceipt(croppedFile, croppedUrl);
-                        document.getElementById(modalId).remove();
-                        this.showNotification('✅ Image cropped and saved!', 'success');
-                        
-                    }, 'image/jpeg', 0.9);
-                };
-            }
         };
         
-        // Handle image loading error
-        img.onerror = () => {
-            console.error('❌ Failed to load image');
+        // Setup controls
+        document.querySelector(`.crop-zoom-in[data-modal="${modalId}"]`).onclick = () => {
+            scale = Math.min(scale + 0.2, 3);
+            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        };
+        
+        document.querySelector(`.crop-zoom-out[data-modal="${modalId}"]`).onclick = () => {
+            scale = Math.max(scale - 0.2, 0.5);
+            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        };
+        
+        document.querySelector(`.crop-rotate[data-modal="${modalId}"]`).onclick = () => {
+            rotation = (rotation + 90) % 360;
+            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+        };
+        
+        // Cancel button
+        document.querySelector(`.crop-cancel[data-modal="${modalId}"]`).onclick = () => {
             document.getElementById(modalId).remove();
-            this.showNotification('Failed to load image for cropping', 'error');
-            
-            // Offer to save without cropping
+            // Ask to save without crop
             setTimeout(() => {
                 if (confirm('Save without cropping?')) {
                     this.processReceiptFile(file);
                 }
             }, 100);
         };
-    };
-    
-    reader.onerror = () => {
-        console.error('❌ Failed to read file');
-        this.showNotification('Failed to read image file', 'error');
+        
+        // Save button
+        document.querySelector(`.crop-save[data-modal="${modalId}"]`).onclick = () => {
+            // Create canvas with current transforms
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Apply transforms
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.rotate(rotation * Math.PI/180);
+            ctx.scale(scale, scale);
+            ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2, img.naturalWidth, img.naturalHeight);
+            
+            // Save
+            canvas.toBlob((blob) => {
+                const croppedFile = new File([blob], file.name, { type: 'image/jpeg' });
+                const croppedUrl = URL.createObjectURL(blob);
+                
+                this.processCroppedReceipt(croppedFile, croppedUrl);
+                document.getElementById(modalId).remove();
+                this.showNotification('✅ Image cropped and saved!', 'success');
+                
+            }, 'image/jpeg', 0.9);
+        };
     };
     
     reader.readAsDataURL(file);
