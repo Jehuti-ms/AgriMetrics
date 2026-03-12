@@ -1592,27 +1592,83 @@ showReceiptCropperModal: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
-        // Create a simple modal with the image
+        // Create a unique ID for this modal
         const modalId = 'crop-modal-' + Date.now();
+        const imgId = 'crop-img-' + Date.now();
         
+        // Variables to track transformations
+        let currentScale = 1;
+        let currentRotation = 0;
+        
+        // Create modal with inline onclick handlers
         const modalHTML = `
             <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center;">
                 <div style="background:white; width:95%; max-width:600px; border-radius:16px; overflow:hidden;">
                     <div style="background:#22c55e; color:white; padding:16px; display:flex; justify-content:space-between;">
                         <h3 style="margin:0;">✂️ Crop Receipt</h3>
-                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; padding:0 10px;">&times;</button>
                     </div>
                     <div style="padding:16px; max-height:60vh; overflow:auto; text-align:center; background:#f0f0f0;">
-                        <img id="crop-img-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:400px; transition:transform 0.1s;">
+                        <img id="${imgId}" src="${imageUrl}" style="max-width:100%; max-height:400px; transition:transform 0.1s;">
                     </div>
                     <div style="padding:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-                        <button class="crop-rotate" data-modal="${modalId}" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">↻ Rotate</button>
-                        <button class="crop-zoom-in" data-modal="${modalId}" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">🔍+</button>
-                        <button class="crop-zoom-out" data-modal="${modalId}" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">🔍-</button>
+                        <button onclick="(function(){ 
+                            var img = document.getElementById('${imgId}');
+                            var scale = parseFloat(img.getAttribute('data-scale') || '1');
+                            var rot = parseFloat(img.getAttribute('data-rotation') || '0');
+                            scale = Math.min(scale + 0.2, 3);
+                            img.setAttribute('data-scale', scale);
+                            img.style.transform = 'scale(' + scale + ') rotate(' + rot + 'deg)';
+                        })()" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">🔍+</button>
+                        
+                        <button onclick="(function(){ 
+                            var img = document.getElementById('${imgId}');
+                            var scale = parseFloat(img.getAttribute('data-scale') || '1');
+                            var rot = parseFloat(img.getAttribute('data-rotation') || '0');
+                            scale = Math.max(scale - 0.2, 0.5);
+                            img.setAttribute('data-scale', scale);
+                            img.style.transform = 'scale(' + scale + ') rotate(' + rot + 'deg)';
+                        })()" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">🔍-</button>
+                        
+                        <button onclick="(function(){ 
+                            var img = document.getElementById('${imgId}');
+                            var scale = parseFloat(img.getAttribute('data-scale') || '1');
+                            var rot = parseFloat(img.getAttribute('data-rotation') || '0');
+                            rot = (rot + 90) % 360;
+                            img.setAttribute('data-rotation', rot);
+                            img.style.transform = 'scale(' + scale + ') rotate(' + rot + 'deg)';
+                        })()" style="padding:12px 20px; background:#f0f0f0; border:none; border-radius:8px; min-width:60px; cursor:pointer;">↻ Rotate</button>
                     </div>
                     <div style="padding:16px; display:flex; gap:12px;">
-                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cancel</button>
-                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Save</button>
+                        <button onclick="document.getElementById('${modalId}').remove(); setTimeout(function(){ if(confirm('Save without cropping?')) { window.IncomeExpensesModule && window.IncomeExpensesModule.processReceiptFile && window.IncomeExpensesModule.processReceiptFile(${JSON.stringify(file)}); } }, 100);" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cancel</button>
+                        <button onclick="(function(){ 
+                            var modal = document.getElementById('${modalId}');
+                            var img = document.getElementById('${imgId}');
+                            var scale = parseFloat(img.getAttribute('data-scale') || '1');
+                            var rot = parseFloat(img.getAttribute('data-rotation') || '0');
+                            
+                            // Create canvas to save cropped image
+                            var canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            
+                            var ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.translate(canvas.width/2, canvas.height/2);
+                            ctx.rotate(rot * Math.PI/180);
+                            ctx.scale(scale, scale);
+                            ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2, img.naturalWidth, img.naturalHeight);
+                            
+                            canvas.toBlob(function(blob) {
+                                var croppedFile = new File([blob], ${JSON.stringify(file.name)}, { type: 'image/jpeg' });
+                                var croppedUrl = URL.createObjectURL(blob);
+                                
+                                if (window.IncomeExpensesModule && window.IncomeExpensesModule.processCroppedReceipt) {
+                                    window.IncomeExpensesModule.processCroppedReceipt(croppedFile, croppedUrl);
+                                }
+                                modal.remove();
+                            }, 'image/jpeg', 0.9);
+                        })()" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Save</button>
                     </div>
                 </div>
             </div>
@@ -1620,140 +1676,21 @@ showReceiptCropperModal: function(file) {
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        const img = document.getElementById(`crop-img-${modalId}`);
-        let scale = 1;
-        let rotation = 0;
+        // Initialize the image with data attributes
+        const img = document.getElementById(imgId);
+        img.setAttribute('data-scale', '1');
+        img.setAttribute('data-rotation', '0');
         
-        // Wait for image to load
-        img.onload = () => {
-            console.log('✅ Image loaded:', img.naturalWidth, 'x', img.naturalHeight);
-        };
-        
-        // Setup controls
-        document.querySelector(`.crop-zoom-in[data-modal="${modalId}"]`).onclick = () => {
-            scale = Math.min(scale + 0.2, 3);
-            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-        };
-        
-        document.querySelector(`.crop-zoom-out[data-modal="${modalId}"]`).onclick = () => {
-            scale = Math.max(scale - 0.2, 0.5);
-            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-        };
-        
-        document.querySelector(`.crop-rotate[data-modal="${modalId}"]`).onclick = () => {
-            rotation = (rotation + 90) % 360;
-            img.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
-        };
-        
-        // Cancel button
-        document.querySelector(`.crop-cancel[data-modal="${modalId}"]`).onclick = () => {
-            document.getElementById(modalId).remove();
-            // Ask to save without crop
-            setTimeout(() => {
-                if (confirm('Save without cropping?')) {
-                    this.processReceiptFile(file);
-                }
-            }, 100);
-        };
-        
-        // Save button
-        document.querySelector(`.crop-save[data-modal="${modalId}"]`).onclick = () => {
-            // Create canvas with current transforms
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Apply transforms
-            ctx.translate(canvas.width/2, canvas.height/2);
-            ctx.rotate(rotation * Math.PI/180);
-            ctx.scale(scale, scale);
-            ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2, img.naturalWidth, img.naturalHeight);
-            
-            // Save
-            canvas.toBlob((blob) => {
-                const croppedFile = new File([blob], file.name, { type: 'image/jpeg' });
-                const croppedUrl = URL.createObjectURL(blob);
-                
-                this.processCroppedReceipt(croppedFile, croppedUrl);
-                document.getElementById(modalId).remove();
-                this.showNotification('✅ Image cropped and saved!', 'success');
-                
-            }, 'image/jpeg', 0.9);
-        };
+        console.log('✅ Crop modal created with ID:', modalId);
+    };
+    
+    reader.onerror = () => {
+        console.error('❌ Failed to read file');
+        this.showNotification('Failed to read image file', 'error');
     };
     
     reader.readAsDataURL(file);
 },
-    
-    processCroppedReceipt(file, imageUrl) {
-        console.log('📦 Processing cropped receipt:', file.name);
-        
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            const dataURL = e.target.result;
-            const receiptId = 'receipt_' + Date.now();
-            
-            const receipt = {
-                id: receiptId,
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                dataURL: dataURL,
-                downloadURL: imageUrl,
-                status: 'pending',
-                uploadedAt: new Date().toISOString(),
-                source: 'upload',
-                cropped: true
-            };
-            
-            this.saveReceiptLocally(receipt);
-            this.updateReceiptQueueUI();
-            this.updateModalReceiptsList();
-            
-            this.showNotification(`Receipt "${file.name}" uploaded and cropped!`, 'success');
-            this.showSimpleSuccessModal([receipt]);
-        };
-        
-        reader.readAsDataURL(file);
-    },
-
-    processReceiptFile(file) {
-        console.log('📄 Processing receipt file without cropping:', file.name);
-        
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            const dataURL = e.target.result;
-            const receiptId = 'receipt_' + Date.now();
-            
-            const receipt = {
-                id: receiptId,
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                dataURL: dataURL,
-                status: 'pending',
-                uploadedAt: new Date().toISOString(),
-                source: 'upload',
-                cropped: false
-            };
-            
-            this.saveReceiptLocally(receipt);
-            this.updateReceiptQueueUI();
-            this.updateModalReceiptsList();
-            
-            this.showNotification(`Receipt "${file.name}" uploaded!`, 'success');
-            this.showSimpleSuccessModal([receipt]);
-        };
-        
-        reader.readAsDataURL(file);
-    },
     
     showSimpleSuccessModal(receipts) {
         console.log('🎉 Showing success modal for', receipts.length, 'receipt(s)');
