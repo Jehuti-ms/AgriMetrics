@@ -4,7 +4,7 @@ console.log('💰 Loading Income & Expenses module...');
 const Broadcaster = window.DataBroadcaster || {
     recordCreated: () => {},
     recordUpdated: () => {},
-    recordDeleted: () => {}
+    recordDeleted: () => {}F
 };
 
 // Add these properties (replace your existing ones)
@@ -1180,7 +1180,7 @@ cropperInstance: null,
 currentImageFile: null,
 cropperLibraryLoaded: false,
 
-// ==================== SIMPLEST CROPPER - FRESH START ====================
+// ==================== CROPPER - IMAGE FILLS THE FRAME ====================
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
     
@@ -1213,13 +1213,13 @@ showStandardCropper: function(file) {
             margin: 0;
         `;
         
-        // Create inner content
+        // Create inner content - IMAGE NOW FILLS THE SPACE
         modal.innerHTML = `
             <div style="
                 background: white;
                 width: 100%;
                 max-width: 600px;
-                height: 90vh;
+                height: 95vh;
                 border-radius: 16px;
                 display: flex;
                 flex-direction: column;
@@ -1233,8 +1233,9 @@ showStandardCropper: function(file) {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    flex-shrink: 0;
                 ">
-                    <h3 style="margin:0; font-size:18px;">✂️ Crop Receipt</h3>
+                    <h3 style="margin:0; font-size:18px; font-weight:600;">✂️ Crop Receipt</h3>
                     <button id="close-${modalId}" style="
                         background: none;
                         border: none;
@@ -1243,10 +1244,13 @@ showStandardCropper: function(file) {
                         cursor: pointer;
                         width: 44px;
                         height: 44px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
                     ">&times;</button>
                 </div>
                 
-                <!-- Image Container -->
+                <!-- Image Container - NOW FILLS AVAILABLE SPACE -->
                 <div style="
                     flex: 1;
                     background: #1a1a1a;
@@ -1254,12 +1258,12 @@ showStandardCropper: function(file) {
                     align-items: center;
                     justify-content: center;
                     overflow: hidden;
+                    min-height: 300px;
                 ">
                     <img id="crop-img-${modalId}" src="${imageUrl}" style="
-                        max-width: 100%;
-                        max-height: 100%;
-                        width: auto;
-                        height: auto;
+                        width: 100%;
+                        height: 100%;
+                        object-fit: contain;
                         display: block;
                     ">
                 </div>
@@ -1269,6 +1273,7 @@ showStandardCropper: function(file) {
                     padding: 16px;
                     background: white;
                     border-top: 1px solid #ddd;
+                    flex-shrink: 0;
                 ">
                     <div style="
                         display: grid;
@@ -1355,6 +1360,43 @@ showStandardCropper: function(file) {
                     </div>
                 </div>
             </div>
+            
+            <style>
+                /* Force cropper to fill container */
+                .cropper-container {
+                    width: 100% !important;
+                    height: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 100% !important;
+                }
+                
+                .cropper-container img {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: contain !important;
+                }
+                
+                .cropper-crop-box {
+                    border: 3px solid #22c55e !important;
+                }
+                
+                .cropper-view-box {
+                    outline: 3px solid #22c55e !important;
+                }
+                
+                .cropper-point {
+                    background: #22c55e !important;
+                    width: 20px !important;
+                    height: 20px !important;
+                    border: 3px solid white !important;
+                    border-radius: 50% !important;
+                }
+                
+                .point-se { bottom: -10px !important; right: -10px !important; }
+                .point-sw { bottom: -10px !important; left: -10px !important; }
+                .point-ne { top: -10px !important; right: -10px !important; }
+                .point-nw { top: -10px !important; left: -10px !important; }
+            </style>
         `;
         
         // Add to body
@@ -1365,7 +1407,7 @@ showStandardCropper: function(file) {
         
         // Initialize cropper after image loads
         img.onload = () => {
-            console.log('✅ Image loaded');
+            console.log('✅ Image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
             
             setTimeout(() => {
                 // Clean up previous cropper
@@ -1373,7 +1415,7 @@ showStandardCropper: function(file) {
                     this.cropperInstance.destroy();
                 }
                 
-                // Create new cropper
+                // Create new cropper - IMAGE WILL FILL CONTAINER
                 this.cropperInstance = new Cropper(img, {
                     aspectRatio: NaN,
                     viewMode: 1,
@@ -1381,12 +1423,15 @@ showStandardCropper: function(file) {
                     autoCropArea: 0.8,
                     guides: true,
                     center: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
                     background: false,
+                    modal: true,
                     ready: function() {
-                        console.log('✅ Cropper ready');
+                        console.log('✅ Cropper ready - image fills frame');
                     }
                 });
-            }, 100);
+            }, 200);
         };
         
         // Close button
