@@ -1114,7 +1114,7 @@ switchCamera: function() {
     }, 'image/jpeg', 0.9);
 },
 
-    // ==================== STANDARD CROPPER IMPLEMENTATION ====================
+    // ==================== STANDARD CROPPER WITH PROPER SIZING ====================
 cropperInstance: null,
 currentImageFile: null,
 
@@ -1127,44 +1127,55 @@ showStandardCropper: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
-        // Create modal with cropper
+        // Create modal with proper sizing
         const modalId = 'standard-cropper-modal-' + Date.now();
         
         const modalHTML = `
-            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center;">
-                <div style="background:white; width:95%; max-width:800px; border-radius:16px; overflow:hidden;">
-                    <div style="background:#22c55e; color:white; padding:16px; display:flex; justify-content:space-between;">
-                        <h3 style="margin:0;">✂️ Crop Receipt</h3>
-                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
-                    </div>
-                    <div style="padding:16px; background:#f0f0f0; max-height:60vh; overflow:hidden;">
-                        <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; display:block;">
+            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:center; justify-content:center; padding:10px; box-sizing:border-box;">
+                <div style="background:white; width:100%; max-width:900px; height:90vh; border-radius:16px; overflow:hidden; display:flex; flex-direction:column;">
+                    
+                    <!-- Header -->
+                    <div style="background:#22c55e; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+                        <h3 style="margin:0; font-size:18px;">✂️ Crop Receipt</h3>
+                        <button onclick="document.getElementById('${modalId}').remove()" style="background:none; border:none; color:white; font-size:28px; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">&times;</button>
                     </div>
                     
-                    <!-- Cropper Controls -->
-                    <div style="padding:16px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; border-top:1px solid #ddd;">
-                        <button class="cropper-control-btn" id="zoom-in-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">🔍+ Zoom In</button>
-                        <button class="cropper-control-btn" id="zoom-out-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">🔍- Zoom Out</button>
-                        <button class="cropper-control-btn" id="rotate-left-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">↺ Rotate Left</button>
-                        <button class="cropper-control-btn" id="rotate-right-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">↻ Rotate Right</button>
-                        <button class="cropper-control-btn" id="reset-${modalId}" style="padding:10px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">🔄 Reset</button>
+                    <!-- Cropper Container - FIXED HEIGHT WITH SCROLL -->
+                    <div style="flex:1; min-height:0; padding:16px; background:#f0f0f0; overflow:auto;">
+                        <div style="min-height:300px; height:100%; display:flex; align-items:center; justify-content:center;">
+                            <img id="cropper-image-${modalId}" src="${imageUrl}" style="max-width:100%; display:block;">
+                        </div>
                     </div>
                     
-                    <!-- Aspect Ratio Selector -->
-                    <div style="padding:0 16px 16px 16px; display:flex; gap:16px; justify-content:center; align-items:center;">
-                        <span style="color:#666;">Aspect Ratio:</span>
-                        <select id="aspect-ratio-${modalId}" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
-                            <option value="NaN">Free (Receipt)</option>
-                            <option value="1">1:1 (Square)</option>
-                            <option value="4/3">4:3</option>
-                            <option value="3/4">3:4</option>
-                            <option value="16/9">16:9</option>
-                        </select>
+                    <!-- Controls - SCROLLABLE ON MOBILE -->
+                    <div style="padding:16px; background:white; border-top:1px solid #ddd; flex-shrink:0; overflow-x:auto;">
+                        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; min-width:min-content;">
+                            <button class="crop-btn" id="zoom-in-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">🔍+ Zoom In</button>
+                            <button class="crop-btn" id="zoom-out-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">🔍- Zoom Out</button>
+                            <button class="crop-btn" id="rotate-left-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">↺ Rotate Left</button>
+                            <button class="crop-btn" id="rotate-right-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">↻ Rotate Right</button>
+                            <button class="crop-btn" id="reset-${modalId}" style="padding:12px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:8px; cursor:pointer; font-size:14px; white-space:nowrap;">🔄 Reset</button>
+                        </div>
                     </div>
                     
-                    <div style="padding:16px; display:flex; gap:12px; border-top:1px solid #ddd;">
-                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cancel</button>
-                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Apply Crop & Save</button>
+                    <!-- Aspect Ratio - SCROLLABLE -->
+                    <div style="padding:0 16px 16px 16px; background:white; flex-shrink:0; overflow-x:auto;">
+                        <div style="display:flex; gap:16px; align-items:center; min-width:min-content;">
+                            <span style="color:#666; font-size:14px; white-space:nowrap;">Aspect Ratio:</span>
+                            <select id="aspect-ratio-${modalId}" style="padding:10px; border-radius:8px; border:1px solid #ddd; font-size:14px;">
+                                <option value="NaN">Free (Receipt)</option>
+                                <option value="1">1:1 (Square)</option>
+                                <option value="4/3">4:3</option>
+                                <option value="3/4">3:4</option>
+                                <option value="16/9">16:9</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="padding:16px; display:flex; gap:12px; border-top:1px solid #ddd; background:white; flex-shrink:0;">
+                        <button class="crop-cancel" data-modal="${modalId}" style="flex:1; padding:14px; background:#f44336; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Cancel</button>
+                        <button class="crop-save" data-modal="${modalId}" style="flex:1; padding:14px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:16px;">Apply Crop & Save</button>
                     </div>
                 </div>
             </div>
@@ -1183,7 +1194,7 @@ showStandardCropper: function(file) {
                 this.cropperInstance.destroy();
             }
             
-            // Initialize new cropper
+            // Initialize new cropper with responsive options
             this.cropperInstance = new Cropper(image, {
                 aspectRatio: NaN,
                 viewMode: 1,
@@ -1198,6 +1209,7 @@ showStandardCropper: function(file) {
                 toggleDragModeOnDblclick: false,
                 minCropBoxWidth: 100,
                 minCropBoxHeight: 100,
+                responsive: true,
                 ready: function() {
                     console.log('✅ Cropper ready');
                 }
@@ -1255,6 +1267,9 @@ showStandardCropper: function(file) {
                 return;
             }
             
+            // Show loading
+            this.showNotification('✂️ Applying crop...', 'info');
+            
             // Get cropped canvas
             const croppedCanvas = this.cropperInstance.getCroppedCanvas({
                 maxWidth: 1200,
@@ -1291,8 +1306,6 @@ showStandardCropper: function(file) {
     
     reader.readAsDataURL(file);
 },
-    
-
     
 // Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
