@@ -2899,7 +2899,6 @@ showReceiptCropperModal: function(file) {
             this.initializeCamera();
         }
         
-        // REMOVE THIS LINE: this.addCropButtonToCamera();
     }
     if (recentSection) recentSection.style.display = 'block';
     
