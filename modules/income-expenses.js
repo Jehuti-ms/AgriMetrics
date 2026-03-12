@@ -1165,8 +1165,16 @@ handleFileUpload: function(files) {
 cropperInstance: null,
 currentImageFile: null,
 
+// In your showStandardCropper function, add a backdrop to ensure camera is hidden
 showStandardCropper: function(file) {
     console.log('🔧 Opening mobile-friendly cropper for:', file.name);
+    
+    // Make sure any camera is stopped and hidden
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+    }
+    this.stopCamera();
     
     this.currentImageFile = file;
     
@@ -1174,11 +1182,11 @@ showStandardCropper: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
-        // Create modal with proper mobile sizing
+        // Create modal with proper mobile sizing and ensure it's on top
         const modalId = 'mobile-cropper-modal-' + Date.now();
         
         const modalHTML = `
-            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:100000; display:flex; align-items:flex-start; justify-content:center; padding:0; box-sizing:border-box; overflow-y:auto;">
+            <div id="${modalId}" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:100000; display:flex; align-items:flex-start; justify-content:center; padding:0; box-sizing:border-box; overflow-y:auto;">
                 <div style="background:white; width:100%; max-width:600px; margin:0 auto; border-radius:0; overflow:visible; display:flex; flex-direction:column;">
                     
                     <!-- Header - Sticky -->
@@ -1270,7 +1278,7 @@ showStandardCropper: function(file) {
             });
         };
         
-        // Setup controls
+        // Setup controls (same as before)
         document.getElementById(`zoom-in-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.zoom(0.1);
         };
@@ -1356,15 +1364,6 @@ showStandardCropper: function(file) {
                 
             }, 'image/jpeg', 0.95);
         };
-        
-        // Make modal scrollable by tapping outside content
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                // Don't close on outside click - let user scroll instead
-                // If you want to close, uncomment below:
-                // modal.remove();
-            }
-        });
     };
     
     reader.readAsDataURL(file);
