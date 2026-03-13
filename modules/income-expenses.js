@@ -1053,15 +1053,14 @@ switchCamera: function() {
 */
 
     // Capture photo standard cropper using library
-   // Update your capturePhoto function to hide camera when cropping
-capturePhoto: async function() {
+// Update this function in your code
+capturePhoto: function() {
     console.log('📸 Capture photo');
     
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('camera-canvas');
     const status = document.getElementById('camera-status');
     const captureBtn = document.getElementById('capture-photo');
-    const cameraSection = document.getElementById('camera-section');
     
     if (!video || !video.srcObject) {
         this.showNotification('Camera not ready', 'error');
@@ -1090,7 +1089,7 @@ capturePhoto: async function() {
     setTimeout(() => video.style.opacity = '1', 100);
     
     // Get image data
-    canvas.toBlob(async (blob) => {
+    canvas.toBlob((blob) => {
         const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
         const imageUrl = URL.createObjectURL(blob);
         
@@ -1104,24 +1103,26 @@ capturePhoto: async function() {
         }
         
         // Ask if user wants to crop
-        setTimeout(async () => {
+        setTimeout(() => {
             if (confirm('Would you like to crop this photo?')) {
-                // HIDE CAMERA SECTION BEFORE SHOWING CROPPER
+                // CRITICAL: Hide ALL camera-related elements
+                const cameraSection = document.getElementById('camera-section');
                 if (cameraSection) {
                     cameraSection.style.display = 'none';
                 }
-                // Stop camera to free resources
+                
+                // Hide the import modal too
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'none';
+                    importModal.classList.add('hidden');
+                }
+                
+                // Stop camera completely
                 this.stopCamera();
                 
-                // Load cropper library first
-                try {
-                    await this.loadCropperLibrary();
-                    this.showStandardCropper(file);
-                } catch (error) {
-                    console.error('Failed to load cropper:', error);
-                    this.showNotification('Cropper unavailable, saving directly', 'warning');
-                    this.saveReceiptFromFile(file, imageUrl);
-                }
+                // Show cropper
+                this.showStandardCropper(file);
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
             }
@@ -1184,8 +1185,26 @@ cropperLibraryLoaded: false,
  // ==================== CROPPER METHOD ====================
     showStandardCropper: function(file) {
         console.log('🔧 Opening cropper for:', file.name);
-        
-        // Store the file
+
+        // Force hide everything again to be safe
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+        cameraSection.style.visibility = 'hidden';
+        cameraSection.style.position = 'absolute';
+        cameraSection.style.top = '-9999px';
+        cameraSection.style.left = '-9999px';
+    }
+    
+    const importModal = document.getElementById('import-receipts-modal');
+    if (importModal) {
+        importModal.style.display = 'none';
+        importModal.classList.add('hidden');
+    }
+    
+    this.stopCamera();
+    
+            // Store the file
         this.currentImageFile = file;
         
         // Read the file
