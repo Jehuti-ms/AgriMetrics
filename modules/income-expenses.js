@@ -1053,7 +1053,7 @@ switchCamera: function() {
 */
 
     // Capture photo standard cropper using library
-// Update this function in your code
+// Update your capturePhoto function
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
@@ -1105,24 +1105,27 @@ capturePhoto: function() {
         // Ask if user wants to crop
         setTimeout(() => {
             if (confirm('Would you like to crop this photo?')) {
-                // CRITICAL: Hide ALL camera-related elements
+                // CRITICAL: Stop camera first
+                this.stopCamera();
+                
+                // COMPLETELY REMOVE the camera section from DOM
                 const cameraSection = document.getElementById('camera-section');
                 if (cameraSection) {
-                    cameraSection.style.display = 'none';
+                    cameraSection.remove(); // This removes it completely
                 }
                 
-                // Hide the import modal too
+                // Hide the import modal
                 const importModal = document.getElementById('import-receipts-modal');
                 if (importModal) {
                     importModal.style.display = 'none';
                     importModal.classList.add('hidden');
                 }
                 
-                // Stop camera completely
-                this.stopCamera();
-                
-                // Show cropper
-                this.showStandardCropper(file);
+                // Small delay to ensure cleanup
+                setTimeout(() => {
+                    // Show cropper
+                    this.showStandardCropper(file);
+                }, 50);
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
             }
@@ -1131,7 +1134,7 @@ capturePhoto: function() {
         
     }, 'image/jpeg', 0.9);
 },
-
+    
 // Also update handleFileUpload to hide any active camera
 handleFileUpload: async function(files) {
     console.log('🎯 ========== handleFileUpload START ==========');
@@ -1183,25 +1186,13 @@ cropperLibraryLoaded: false,
 
     
  // ==================== CROPPER.JS IMPLEMENTATION ====================
-// ==================== CROPPER.JS IMPLEMENTATION ====================
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
     
-    // Force hide everything
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
-    const importModal = document.getElementById('import-receipts-modal');
-    if (importModal) {
-        importModal.style.display = 'none';
-        importModal.classList.add('hidden');
-    }
-    
-    this.stopCamera();
+    // Store the file
     this.currentImageFile = file;
     
+    // Read the file
     const reader = new FileReader();
     reader.onload = (e) => {
         const imageUrl = e.target.result;
@@ -1216,8 +1207,8 @@ showStandardCropper: function(file) {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0,0,0,0.9);
-            z-index: 999999;
+            background: black;
+            z-index: 9999999;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1243,7 +1234,7 @@ showStandardCropper: function(file) {
                     justify-content: space-between;
                     align-items: center;
                 ">
-                    <h3 style="margin:0; font-size:18px;">✂️ Crop Receipt</h3>
+                    <h3 style="margin:0;">✂️ Crop Receipt</h3>
                     <button id="close-${modalId}" style="
                         background: none;
                         border: none;
@@ -1255,11 +1246,10 @@ showStandardCropper: function(file) {
                     ">&times;</button>
                 </div>
                 
-                <!-- Image Container -->
+                <!-- Image Container - FIXED SIZE, CENTERED -->
                 <div style="
-                    flex: 1;
+                    height: 400px;
                     background: #f0f0f0;
-                    padding: 10px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -1273,6 +1263,7 @@ showStandardCropper: function(file) {
                     padding: 16px;
                     background: white;
                     border-top: 1px solid #ddd;
+                    overflow-y: auto;
                 ">
                     <div style="
                         display: grid;
@@ -1280,19 +1271,39 @@ showStandardCropper: function(file) {
                         gap: 8px;
                         margin-bottom: 16px;
                     ">
-                        <button id="zoom-in-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍+ Zoom In</button>
-                        <button id="zoom-out-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍- Zoom Out</button>
-                        <button id="rotate-left-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↺ Rotate</button>
-                        <button id="rotate-right-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↻ Rotate</button>
-                        <button id="reset-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; grid-column: span 2;">🔄 Reset</button>
+                        <button id="zoom-in-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍+ Zoom In</button>
+                        <button id="zoom-out-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍- Zoom Out</button>
+                        <button id="rotate-left-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↺ Rotate</button>
+                        <button id="rotate-right-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↻ Rotate</button>
+                        <button id="reset-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; grid-column: span 2;">🔄 Reset</button>
                     </div>
                     
                     <div style="display: flex; gap: 12px;">
-                        <button id="cancel-${modalId}" style="flex: 1; padding: 14px; background: #f44336; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancel</button>
-                        <button id="save-${modalId}" style="flex: 1; padding: 14px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Apply Crop</button>
+                        <button id="cancel-${modalId}" style="flex: 1; padding: 16px; background: #f44336; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancel</button>
+                        <button id="save-${modalId}" style="flex: 1; padding: 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Apply Crop</button>
                     </div>
                 </div>
             </div>
+            
+            <style>
+                .cropper-container {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                .cropper-crop-box {
+                    border: 3px solid #22c55e !important;
+                }
+                .cropper-view-box {
+                    outline: 3px solid #22c55e !important;
+                }
+                .cropper-point {
+                    background: #22c55e !important;
+                    width: 15px !important;
+                    height: 15px !important;
+                    border: 2px solid white !important;
+                    border-radius: 50% !important;
+                }
+            </style>
         `;
         
         document.body.appendChild(modal);
@@ -1317,17 +1328,26 @@ showStandardCropper: function(file) {
                     center: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
                     background: false,
                     modal: true,
                     ready: function() {
                         console.log('✅ Cropper ready');
+                        // Center the crop box
+                        const cropper = this.cropper;
+                        setTimeout(() => {
+                            const containerData = cropper.getContainerData();
+                            const cropBoxData = cropper.getCropBoxData();
+                            cropper.setCropBoxData({
+                                left: (containerData.width - cropBoxData.width) / 2,
+                                top: (containerData.height - cropBoxData.height) / 2
+                            });
+                        }, 100);
                     }
                 });
             }, 100);
         };
         
-        // Setup controls
+        // Setup controls (same as before)
         document.getElementById(`zoom-in-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.zoom(0.1);
         };
@@ -1355,12 +1375,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            
-            setTimeout(() => {
-                if (confirm('Save without cropping?')) {
-                    this.processReceiptFile(this.currentImageFile);
-                }
-            }, 100);
         };
         
         // Close
