@@ -1183,220 +1183,138 @@ cropperLibraryLoaded: false,
 
     
  // ==================== CROPPER.JS IMPLEMENTATION ====================
+// ==================== CROPPER.JS IMPLEMENTATION ====================
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
-    
-    // Force hide everything
+
+    // Hide other sections
     const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
+    if (cameraSection) cameraSection.style.display = 'none';
+
     const importModal = document.getElementById('import-receipts-modal');
     if (importModal) {
         importModal.style.display = 'none';
         importModal.classList.add('hidden');
     }
-    
+
     this.stopCamera();
     this.currentImageFile = file;
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
         const imageUrl = e.target.result;
-        
+
         // Create modal
         const modalId = 'cropper-modal-' + Date.now();
         const modal = document.createElement('div');
         modal.id = modalId;
         modal.style.cssText = `
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.9);
             z-index: 999999;
             display: flex;
             align-items: center;
             justify-content: center;
         `;
-        
+
         modal.innerHTML = `
-            <div style="
-                background: white;
-                width: 95%;
-                max-width: 600px;
-                height: 90vh;
-                border-radius: 16px;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            ">
+            <div style="background: white; width: 95%; max-width: 600px; height: 90vh; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden;">
                 <!-- Header -->
-                <div style="
-                    background: #22c55e;
-                    color: white;
-                    padding: 16px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                ">
+                <div style="background: #22c55e; color: white; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin:0; font-size:18px;">✂️ Crop Receipt</h3>
-                    <button id="close-${modalId}" style="
-                        background: none;
-                        border: none;
-                        color: white;
-                        font-size: 28px;
-                        cursor: pointer;
-                        width: 44px;
-                        height: 44px;
-                    ">&times;</button>
+                    <button id="close-${modalId}" style="background:none; border:none; color:white; font-size:28px; cursor:pointer;">&times;</button>
                 </div>
-                
-                <!-- Image Container -->
-                <div style="
-                    flex: 1;
-                    background: #f0f0f0;
-                    padding: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
-                ">
-                    <img id="image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
+
+                <!-- Image -->
+                <div style="flex:1; background:#f0f0f0; padding:10px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                    <img id="image-${modalId}" src="${imageUrl}" style="max-width:100%; max-height:100%; display:block;">
                 </div>
-                
+
                 <!-- Controls -->
-                <div style="
-                    padding: 16px;
-                    background: white;
-                    border-top: 1px solid #ddd;
-                ">
-                    <div style="
-                        display: grid;
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 8px;
-                        margin-bottom: 16px;
-                    ">
-                        <button id="zoom-in-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍+ Zoom In</button>
-                        <button id="zoom-out-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍- Zoom Out</button>
-                        <button id="rotate-left-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↺ Rotate</button>
-                        <button id="rotate-right-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↻ Rotate</button>
-                        <button id="reset-${modalId}" style="padding: 12px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; grid-column: span 2;">🔄 Reset</button>
+                <div style="padding:16px; background:white; border-top:1px solid #ddd;">
+                    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:16px;">
+                        <button id="zoom-in-${modalId}">🔍+ Zoom In</button>
+                        <button id="zoom-out-${modalId}">🔍- Zoom Out</button>
+                        <button id="rotate-left-${modalId}">↺ Rotate</button>
+                        <button id="rotate-right-${modalId}">↻ Rotate</button>
+                        <button id="reset-${modalId}" style="grid-column:span 2;">🔄 Reset</button>
                     </div>
-                    
-                    <div style="display: flex; gap: 12px;">
-                        <button id="cancel-${modalId}" style="flex: 1; padding: 14px; background: #f44336; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancel</button>
-                        <button id="save-${modalId}" style="flex: 1; padding: 14px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Apply Crop</button>
+                    <div style="display:flex; gap:12px;">
+                        <button id="cancel-${modalId}" style="flex:1; background:#f44336; color:white;">Cancel</button>
+                        <button id="save-${modalId}" style="flex:1; background:#4CAF50; color:white;">Apply Crop</button>
                     </div>
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal);
-        
+
         const image = document.getElementById(`image-${modalId}`);
-        
-        // Initialize cropper after image loads
         image.onload = () => {
-            console.log('✅ Image loaded');
-            
-            setTimeout(() => {
-                if (this.cropperInstance) {
-                    this.cropperInstance.destroy();
-                }
-                
-                this.cropperInstance = new Cropper(image, {
-                    aspectRatio: NaN,
-                    viewMode: 1,
-                    dragMode: 'crop',
-                    autoCropArea: 0.8,
-                    guides: true,
-                    center: true,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                    background: false,
-                    modal: true,
-                    ready: function() {
-                        console.log('✅ Cropper ready');
-                    }
-                });
-            }, 100);
+            if (this.cropperInstance) this.cropperInstance.destroy();
+
+            this.cropperInstance = new Cropper(image, {
+                aspectRatio: undefined, // freeform crop
+                viewMode: 1,
+                dragMode: 'crop',
+                autoCropArea: 0.8,
+                background: false,
+                modal: true,
+                ready: () => console.log('✅ Cropper ready')
+            });
         };
-        
-        // Setup controls
-        document.getElementById(`zoom-in-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.zoom(0.1);
-        };
-        
-        document.getElementById(`zoom-out-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.zoom(-0.1);
-        };
-        
-        document.getElementById(`rotate-left-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.rotate(-90);
-        };
-        
-        document.getElementById(`rotate-right-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.rotate(90);
-        };
-        
-        document.getElementById(`reset-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.reset();
-        };
-        
+
+        // Controls
+        document.getElementById(`zoom-in-${modalId}`).onclick = () => this.cropperInstance?.zoom(0.1);
+        document.getElementById(`zoom-out-${modalId}`).onclick = () => this.cropperInstance?.zoom(-0.1);
+        document.getElementById(`rotate-left-${modalId}`).onclick = () => this.cropperInstance?.rotate(-90);
+        document.getElementById(`rotate-right-${modalId}`).onclick = () => this.cropperInstance?.rotate(90);
+        document.getElementById(`reset-${modalId}`).onclick = () => this.cropperInstance?.reset();
+
         // Cancel
         document.getElementById(`cancel-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.destroy();
-                this.cropperInstance = null;
-            }
+            this.cropperInstance?.destroy();
+            this.cropperInstance = null;
             modal.remove();
-            
-            setTimeout(() => {
-                if (confirm('Save without cropping?')) {
-                    this.processReceiptFile(this.currentImageFile);
-                }
-            }, 100);
+            if (confirm('Save without cropping?')) {
+                this.processReceiptFile(this.currentImageFile);
+            }
         };
-        
+
         // Close
         document.getElementById(`close-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.destroy();
-                this.cropperInstance = null;
-            }
+            this.cropperInstance?.destroy();
+            this.cropperInstance = null;
             modal.remove();
         };
-        
+
         // Save
         document.getElementById(`save-${modalId}`).onclick = () => {
             if (!this.cropperInstance) return;
-            
-            const croppedCanvas = this.cropperInstance.getCroppedCanvas({
-                maxWidth: 1200,
-                maxHeight: 1200
-            });
-            
-            croppedCanvas.toBlob((blob) => {
+            const canvas = this.cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
+            if (!canvas) return;
+
+            canvas.toBlob((blob) => {
+                if (!blob) return;
                 const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
                 const croppedUrl = URL.createObjectURL(blob);
-                
+
                 this.saveCroppedReceipt(croppedFile, croppedUrl);
-                
+
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
                 modal.remove();
-                
+
                 this.showNotification('✅ Image cropped and saved!', 'success');
             }, 'image/jpeg', 0.95);
         };
     };
-    
+
     reader.readAsDataURL(file);
 },
+
     
     // Function to load Cropper library with CSP compliance
 loadCropperLibrary: function() {
