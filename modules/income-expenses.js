@@ -1185,17 +1185,17 @@ currentImageFile: null,
 cropperLibraryLoaded: false,
 
     
-// ==================== SIMPLE CANVAS CROP TOOL - NO DOUBLE IMAGE ====================
-showSimpleCropTool: function(file) {
-    console.log('🔧 Opening simple crop tool for:', file.name);
+// Find this line in your file - it's near the end of all your functions
+// ==================== CROPPER METHOD ====================
+showStandardCropper: function(file) {
+    console.log('🔧 Opening cropper for:', file.name);
     
-    // Completely remove camera section
+    // Force hide camera and modal
     const cameraSection = document.getElementById('camera-section');
     if (cameraSection) {
         cameraSection.remove();
     }
     
-    // Hide import modal
     const importModal = document.getElementById('import-receipts-modal');
     if (importModal) {
         importModal.style.display = 'none';
@@ -1209,7 +1209,7 @@ showSimpleCropTool: function(file) {
         const imageUrl = e.target.result;
         
         // Create modal
-        const modalId = 'simple-crop-' + Date.now();
+        const modalId = 'crop-modal-' + Date.now();
         const modal = document.createElement('div');
         modal.id = modalId;
         modal.style.cssText = `
@@ -1245,7 +1245,7 @@ showSimpleCropTool: function(file) {
                     justify-content: space-between;
                     align-items: center;
                 ">
-                    <h3 style="margin:0; font-size:18px;">✂️ Crop Receipt</h3>
+                    <h3 style="margin:0;">✂️ Crop Receipt</h3>
                     <button id="close-${modalId}" style="
                         background: none;
                         border: none;
@@ -1257,7 +1257,7 @@ showSimpleCropTool: function(file) {
                     ">&times;</button>
                 </div>
                 
-                <!-- Image Container with Canvas -->
+                <!-- Image -->
                 <div style="
                     flex: 1;
                     background: #f0f0f0;
@@ -1265,9 +1265,8 @@ showSimpleCropTool: function(file) {
                     align-items: center;
                     justify-content: center;
                     overflow: hidden;
-                    position: relative;
                 ">
-                    <canvas id="crop-canvas-${modalId}" style="max-width: 100%; max-height: 100%;"></canvas>
+                    <img id="crop-image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
                 </div>
                 
                 <!-- Controls -->
@@ -1284,20 +1283,8 @@ showSimpleCropTool: function(file) {
                     ">
                         <button id="zoom-in-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍+ Zoom In</button>
                         <button id="zoom-out-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍- Zoom Out</button>
-                        <button id="rotate-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer; grid-column: span 2;">↻ Rotate 90°</button>
-                    </div>
-                    
-                    <!-- Crop Instructions -->
-                    <div style="
-                        background: #e8f5e9;
-                        padding: 12px;
-                        border-radius: 8px;
-                        margin-bottom: 16px;
-                        text-align: center;
-                    ">
-                        <p style="margin:0; color:#2e7d32;">
-                            👆 Drag to select area to keep
-                        </p>
+                        <button id="rotate-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↻ Rotate</button>
+                        <button id="reset-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔄 Reset</button>
                     </div>
                     
                     <div style="display: flex; gap: 12px;">
@@ -1310,243 +1297,83 @@ showSimpleCropTool: function(file) {
         
         document.body.appendChild(modal);
         
-        const canvas = document.getElementById(`crop-canvas-${modalId}`);
-        const ctx = canvas.getContext('2d');
+        const img = document.getElementById(`crop-image-${modalId}`);
         
-        // Load image
-        const img = new Image();
+        // Initialize cropper
         img.onload = () => {
-            console.log('✅ Image loaded');
-            
-            // Set canvas size to fit container while maintaining aspect ratio
-            const maxWidth = 500;
-            const maxHeight = 400;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > maxWidth) {
-                height = (maxWidth / width) * height;
-                width = maxWidth;
-            }
-            if (height > maxHeight) {
-                width = (maxHeight / height) * width;
-                height = maxHeight;
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Draw image
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Crop selection variables
-            let startX, startY, isDragging = false;
-            let cropBox = { x: 50, y: 50, w: 200, h: 200 };
-            
-            // Draw crop box
-            function drawCropBox() {
-                // Redraw image
-                ctx.drawImage(img, 0, 0, width, height);
+            setTimeout(() => {
+                if (this.cropperInstance) {
+                    this.cropperInstance.destroy();
+                }
                 
-                // Draw dark overlay
-                ctx.fillStyle = 'rgba(0,0,0,0.5)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Clear crop area
-                ctx.clearRect(cropBox.x, cropBox.y, cropBox.w, cropBox.h);
-                
-                // Draw crop box border
-                ctx.strokeStyle = '#22c55e';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(cropBox.x, cropBox.y, cropBox.w, cropBox.h);
-                
-                // Draw corners
-                ctx.fillStyle = '#22c55e';
-                const corners = [
-                    [cropBox.x - 5, cropBox.y - 5],
-                    [cropBox.x + cropBox.w - 5, cropBox.y - 5],
-                    [cropBox.x - 5, cropBox.y + cropBox.h - 5],
-                    [cropBox.x + cropBox.w - 5, cropBox.y + cropBox.h - 5]
-                ];
-                
-                corners.forEach(([x, y]) => {
-                    ctx.fillRect(x, y, 10, 10);
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(x, y, 10, 10);
+                this.cropperInstance = new Cropper(img, {
+                    aspectRatio: NaN,
+                    viewMode: 1,
+                    dragMode: 'crop',
+                    autoCropArea: 0.8,
+                    guides: true,
+                    center: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    background: false
                 });
-            }
-            
-            drawCropBox();
-            
-            // Mouse events for dragging crop box
-            canvas.addEventListener('mousedown', (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                const mouseX = (e.clientX - rect.left) * scaleX;
-                const mouseY = (e.clientY - rect.top) * scaleY;
-                
-                // Check if clicking inside crop box
-                if (mouseX >= cropBox.x && mouseX <= cropBox.x + cropBox.w &&
-                    mouseY >= cropBox.y && mouseY <= cropBox.y + cropBox.h) {
-                    isDragging = true;
-                    startX = mouseX - cropBox.x;
-                    startY = mouseY - cropBox.y;
-                    canvas.style.cursor = 'grabbing';
-                }
-            });
-            
-            canvas.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                const mouseX = (e.clientX - rect.left) * scaleX;
-                const mouseY = (e.clientY - rect.top) * scaleY;
-                
-                // Update crop box position
-                cropBox.x = Math.max(0, Math.min(mouseX - startX, canvas.width - cropBox.w));
-                cropBox.y = Math.max(0, Math.min(mouseY - startY, canvas.height - cropBox.h));
-                
-                drawCropBox();
-            });
-            
-            canvas.addEventListener('mouseup', () => {
-                isDragging = false;
-                canvas.style.cursor = 'default';
-            });
-            
-            canvas.addEventListener('mouseleave', () => {
-                isDragging = false;
-                canvas.style.cursor = 'default';
-            });
-            
-            // Touch events for mobile
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                const touchX = (touch.clientX - rect.left) * scaleX;
-                const touchY = (touch.clientY - rect.top) * scaleY;
-                
-                if (touchX >= cropBox.x && touchX <= cropBox.x + cropBox.w &&
-                    touchY >= cropBox.y && touchY <= cropBox.y + cropBox.h) {
-                    isDragging = true;
-                    startX = touchX - cropBox.x;
-                    startY = touchY - cropBox.y;
-                }
-            });
-            
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!isDragging) return;
-                
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                const scaleX = canvas.width / rect.width;
-                const scaleY = canvas.height / rect.height;
-                
-                const touchX = (touch.clientX - rect.left) * scaleX;
-                const touchY = (touch.clientY - rect.top) * scaleY;
-                
-                cropBox.x = Math.max(0, Math.min(touchX - startX, canvas.width - cropBox.w));
-                cropBox.y = Math.max(0, Math.min(touchY - startY, canvas.height - cropBox.h));
-                
-                drawCropBox();
-            });
-            
-            canvas.addEventListener('touchend', () => {
-                isDragging = false;
-            });
-            
-            // Zoom controls
-            let scale = 1;
-            document.getElementById(`zoom-in-${modalId}`).onclick = () => {
-                scale += 0.1;
-                width = img.width * scale;
-                height = img.height * scale;
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                cropBox = { x: 50, y: 50, w: 200, h: 200 };
-                drawCropBox();
-            };
-            
-            document.getElementById(`zoom-out-${modalId}`).onclick = () => {
-                scale = Math.max(0.5, scale - 0.1);
-                width = img.width * scale;
-                height = img.height * scale;
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                cropBox = { x: 50, y: 50, w: 200, h: 200 };
-                drawCropBox();
-            };
-            
-            document.getElementById(`rotate-${modalId}`).onclick = () => {
-                // Create temporary canvas for rotation
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.height;
-                tempCanvas.height = canvas.width;
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                tempCtx.translate(tempCanvas.width/2, tempCanvas.height/2);
-                tempCtx.rotate(90 * Math.PI/180);
-                tempCtx.drawImage(img, -img.width/2, -img.height/2, img.width, img.height);
-                
-                // Update main canvas
-                canvas.width = tempCanvas.width;
-                canvas.height = tempCanvas.height;
-                ctx.drawImage(tempCanvas, 0, 0);
-                
-                cropBox = { x: 50, y: 50, w: 200, h: 200 };
-                drawCropBox();
-            };
-            
-            // Save button
-            document.getElementById(`save-${modalId}`).onclick = () => {
-                // Create cropped canvas
-                const croppedCanvas = document.createElement('canvas');
-                croppedCanvas.width = cropBox.w;
-                croppedCanvas.height = cropBox.h;
-                const croppedCtx = croppedCanvas.getContext('2d');
-                
-                croppedCtx.drawImage(canvas, cropBox.x, cropBox.y, cropBox.w, cropBox.h, 0, 0, cropBox.w, cropBox.h);
-                
-                croppedCanvas.toBlob((blob) => {
-                    const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
-                    const croppedUrl = URL.createObjectURL(blob);
-                    
-                    this.saveCroppedReceipt(croppedFile, croppedUrl);
-                    modal.remove();
-                    this.showNotification('✅ Image cropped and saved!', 'success');
-                }, 'image/jpeg', 0.95);
-            };
-            
-            // Cancel button
-            document.getElementById(`cancel-${modalId}`).onclick = () => {
-                modal.remove();
-                setTimeout(() => {
-                    if (confirm('Save without cropping?')) {
-                        this.processReceiptFile(this.currentImageFile);
-                    }
-                }, 100);
-            };
-            
-            // Close button
-            document.getElementById(`close-${modalId}`).onclick = () => {
-                modal.remove();
-            };
+            }, 100);
         };
         
-        img.src = imageUrl;
+        // Controls
+        document.getElementById(`zoom-in-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.zoom(0.1);
+        };
+        
+        document.getElementById(`zoom-out-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.zoom(-0.1);
+        };
+        
+        document.getElementById(`rotate-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.rotate(90);
+        };
+        
+        document.getElementById(`reset-${modalId}`).onclick = () => {
+            if (this.cropperInstance) this.cropperInstance.reset();
+        };
+        
+        document.getElementById(`cancel-${modalId}`).onclick = () => {
+            if (this.cropperInstance) {
+                this.cropperInstance.destroy();
+                this.cropperInstance = null;
+            }
+            modal.remove();
+        };
+        
+        document.getElementById(`close-${modalId}`).onclick = () => {
+            if (this.cropperInstance) {
+                this.cropperInstance.destroy();
+                this.cropperInstance = null;
+            }
+            modal.remove();
+        };
+        
+        document.getElementById(`save-${modalId}`).onclick = () => {
+            if (!this.cropperInstance) return;
+            
+            const croppedCanvas = this.cropperInstance.getCroppedCanvas({
+                maxWidth: 1200,
+                maxHeight: 1200
+            });
+            
+            croppedCanvas.toBlob((blob) => {
+                const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
+                const croppedUrl = URL.createObjectURL(blob);
+                
+                this.saveCroppedReceipt(croppedFile, croppedUrl);
+                
+                this.cropperInstance.destroy();
+                this.cropperInstance = null;
+                modal.remove();
+                
+                this.showNotification('✅ Image cropped and saved!', 'success');
+            }, 'image/jpeg', 0.95);
+        };
     };
     
     reader.readAsDataURL(file);
