@@ -2,16 +2,26 @@
 const SwipeNavigation = {
     touchStartX: 0,
     touchEndX: 0,
-    minSwipeDistance: 100, // minimum distance for swipe
+    minSwipeDistance: 100,
     enabled: true,
+    isEdgeSwipe: false,  // ADD THIS
     
-    init: function() {
+    init: function(useEdgeDetection = false) {
         console.log('👆 Initializing swipe navigation...');
         
-        // Add touch event listeners to the main content area
         const contentArea = document.getElementById('content-area');
         if (!contentArea) return;
         
+        if (useEdgeDetection) {
+            this.initEdgeDetection(contentArea);
+        } else {
+            this.initStandard(contentArea);
+        }
+        
+        console.log('✅ Swipe navigation initialized');
+    },
+    
+    initStandard: function(contentArea) {
         contentArea.addEventListener('touchstart', (e) => {
             this.touchStartX = e.changedTouches[0].screenX;
         }, { passive: true });
@@ -21,7 +31,7 @@ const SwipeNavigation = {
             this.handleSwipe();
         }, { passive: true });
         
-        // Also add mouse swipe for desktop testing
+        // Mouse support for desktop
         let isMouseDown = false;
         contentArea.addEventListener('mousedown', (e) => {
             isMouseDown = true;
@@ -43,119 +53,13 @@ const SwipeNavigation = {
         contentArea.addEventListener('mouseleave', () => {
             isMouseDown = false;
         });
-        
-        console.log('✅ Swipe navigation initialized');
     },
     
-    handleSwipe: function() {
-        if (!this.enabled) return;
-        
-        const swipeDistance = this.touchEndX - this.touchStartX;
-        
-        // Get current section and available sections
-        const currentSection = window.app?.currentSection || 'dashboard';
-        const sections = ['dashboard', 'income-expenses', 'inventory-check', 'feed-record', 
-                         'broiler-mortality', 'orders', 'sales-record', 'production', 
-                         'reports', 'profile'];
-        
-        const currentIndex = sections.indexOf(currentSection);
-        if (currentIndex === -1) return;
-        
-        // Swipe left (negative distance) - go to next section
-        if (swipeDistance < -this.minSwipeDistance && currentIndex < sections.length - 1) {
-            const nextSection = sections[currentIndex + 1];
-            console.log(`👆 Swipe left: navigating to ${nextSection}`);
-            
-            // Haptic feedback if available
-            if (navigator.vibrate) navigator.vibrate(50);
-            
-            // Navigate
-            if (window.app?.showSection) {
-                window.app.showSection(nextSection);
-            } else {
-                this.navigateTo(nextSection);
-            }
-        }
-        
-        // Swipe right (positive distance) - go to previous section
-        else if (swipeDistance > this.minSwipeDistance && currentIndex > 0) {
-            const prevSection = sections[currentIndex - 1];
-            console.log(`👆 Swipe right: navigating to ${prevSection}`);
-            
-            // Haptic feedback
-            if (navigator.vibrate) navigator.vibrate(50);
-            
-            // Navigate
-            if (window.app?.showSection) {
-                window.app.showSection(prevSection);
-            } else {
-                this.navigateTo(prevSection);
-            }
-        }
-    },
-    
-    navigateTo: function(section) {
-        // Fallback navigation if app.showSection isn't available
-        console.log(`Navigating to ${section}`);
-        
-        // Update URL hash
-        window.location.hash = section;
-        
-        // Trigger section change
-        const event = new CustomEvent('section-change', { detail: { section } });
-        window.dispatchEvent(event);
-        
-        // Try to update active menu
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.dataset.section === section) {
-                item.classList.add('active');
-            }
-        });
-    },
-    
-    // Enable/disable swipe
-    enable: function() {
-        this.enabled = true;
-    },
-    
-    disable: function() {
-        this.enabled = false;
-    },
-    
-    // Set minimum swipe distance
-    setMinDistance: function(distance) {
-        this.minSwipeDistance = distance;
-    }
-};
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for app to initialize
-    setTimeout(() => {
-        SwipeNavigation.init();
-    }, 1000);
-});
-
-// Make globally available
-window.SwipeNavigation = SwipeNavigation;
-
-// Enhanced version with edge detection
-const EdgeSwipeNavigation = {
-    ...SwipeNavigation,
-    
-    init: function() {
-        console.log('👆 Initializing edge swipe navigation...');
-        
-        const contentArea = document.getElementById('content-area');
-        if (!contentArea) return;
-        
-        // Detect if touch started near edge
+    initEdgeDetection: function(contentArea) {
         contentArea.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
-            const edgeThreshold = 30; // pixels from edge
+            const edgeThreshold = 30;
             
-            // Check if touch is near left or right edge
             if (touch.clientX < edgeThreshold || touch.clientX > window.innerWidth - edgeThreshold) {
                 this.touchStartX = touch.screenX;
                 this.isEdgeSwipe = true;
@@ -166,7 +70,7 @@ const EdgeSwipeNavigation = {
         
         contentArea.addEventListener('touchmove', (e) => {
             if (!this.isEdgeSwipe) return;
-            e.preventDefault(); // Prevent scrolling during edge swipe
+            e.preventDefault();
         }, { passive: false });
         
         contentArea.addEventListener('touchend', (e) => {
@@ -176,15 +80,139 @@ const EdgeSwipeNavigation = {
             this.handleSwipe();
             this.isEdgeSwipe = false;
         }, { passive: true });
+    },
+    
+    handleSwipe: function() {
+        if (!this.enabled) return;
         
-        console.log('✅ Edge swipe navigation initialized');
+        const swipeDistance = this.touchEndX - this.touchStartX;
+        
+        const currentSection = window.app?.currentSection || 'dashboard';
+        const sections = ['dashboard', 'income-expenses', 'inventory-check', 'feed-record', 
+                         'broiler-mortality', 'orders', 'sales-record', 'production', 
+                         'reports', 'profile'];
+        
+        const currentIndex = sections.indexOf(currentSection);
+        if (currentIndex === -1) return;
+        
+        if (swipeDistance < -this.minSwipeDistance && currentIndex < sections.length - 1) {
+            const nextSection = sections[currentIndex + 1];
+            console.log(`👆 Swipe left: navigating to ${nextSection}`);
+            
+            if (navigator.vibrate) navigator.vibrate(50);
+            
+            if (window.app?.showSection) {
+                window.app.showSection(nextSection);
+            } else {
+                this.navigateTo(nextSection);
+            }
+        }
+        else if (swipeDistance > this.minSwipeDistance && currentIndex > 0) {
+            const prevSection = sections[currentIndex - 1];
+            console.log(`👆 Swipe right: navigating to ${prevSection}`);
+            
+            if (navigator.vibrate) navigator.vibrate(50);
+            
+            if (window.app?.showSection) {
+                window.app.showSection(prevSection);
+            } else {
+                this.navigateTo(prevSection);
+            }
+        }
+    },
+    
+    navigateTo: function(section) {
+        console.log(`Navigating to ${section}`);
+        window.location.hash = section;
+        
+        const event = new CustomEvent('section-change', { detail: { section } });
+        window.dispatchEvent(event);
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.section === section) {
+                item.classList.add('active');
+            }
+        });
+    },
+    
+    enable: function() {
+        this.enabled = true;
+    },
+    
+    disable: function() {
+        this.enabled = false;
+    },
+    
+    setMinDistance: function(distance) {
+        this.minSwipeDistance = distance;
     }
 };
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        // Use false for standard swipe, true for edge detection
+        SwipeNavigation.init(false);
+    }, 1000);
+});
+
+// Add visual indicator (optional)
+const swipeIndicatorStyles = `
+    .swipe-indicator {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(5px);
+        border-radius: 30px;
+        color: white;
+        font-size: 12px;
+        z-index: 1000;
+        opacity: 0.7;
+        transition: opacity 0.3s;
+    }
+    
+    .swipe-indicator.hidden {
+        opacity: 0;
+    }
+    
+    .swipe-arrow {
+        font-size: 16px;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(5px); }
+    }
+`;
+
+// Add styles and indicator
+const styleSheet = document.createElement('style');
+styleSheet.textContent = swipeIndicatorStyles;
+document.head.appendChild(styleSheet);
+
+const swipeIndicator = document.createElement('div');
+swipeIndicator.className = 'swipe-indicator';
+swipeIndicator.innerHTML = `
+    <span>👆 Swipe left/right to navigate</span>
+    <span class="swipe-arrow">→</span>
+`;
+document.body.appendChild(swipeIndicator);
+
+setTimeout(() => {
+    swipeIndicator.classList.add('hidden');
+}, 5000);
 
 // Register with FarmModules
 if (window.FarmModules) {
     window.FarmModules.registerModule('swipe-navigation', SwipeNavigation);
 }
 
-// Make global
+// Make globally available
 window.SwipeNavigation = SwipeNavigation;
