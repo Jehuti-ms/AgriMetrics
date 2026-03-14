@@ -348,6 +348,7 @@ async initialize() {  // ← ADD async
         console.log('✅ Income added successfully:', transactionData);
     },
 
+    
     // ==================== NETWORK DETECTION ====================
     setupNetworkDetection() {
         this.isOnline = navigator.onLine;
@@ -574,6 +575,15 @@ async initialize() {  // ← ADD async
     this.saveToFirebase();
 },
 
+    setupExpenseBroadcast() {
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.on('expense-created', (data) => {
+            console.log('💰 Income received expense:', data);
+            // This is already handled by normal transaction saving
+        });
+    }
+},
+    
 async saveTransaction(transactionData) {
     console.log('Saving transaction...', transactionData);
     
@@ -603,6 +613,540 @@ async saveTransaction(transactionData) {
     this.updateStats();
     this.updateTransactionsList();
     this.updateCategoryBreakdown();
+    
+    // ==================== INTEGRATION BROADCASTS ====================
+    
+    // 1. Broadcast general transaction update
+    this.broadcastTransactionUpdate(transactionData, isNewTransaction, oldTransaction);
+    
+    // 2. If this is an INCOME transaction, create sale
+    if (transactionData.type === 'income' && isNewTransaction && !transactionData.source?.includes('sales')) {
+        await this.createSaleFromIncome(transactionData);
+    }
+    
+    // 3. If this is an EXPENSE transaction, handle inventory updates
+    if (transactionData.type === 'expense') {
+        await this.handleExpenseIntegration(transactionData, isNewTransaction, oldTransaction);
+    }
+    
+    // 4. If this is a FEED expense, handle feed-specific logic
+    if (transactionData.type === 'expense' && this.isFeedRelated(transactionData)) {
+        await this.handleFeedExpense(transactionData);
+    }
+    
+    // 5. If this is a MEDICAL expense, handle medical inventory
+    if (transactionData.type === 'expense' && this.isMedicalRelated(transactionData)) {
+        await this.handleMedicalExpense(transactionData);
+    }
+    
+    // 6. If this is an EQUIPMENT expense, handle equipment inventory
+    if (transactionData.type === 'expense' && this.isEquipmentRelated(transactionData)) {
+        await this.handleEquipmentExpense(transactionData);
+    }
+    
+    // 7. Broadcast to dashboard for real-time updates
+    this.broadcastToDashboard(transactionData);
+    
+    return true;
+},
+
+// ==================== INTEGRATION METHODS ====================
+
+broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
+    console.log('📢 Broadcasting transaction update');
+    
+    const updateData = {
+        id: transactionData.id,
+        date: transactionData.date,
+        type: transactionData.type,
+        category: transactionData.category,
+        amount: transactionData.amount,
+        description: transactionData.description,
+        isNew: isNew,
+        timestamp: new Date().toISOString(),
+        oldData: oldTransaction || null
+    };
+    
+    // Broadcast via Data Broadcaster
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('transaction-updated', updateData);
+    }
+    
+    // Also dispatch custom event
+    const event = new CustomEvent('transaction-updated', { detail: updateData });
+    window.dispatchEvent(event);
+},
+
+createSaleFromIncome: async function(transactionData) {
+    console.log('💰 Creating sale from income transaction:', transactionData);
+    
+    // Determine product from description or category
+    let product = 'other';
+    const desc = transactionData.description?.toLowerCase() || '';
+    const cat = transactionData.category?.toLowerCase() || '';
+    
+    // Product mapping
+    if (desc.includes('egg') || cat.includes('egg')) product = 'eggs';
+    else if (desc.includes('broiler') || cat.includes('broiler')) product = 'broilers-dressed';
+    else if (desc.includes('layer') || cat.includes('layer')) product = 'layers';
+    else if (desc.includes('milk') || cat.includes('milk')) product = 'milk';
+    else if (desc.includes('pork') || cat.includes('pork')) product = 'pork';
+    else if (desc.includes('beef') || cat.includes('beef')) product = 'beef';
+    else if (desc.includes('goat') || cat.includes('goat')) product = 'goat';
+    else if (desc.includes('lamb') || cat.includes('lamb')) product = 'lamb';
+    else if (desc.includes('tomato') || cat.includes('tomato')) product = 'tomatoes';
+    else if (desc.includes('lettuce') || cat.includes('lettuce')) product = 'lettuce';
+    else if (desc.includes('carrot') || cat.includes('carrot')) product = 'carrots';
+    else if (desc.includes('potato') || cat.includes('potato')) product = 'potatoes';
+    else if (desc.includes('honey') || cat.includes('honey')) product = 'honey';
+    
+    const saleData = {
+        id: 'INC-' + transactionData.id,
+        date: transactionData.date,
+        customer: this.extractCustomerFromDescription(transactionData.description) || 'Walk-in',
+        product: product,
+        unit: this.getUnitForProduct(product),
+        quantity: 1,
+        unitPrice: transactionData.amount,
+        totalAmount: transactionData.amount,
+        paymentMethod: transactionData.paymentMethod || 'cash',
+        paymentStatus: 'paid',
+        notes: `Auto-generated from income: ${transactionData.description}`,
+        source: 'income-module',
+        transactionId: transactionData.id
+    };
+    
+    // Broadcast to Sales module
+    if (window.DataBroadcaster) {
+        console.log('📢 Broadcasting income-sale-created');
+        window.DataBroadcaster.emit('income-sale-created', saleData);
+    }
+    
+    // Direct update if sales module exists
+    if (window.SalesRecordModule && typeof window.SalesRecordModule.addSale === 'function') {
+        console.log('💰 Directly updating SalesRecordModule');
+        window.SalesRecordModule.addSale(saleData);
+    }
+    
+    // Also dispatch custom event
+    const event = new CustomEvent('income-sale-created', { detail: saleData });
+    window.dispatchEvent(event);
+    
+    this.showNotification(`✅ Created sale record from income`, 'success');
+},
+
+handleExpenseIntegration: async function(transactionData, isNew, oldTransaction) {
+    console.log('📦 Handling expense integration:', transactionData);
+    
+    // Prepare expense data for other modules
+    const expenseData = {
+        id: transactionData.id,
+        date: transactionData.date,
+        description: transactionData.description,
+        category: transactionData.category,
+        amount: transactionData.amount,
+        paymentMethod: transactionData.paymentMethod,
+        reference: transactionData.reference,
+        notes: transactionData.notes,
+        source: 'income-module',
+        isNew: isNew,
+        oldAmount: oldTransaction?.amount || 0
+    };
+    
+    // Broadcast to all modules
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('expense-recorded', expenseData);
+    }
+    
+    // Also dispatch custom event
+    const event = new CustomEvent('expense-recorded', { detail: expenseData });
+    window.dispatchEvent(event);
+    
+    // Update inventory module if available
+    await this.updateInventoryFromExpense(transactionData);
+},
+
+updateInventoryFromExpense: async function(expenseData) {
+    console.log('📦 Updating inventory from expense:', expenseData);
+    
+    // Only process if expense is for inventory items
+    const inventoryCategories = ['feed', 'medical', 'equipment', 'packaging', 'cleaning'];
+    if (!inventoryCategories.includes(expenseData.category)) {
+        return;
+    }
+    
+    // Determine item details
+    let itemName = expenseData.description || 'Unknown item';
+    let quantity = this.estimateQuantityFromExpense(expenseData);
+    let unit = this.getUnitForCategory(expenseData.category);
+    
+    // Update InventoryCheckModule if available
+    if (window.InventoryCheckModule && window.InventoryCheckModule.inventory) {
+        console.log('📦 Updating InventoryCheckModule');
+        
+        // Find existing item or create new
+        let inventoryItem = window.InventoryCheckModule.inventory.find(item => 
+            item.category === expenseData.category && 
+            (item.name?.toLowerCase().includes(itemName.toLowerCase()) || 
+             item.name?.toLowerCase().includes(expenseData.category))
+        );
+        
+        if (inventoryItem) {
+            // Update existing
+            const oldStock = inventoryItem.currentStock;
+            inventoryItem.currentStock += quantity;
+            inventoryItem.lastRestocked = expenseData.date;
+            
+            console.log(`✅ Updated ${inventoryItem.name}: ${oldStock} → ${inventoryItem.currentStock}`);
+        } else {
+            // Create new inventory item
+            const newItem = {
+                id: Date.now(),
+                name: this.formatItemName(expenseData.description, expenseData.category),
+                category: expenseData.category,
+                currentStock: quantity,
+                unit: unit,
+                minStock: this.getMinStockForCategory(expenseData.category),
+                costPerKg: expenseData.amount / quantity,
+                supplier: this.extractSupplier(expenseData.notes),
+                lastRestocked: expenseData.date,
+                notes: `Purchased: ${expenseData.description}`
+            };
+            
+            window.InventoryCheckModule.inventory.push(newItem);
+            console.log('✅ Created new inventory item:', newItem);
+        }
+        
+        // Save inventory module
+        if (typeof window.InventoryCheckModule.saveData === 'function') {
+            window.InventoryCheckModule.saveData();
+        }
+        
+        // Broadcast inventory update
+        if (window.DataBroadcaster) {
+            window.DataBroadcaster.emit('inventory-updated', {
+                module: 'income-expenses',
+                category: expenseData.category,
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+    
+    // Also update FarmData
+    if (window.FarmData) {
+        if (!window.FarmData.inventory) {
+            window.FarmData.inventory = [];
+        }
+        
+        const farmDataItem = window.FarmData.inventory.find(item => 
+            item.category === expenseData.category && 
+            item.name?.toLowerCase().includes(itemName.toLowerCase())
+        );
+        
+        if (farmDataItem) {
+            farmDataItem.quantity = (farmDataItem.quantity || 0) + quantity;
+            farmDataItem.lastUpdated = expenseData.date;
+        } else {
+            window.FarmData.inventory.push({
+                id: Date.now(),
+                name: this.formatItemName(expenseData.description, expenseData.category),
+                category: expenseData.category,
+                quantity: quantity,
+                unit: unit,
+                cost: expenseData.amount,
+                purchased: expenseData.date
+            });
+        }
+        
+        // Dispatch farm data updated event
+        window.dispatchEvent(new CustomEvent('farm-data-updated', {
+            detail: { module: 'income-expenses', action: 'inventory-updated' }
+        }));
+    }
+},
+
+handleFeedExpense: async function(expenseData) {
+    console.log('🌾 Handling feed expense:', expenseData);
+    
+    const feedData = {
+        id: expenseData.id,
+        date: expenseData.date,
+        description: expenseData.description,
+        amount: expenseData.amount,
+        feedType: this.extractFeedType(expenseData.description),
+        quantity: this.estimateFeedQuantity(expenseData),
+        source: 'income-module'
+    };
+    
+    // Broadcast to Feed module
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('feed-purchased', feedData);
+    }
+    
+    // Direct update if Feed module exists
+    if (window.FeedRecordModule && window.FeedRecordModule.feedInventory) {
+        console.log('🌾 Directly updating FeedRecordModule');
+        
+        const feedItem = window.FeedRecordModule.feedInventory.find(item => 
+            item.feedType === feedData.feedType
+        );
+        
+        if (feedItem) {
+            feedItem.currentStock += feedData.quantity;
+            feedItem.lastRestocked = expenseData.date;
+            
+            if (typeof window.FeedRecordModule.saveData === 'function') {
+                window.FeedRecordModule.saveData();
+            }
+        }
+    }
+    
+    const event = new CustomEvent('feed-purchased', { detail: feedData });
+    window.dispatchEvent(event);
+},
+
+handleMedicalExpense: function(expenseData) {
+    console.log('💊 Handling medical expense:', expenseData);
+    
+    const medicalData = {
+        id: expenseData.id,
+        date: expenseData.date,
+        description: expenseData.description,
+        amount: expenseData.amount,
+        type: this.extractMedicalType(expenseData.description),
+        quantity: this.estimateMedicalQuantity(expenseData),
+        source: 'income-module'
+    };
+    
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('medical-purchased', medicalData);
+    }
+    
+    const event = new CustomEvent('medical-purchased', { detail: medicalData });
+    window.dispatchEvent(event);
+},
+
+handleEquipmentExpense: function(expenseData) {
+    console.log('🔧 Handling equipment expense:', expenseData);
+    
+    const equipmentData = {
+        id: expenseData.id,
+        date: expenseData.date,
+        description: expenseData.description,
+        amount: expenseData.amount,
+        type: 'equipment',
+        quantity: 1,
+        source: 'income-module'
+    };
+    
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('equipment-purchased', equipmentData);
+    }
+    
+    const event = new CustomEvent('equipment-purchased', { detail: equipmentData });
+    window.dispatchEvent(event);
+},
+
+broadcastToDashboard: function(transactionData) {
+    console.log('📊 Broadcasting to dashboard');
+    
+    if (transactionData.type === 'income') {
+        if (window.DataBroadcaster) {
+            window.DataBroadcaster.emit('income-updated', {
+                amount: transactionData.amount,
+                source: 'transaction',
+                transactionId: transactionData.id,
+                timestamp: new Date().toISOString()
+            });
+        }
+    } else if (transactionData.type === 'expense') {
+        if (window.DataBroadcaster) {
+            window.DataBroadcaster.emit('expense-updated', {
+                amount: transactionData.amount,
+                source: 'transaction',
+                transactionId: transactionData.id,
+                timestamp: new Date().toISOString()
+            });
+        }
+    }
+},
+
+// ==================== HELPER METHODS ====================
+
+isFeedRelated: function(transactionData) {
+    const desc = transactionData.description?.toLowerCase() || '';
+    const cat = transactionData.category?.toLowerCase() || '';
+    return cat.includes('feed') || desc.includes('feed') || 
+           desc.includes('starter') || desc.includes('grower') || 
+           desc.includes('finisher') || desc.includes('layer');
+},
+
+isMedicalRelated: function(transactionData) {
+    const desc = transactionData.description?.toLowerCase() || '';
+    const cat = transactionData.category?.toLowerCase() || '';
+    return cat.includes('medical') || cat.includes('vet') || 
+           desc.includes('vaccine') || desc.includes('medicine') ||
+           desc.includes('treatment');
+},
+
+isEquipmentRelated: function(transactionData) {
+    const desc = transactionData.description?.toLowerCase() || '';
+    const cat = transactionData.category?.toLowerCase() || '';
+    return cat.includes('equipment') || cat.includes('tool') ||
+           desc.includes('trough') || desc.includes('feeder') ||
+           desc.includes('waterer');
+},
+
+extractCustomerFromDescription: function(description) {
+    if (!description) return null;
+    
+    const patterns = [
+        /from\s+([A-Za-z\s]+)/i,
+        /customer:\s*([A-Za-z\s]+)/i,
+        /sale to\s+([A-Za-z\s]+)/i
+    ];
+    
+    for (const pattern of patterns) {
+        const match = description.match(pattern);
+        if (match && match[1]) {
+            return match[1].trim();
+        }
+    }
+    
+    return null;
+},
+
+getUnitForProduct: function(product) {
+    const units = {
+        'eggs': 'dozen',
+        'broilers-dressed': 'birds',
+        'broilers-live': 'birds',
+        'layers': 'birds',
+        'milk': 'liters',
+        'pork': 'kg',
+        'beef': 'kg',
+        'goat': 'kg',
+        'lamb': 'kg',
+        'tomatoes': 'kg',
+        'lettuce': 'heads',
+        'carrots': 'kg',
+        'potatoes': 'kg',
+        'honey': 'kg',
+        'other': 'units'
+    };
+    
+    return units[product] || 'units';
+},
+
+estimateQuantityFromExpense: function(expenseData) {
+    // Try to extract quantity from description
+    const desc = expenseData.description || '';
+    const match = desc.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilos|kilograms|bags|units)/i);
+    if (match && match[1]) {
+        return parseFloat(match[1]);
+    }
+    
+    // Estimate based on amount (assuming $10 per unit average)
+    return Math.max(1, Math.floor(expenseData.amount / 10));
+},
+
+getUnitForCategory: function(category) {
+    const units = {
+        'feed': 'kg',
+        'medical': 'bottles',
+        'equipment': 'pcs',
+        'packaging': 'pcs',
+        'cleaning': 'bottles',
+        'other': 'units'
+    };
+    return units[category] || 'units';
+},
+
+formatItemName: function(description, category) {
+    if (description && description.length > 3) {
+        // Capitalize first letter of each word
+        return description.split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ')
+            .substring(0, 50);
+    }
+    
+    // Default names
+    const defaultNames = {
+        'feed': 'Animal Feed',
+        'medical': 'Medical Supplies',
+        'equipment': 'Farm Equipment',
+        'packaging': 'Packaging Materials',
+        'cleaning': 'Cleaning Supplies',
+        'other': 'Miscellaneous Items'
+    };
+    
+    return defaultNames[category] || 'Inventory Item';
+},
+
+getMinStockForCategory: function(category) {
+    const mins = {
+        'feed': 50,
+        'medical': 10,
+        'equipment': 5,
+        'packaging': 100,
+        'cleaning': 20,
+        'other': 10
+    };
+    return mins[category] || 10;
+},
+
+extractSupplier: function(notes) {
+    if (!notes) return '';
+    
+    const match = notes.match(/supplier:\s*([A-Za-z\s]+)/i);
+    return match ? match[1].trim() : '';
+},
+
+extractFeedType: function(description) {
+    if (!description) return 'other';
+    
+    const desc = description.toLowerCase();
+    if (desc.includes('starter')) return 'starter';
+    if (desc.includes('grower')) return 'grower';
+    if (desc.includes('finisher')) return 'finisher';
+    if (desc.includes('layer')) return 'layer';
+    if (desc.includes('broiler')) return 'broiler';
+    return 'other';
+},
+
+extractMedicalType: function(description) {
+    if (!description) return 'other';
+    
+    const desc = description.toLowerCase();
+    if (desc.includes('vaccine')) return 'vaccine';
+    if (desc.includes('antibiotic')) return 'antibiotic';
+    if (desc.includes('vitamin')) return 'vitamin';
+    if (desc.includes('deworm')) return 'dewormer';
+    return 'medicine';
+},
+
+estimateFeedQuantity: function(expenseData) {
+    // Try to extract quantity from description
+    const desc = expenseData.description || '';
+    const match = desc.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilos|kilograms|bags)/i);
+    if (match && match[1]) {
+        return parseFloat(match[1]);
+    }
+    
+    // Estimate based on amount (assuming $15 per 50kg bag)
+    return Math.round(expenseData.amount / 15 * 50);
+},
+
+estimateMedicalQuantity: function(expenseData) {
+    const desc = expenseData.description || '';
+    const match = desc.match(/(\d+(?:\.\d+)?)\s*(?:bottles|vials|units)/i);
+    if (match && match[1]) {
+        return parseFloat(match[1]);
+    }
+    
+    return Math.max(1, Math.floor(expenseData.amount / 25));
+}
     
     // ==================== INTEGRATION BROADCASTS ====================
     
