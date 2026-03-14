@@ -301,6 +301,101 @@ const InventoryCheckModule = {
         return stats;
     },
 
+    // Add to inventory-check.js
+
+// NEW: Listen for expense transactions
+setupExpenseListener() {
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.on('expense-recorded', (data) => {
+            console.log('📦 Inventory received expense:', data);
+            this.handleExpenseAsPurchase(data);
+        });
+    }
+    
+    window.addEventListener('expense-recorded', (e) => {
+        this.handleExpenseAsPurchase(e.detail);
+    });
+},
+
+// NEW: Convert expense to inventory purchase
+handleExpenseAsPurchase(expenseData) {
+    console.log('🔄 Converting expense to inventory purchase:', expenseData);
+    
+    // Determine what was purchased from description/category
+    let category = 'other';
+    let itemName = expenseData.description || 'Unknown item';
+    
+    // Map expense categories to inventory categories
+    if (expenseData.category?.includes('feed')) {
+        category = 'feed';
+        // Extract feed type from description
+        if (itemName.toLowerCase().includes('starter')) {
+            itemName = 'Chicken Feed - Starter';
+        } else if (itemName.toLowerCase().includes('grower')) {
+            itemName = 'Chicken Feed - Grower';
+        } else if (itemName.toLowerCase().includes('layer')) {
+            itemName = 'Layer Feed';
+        }
+    } else if (expenseData.category?.includes('medical')) {
+        category = 'medical';
+        itemName = 'Vaccines/Medicine';
+    } else if (expenseData.category?.includes('equipment')) {
+        category = 'equipment';
+    } else if (expenseData.category?.includes('packaging')) {
+        category = 'packaging';
+    } else if (expenseData.category?.includes('cleaning')) {
+        category = 'cleaning';
+    }
+    
+    // Find or create inventory item
+    let inventoryItem = this.inventory.find(item => 
+        item.name?.toLowerCase().includes(itemName.toLowerCase()) ||
+        (category === 'feed' && item.category === 'feed' && item.name?.toLowerCase().includes(itemName.toLowerCase().split(' ').pop()))
+    );
+    
+    if (inventoryItem) {
+        // Update existing item
+        const oldStock = inventoryItem.currentStock;
+        const purchaseQty = Math.floor(expenseData.amount / (inventoryItem.costPerKg || 2.5));
+        inventoryItem.currentStock += purchaseQty;
+        inventoryItem.lastRestocked = new Date().toISOString().split('T')[0];
+        
+        console.log(`✅ Updated ${inventoryItem.name}: ${oldStock} → ${inventoryItem.currentStock} (added ${purchaseQty})`);
+    } else {
+        // Create new inventory item
+        const newItem = {
+            id: Date.now(),
+            name: itemName,
+            category: category,
+            currentStock: Math.floor(expenseData.amount / 2.5), // Estimate quantity
+            unit: this.getUnitForCategory(category),
+            minStock: 10,
+            costPerKg: expenseData.amount / Math.floor(expenseData.amount / 2.5) || 2.5,
+            supplier: expenseData.supplier || '',
+            lastRestocked: new Date().toISOString().split('T')[0],
+            notes: `Purchased: ${expenseData.description}`
+        };
+        this.inventory.push(newItem);
+        console.log('✅ Created new inventory item from expense:', newItem);
+    }
+    
+    this.saveData();
+    this.renderModule();
+    this.broadcastInventoryUpdated();
+},
+
+getUnitForCategory(category) {
+    const units = {
+        'feed': 'kg',
+        'medical': 'bottles',
+        'packaging': 'pcs',
+        'equipment': 'pcs',
+        'cleaning': 'bottles',
+        'other': 'units'
+    };
+    return units[category] || 'units';
+},
+    
     // ✅ MODIFIED: Enhanced loadData with broadcasting
     loadData() {
         const saved = localStorage.getItem('farm-inventory');
