@@ -582,6 +582,8 @@ async saveTransaction(transactionData) {
     
     // Check if exists
     const existingIndex = this.transactions.findIndex(t => t.id === transactionData.id);
+    const isNewTransaction = existingIndex < 0;
+    const oldTransaction = existingIndex >= 0 ? this.transactions[existingIndex] : null;
     
     if (existingIndex >= 0) {
         // Update
@@ -602,8 +604,244 @@ async saveTransaction(transactionData) {
     this.updateTransactionsList();
     this.updateCategoryBreakdown();
     
+    // ==================== INTEGRATION BROADCASTS ====================
+    
+    // 1. If this is an INCOME transaction, potentially create a sale
+    if (transactionData.type === 'income' && isNewTransaction && !transactionData.source?.includes('sales')) {
+        // Prevent infinite loop - don't create sale if this came from a sale
+        await this.createSaleFromIncome(transactionData);
+    }
+    
+    // 2. If this is an EXPENSE transaction, broadcast for inventory
+    if (transactionData.type === 'expense') {
+        this.broadcastExpenseToInventory(transactionData, isNewTransaction, oldTransaction);
+    }
+    
+    // 3. Broadcast general transaction update
+    this.broadcastTransactionUpdate(transactionData, isNewTransaction, oldTransaction);
+    
     return true;
 },
+
+// ==================== NEW INTEGRATION METHODS ====================
+
+createSaleFromIncome: async function(transactionData) {
+    console.log('💰 Creating sale from income transaction:', transactionData);
+    
+    // Determine product from description or category
+    let product = 'other';
+    const desc = transactionData.description?.toLowerCase() || '';
+    const cat = transactionData.category?.toLowerCase() || '';
+    
+    if (desc.includes('egg') || cat.includes('egg')) product = 'eggs';
+    else if (desc.includes('broiler') || cat.includes('broiler')) product = 'broilers-dressed';
+    else if (desc.includes('layer') || cat.includes('layer')) product = 'layers';
+    else if (desc.includes('milk') || cat.includes('milk')) product = 'milk';
+    else if (desc.includes('pork') || cat.includes('pork')) product = 'pork';
+    else if (desc.includes('beef') || cat.includes('beef')) product = 'beef';
+    else if (desc.includes('tomato') || cat.includes('tomato')) product = 'tomatoes';
+    else if (desc.includes('lettuce') || cat.includes('lettuce')) product = 'lettuce';
+    else if (desc.includes('carrot') || cat.includes('carrot')) product = 'carrots';
+    else if (desc.includes('potato') || cat.includes('potato')) product = 'potatoes';
+    
+    const saleData = {
+        id: 'INC-' + transactionData.id,
+        date: transactionData.date,
+        customer: transactionData.customerName || this.extractCustomerFromDescription(transactionData.description) || 'Walk-in',
+        product: product,
+        unit: this.getUnitForProduct(product),
+        quantity: 1,
+        unitPrice: transactionData.amount,
+        totalAmount: transactionData.amount,
+        paymentMethod: transactionData.paymentMethod || 'cash',
+        paymentStatus: 'paid',
+        notes: `Auto-generated from income: ${transactionData.description}`,
+        source: 'income-module',
+        transactionId: transactionData.id
+    };
+    
+    // Broadcast to Sales module via Data Broadcaster
+    if (window.DataBroadcaster) {
+        console.log('📢 Broadcasting income-sale-created via DataBroadcaster');
+        window.DataBroadcaster.emit('income-sale-created', saleData);
+    }
+    
+    // Also dispatch custom event as backup
+    const event = new CustomEvent('income-sale-created', { detail: saleData });
+    window.dispatchEvent(event);
+    console.log('📢 Dispatched income-sale-created event');
+    
+    // Direct update if sales module exists (immediate sync)
+    if (window.SalesRecordModule && typeof window.SalesRecordModule.addSale === 'function') {
+        console.log('💰 Directly updating SalesRecordModule');
+        window.SalesRecordModule.addSale(saleData);
+    }
+    
+    this.showNotification(`✅ Created sale record from income`, 'success');
+},
+
+broadcastExpenseToInventory: function(transactionData, isNew, oldTransaction) {
+    console.log('📦 Broadcasting expense to inventory:', transactionData);
+    
+    // Prepare expense data for inventory
+    const expenseForInventory = {
+        id: transactionData.id,
+        date: transactionData.date,
+        description: transactionData.description,
+        category: transactionData.category,
+        amount: transactionData.amount,
+        paymentMethod: transactionData.paymentMethod,
+        reference: transactionData.reference,
+        notes: transactionData.notes,
+        source: 'income-module',
+        isNew: isNew,
+        oldAmount: oldTransaction?.amount || 0
+    };
+    
+    // Broadcast via Data Broadcaster
+    if (window.DataBroadcaster) {
+        console.log('📢 Broadcasting expense-recorded via DataBroadcaster');
+        window.DataBroadcaster.emit('expense-recorded', expenseForInventory);
+    }
+    
+    // Also dispatch custom event
+    const event = new CustomEvent('expense-recorded', { detail: expenseForInventory });
+    window.dispatchEvent(event);
+    console.log('📢 Dispatched expense-recorded event');
+    
+    // If this is a feed-related expense, also broadcast specifically for feed module
+    if (transactionData.category?.toLowerCase().includes('feed') || 
+        transactionData.description?.toLowerCase().includes('feed')) {
+        this.broadcastFeedPurchase(transactionData);
+    }
+},
+
+broadcastFeedPurchase: function(transactionData) {
+    console.log('🌾 Broadcasting feed purchase:', transactionData);
+    
+    const feedData = {
+        id: transactionData.id,
+        date: transactionData.date,
+        description: transactionData.description,
+        amount: transactionData.amount,
+        feedType: this.extractFeedType(transactionData.description),
+        quantity: this.estimateFeedQuantity(transactionData.amount, transactionData.description),
+        source: 'income-module'
+    };
+    
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('feed-purchased', feedData);
+    }
+    
+    const event = new CustomEvent('feed-purchased', { detail: feedData });
+    window.dispatchEvent(event);
+},
+
+broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
+    console.log('📢 Broadcasting transaction update');
+    
+    const updateData = {
+        id: transactionData.id,
+        date: transactionData.date,
+        type: transactionData.type,
+        category: transactionData.category,
+        amount: transactionData.amount,
+        description: transactionData.description,
+        isNew: isNew,
+        timestamp: new Date().toISOString(),
+        oldData: oldTransaction || null
+    };
+    
+    // Broadcast to dashboard
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('transaction-updated', updateData);
+    }
+    
+    // Also broadcast finance update for dashboard
+    if (transactionData.type === 'income') {
+        window.DataBroadcaster?.emit('income-updated', {
+            amount: transactionData.amount,
+            source: 'transaction',
+            transactionId: transactionData.id
+        });
+    } else if (transactionData.type === 'expense') {
+        window.DataBroadcaster?.emit('expense-updated', {
+            amount: transactionData.amount,
+            source: 'transaction',
+            transactionId: transactionData.id
+        });
+    }
+    
+    // Dispatch custom event
+    const event = new CustomEvent('transaction-updated', { detail: updateData });
+    window.dispatchEvent(event);
+},
+
+// ==================== HELPER METHODS ====================
+
+extractCustomerFromDescription: function(description) {
+    if (!description) return null;
+    
+    // Try to extract customer name from description
+    const patterns = [
+        /from\s+([A-Za-z\s]+)/i,
+        /customer:\s*([A-Za-z\s]+)/i,
+        /sale to\s+([A-Za-z\s]+)/i
+    ];
+    
+    for (const pattern of patterns) {
+        const match = description.match(pattern);
+        if (match && match[1]) {
+            return match[1].trim();
+        }
+    }
+    
+    return null;
+},
+
+getUnitForProduct: function(product) {
+    const units = {
+        'eggs': 'dozen',
+        'broilers-dressed': 'birds',
+        'broilers-live': 'birds',
+        'layers': 'birds',
+        'milk': 'liters',
+        'pork': 'kg',
+        'beef': 'kg',
+        'tomatoes': 'kg',
+        'lettuce': 'heads',
+        'carrots': 'kg',
+        'potatoes': 'kg',
+        'other': 'units'
+    };
+    
+    return units[product] || 'units';
+},
+
+extractFeedType: function(description) {
+    if (!description) return 'other';
+    
+    const desc = description.toLowerCase();
+    if (desc.includes('starter')) return 'starter';
+    if (desc.includes('grower')) return 'grower';
+    if (desc.includes('finisher')) return 'finisher';
+    if (desc.includes('layer')) return 'layer';
+    if (desc.includes('broiler')) return 'broiler';
+    return 'other';
+},
+
+estimateFeedQuantity: function(amount, description) {
+    // Try to extract quantity from description
+    if (description) {
+        const match = description.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilos|kilograms)/i);
+        if (match && match[1]) {
+            return parseFloat(match[1]);
+        }
+    }
+    
+    // Estimate based on amount (assuming $2.5/kg average)
+    return Math.round(amount / 2.5);
+}
     
     // ==================== RECEIPT MANAGEMENT ====================
     async loadReceiptsFromFirebase() {
