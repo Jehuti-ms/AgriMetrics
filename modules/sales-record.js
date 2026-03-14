@@ -28,6 +28,8 @@ const SalesRecordModule = {
             this.broadcaster = window.Broadcaster;
             console.log('📡 Sales module connected to Data Broadcaster');
         }
+
+        this.setupBroadcasterListeners();
         
         // ✅ Register with StyleManager
         if (window.StyleManager) {
@@ -54,29 +56,198 @@ const SalesRecordModule = {
     },
 
     // ✅ NEW: Setup broadcaster listeners
-    setupBroadcasterListeners() {
-        if (!this.broadcaster) return;
-        
-        // Listen for orders completed
-        this.broadcaster.on('order-completed', (data) => {
-            console.log('📡 Sales received order completion:', data);
-            this.handleOrderCompletion(data);
-        });
-        
-        // Listen for production updates
-        this.broadcaster.on('production-updated', (data) => {
-            console.log('📡 Sales received production update:', data);
-            this.updateAvailableProductionItems(data);
-        });
-        
-        // Listen for inventory updates
-        this.broadcaster.on('inventory-updated', (data) => {
-            console.log('📡 Sales received inventory update:', data);
-            this.checkInventoryForSales(data);
-        });
-    },
+   setupBroadcasterListeners() {
+    if (!this.broadcaster) return;
+    
+    console.log('📡 Setting up Sales module broadcaster listeners...');
+    
+    // ===== EXISTING LISTENERS =====
+    
+    // Listen for orders completed
+    this.broadcaster.on('order-completed', (data) => {
+        console.log('📡 Sales received order completion:', data);
+        this.handleOrderCompletion(data);
+    });
+    
+    // Listen for production updates
+    this.broadcaster.on('production-updated', (data) => {
+        console.log('📡 Sales received production update:', data);
+        this.updateAvailableProductionItems(data);
+    });
+    
+    // Listen for inventory updates
+    this.broadcaster.on('inventory-updated', (data) => {
+        console.log('📡 Sales received inventory update:', data);
+        this.checkInventoryForSales(data);
+    });
+    
+    // ===== NEW LISTENERS FOR COMPLETE INTEGRATION =====
+    
+    // 1. Listen for income-created sales (reverse sync from Income module)
+    this.broadcaster.on('income-sale-created', (data) => {
+        console.log('📡 Sales received income-sale-created:', data);
+        this.handleIncomeSale(data);
+    });
+    
+    // 2. Listen for feed purchases (to potentially create sales from feed expenses)
+    this.broadcaster.on('feed-purchased', (data) => {
+        console.log('📡 Sales received feed-purchased:', data);
+        // Could create a sale record for feed resale if applicable
+        this.handleFeedPurchase(data);
+    });
+    
+    // 3. Listen for production items marked for sale
+    this.broadcaster.on('production-for-sale', (data) => {
+        console.log('📡 Sales received production-for-sale:', data);
+        this.handleProductionForSale(data);
+    });
+    
+    // 4. Listen for bulk sales from dashboard
+    this.broadcaster.on('bulk-sale-created', (data) => {
+        console.log('📡 Sales received bulk-sale-created:', data);
+        this.handleBulkSale(data);
+    });
+    
+    // 5. Listen for price updates from inventory/production
+    this.broadcaster.on('price-updated', (data) => {
+        console.log('📡 Sales received price-updated:', data);
+        this.updateProductPrices(data);
+    });
+    
+    console.log('✅ Sales module broadcaster listeners setup complete');
+},
 
-    // ✅ NEW: Broadcast when sales data is loaded
+// ===== NEW HANDLER METHODS =====
+
+handleIncomeSale: function(data) {
+    console.log('💰 Handling income-created sale:', data);
+    
+    // Check if sale already exists to prevent duplicates
+    const existingSale = window.FarmModules.appData.sales?.find(s => 
+        s.id === data.id || s.transactionId === data.transactionId
+    );
+    
+    if (existingSale) {
+        console.log('⚠️ Sale already exists, skipping:', existingSale.id);
+        return;
+    }
+    
+    // Add the sale
+    this.addSale(data);
+    
+    // Show notification
+    this.showNotification(`✅ Sale recorded from income: ${this.formatCurrency(data.totalAmount)}`, 'success');
+},
+
+handleFeedPurchase: function(data) {
+    console.log('🌾 Handling feed purchase for potential resale:', data);
+    
+    // Only create sale if this is a resale (not for farm use)
+    if (data.forResale) {
+        const saleData = {
+            id: 'FEED-' + data.id,
+            date: data.date,
+            customer: 'Farm Store',
+            product: 'feed',
+            unit: 'kg',
+            quantity: data.quantity || 50,
+            unitPrice: (data.amount / (data.quantity || 50)) * 1.2, // 20% markup
+            totalAmount: data.amount * 1.2,
+            paymentMethod: 'cash',
+            paymentStatus: 'pending',
+            notes: `Feed resale: ${data.description}`,
+            source: 'feed-resale',
+            feedPurchaseId: data.id
+        };
+        
+        this.addSale(saleData);
+        this.showNotification(`📦 Created resale record for feed`, 'info');
+    }
+},
+
+handleProductionForSale: function(data) {
+    console.log('🚜 Handling production marked for sale:', data);
+    
+    // Store in pending production sales
+    if (!this.pendingProductionSales) {
+        this.pendingProductionSales = [];
+    }
+    
+    this.pendingProductionSales.push({
+        ...data,
+        receivedAt: new Date().toISOString()
+    });
+    
+    // Show notification
+    this.showNotification(`📦 New production items available for sale: ${data.product}`, 'info');
+    
+    // Update UI if on sales page
+    if (window.app?.currentSection === 'sales-record') {
+        this.updateProductionItemsDisplay();
+    }
+},
+
+handleBulkSale: function(data) {
+    console.log('📊 Handling bulk sale:', data);
+    
+    // Create multiple sale records from bulk data
+    if (data.items && Array.isArray(data.items)) {
+        data.items.forEach(item => {
+            const saleData = {
+                id: 'BULK-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                date: data.date || this.getCurrentDate(),
+                customer: data.customer || 'Bulk Customer',
+                product: item.product,
+                unit: item.unit || 'units',
+                quantity: item.quantity,
+                unitPrice: item.price,
+                totalAmount: item.quantity * item.price,
+                paymentMethod: data.paymentMethod || 'cash',
+                paymentStatus: data.paymentStatus || 'paid',
+                notes: `Bulk sale: ${data.notes || ''}`,
+                source: 'bulk-sale',
+                bulkId: data.id
+            };
+            
+            this.addSale(saleData);
+        });
+        
+        this.showNotification(`✅ Created ${data.items.length} bulk sale records`, 'success');
+    }
+},
+
+updateProductPrices: function(data) {
+    console.log('💰 Updating product prices from broadcast:', data);
+    
+    // Update any cached price data
+    if (!this.productPrices) {
+        this.productPrices = {};
+    }
+    
+    if (data.product && data.price) {
+        this.productPrices[data.product] = {
+            price: data.price,
+            unit: data.unit || 'unit',
+            updatedAt: data.timestamp || new Date().toISOString()
+        };
+        
+        console.log(`✅ Updated price for ${data.product}: ${this.formatCurrency(data.price)}/${data.unit || 'unit'}`);
+    }
+},
+
+updateProductionItemsDisplay: function() {
+    // Refresh the production items section in the UI
+    const productionSection = document.querySelector('.glass-card[style*="background: linear-gradient(135deg, #f0f9ff"]');
+    if (productionSection) {
+        // Re-render the production items section
+        const newSection = this.renderProductionItems();
+        if (productionSection.parentNode) {
+            productionSection.outerHTML = newSection;
+        }
+    }
+},
+
+  // ✅ NEW: Broadcast when sales data is loaded
     broadcastSalesLoaded() {
         if (!this.broadcaster) return;
         
