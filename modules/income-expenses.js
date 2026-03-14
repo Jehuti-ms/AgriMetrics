@@ -1146,7 +1146,7 @@ estimateMedicalQuantity: function(expenseData) {
     }
     
     return Math.max(1, Math.floor(expenseData.amount / 25));
-}
+},
     
     // ==================== INTEGRATION BROADCASTS ====================
     
