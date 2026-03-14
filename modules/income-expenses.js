@@ -1213,7 +1213,7 @@ estimateFeedQuantity: function(amount, description) {
     
     // Estimate based on amount (assuming $2.5/kg average)
     return Math.round(amount / 2.5);
-}
+},
     
     // ==================== RECEIPT MANAGEMENT ====================
     async loadReceiptsFromFirebase() {
