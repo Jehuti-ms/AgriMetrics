@@ -434,62 +434,204 @@ const FeedRecordModule = {
         }
     },
 
-    createFeedRecord(feedType, quantity, notes) {
-        // Check if feed type has sufficient stock
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        if (!inventoryItem) {
-            this.showNotification('Invalid feed type selected!', 'error');
-            return;
-        }
-        
-        if (inventoryItem.currentStock < quantity) {
-            this.showNotification(`Insufficient stock! Only ${inventoryItem.currentStock}kg available.`, 'error');
-            return;
-        }
+   createFeedRecord(feedType, quantity, notes) {
+    // Check if feed type has sufficient stock
+    const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+    if (!inventoryItem) {
+        this.showNotification('Invalid feed type selected!', 'error');
+        return;
+    }
+    
+    if (inventoryItem.currentStock < quantity) {
+        this.showNotification(`Insufficient stock! Only ${inventoryItem.currentStock}kg available.`, 'error');
+        return;
+    }
 
-        const formData = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
+    const formData = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        feedType: feedType,
+        quantity: quantity,
+        cost: this.calculateCost(feedType, quantity),
+        notes: notes,
+        birdsFed: this.birdsStock
+    };
+
+    // Update inventory
+    const oldStock = inventoryItem.currentStock;
+    inventoryItem.currentStock -= quantity;
+    
+    this.feedRecords.unshift(formData);
+    this.saveData();
+    this.updateFarmData();
+    this.renderModule();
+    
+    // ==================== INTEGRATION BROADCASTS ====================
+    
+    // 1. Broadcast feed recorded (existing)
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('feed-recorded', {
+            id: formData.id,
             feedType: feedType,
             quantity: quantity,
-            cost: this.calculateCost(feedType, quantity),
-            notes: notes,
-            birdsFed: this.birdsStock
-        };
-
-        // Update inventory
-        const oldStock = inventoryItem.currentStock;
-        inventoryItem.currentStock -= quantity;
+            birdsFed: this.birdsStock,
+            timestamp: new Date().toISOString()
+        });
+    }
+    
+    // Also dispatch custom event (existing)
+    window.dispatchEvent(new CustomEvent('feed-recorded', {
+        detail: {
+            feedType: feedType,
+            quantity: quantity,
+            oldStock: oldStock,
+            newStock: inventoryItem.currentStock
+        }
+    }));
+    
+    // ===== NEW: Create EXPENSE record for feed usage =====
+    const expenseData = {
+        id: Date.now() + 1, // Slightly different ID
+        date: formData.date,
+        type: 'expense',
+        category: 'feed',
+        description: `Feed: ${feedType} - ${quantity}kg`,
+        amount: formData.cost,
+        paymentMethod: 'cash',
+        reference: `FEED-${formData.id.toString().slice(-6)}`,
+        notes: notes || `Feed usage record #${formData.id}`,
+        source: 'feed-module',
+        feedRecordId: formData.id,
+        feedType: feedType,
+        quantity: quantity,
+        birdsFed: this.birdsStock
+    };
+    
+    // Broadcast expense to Income module
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('expense-recorded', expenseData);
+        console.log('📢 Broadcast expense-recorded to Income module');
+    }
+    
+    // Direct update to Income module if available (immediate sync)
+    if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+        console.log('💰 Directly updating IncomeExpensesModule with feed expense');
+        window.IncomeExpensesModule.transactions.unshift(expenseData);
+        window.IncomeExpensesModule.saveData();
         
-        this.feedRecords.unshift(formData);
-        this.saveData();
-        this.updateFarmData();
-        this.renderModule();
+        // Refresh income display if active
+        if (window.app?.currentSection === 'income-expenses') {
+            window.IncomeExpensesModule.renderModule();
+        }
+    }
+    
+    // ===== NEW: Update main INVENTORY module =====
+    if (window.InventoryCheckModule && window.InventoryCheckModule.inventory) {
+        console.log('📦 Updating main Inventory module feed stock');
         
-        // Broadcast feed recorded
+        // Find matching inventory item
+        const mainInventoryItem = window.InventoryCheckModule.inventory.find(item => 
+            item.category === 'feed' && 
+            item.name?.toLowerCase().includes(feedType.toLowerCase())
+        );
+        
+        if (mainInventoryItem) {
+            const mainOldStock = mainInventoryItem.currentStock;
+            mainInventoryItem.currentStock -= quantity;
+            mainInventoryItem.lastRestocked = formData.date;
+            
+            console.log(`✅ Updated main inventory: ${mainInventoryItem.name} ${mainOldStock} → ${mainInventoryItem.currentStock}`);
+            
+            // Save inventory module
+            if (typeof window.InventoryCheckModule.saveData === 'function') {
+                window.InventoryCheckModule.saveData();
+            }
+            
+            // Broadcast inventory update
+            if (this.broadcaster) {
+                this.broadcaster.broadcast('inventory-updated', {
+                    module: 'feed-record',
+                    itemId: mainInventoryItem.id,
+                    itemName: mainInventoryItem.name,
+                    oldStock: mainOldStock,
+                    newStock: mainInventoryItem.currentStock,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } else {
+            console.log('⚠️ No matching feed item found in main inventory');
+        }
+    }
+    
+    // ===== NEW: Update FarmData =====
+    if (window.FarmData) {
+        if (!window.FarmData.feed) {
+            window.FarmData.feed = {
+                records: [],
+                usage: []
+            };
+        }
+        
+        // Add feed usage record
+        window.FarmData.feed.usage = window.FarmData.feed.usage || [];
+        window.FarmData.feed.usage.push({
+            id: formData.id,
+            date: formData.date,
+            feedType: feedType,
+            quantity: quantity,
+            cost: formData.cost,
+            birdsFed: this.birdsStock,
+            notes: notes
+        });
+        
+        // Dispatch farm data updated event
+        window.dispatchEvent(new CustomEvent('farm-data-updated', {
+            detail: { module: 'feed-record', action: 'feed-used' }
+        }));
+    }
+    
+    // ===== NEW: Check if we need to reorder (low stock alert) =====
+    if (inventoryItem.currentStock <= inventoryItem.minStock) {
+        this.showNotification(`⚠️ Low stock: ${inventoryItem.feedType} feed (${inventoryItem.currentStock}kg remaining)`, 'warning');
+        
+        // Broadcast low stock alert
         if (this.broadcaster) {
-            this.broadcaster.broadcast('feed-recorded', {
-                id: formData.id,
+            this.broadcaster.broadcast('low-stock-alert', {
+                module: 'feed-record',
+                itemType: 'feed',
                 feedType: feedType,
-                quantity: quantity,
-                birdsFed: this.birdsStock,
+                currentStock: inventoryItem.currentStock,
+                minStock: inventoryItem.minStock,
+                suggestedOrder: inventoryItem.minStock * 2,
                 timestamp: new Date().toISOString()
             });
         }
-        
-        // Also dispatch custom event
-        window.dispatchEvent(new CustomEvent('feed-recorded', {
-            detail: {
-                feedType: feedType,
-                quantity: quantity,
-                oldStock: oldStock,
-                newStock: inventoryItem.currentStock
-            }
-        }));
-        
-        this.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
-    },
-
+    }
+    
+    // ===== NEW: Calculate cost per bird for analytics =====
+    const costPerBird = this.birdsStock > 0 ? formData.cost / this.birdsStock : 0;
+    console.log(`📊 Feed cost analytics: $${costPerBird.toFixed(2)} per bird for this feeding`);
+    
+    // Broadcast feed cost analytics
+    if (this.broadcaster && this.birdsStock > 0) {
+        this.broadcaster.broadcast('feed-cost-analytics', {
+            module: 'feed-record',
+            feedType: feedType,
+            totalCost: formData.cost,
+            birdsFed: this.birdsStock,
+            costPerBird: costPerBird,
+            quantity: quantity,
+            date: formData.date,
+            timestamp: new Date().toISOString()
+        });
+    }
+    
+    this.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
+    
+    // Return the created record for any further processing
+    return formData;
+},
+    
     cancelFeedForm() {
     console.log('❌ Cancelling feed form');
     
