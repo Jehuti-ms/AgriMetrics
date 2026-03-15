@@ -170,7 +170,7 @@ const StyleManager = {
 
 
     // Add this method to your StyleManager
-applyAuthCentering: function() {
+/*applyAuthCentering: function() {
     console.log('🎯 Applying auth centering fixes');
     
     // Create a style element for auth centering
@@ -181,7 +181,7 @@ applyAuthCentering: function() {
     style.id = styleId;
     style.textContent = `
         /* Auth container - full screen with gradient */
-        #auth-container {
+   /*     #auth-container {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -192,14 +192,14 @@ applyAuthCentering: function() {
             z-index: 99999 !important;
         }
 
-        /* Show with perfect centering */
+        /* Show with perfect centering 
         #auth-container.active {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
         }
 
-        /* Auth forms container - perfectly centered */
+        /* Auth forms container - perfectly centered 
         .auth-forms {
             background: white !important;
             border-radius: 16px !important;
@@ -213,7 +213,7 @@ applyAuthCentering: function() {
             position: relative !important;
         }
 
-        /* Individual forms */
+        /* Individual forms 
         .auth-form {
             display: none !important;
             width: 100% !important;
@@ -223,7 +223,7 @@ applyAuthCentering: function() {
             display: block !important;
         }
 
-        /* Fix html/body */
+        /* Fix html/body 
         html, body {
             margin: 0 !important;
             padding: 0 !important;
@@ -232,7 +232,7 @@ applyAuthCentering: function() {
             overflow-x: hidden !important;
         }
 
-        /* Mobile responsiveness */
+        /* Mobile responsiveness 
         @media (max-width: 768px) {
             .auth-forms {
                 padding: 30px 25px !important;
@@ -249,7 +249,7 @@ applyAuthCentering: function() {
             }
         }
 
-        /* For very short screens */
+        /* For very short screens 
         @media (max-height: 600px) {
             .auth-forms {
                 max-height: 95vh !important;
@@ -260,7 +260,7 @@ applyAuthCentering: function() {
     
     document.head.appendChild(style);
     console.log('✅ Auth centering styles applied');
-},
+}, */
     /**
      * Initialize the StyleManager
      */
@@ -270,7 +270,7 @@ applyAuthCentering: function() {
         this.injectBaseStyles();
         this.applyTheme(this.currentTheme);
         // this.setupThemeSwitcher(); // Commented out to remove floating theme switcher
-        this.applyAuthCentering();
+        //this.applyAuthCentering();
         this.initializeModules();
         
         console.log('✅ StyleManager initialized with all modules');
