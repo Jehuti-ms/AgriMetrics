@@ -503,7 +503,8 @@ async initialize() {  // ← ADD async
         if (!loadedFromFirebase) {
             console.log('🔄 Falling back to localStorage');
             const saved = localStorage.getItem('farm-transactions');
-            this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+            this.transactions = saved ? JSON.parse(saved) : [];
+            //this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
             
             // Add source marker for local transactions
             this.transactions.forEach(t => {
@@ -518,7 +519,7 @@ async initialize() {  // ← ADD async
         
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
-        this.transactions = this.getDemoData();
+       // this.transactions = this.getDemoData();
         console.log('📝 Loaded demo transactions:', this.transactions.length);
     }
 },
