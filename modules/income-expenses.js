@@ -1446,7 +1446,8 @@ capturePhoto: function() {
                 // Small delay to ensure cleanup
                 setTimeout(() => {
                     // Show cropper
-                    this.showStandardCropper(file);
+                   // this.showStandardCropper(file);
+                    this.showSimpleImageViewer(file);
                 }, 100);
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
@@ -1455,6 +1456,50 @@ capturePhoto: function() {
         }, 200);
         
     }, 'image/jpeg', 0.9);
+},
+
+    // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
+showSimpleImageViewer: function(file) {
+    console.log('🖼️ SIMPLE VIEWER - TEST FUNCTION');
+    
+    // Force remove camera
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) cameraSection.remove();
+    
+    const importModal = document.getElementById('import-receipts-modal');
+    if (importModal) {
+        importModal.style.display = 'none';
+        importModal.classList.add('hidden');
+    }
+    
+    this.stopCamera();
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 1000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        modal.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; max-width: 90%;">
+                <img src="${e.target.result}" style="max-width: 100%; max-height: 70vh;">
+                <button id="close-modal" style="margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-modal').onclick = () => modal.remove();
+    };
+    reader.readAsDataURL(file);
 },
     
 // Also update handleFileUpload to hide any active camera
