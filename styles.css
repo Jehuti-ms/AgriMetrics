@@ -4567,12 +4567,88 @@ body.dark-mode {
     }
 }*/
 
-/* Hide all spinners except your good one */
-.spinner:not(#capture-loading-overlay *),
-.loader:not(#capture-loading-overlay *),
-[class*="spinner"]:not(#capture-loading-overlay *),
-[class*="loader"]:not(#capture-loading-overlay *) {
-    display: none !important;
+/* ===== FIXED CENTERING FOR AUTH SCREEN ===== */
+
+/* Main auth container - full screen flexbox */
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
+
+/* Show when active */
+#auth-container.active {
+    display: flex !important;
+}
+
+/* Auth forms wrapper - perfectly centered */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    
+    /* Perfect centering - no transforms needed */
+    margin: auto !important;
+}
+
+/* Individual auth forms */
+.auth-form {
+    display: none;
+    width: 100%;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    #auth-container {
+        padding: 16px;
+    }
+    
+    .auth-forms {
+        padding: 30px 25px;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    #auth-container {
+        padding: 12px;
+    }
+    
+    .auth-forms {
+        padding: 25px 20px;
+        border-radius: 12px;
+        max-width: 100%;
+    }
+}
+
+/* For very short screens */
+@media (max-height: 600px) {
+    .auth-forms {
+        max-height: 95vh;
+        padding: 20px;
+    }
+}
+
 
 
