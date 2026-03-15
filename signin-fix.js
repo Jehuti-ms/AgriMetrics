@@ -81,3 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const observer = new MutationObserver(forceCenterAuth);
     observer.observe(document.body, { childList: true, subtree: true });
 })();
+
+// Force active class if needed
+const authContainer = document.getElementById('auth-container');
+if (authContainer && !authContainer.classList.contains('active')) {
+    authContainer.classList.add('active');
+}
+
