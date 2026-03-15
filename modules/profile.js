@@ -1755,27 +1755,27 @@ loadUserData() {
         let loadedProfile = null;
         let source = '';
         
-        // 🔥 Try ALL possible storage locations
-        const email = this.getCurrentUserEmail();
+        // 🔥 FIX: Try the MOST COMPLETE profile first, not the partial one
         
-        // 1. Try user-specific storage first (by email)
+        // 1. Try user-specific storage (by email) - This has ALL data
+        const email = this.getCurrentUserEmail();
         if (email) {
             const userKey = `farm-profile-${email}`;
             const userData = localStorage.getItem(userKey);
             if (userData) {
                 loadedProfile = JSON.parse(userData);
-                source = `user-specific (${email})`;
-                console.log(`✅ Loaded from ${source}`);
+                source = `user-key: ${userKey}`;
+                console.log(`✅ Loaded COMPLETE profile from ${source}`);
             }
         }
         
-        // 2. Try main farm-profile
+        // 2. Try general farm-profile
         if (!loadedProfile) {
             const mainData = localStorage.getItem('farm-profile');
             if (mainData) {
                 loadedProfile = JSON.parse(mainData);
                 source = 'farm-profile';
-                console.log(`✅ Loaded from ${source}`);
+                console.log(`✅ Loaded COMPLETE profile from ${source}`);
             }
         }
         
@@ -1785,11 +1785,27 @@ loadUserData() {
             if (lastData) {
                 loadedProfile = JSON.parse(lastData);
                 source = 'last-known-profile';
-                console.log(`✅ Loaded from ${source}`);
+                console.log(`✅ Loaded profile from ${source}`);
             }
         }
         
-        // 4. Try farm-last-name to at least get the farm name
+        // 4. Try any backup
+        if (!loadedProfile) {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('farm-profile-backup-')) {
+                    const backupData = localStorage.getItem(key);
+                    if (backupData) {
+                        loadedProfile = JSON.parse(backupData);
+                        source = `backup: ${key}`;
+                        console.log(`✅ Loaded profile from ${source}`);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // 5. ONLY use farm-last-name as LAST RESORT if nothing else found
         if (!loadedProfile) {
             const farmName = localStorage.getItem('farm-last-name');
             if (farmName) {
@@ -1798,12 +1814,12 @@ loadUserData() {
                     farmerName: 'Farm Manager',
                     email: email || ''
                 };
-                source = 'farm-last-name only';
-                console.log(`✅ Created partial profile from ${source}`);
+                source = 'farm-last-name only (partial)';
+                console.log(`⚠️ Only found farm name, created partial profile from ${source}`);
             }
         }
         
-        // 5. Create default if nothing found
+        // 6. Create default if absolutely nothing found
         if (!loadedProfile) {
             console.log('🆕 Creating new default profile');
             loadedProfile = {
@@ -1817,7 +1833,7 @@ loadUserData() {
             source = 'new default';
         }
         
-        // Load settings
+        // Load settings separately
         let settings = null;
         const savedSettings = localStorage.getItem('farm-settings');
         if (savedSettings) {
@@ -1853,6 +1869,7 @@ loadUserData() {
         
         console.log(`✅ User data loaded from: ${source}`);
         console.log(`🏷️ Farm name: "${loadedProfile.farmName}"`);
+        console.log(`📊 Settings:`, settings);
         
     } catch (error) {
         console.error('❌ Error loading user data:', error);
