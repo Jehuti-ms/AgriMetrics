@@ -1420,23 +1420,38 @@ capturePhoto: function() {
         // Ask if user wants to crop
         setTimeout(() => {
             if (confirm('Would you like to crop this photo?')) {
-                // CRITICAL: Completely remove camera elements
-                this.stopCamera();
+                // ===== AGGRESSIVE CAMERA CLEANUP =====
                 
-                // Remove camera section completely
-                const cameraSection = document.getElementById('camera-section');
-                if (cameraSection) {
-                    cameraSection.remove(); // This removes it from DOM entirely
+                // 1. Stop all tracks
+                if (this.cameraStream) {
+                    this.cameraStream.getTracks().forEach(track => {
+                        track.stop();
+                        track.enabled = false;
+                    });
+                    this.cameraStream = null;
                 }
                 
-                // Also remove any lingering video elements
+                // 2. Clear video element
                 if (video) {
                     video.srcObject = null;
+                    video.pause();
                     video.removeAttribute('src');
                     video.load();
                 }
                 
-                // Hide the import modal
+                // 3. Remove camera section completely
+                const cameraSection = document.getElementById('camera-section');
+                if (cameraSection) {
+                    cameraSection.remove();
+                }
+                
+                // 4. Also remove any camera elements from DOM
+                const anyVideo = document.querySelector('video');
+                if (anyVideo && anyVideo.id === 'camera-preview') {
+                    anyVideo.remove();
+                }
+                
+                // 5. Hide import modal
                 const importModal = document.getElementById('import-receipts-modal');
                 if (importModal) {
                     importModal.style.display = 'none';
@@ -1445,10 +1460,9 @@ capturePhoto: function() {
                 
                 // Small delay to ensure cleanup
                 setTimeout(() => {
-                    // Show cropper
-                   // this.showStandardCropper(file);
+                    // Show simple viewer
                     this.showSimpleImageViewer(file);
-                }, 100);
+                }, 200);
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
             }
