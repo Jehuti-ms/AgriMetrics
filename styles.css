@@ -4656,3 +4656,79 @@ html, body {
         padding: 20px;
     }
 }
+
+/* ===== ULTIMATE AUTH CENTERING FIX ===== */
+
+/* Override ALL existing styles */
+#auth-container,
+body #auth-container,
+html body #auth-container,
+#auth-container.active,
+body #auth-container.active {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 999999 !important;
+    
+    /* Remove any inline styles */
+    style: all !important;
+}
+
+/* Force remove any inline display style */
+#auth-container[style*="display: block"] {
+    display: flex !important;
+}
+
+/* Auth forms container */
+.auth-forms,
+body .auth-forms {
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 40px !important;
+    width: 90% !important;
+    max-width: 420px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    transform: none !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+/* Fix html/body */
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .auth-forms {
+        padding: 30px 25px !important;
+        width: 95% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 25px 20px !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+        margin: 0 16px !important;
+    }
+}
