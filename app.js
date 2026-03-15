@@ -222,34 +222,56 @@ class FarmManagementApp {
         }
     }
 
-    handleUserAuthenticated(user) {
-        console.log('🎉 User authenticated, showing app...');
-        this.currentUser = user;
-        this.authInitialized = true;
-        
-        // Store user info
-        localStorage.setItem('userEmail', user.email);
-        localStorage.setItem('userId', user.uid);
-        localStorage.setItem('userAuthenticated', 'true');
-        
-        // Show app
-        this.showApp();
-        
-        // Initialize menu AFTER showing app
-        this.initializeMenu();
-        
-        // Initialize Data Service first
-        if (window.DataService && typeof window.DataService.initialize === 'function') {
-            window.DataService.initialize().then(() => {
-                // Then initialize app components
-                this.initializeAppComponents();
-            });
-        } else {
-            this.initializeAppComponents();
-        }
+handleUserAuthenticated(user) {
+    console.log('🎉 User authenticated, showing app...');
+    this.currentUser = user;
+    this.authInitialized = true;
+    
+    // Store user info
+    localStorage.setItem('userEmail', user.email);
+    localStorage.setItem('userId', user.uid);
+    localStorage.setItem('userAuthenticated', 'true');
+    
+    // Hide splash screen if visible
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        splash.classList.remove('active');
+        splash.classList.add('hidden');
     }
+    
+    // Hide auth container
+    const authContainer = document.getElementById('auth-container');
+    if (authContainer) {
+        authContainer.style.display = 'none';
+        authContainer.classList.remove('active');
+    }
+    
+    // Show app container
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) {
+        appContainer.style.display = 'block';
+        appContainer.classList.remove('hidden');
+    }
+    
+    // Set body class
+    document.body.classList.add('app-active');
+    document.body.classList.remove('auth-visible', 'loading');
+    
+    // Initialize menu AFTER showing app
+    this.initializeMenu();
+    
+    // Initialize Data Service first
+    if (window.DataService && typeof window.DataService.initialize === 'function') {
+        window.DataService.initialize().then(() => {
+            // Then initialize app components
+            this.initializeAppComponents();
+        });
+    } else {
+        this.initializeAppComponents();
+    }
+}
 
-   handleNoUser() {
+  handleNoUser() {
     console.log('🔒 No user found, showing auth');
     this.authInitialized = true;
     
@@ -258,12 +280,15 @@ class FarmManagementApp {
     const signin = document.getElementById('signin-form');
     const appContainer = document.getElementById('app-container');
     
+    // Hide splash
     if (splash) {
-        splash.style.display = 'none';
+        splash.classList.remove('active');
+        splash.classList.add('hidden');
     }
     
+    // Show auth
     if (authContainer) {
-        authContainer.style.display = 'flex'; // Make sure it's flex, not block
+        authContainer.style.display = 'flex';
         authContainer.classList.add('active');
         
         if (signin) {
@@ -271,15 +296,14 @@ class FarmManagementApp {
         }
     }
     
+    // Hide app
     if (appContainer) {
         appContainer.style.display = 'none';
     }
     
+    // Set body class
     document.body.classList.add('auth-visible');
     document.body.classList.remove('app-active', 'loading');
-    
-    // Hide loading
-    this.hideLoading();
     
     console.log('✅ Auth screen shown');
 }
