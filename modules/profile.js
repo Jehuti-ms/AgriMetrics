@@ -591,109 +591,154 @@ const ProfileModule = {
 
     // ==================== LOGOUT WITH PERSISTENCE ====================
 
-    async performLogout() {
-        console.log('🚪 Starting logout process WITH PERSISTENCE...');
+   // ==================== FIXED LOGOUT WITH TRUE PERSISTENCE ====================
+
+async performLogout() {
+    console.log('🚪 Starting logout process WITH TRUE PERSISTENCE...');
+    
+    const logoutBtn = document.getElementById('logout-btn');
+    const originalHTML = logoutBtn?.innerHTML || '';
+    
+    try {
+        // Disable button and show loading
+        if (logoutBtn) {
+            logoutBtn.disabled = true;
+            logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+        }
         
-        const logoutBtn = document.getElementById('logout-btn');
-        const originalHTML = logoutBtn?.innerHTML || '';
+        // 🔥 CRITICAL: SAVE PROFILE DATA BEFORE LOGOUT
+        console.log('💾 Saving profile data before logout...');
         
-        try {
-            // Disable button and show loading
-            if (logoutBtn) {
-                logoutBtn.disabled = true;
-                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+        // Get current profile
+        const profile = window.FarmModules.appData.profile;
+        const settings = window.FarmModules.appData.settings;
+        const preferences = window.FarmModules.appData.userPreferences;
+        
+        if (profile) {
+            console.log('📋 Saving profile:', profile.farmName);
+            
+            // Save to ALL storage locations
+            localStorage.setItem('farm-profile', JSON.stringify(profile));
+            localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
+            localStorage.setItem('farm-last-name', profile.farmName || 'My Farm');
+            
+            // Save with email key
+            if (profile.email) {
+                localStorage.setItem(`farm-profile-${profile.email}`, JSON.stringify(profile));
             }
             
-            // 🔥 CRITICAL: SAVE PROFILE DATA BEFORE LOGOUT
-            console.log('💾 Backing up profile data before logout...');
-            await this.saveAllPersistedData(); // Make sure data is saved to Firebase too
-            
-            // Save last user info for next login
-            const userEmail = this.getCurrentUserEmail();
-            if (userEmail) {
-                localStorage.setItem(this.STORAGE_KEYS.LAST_USER, userEmail);
+            // Save settings
+            if (settings) {
+                localStorage.setItem('farm-settings', JSON.stringify(settings));
             }
             
-            // 1. Firebase logout
-            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
-                console.log('🔥 Attempting Firebase logout...');
+            // Save preferences
+            if (preferences) {
+                localStorage.setItem('farm-user-preferences', JSON.stringify(preferences));
+            }
+            
+            // Save to Firebase if available
+            if (this.isFirebaseAvailable && window.db) {
                 try {
-                    await firebase.auth().signOut();
-                    console.log('✅ Firebase logout successful');
-                } catch (firebaseError) {
-                    console.warn('⚠️ Firebase logout error:', firebaseError.message);
+                    const user = window.firebase.auth().currentUser;
+                    if (user) {
+                        await window.db.collection('profiles').doc(user.uid).set({
+                            profile: profile,
+                            settings: settings || {},
+                            preferences: preferences || {},
+                            lastUpdated: new Date().toISOString(),
+                            userId: user.uid,
+                            email: user.email
+                        }, { merge: true });
+                        console.log('✅ Profile saved to Firebase before logout');
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Could not save to Firebase:', e);
                 }
             }
-            
-            // 2. Clear ONLY authentication/session data, NOT profile data
-            console.log('🧹 Clearing authentication data ONLY...');
-            this.clearAuthenticationDataOnly();
-            
-            // 3. Show success message
-            this.showNotification('Logged out successfully! Data preserved.', 'success');
-            
-            // 4. Reset button
-            if (logoutBtn) {
-                logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
-                logoutBtn.style.background = '#10b981';
-            }
-            
-            // 5. Redirect to home/login page
-            console.log('🔄 Redirecting...');
-            setTimeout(() => {
-                window.location.href = window.location.origin + window.location.pathname;
-            }, 1500);
-            
-        } catch (error) {
-            console.error('❌ Logout process error:', error);
-            
-            if (logoutBtn) {
-                logoutBtn.innerHTML = originalHTML;
-                logoutBtn.disabled = false;
-            }
-            
-            this.showNotification('Logout failed: ' + error.message, 'error');
         }
-    },
-
-    clearAuthenticationDataOnly() {
-        console.log('🔐 Clearing authentication data only...');
+        
+        // 🔥 DO NOT CLEAR PROFILE DATA - only clear auth tokens
+        console.log('🧹 Clearing ONLY authentication tokens...');
         
         const keysToRemove = [];
+        const keysToKeep = [];
         
-        // Scan localStorage and categorize keys
+        // Scan localStorage
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             
-            // Keys to REMOVE (authentication/session data)
+            // Keys to REMOVE (authentication/session data only)
             if (key?.includes('firebase:auth')) {
                 keysToRemove.push(key);
             } else if (key?.includes('firebaseuser')) {
                 keysToRemove.push(key);
-            } else if (key === 'firebase:host' || key === 'firebase:authUser') {
+            } else if (key === 'firebase:host') {
+                keysToRemove.push(key);
+            } else if (key === 'firebase:authUser') {
                 keysToRemove.push(key);
             } else if (key === 'farm-current-user') {
                 keysToRemove.push(key);
             } else if (key?.includes('session')) {
                 keysToRemove.push(key);
-            } else if (key?.includes('token')) {
+            } else if (key?.includes('token') && !key.includes('farm-')) {
                 keysToRemove.push(key);
+            } else {
+                // Keep ALL farm-* keys (profile, settings, data)
+                keysToKeep.push(key);
             }
         }
         
-        console.log('🗑️ Removing authentication keys:', keysToRemove);
+        console.log('🗑️ Removing auth keys:', keysToRemove);
+        console.log('💾 Keeping data keys:', keysToKeep);
         
-        // Remove only authentication keys
+        // Remove ONLY auth keys
         keysToRemove.forEach(key => {
             localStorage.removeItem(key);
         });
         
-        // Clear sessionStorage
+        // Clear sessionStorage (temporary session only)
         sessionStorage.clear();
         
-        console.log('✅ Authentication cleared, profile data preserved');
-    },
+        // 2. Firebase logout
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
+            console.log('🔥 Attempting Firebase logout...');
+            try {
+                await firebase.auth().signOut();
+                console.log('✅ Firebase logout successful');
+            } catch (firebaseError) {
+                console.warn('⚠️ Firebase logout error:', firebaseError.message);
+            }
+        }
+        
+        // 3. Show success message
+        this.showNotification('Logged out successfully! Your farm data is saved.', 'success');
+        
+        // 4. Reset button
+        if (logoutBtn) {
+            logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
+            logoutBtn.style.background = '#10b981';
+        }
+        
+        // 5. Redirect to home/login page
+        console.log('🔄 Redirecting...');
+        setTimeout(() => {
+            window.location.href = window.location.origin + window.location.pathname;
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Logout process error:', error);
+        
+        if (logoutBtn) {
+            logoutBtn.innerHTML = originalHTML;
+            logoutBtn.disabled = false;
+        }
+        
+        this.showNotification('Logout failed: ' + error.message, 'error');
+    }
+},
 
+   
     // ==================== SYNC ====================
     async syncNow() {
         const syncStatus = document.getElementById('sync-status');
@@ -1539,72 +1584,7 @@ const ProfileModule = {
         }, 50);
     },
 
-   // ==================== LOGOUT SYSTEM - WITH PERSISTENCE ====================
-async performLogout() {
-    console.log('🚪 Starting logout process WITH PERSISTENCE...');
-    
-    const logoutBtn = document.getElementById('logout-btn');
-    const originalHTML = logoutBtn?.innerHTML || '';
-    
-    try {
-        // Disable button and show loading
-        if (logoutBtn) {
-            logoutBtn.disabled = true;
-            logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
-        }
-        
-        // 🔥 CRITICAL: SAVE PROFILE DATA BEFORE LOGOUT
-        console.log('💾 Backing up profile data before logout...');
-        const currentProfile = this.getCurrentProfileForPersistence();
-        
-        if (currentProfile) {
-            // Save profile to multiple locations for persistence
-            this.backupProfileForPersistence(currentProfile);
-        }
-        
-        // 1. Firebase logout (optional - doesn't affect local data)
-        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
-            console.log('🔥 Attempting Firebase logout...');
-            try {
-                await firebase.auth().signOut();
-                console.log('✅ Firebase logout successful');
-            } catch (firebaseError) {
-                console.warn('⚠️ Firebase logout error:', firebaseError.message);
-            }
-        }
-        
-        // 2. Clear ONLY authentication/session data, NOT profile data
-        console.log('🧹 Clearing authentication data ONLY...');
-        this.clearAuthenticationDataOnly();
-        
-        // 3. Show success message
-        this.showNotification('Logged out successfully! Redirecting...', 'success');
-        
-        // 4. Reset button
-        if (logoutBtn) {
-            logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
-            logoutBtn.style.background = '#10b981';
-        }
-        
-        // 5. Redirect to home/login page
-        console.log('🔄 Redirecting...');
-        setTimeout(() => {
-            window.location.href = window.location.origin + window.location.pathname;
-            window.location.reload(true);
-        }, 1500);
-        
-    } catch (error) {
-        console.error('❌ Logout process error:', error);
-        
-        // Reset button
-        if (logoutBtn) {
-            logoutBtn.innerHTML = originalHTML;
-            logoutBtn.disabled = false;
-        }
-        
-        this.showNotification('Logout failed: ' + error.message, 'error');
-    }
-},
+  
 
 // 🔥 NEW: Get current profile for persistence
 getCurrentProfileForPersistence() {
@@ -1681,71 +1661,9 @@ backupProfileForPersistence(profile) {
     }
 },
 
-// 🔥 NEW: Clear ONLY authentication data
-clearAuthenticationDataOnly() {
-    console.log('🔐 Clearing authentication data only...');
-    
-    const keysToRemove = [];
-    const keysToKeep = [];
-    
-    // Scan localStorage and categorize keys
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        
-        // Keys to REMOVE (authentication/session data)
-        if (key.includes('firebase') && key.includes('auth')) {
-            keysToRemove.push(key);
-        } else if (key.includes('session') || key.includes('token')) {
-            keysToRemove.push(key);
-        } else if (key === 'farm-current-user' || key === 'firebase-auth-token') {
-            keysToRemove.push(key);
-        }
-        
-        // Keys to KEEP (profile/data)
-        if (key.startsWith('farm-profile') || 
-            key.includes('farm-data') ||
-            key.includes('farm-last') ||
-            key.includes('profile') && !key.includes('token')) {
-            keysToKeep.push(key);
-        }
-    }
-    
-    console.log('🗑️ Removing authentication keys:', keysToRemove);
-    console.log('💾 Keeping data keys:', keysToKeep);
-    
-    // Remove only authentication keys
-    keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-        console.log(`❌ Removed: ${key}`);
-    });
-    
-    // Clear sessionStorage (session data only)
-    sessionStorage.clear();
-    
-    console.log('✅ Authentication cleared, profile data preserved');
-},
-    
-    // 🔥 FIX: Clear only session data, keep profile
-    clearSessionData() {
-        console.log('🗑️ Clearing session data (keeping profile)...');
-        
-        // Clear Firebase auth data
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.includes('firebase') && key.includes('auth')) {
-                localStorage.removeItem(key);
-            }
-        }
-        
-        // Clear sessionStorage
-        sessionStorage.clear();
-        
-        // Keep farm-profile and user-specific profiles
-        // Don't clear farm-profile, farm-user-profile, or farm-profile-email keys
-        
-        console.log('✅ Session data cleared, profile preserved');
-    },
 
+    
+    
     // ==================== SAVE PROFILE - FIXED (NO DUPLICATE LISTENERS) ====================
     async handleSaveProfile() {
         console.log('💾 Starting profile save - SINGLE ENTRY POINT');
