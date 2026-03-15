@@ -249,44 +249,41 @@ class FarmManagementApp {
         }
     }
 
-    handleNoUser() {
-        console.log('🔒 No user found, showing auth');
-        this.authInitialized = true;
-        
-        const splash = document.getElementById('splash-screen');
-        const authContainer = document.getElementById('auth-container');
-        const signin = document.getElementById('signin-form');
-        const appContainer = document.getElementById('app-container');
-        
-        if (splash) {
-            splash.style.display = 'none';
-        }
-        
-        if (authContainer) {
-            authContainer.style.display = 'block';
-            authContainer.classList.add('active');
-            
-            if (signin) {
-                signin.classList.add('active');
-            }
-        }
-        
-        if (appContainer) {
-            appContainer.style.display = 'none';
-        }
-        
-        document.body.classList.add('auth-visible');
-        document.body.classList.remove('app-active', 'loading');
-        
-        // Hide loading
-        this.hideLoading();
-        
-        // Initialize menu in auth state
-        this.initializeMenu();
-        
-        console.log('✅ Auth screen shown');
+   handleNoUser() {
+    console.log('🔒 No user found, showing auth');
+    this.authInitialized = true;
+    
+    const splash = document.getElementById('splash-screen');
+    const authContainer = document.getElementById('auth-container');
+    const signin = document.getElementById('signin-form');
+    const appContainer = document.getElementById('app-container');
+    
+    if (splash) {
+        splash.style.display = 'none';
     }
-
+    
+    if (authContainer) {
+        authContainer.style.display = 'flex'; // Make sure it's flex, not block
+        authContainer.classList.add('active');
+        
+        if (signin) {
+            signin.classList.add('active');
+        }
+    }
+    
+    if (appContainer) {
+        appContainer.style.display = 'none';
+    }
+    
+    document.body.classList.add('auth-visible');
+    document.body.classList.remove('app-active', 'loading');
+    
+    // Hide loading
+    this.hideLoading();
+    
+    console.log('✅ Auth screen shown');
+}
+    
     async initializeAppComponents() {
         console.log('🚀 Initializing app components...');
         
