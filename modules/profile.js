@@ -1753,106 +1753,131 @@ loadUserData() {
     
     try {
         let loadedProfile = null;
+        let loadedSettings = null;
+        let loadedPreferences = null;
         let source = '';
         
-        // 🔥 FIX: Try the MOST COMPLETE profile first, not the partial one
-        
-        // 1. Try user-specific storage (by email) - This has ALL data
+        // Get current email
         const email = this.getCurrentUserEmail();
+        console.log('📧 Current user email:', email);
+        
+        // TRY IN THIS ORDER:
+        
+        // 1. Try Firebase first (cloud)
+        if (this.isFirebaseAvailable) {
+            // This will be loaded by loadAllPersistedData() which runs before this
+            console.log('☁️ Firebase data should be loaded already');
+        }
+        
+        // 2. Try user-specific storage (by email) - MOST COMPLETE
         if (email) {
             const userKey = `farm-profile-${email}`;
             const userData = localStorage.getItem(userKey);
             if (userData) {
-                loadedProfile = JSON.parse(userData);
-                source = `user-key: ${userKey}`;
-                console.log(`✅ Loaded COMPLETE profile from ${source}`);
-            }
-        }
-        
-        // 2. Try general farm-profile
-        if (!loadedProfile) {
-            const mainData = localStorage.getItem('farm-profile');
-            if (mainData) {
-                loadedProfile = JSON.parse(mainData);
-                source = 'farm-profile';
-                console.log(`✅ Loaded COMPLETE profile from ${source}`);
-            }
-        }
-        
-        // 3. Try last-known-profile
-        if (!loadedProfile) {
-            const lastData = localStorage.getItem('farm-last-known-profile');
-            if (lastData) {
-                loadedProfile = JSON.parse(lastData);
-                source = 'last-known-profile';
-                console.log(`✅ Loaded profile from ${source}`);
-            }
-        }
-        
-        // 4. Try any backup
-        if (!loadedProfile) {
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('farm-profile-backup-')) {
-                    const backupData = localStorage.getItem(key);
-                    if (backupData) {
-                        loadedProfile = JSON.parse(backupData);
-                        source = `backup: ${key}`;
-                        console.log(`✅ Loaded profile from ${source}`);
-                        break;
-                    }
+                try {
+                    loadedProfile = JSON.parse(userData);
+                    source = `user-specific: ${userKey}`;
+                    console.log(`✅ Loaded COMPLETE profile from ${source}`, loadedProfile);
+                } catch (e) {
+                    console.warn('⚠️ Failed to parse user-specific profile:', e);
                 }
             }
         }
         
-        // 5. ONLY use farm-last-name as LAST RESORT if nothing else found
+        // 3. Try general farm-profile
         if (!loadedProfile) {
-            const farmName = localStorage.getItem('farm-last-name');
-            if (farmName) {
-                loadedProfile = {
-                    farmName: farmName,
-                    farmerName: 'Farm Manager',
-                    email: email || ''
-                };
-                source = 'farm-last-name only (partial)';
-                console.log(`⚠️ Only found farm name, created partial profile from ${source}`);
+            const mainData = localStorage.getItem('farm-profile');
+            if (mainData) {
+                try {
+                    loadedProfile = JSON.parse(mainData);
+                    source = 'farm-profile';
+                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
+                } catch (e) {
+                    console.warn('⚠️ Failed to parse farm-profile:', e);
+                }
             }
         }
         
-        // 6. Create default if absolutely nothing found
+        // 4. Try last-known-profile
         if (!loadedProfile) {
-            console.log('🆕 Creating new default profile');
+            const lastData = localStorage.getItem('farm-last-known-profile');
+            if (lastData) {
+                try {
+                    loadedProfile = JSON.parse(lastData);
+                    source = 'last-known-profile';
+                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
+                } catch (e) {
+                    console.warn('⚠️ Failed to parse last-known-profile:', e);
+                }
+            }
+        }
+        
+        // Load settings separately
+        const settingsData = localStorage.getItem('farm-settings');
+        if (settingsData) {
+            try {
+                loadedSettings = JSON.parse(settingsData);
+                console.log('✅ Loaded settings:', loadedSettings);
+            } catch (e) {
+                console.warn('⚠️ Failed to parse settings:', e);
+            }
+        }
+        
+        // Load preferences separately
+        const prefsData = localStorage.getItem('farm-user-preferences');
+        if (prefsData) {
+            try {
+                loadedPreferences = JSON.parse(prefsData);
+                console.log('✅ Loaded preferences:', loadedPreferences);
+            } catch (e) {
+                console.warn('⚠️ Failed to parse preferences:', e);
+            }
+        }
+        
+        // Create default profile if nothing loaded
+        if (!loadedProfile) {
+            console.log('🆕 Creating new profile from defaults');
             loadedProfile = {
                 farmName: 'My Farm',
                 farmerName: 'Farm Manager',
                 email: email || '',
                 farmType: '',
                 farmLocation: '',
-                memberSince: new Date().toISOString()
-            };
-            source = 'new default';
-        }
-        
-        // Load settings separately
-        let settings = null;
-        const savedSettings = localStorage.getItem('farm-settings');
-        if (savedSettings) {
-            settings = JSON.parse(savedSettings);
-        } else {
-            settings = {
                 currency: 'USD',
                 lowStockThreshold: 10,
                 autoSync: true,
                 localStorageEnabled: true,
-                theme: 'light'
+                theme: 'light',
+                memberSince: new Date().toISOString(),
+                lastUpdated: new Date().toISOString()
+            };
+            source = 'new default';
+        }
+        
+        // Set default settings if none loaded
+        if (!loadedSettings) {
+            loadedSettings = {
+                currency: loadedProfile.currency || 'USD',
+                lowStockThreshold: loadedProfile.lowStockThreshold || 10,
+                autoSync: loadedProfile.autoSync !== false,
+                localStorageEnabled: loadedProfile.localStorageEnabled !== false,
+                theme: loadedProfile.theme || 'light',
+                notificationsEnabled: true,
+                emailReports: false,
+                dateFormat: 'MM/DD/YYYY',
+                timeFormat: '12h'
             };
         }
         
-        // Load preferences
-        let preferences = null;
-        const savedPrefs = localStorage.getItem('farm-user-preferences');
-        if (savedPrefs) {
-            preferences = JSON.parse(savedPrefs);
+        // Ensure email is set in profile
+        if (!loadedProfile.email && email) {
+            loadedProfile.email = email;
+        }
+        
+        // Ensure farm name is set
+        if (!loadedProfile.farmName) {
+            const savedFarmName = localStorage.getItem('farm-last-name');
+            loadedProfile.farmName = savedFarmName || 'My Farm';
         }
         
         // Update app data
@@ -1860,16 +1885,20 @@ loadUserData() {
         if (!window.FarmModules.appData) window.FarmModules.appData = {};
         
         window.FarmModules.appData.profile = loadedProfile;
-        window.FarmModules.appData.settings = settings;
-        window.FarmModules.appData.userPreferences = preferences;
+        window.FarmModules.appData.settings = loadedSettings;
+        window.FarmModules.appData.userPreferences = loadedPreferences;
         window.FarmModules.appData.farmName = loadedProfile.farmName;
         
-        // Update UI
-        this.updateProfileDisplay();
+        console.log('📊 FINAL PROFILE LOADED:', {
+            farmName: loadedProfile.farmName,
+            farmType: loadedProfile.farmType,
+            farmLocation: loadedProfile.farmLocation,
+            email: loadedProfile.email,
+            settings: loadedSettings
+        });
         
-        console.log(`✅ User data loaded from: ${source}`);
-        console.log(`🏷️ Farm name: "${loadedProfile.farmName}"`);
-        console.log(`📊 Settings:`, settings);
+        // Update the UI
+        this.updateProfileDisplay();
         
     } catch (error) {
         console.error('❌ Error loading user data:', error);
