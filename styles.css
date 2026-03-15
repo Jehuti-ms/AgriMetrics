@@ -4735,34 +4735,34 @@ html, body {
 
 /* ===== EMERGENCY AUTH CENTERING ===== */
 
-/* Auth Container - Full screen */
+/* Auth Container - Full screen 
 #auth-container,
 body #auth-container {
     /* DON'T use all: initial - it's too aggressive */
     
-    /* Force full screen */
+    /* Force full screen 
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
     
-    /* Gradient background */
+    /* Gradient background 
     background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20) !important;
     
-    /* Centering */
+    /* Centering 
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     z-index: 999999 !important;
     
-    /* Reset only what's needed */
+    /* Reset only what's needed 
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* Center the auth forms */
+/* Center the auth forms 
 .auth-forms,
 body .auth-forms {
     background: white !important;
@@ -4776,7 +4776,7 @@ body .auth-forms {
     margin: 0 auto !important;
 }
 
-/* Hide other auth forms */
+/* Hide other auth forms 
 .auth-form {
     display: none !important;
 }
@@ -4785,7 +4785,7 @@ body .auth-forms {
     display: block !important;
 }
 
-/* Mobile adjustments */
+/* Mobile adjustments 
 @media (max-width: 768px) {
     .auth-forms {
         width: 95% !important;
@@ -4802,10 +4802,10 @@ body .auth-forms {
 }
 
 /* Fix html/body - DON'T reset everything */
-html, body {
+/* html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     height: 100% !important;
-}
+} */
 
