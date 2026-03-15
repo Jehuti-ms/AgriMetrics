@@ -168,6 +168,99 @@ const StyleManager = {
         }
     },
 
+
+    // Add this method to your StyleManager
+applyAuthCentering: function() {
+    console.log('🎯 Applying auth centering fixes');
+    
+    // Create a style element for auth centering
+    const styleId = 'auth-centering-fix';
+    if (document.getElementById(styleId)) return;
+    
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        /* Auth container - full screen with gradient */
+        #auth-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
+            display: none !important;
+            z-index: 99999 !important;
+        }
+
+        /* Show with perfect centering */
+        #auth-container.active {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Auth forms container - perfectly centered */
+        .auth-forms {
+            background: white !important;
+            border-radius: 16px !important;
+            padding: 40px !important;
+            width: 90% !important;
+            max-width: 420px !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+            margin: 0 !important;
+            position: relative !important;
+        }
+
+        /* Individual forms */
+        .auth-form {
+            display: none !important;
+            width: 100% !important;
+        }
+
+        .auth-form.active {
+            display: block !important;
+        }
+
+        /* Fix html/body */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .auth-forms {
+                padding: 30px 25px !important;
+                width: 95% !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .auth-forms {
+                padding: 25px 20px !important;
+                border-radius: 12px !important;
+                width: 100% !important;
+                margin: 0 16px !important;
+            }
+        }
+
+        /* For very short screens */
+        @media (max-height: 600px) {
+            .auth-forms {
+                max-height: 95vh !important;
+                padding: 20px !important;
+            }
+        }
+    `;
+    
+    document.head.appendChild(style);
+    console.log('✅ Auth centering styles applied');
+},
     /**
      * Initialize the StyleManager
      */
@@ -177,6 +270,7 @@ const StyleManager = {
         this.injectBaseStyles();
         this.applyTheme(this.currentTheme);
         // this.setupThemeSwitcher(); // Commented out to remove floating theme switcher
+        this.applyAuthCentering();
         this.initializeModules();
         
         console.log('✅ StyleManager initialized with all modules');
