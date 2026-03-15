@@ -4569,7 +4569,7 @@ body.dark-mode {
 
 /* ===== ABSOLUTE CENTERING FOR AUTH SCREEN ===== */
 
-/* Force full-screen container */
+/* Force full-screen container 
 #auth-container {
     position: fixed !important;
     top: 0 !important;
@@ -4583,14 +4583,14 @@ body.dark-mode {
     z-index: 9998 !important;
 }
 
-/* Show with flexbox centering */
+/* Show with flexbox centering 
 #auth-container.active {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
-/* Auth forms container - perfectly centered */
+/* Auth forms container - perfectly centered 
 .auth-forms {
     background: white;
     border-radius: 16px;
@@ -4601,11 +4601,11 @@ body.dark-mode {
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     
-    /* Remove any margins/padding that could affect centering */
+    /* Remove any margins/padding that could affect centering 
     margin: 0 auto !important;
     position: relative !important;
     
-    /* Reset any transforms */
+    /* Reset any transforms 
     transform: none !important;
     top: auto !important;
     left: auto !important;
@@ -4613,7 +4613,7 @@ body.dark-mode {
     bottom: auto !important;
 }
 
-/* Individual forms */
+/* Individual forms 
 .auth-form {
     display: none;
     width: 100%;
@@ -4623,7 +4623,7 @@ body.dark-mode {
     display: block;
 }
 
-/* Fix any potential body/html issues */
+/* Fix any potential body/html issues 
 html, body {
     width: 100%;
     height: 100%;
@@ -4632,7 +4632,7 @@ html, body {
     overflow-x: hidden;
 }
 
-/* Mobile responsiveness */
+/* Mobile responsiveness 
 @media (max-width: 768px) {
     .auth-forms {
         padding: 30px 25px;
@@ -4649,7 +4649,7 @@ html, body {
     }
 }
 
-/* For very short screens */
+/* For very short screens 
 @media (max-height: 600px) {
     .auth-forms {
         max-height: 95vh;
@@ -4659,7 +4659,7 @@ html, body {
 
 /* ===== ULTIMATE AUTH CENTERING FIX ===== */
 
-/* Override ALL existing styles */
+/* Override ALL existing styles 
 #auth-container,
 body #auth-container,
 html body #auth-container,
@@ -4678,16 +4678,16 @@ body #auth-container.active {
     padding: 0 !important;
     z-index: 999999 !important;
     
-    /* Remove any inline styles */
+    /* Remove any inline styles 
     style: all !important;
 }
 
-/* Force remove any inline display style */
+/* Force remove any inline display style 
 #auth-container[style*="display: block"] {
     display: flex !important;
 }
 
-/* Auth forms container */
+/* Auth forms container 
 .auth-forms,
 body .auth-forms {
     background: white !important;
@@ -4707,7 +4707,7 @@ body .auth-forms {
     bottom: auto !important;
 }
 
-/* Fix html/body */
+/* Fix html/body 
 html, body {
     margin: 0 !important;
     padding: 0 !important;
@@ -4716,7 +4716,7 @@ html, body {
     overflow: hidden !important;
 }
 
-/* Mobile */
+/* Mobile 
 @media (max-width: 768px) {
     .auth-forms {
         padding: 30px 25px !important;
@@ -4811,5 +4811,5 @@ html, body {
     width: 100% !important;
     height: 100% !important;
    
-}
+} */
 
