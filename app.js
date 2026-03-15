@@ -452,7 +452,7 @@ class FarmManagementApp {
     } else {
         document.getElementById('app-loading').style.display = 'flex';
     }
-},
+}
     
     hideLoading() {
         const loadingDiv = document.getElementById('app-loading');
