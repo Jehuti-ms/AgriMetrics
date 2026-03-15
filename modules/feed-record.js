@@ -176,8 +176,8 @@ const FeedRecordModule = {
         const savedInventory = localStorage.getItem('farm-feed-inventory');
         const savedBirds = localStorage.getItem('farm-birds-stock');
         
-        this.feedRecords = savedRecords ? JSON.parse(savedRecords) : this.getDemoRecords();
-        this.feedInventory = savedInventory ? JSON.parse(savedInventory) : this.getDemoInventory();
+       this.feedRecords = savedRecords ? JSON.parse(savedRecords) : [];
+       this.feedInventory = savedInventory ? JSON.parse(savedInventory) : [];
         
         // Don't default to 1000 - use FarmData or saved value
         if (savedBirds) {
