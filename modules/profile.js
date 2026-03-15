@@ -1763,13 +1763,7 @@ loadUserData() {
         
         // TRY IN THIS ORDER:
         
-        // 1. Try Firebase first (cloud)
-        if (this.isFirebaseAvailable) {
-            // This will be loaded by loadAllPersistedData() which runs before this
-            console.log('☁️ Firebase data should be loaded already');
-        }
-        
-        // 2. Try user-specific storage (by email) - MOST COMPLETE
+        // 1. Try user-specific storage (by email) - MOST COMPLETE
         if (email) {
             const userKey = `farm-profile-${email}`;
             const userData = localStorage.getItem(userKey);
@@ -1784,7 +1778,7 @@ loadUserData() {
             }
         }
         
-        // 3. Try general farm-profile
+        // 2. Try general farm-profile
         if (!loadedProfile) {
             const mainData = localStorage.getItem('farm-profile');
             if (mainData) {
@@ -1798,7 +1792,7 @@ loadUserData() {
             }
         }
         
-        // 4. Try last-known-profile
+        // 3. Try last-known-profile
         if (!loadedProfile) {
             const lastData = localStorage.getItem('farm-last-known-profile');
             if (lastData) {
@@ -1848,10 +1842,22 @@ loadUserData() {
                 autoSync: true,
                 localStorageEnabled: true,
                 theme: 'light',
-                memberSince: new Date().toISOString(),
+                memberSince: new Date().toISOString(), // 🔥 Set to NOW for new users
                 lastUpdated: new Date().toISOString()
             };
             source = 'new default';
+            console.log('📅 New user - member since set to:', loadedProfile.memberSince);
+        } else {
+            // 🔥 Check if memberSince exists, if not set it to a reasonable default
+            if (!loadedProfile.memberSince) {
+                // Try to find when they first appeared in your system
+                // Look at oldest transaction or just set to account creation date
+                const oldestData = this.findOldestUserData();
+                loadedProfile.memberSince = oldestData || new Date().toISOString();
+                console.log('📅 Added missing memberSince:', loadedProfile.memberSince);
+            } else {
+                console.log('📅 Existing member since:', loadedProfile.memberSince);
+            }
         }
         
         // Set default settings if none loaded
@@ -1894,6 +1900,7 @@ loadUserData() {
             farmType: loadedProfile.farmType,
             farmLocation: loadedProfile.farmLocation,
             email: loadedProfile.email,
+            memberSince: loadedProfile.memberSince,
             settings: loadedSettings
         });
         
@@ -1902,6 +1909,54 @@ loadUserData() {
         
     } catch (error) {
         console.error('❌ Error loading user data:', error);
+    }
+},
+
+// 🔥 Add this helper method to find oldest user data
+findOldestUserData() {
+    try {
+        let oldestDate = null;
+        
+        // Check transactions
+        if (window.FarmModules?.appData?.transactions?.length > 0) {
+            window.FarmModules.appData.transactions.forEach(t => {
+                if (t.date || t.createdAt) {
+                    const date = new Date(t.date || t.createdAt);
+                    if (!oldestDate || date < oldestDate) {
+                        oldestDate = date;
+                    }
+                }
+            });
+        }
+        
+        // Check orders
+        if (window.FarmModules?.appData?.orders?.length > 0) {
+            window.FarmModules.appData.orders.forEach(o => {
+                if (o.date || o.createdAt) {
+                    const date = new Date(o.date || o.createdAt);
+                    if (!oldestDate || date < oldestDate) {
+                        oldestDate = date;
+                    }
+                }
+            });
+        }
+        
+        // Check inventory
+        if (window.FarmModules?.appData?.inventory?.length > 0) {
+            window.FarmModules.appData.inventory.forEach(i => {
+                if (i.createdAt) {
+                    const date = new Date(i.createdAt);
+                    if (!oldestDate || date < oldestDate) {
+                        oldestDate = date;
+                    }
+                }
+            });
+        }
+        
+        return oldestDate ? oldestDate.toISOString() : null;
+    } catch (e) {
+        console.warn('Could not find oldest user data:', e);
+        return null;
     }
 },
     
@@ -1952,9 +2007,14 @@ loadUserData() {
         if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
         if (emailCard) emailCard.textContent = profile.email || 'No email';
         
-        // Update member since
-        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
-        document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+        // Update member since display
+            const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : 'Today';
+            const memberSinceEl = document.getElementById('member-since');
+            if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
         
         // Update form inputs
         const farmNameInput = document.getElementById('farm-name');
