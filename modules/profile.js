@@ -1,46 +1,720 @@
-// modules/profile.js - COMPLETE FIXED VERSION
-console.log('👤 Loading profile module with all fixes...');
+
+// modules/profile.js - ENHANCED PERSISTENCE WITH FIREBASE
+console.log('👤 Loading profile module with ENHANCED persistence + Firebase...');
 
 const ProfileModule = {
     name: 'profile',
     initialized: false,
     element: null,
-    isDarkMode: false, // Track dark mode state
+    isDarkMode: false,
     
-   // ==================== INITIALIZATION ====================
-initialize() {
-    console.log('👤 Initializing profile...');
+    // Add Firebase properties
+    isFirebaseAvailable: false,
+    broadcaster: null,
     
-    this.element = document.getElementById('content-area');
-    if (!this.element) {
-        console.error('Content area element not found');
-        return false;
-    }
-    
-    if (window.StyleManager) {
-        window.StyleManager.registerModule(this.name, this.element, {
-            onThemeChange: (theme) => this.onThemeChange(theme)
+    // Storage keys for organized persistence
+    STORAGE_KEYS: {
+        PROFILE: 'farm-profile',
+        PROFILE_BACKUP: 'farm-profile-backup',
+        SETTINGS: 'farm-settings',
+        USER_PREFS: 'farm-user-preferences',
+        LAST_USER: 'farm-last-user',
+        LAST_SYNC: 'farm-last-sync'
+    },
+
+    // ==================== INITIALIZATION ====================
+    initialize() {
+        console.log('👤 Initializing profile with enhanced persistence...');
+        
+        this.element = document.getElementById('content-area');
+        if (!this.element) {
+            console.error('Content area element not found');
+            return false;
+        }
+
+        // Check Firebase availability
+        this.checkFirebaseAvailability();
+
+        // Register with StyleManager
+        if (window.StyleManager) {
+            window.StyleManager.registerModule(this.name, this.element, {
+                onThemeChange: (theme) => this.onThemeChange(theme)
+            });
+        }
+
+        // Initialize data structure if needed
+        this.initializeDataStructure();
+        
+        // Load ALL saved data (async)
+        setTimeout(async () => {
+            await this.loadAllPersistedData();
+            this.renderModule();
+            this.initialized = true;
+        }, 100);
+
+        // Listen for global theme changes
+        document.addEventListener('theme-changed', (e) => {
+            this.onThemeChange(e.detail.theme);
         });
-    }
+
+        // Listen for auth state changes (for cross-tab sync)
+        window.addEventListener('storage', (e) => {
+            if (e.key === this.STORAGE_KEYS.PROFILE || e.key === this.STORAGE_KEYS.SETTINGS) {
+                console.log('🔄 Detected profile change in another tab, reloading...');
+                this.loadAllPersistedData();
+                this.updateProfileDisplay();
+            }
+        });
+
+        console.log('✅ Profile module initialized with Firebase support');
+        return true;
+    },
+
+    // ==================== FIREBASE METHODS ====================
     
-    this.renderModule();
-    this.initialized = true;
+    checkFirebaseAvailability() {
+        this.isFirebaseAvailable = !!(window.firebase && window.db);
+        this.broadcaster = window.DataBroadcaster || window.Broadcaster || null;
+        
+        console.log('🔥 Firebase available for profile:', this.isFirebaseAvailable);
+        if (this.broadcaster) {
+            console.log('📡 Profile connected to broadcaster');
+        }
+        
+        return this.isFirebaseAvailable;
+    },
 
-    // ✅ Listen for global theme changes
-    document.addEventListener('theme-changed', (e) => {
-        this.onThemeChange(e.detail.theme);
-    });
-    
-    return true;
-},
+    async saveToFirebase() {
+        if (!this.isFirebaseAvailable || !window.db) {
+            console.log('Firebase not available, skipping cloud save');
+            return false;
+        }
+        
+        try {
+            const user = window.firebase.auth().currentUser;
+            if (!user) {
+                console.log('No user logged in, skipping Firebase save');
+                return false;
+            }
+            
+            const profile = window.FarmModules.appData.profile;
+            const settings = window.FarmModules.appData.settings;
+            const preferences = window.FarmModules.appData.userPreferences;
+            
+            if (!profile) return false;
+            
+            // Save to Firebase profiles collection
+            await window.db.collection('profiles').doc(user.uid).set({
+                profile: profile,
+                settings: settings || {},
+                preferences: preferences || {},
+                lastUpdated: new Date().toISOString(),
+                userId: user.uid,
+                email: user.email
+            }, { merge: true });
+            
+            console.log('✅ Profile saved to Firebase');
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Error saving profile to Firebase:', error);
+            return false;
+        }
+    },
 
-onThemeChange(theme) {
-    console.log(`Profile module: Theme changed to ${theme}`);
-    if (this.initialized) {
-        this.renderModule();
-    }
-},
+    async loadFromFirebase() {
+        if (!this.isFirebaseAvailable || !window.db) return null;
+        
+        try {
+            const user = window.firebase.auth().currentUser;
+            if (!user) return null;
+            
+            const doc = await window.db.collection('profiles').doc(user.uid).get();
+            
+            if (doc.exists) {
+                const data = doc.data();
+                console.log('✅ Profile loaded from Firebase');
+                return {
+                    profile: data.profile || {},
+                    settings: data.settings || {},
+                    preferences: data.preferences || {}
+                };
+            }
+            
+            return null;
+            
+        } catch (error) {
+            console.error('❌ Error loading profile from Firebase:', error);
+            return null;
+        }
+    },
 
+    // ==================== ENHANCED PERSISTENCE WITH FIREBASE ====================
+
+    async saveAllPersistedData() {
+        console.log('💾 Saving ALL data with multi-layer persistence...');
+
+        try {
+            const profile = window.FarmModules.appData.profile;
+            const settings = window.FarmModules.appData.settings;
+            const preferences = window.FarmModules.appData.userPreferences;
+
+            // Save to localStorage (always)
+            if (profile) {
+                localStorage.setItem(this.STORAGE_KEYS.PROFILE, JSON.stringify(profile));
+                console.log('✅ Profile saved to primary storage');
+            }
+            
+            // Save user-specific profile
+            const userEmail = profile?.email || this.getCurrentUserEmail();
+            if (userEmail) {
+                const userKey = `${this.STORAGE_KEYS.PROFILE}-${userEmail}`;
+                localStorage.setItem(userKey, JSON.stringify(profile));
+                console.log('✅ Profile saved for user:', userEmail);
+            }
+
+            // Save backup
+            localStorage.setItem(this.STORAGE_KEYS.PROFILE_BACKUP, JSON.stringify({
+                ...profile,
+                backupTimestamp: new Date().toISOString()
+            }));
+            console.log('✅ Backup saved');
+
+            if (settings) {
+                localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+            }
+
+            if (preferences) {
+                localStorage.setItem(this.STORAGE_KEYS.USER_PREFS, JSON.stringify(preferences));
+            }
+
+            if (profile?.farmName) {
+                localStorage.setItem('farm-last-name', profile.farmName);
+            }
+
+            // 🔥 NEW: Save to Firebase if available
+            await this.saveToFirebase();
+
+            // Broadcast update
+            if (this.broadcaster) {
+                this.broadcaster.broadcast('profile-updated', {
+                    module: 'profile',
+                    timestamp: new Date().toISOString(),
+                    profile: profile,
+                    settings: settings
+                });
+            }
+
+            console.log('✅ All data persisted (localStorage + Firebase)');
+            return true;
+
+        } catch (error) {
+            console.error('❌ Error saving data:', error);
+            this.showNotification('Error saving data', 'error');
+            return false;
+        }
+    },
+
+    async loadAllPersistedData() {
+        console.log('📂 Loading ALL persisted data...');
+        
+        // Check Firebase availability
+        this.checkFirebaseAvailability();
+        
+        let loaded = {
+            profile: null,
+            settings: null,
+            preferences: null,
+            fromFirebase: false
+        };
+
+        // 🔥 NEW: Try Firebase first (cloud)
+        if (this.isFirebaseAvailable) {
+            try {
+                const firebaseData = await this.loadFromFirebase();
+                if (firebaseData) {
+                    loaded = {
+                        ...firebaseData,
+                        fromFirebase: true
+                    };
+                    console.log('✅ Loaded from Firebase');
+                }
+            } catch (e) {
+                console.warn('⚠️ Firebase load failed, trying localStorage:', e);
+            }
+        }
+
+        // If Firebase didn't have data, try localStorage
+        if (!loaded.profile) {
+            // Try user-specific profile
+            try {
+                const email = this.getCurrentUserEmail();
+                if (email) {
+                    const userKey = `${this.STORAGE_KEYS.PROFILE}-${email}`;
+                    const userProfile = localStorage.getItem(userKey);
+                    if (userProfile) {
+                        loaded.profile = JSON.parse(userProfile);
+                        console.log('✅ Loaded user-specific profile');
+                    }
+                }
+            } catch (e) {}
+
+            // Try primary storage
+            if (!loaded.profile) {
+                try {
+                    const savedProfile = localStorage.getItem(this.STORAGE_KEYS.PROFILE);
+                    if (savedProfile) {
+                        loaded.profile = JSON.parse(savedProfile);
+                        console.log('✅ Loaded from primary storage');
+                    }
+                } catch (e) {}
+            }
+
+            // Try backup
+            if (!loaded.profile) {
+                try {
+                    const backupProfile = localStorage.getItem(this.STORAGE_KEYS.PROFILE_BACKUP);
+                    if (backupProfile) {
+                        loaded.profile = JSON.parse(backupProfile);
+                        console.log('✅ Loaded from backup');
+                    }
+                } catch (e) {}
+            }
+
+            // Load settings
+            try {
+                const savedSettings = localStorage.getItem(this.STORAGE_KEYS.SETTINGS);
+                if (savedSettings) {
+                    loaded.settings = JSON.parse(savedSettings);
+                }
+            } catch (e) {}
+
+            // Load preferences
+            try {
+                const savedPrefs = localStorage.getItem(this.STORAGE_KEYS.USER_PREFS);
+                if (savedPrefs) {
+                    loaded.preferences = JSON.parse(savedPrefs);
+                }
+            } catch (e) {}
+        }
+
+        // Merge with defaults
+        this.mergeLoadedData(loaded);
+        
+        // 🔥 NEW: If we loaded from localStorage but Firebase is available, sync to Firebase
+        if (this.isFirebaseAvailable && loaded.profile && !loaded.fromFirebase) {
+            setTimeout(() => {
+                console.log('🔄 Syncing localStorage profile to Firebase...');
+                this.saveToFirebase();
+            }, 1000);
+        }
+    },
+
+    initializeDataStructure() {
+        // Ensure FarmModules.appData exists
+        if (!window.FarmModules) window.FarmModules = {};
+        if (!window.FarmModules.appData) window.FarmModules.appData = {};
+        if (!window.FarmModules.appData.profile) window.FarmModules.appData.profile = {};
+        if (!window.FarmModules.appData.settings) window.FarmModules.appData.settings = {};
+    },
+
+    mergeLoadedData(loaded) {
+        const defaultProfile = {
+            farmName: 'My Farm',
+            farmerName: 'Farm Manager',
+            email: this.getCurrentUserEmail() || '',
+            farmType: '',
+            farmLocation: '',
+            memberSince: new Date().toISOString(),
+            lastUpdated: new Date().toISOString()
+        };
+
+        const defaultSettings = {
+            currency: 'USD',
+            lowStockThreshold: 10,
+            autoSync: true,
+            localStorageEnabled: true,
+            theme: 'light',
+            notificationsEnabled: true,
+            emailReports: false,
+            dateFormat: 'MM/DD/YYYY',
+            timeFormat: '12h'
+        };
+
+        const defaultPreferences = {
+            defaultView: 'dashboard',
+            showQuickStats: true,
+            compactMode: false,
+            soundAlerts: false
+        };
+
+        // Merge profile
+        window.FarmModules.appData.profile = {
+            ...defaultProfile,
+            ...(loaded.profile || {}),
+            lastUpdated: new Date().toISOString()
+        };
+
+        // Merge settings
+        window.FarmModules.appData.settings = {
+            ...defaultSettings,
+            ...(loaded.settings || {})
+        };
+
+        // Merge preferences
+        window.FarmModules.appData.userPreferences = {
+            ...defaultPreferences,
+            ...(loaded.preferences || {})
+        };
+
+        // Also store farm name separately for quick access
+        if (window.FarmModules.appData.profile.farmName) {
+            localStorage.setItem('farm-last-name', window.FarmModules.appData.profile.farmName);
+        }
+
+        console.log('✅ Data merged with defaults');
+        console.log('📊 Current farm name:', window.FarmModules.appData.profile.farmName);
+    },
+
+    // ==================== SAVE PROFILE ====================
+    async handleSaveProfile() {
+        console.log('💾 Starting profile save - SINGLE ENTRY POINT');
+        
+        try {
+            // Small delay to ensure any paste/typing completes
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // Get current values directly
+            const farmNameInput = document.getElementById('farm-name');
+            const farmerNameInput = document.getElementById('farmer-name');
+            const emailInput = document.getElementById('farm-email');
+            const farmTypeInput = document.getElementById('farm-type');
+            const farmLocationInput = document.getElementById('farm-location');
+            
+            if (!farmNameInput) {
+                throw new Error('Farm name input not found');
+            }
+            
+            // Get CURRENT values
+            const farmName = farmNameInput.value.trim();
+            const farmerName = farmerNameInput?.value.trim();
+            const email = emailInput?.value.trim();
+            const farmType = farmTypeInput?.value;
+            const farmLocation = farmLocationInput?.value.trim();
+            
+            console.log('📝 SAVING farm name:', farmName);
+            
+            // Ensure profile exists
+            if (!window.FarmModules.appData.profile) {
+                window.FarmModules.appData.profile = {};
+            }
+            
+            const profile = window.FarmModules.appData.profile;
+            
+            // Update profile
+            profile.farmName = farmName || 'My Farm';
+            profile.farmerName = farmerName || 'Farm Manager';
+            profile.email = email || '';
+            profile.farmType = farmType || '';
+            profile.farmLocation = farmLocation || '';
+            profile.lastUpdated = new Date().toISOString();
+            
+            // Ensure persistence
+            profile.currency = profile.currency || 'USD';
+            profile.lowStockThreshold = profile.lowStockThreshold || 10;
+            profile.autoSync = profile.autoSync !== false;
+            profile.localStorageEnabled = profile.localStorageEnabled !== false;
+            profile.theme = profile.theme || 'light';
+            profile.memberSince = profile.memberSince || new Date().toISOString();
+            
+            // Update app data
+            window.FarmModules.appData.farmName = profile.farmName;
+            
+            console.log('📊 Profile to save:', profile);
+            
+            // Save to all persistence layers
+            await this.saveAllPersistedData();
+            
+            // Force immediate UI update
+            this.updateProfileDisplay(true);
+            
+            // Show success
+            this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
+            
+            // Notify other modules
+            window.dispatchEvent(new CustomEvent('farm-data-updated', {
+                detail: { farmName: profile.farmName }
+            }));
+            
+            console.log('✅ Profile saved successfully');
+            
+        } catch (error) {
+            console.error('❌ Error saving profile:', error);
+            this.showNotification('Error saving profile: ' + error.message, 'error');
+        }
+    },
+
+    // ==================== USER DATA MANAGEMENT ====================
+
+    getCurrentUserEmail() {
+        try {
+            // Try Firebase first
+            if (typeof firebase !== 'undefined' && firebase.auth()?.currentUser) {
+                return firebase.auth().currentUser.email;
+            }
+            
+            // Try localStorage
+            const userData = localStorage.getItem('farm-current-user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                return user.email;
+            }
+            
+            // Try profile data
+            if (window.FarmModules.appData.profile?.email) {
+                return window.FarmModules.appData.profile.email;
+            }
+            
+            return null;
+        } catch (e) {
+            console.error('Error getting user email:', e);
+            return null;
+        }
+    },
+
+    updateProfileDisplay(forceUpdate = false) {
+        console.log('🔄 Updating profile display...');
+        
+        const profile = window.FarmModules.appData.profile;
+        if (!profile) return;
+        
+        console.log('📊 Displaying profile name:', profile.farmName);
+        
+        // Update profile card
+        const farmNameCard = document.getElementById('profile-farm-name');
+        const farmerNameCard = document.getElementById('profile-farmer-name');
+        const emailCard = document.getElementById('profile-email');
+        
+        if (farmNameCard) {
+            farmNameCard.textContent = profile.farmName || 'My Farm';
+            console.log(`✅ Updated profile card to: "${profile.farmName}"`);
+        }
+        if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
+        if (emailCard) emailCard.textContent = profile.email || 'No email';
+        
+        // Update member since
+        const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+        document.getElementById('member-since').textContent = `Member since: ${memberSince}`;
+        
+        // Update form inputs
+        const farmNameInput = document.getElementById('farm-name');
+        const farmerNameInput = document.getElementById('farmer-name');
+        const emailInput = document.getElementById('farm-email');
+        const farmTypeInput = document.getElementById('farm-type');
+        const farmLocationInput = document.getElementById('farm-location');
+        
+        if (farmNameInput) {
+            farmNameInput.value = profile.farmName || '';
+            console.log(`✅ Set form input to: "${profile.farmName}"`);
+        }
+        if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
+        if (emailInput) emailInput.value = profile.email || '';
+        if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
+        if (farmLocationInput) farmLocationInput.value = profile.farmLocation || '';
+        
+        // Update settings
+        const settings = window.FarmModules.appData.settings || {};
+        
+        document.getElementById('default-currency').value = settings.currency || 'USD';
+        document.getElementById('low-stock-threshold').value = settings.lowStockThreshold || 10;
+        document.getElementById('auto-sync').checked = settings.autoSync !== false;
+        document.getElementById('local-storage').checked = settings.localStorageEnabled !== false;
+        
+        // Force light theme in selector
+        const themeSelector = document.getElementById('theme-selector');
+        if (themeSelector) {
+            themeSelector.value = settings.theme || 'light';
+            console.log('🌞 Theme selector set to:', settings.theme || 'light');
+        }
+        
+        console.log('✅ Profile display updated');
+    },
+
+    // ==================== SETTINGS ====================
+    async saveSetting(setting, value) {
+        try {
+            // Determine which category the setting belongs to
+            const settingsKeys = ['currency', 'lowStockThreshold', 'autoSync', 'localStorageEnabled', 'theme', 'notificationsEnabled', 'emailReports', 'dateFormat', 'timeFormat'];
+            const profileKeys = ['farmName', 'farmerName', 'email', 'farmType', 'farmLocation'];
+            
+            if (settingsKeys.includes(setting)) {
+                if (!window.FarmModules.appData.settings) {
+                    window.FarmModules.appData.settings = {};
+                }
+                window.FarmModules.appData.settings[setting] = value;
+            } else if (profileKeys.includes(setting)) {
+                window.FarmModules.appData.profile[setting] = value;
+            } else {
+                if (!window.FarmModules.appData.userPreferences) {
+                    window.FarmModules.appData.userPreferences = {};
+                }
+                window.FarmModules.appData.userPreferences[setting] = value;
+            }
+            
+            await this.saveAllPersistedData();
+            this.showNotification(`${setting} updated`, 'success');
+        } catch (error) {
+            console.error('Error saving setting:', error);
+            this.showNotification('Error saving setting', 'error');
+        }
+    },
+
+    changeTheme(theme) {
+        // Force light theme
+        if (theme === 'dark' || theme === 'auto') {
+            this.showNotification('Dark mode is disabled. Using light theme.', 'info');
+            theme = 'light';
+            
+            // Update selector
+            const themeSelector = document.getElementById('theme-selector');
+            if (themeSelector) {
+                themeSelector.value = 'light';
+            }
+        }
+        
+        if (window.StyleManager) {
+            window.StyleManager.applyTheme(theme);
+            this.saveSetting('theme', theme);
+            this.showNotification(`Theme changed to ${theme}`, 'success');
+        }
+    },
+
+    // ==================== LOGOUT WITH PERSISTENCE ====================
+
+    async performLogout() {
+        console.log('🚪 Starting logout process WITH PERSISTENCE...');
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        const originalHTML = logoutBtn?.innerHTML || '';
+        
+        try {
+            // Disable button and show loading
+            if (logoutBtn) {
+                logoutBtn.disabled = true;
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+            }
+            
+            // 🔥 CRITICAL: SAVE PROFILE DATA BEFORE LOGOUT
+            console.log('💾 Backing up profile data before logout...');
+            await this.saveAllPersistedData(); // Make sure data is saved to Firebase too
+            
+            // Save last user info for next login
+            const userEmail = this.getCurrentUserEmail();
+            if (userEmail) {
+                localStorage.setItem(this.STORAGE_KEYS.LAST_USER, userEmail);
+            }
+            
+            // 1. Firebase logout
+            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
+                console.log('🔥 Attempting Firebase logout...');
+                try {
+                    await firebase.auth().signOut();
+                    console.log('✅ Firebase logout successful');
+                } catch (firebaseError) {
+                    console.warn('⚠️ Firebase logout error:', firebaseError.message);
+                }
+            }
+            
+            // 2. Clear ONLY authentication/session data, NOT profile data
+            console.log('🧹 Clearing authentication data ONLY...');
+            this.clearAuthenticationDataOnly();
+            
+            // 3. Show success message
+            this.showNotification('Logged out successfully! Data preserved.', 'success');
+            
+            // 4. Reset button
+            if (logoutBtn) {
+                logoutBtn.innerHTML = '<i class="fas fa-check"></i> Logged out!';
+                logoutBtn.style.background = '#10b981';
+            }
+            
+            // 5. Redirect to home/login page
+            console.log('🔄 Redirecting...');
+            setTimeout(() => {
+                window.location.href = window.location.origin + window.location.pathname;
+            }, 1500);
+            
+        } catch (error) {
+            console.error('❌ Logout process error:', error);
+            
+            if (logoutBtn) {
+                logoutBtn.innerHTML = originalHTML;
+                logoutBtn.disabled = false;
+            }
+            
+            this.showNotification('Logout failed: ' + error.message, 'error');
+        }
+    },
+
+    clearAuthenticationDataOnly() {
+        console.log('🔐 Clearing authentication data only...');
+        
+        const keysToRemove = [];
+        
+        // Scan localStorage and categorize keys
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            
+            // Keys to REMOVE (authentication/session data)
+            if (key?.includes('firebase:auth')) {
+                keysToRemove.push(key);
+            } else if (key?.includes('firebaseuser')) {
+                keysToRemove.push(key);
+            } else if (key === 'firebase:host' || key === 'firebase:authUser') {
+                keysToRemove.push(key);
+            } else if (key === 'farm-current-user') {
+                keysToRemove.push(key);
+            } else if (key?.includes('session')) {
+                keysToRemove.push(key);
+            } else if (key?.includes('token')) {
+                keysToRemove.push(key);
+            }
+        }
+        
+        console.log('🗑️ Removing authentication keys:', keysToRemove);
+        
+        // Remove only authentication keys
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+        });
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        console.log('✅ Authentication cleared, profile data preserved');
+    },
+
+    // ==================== SYNC ====================
+    async syncNow() {
+        const syncStatus = document.getElementById('sync-status');
+        if (syncStatus) syncStatus.textContent = '🔄 Syncing...';
+
+        try {
+            await this.saveAllPersistedData();
+            
+            this.showNotification('Data synchronized!', 'success');
+            if (syncStatus) syncStatus.textContent = '✅ Synced';
+
+            setTimeout(() => {
+                if (syncStatus) syncStatus.textContent = '💾 Local';
+            }, 3000);
+
+        } catch (error) {
+            console.error('Sync error:', error);
+            this.showNotification('Sync failed', 'error');
+            if (syncStatus) syncStatus.textContent = '❌ Failed';
+        }
+    },
 
     // ==================== MAIN RENDER ====================
     renderModule() {
@@ -2039,7 +2713,7 @@ Generated on: ${new Date().toLocaleString()}
 // ==================== REGISTRATION ====================
 if (window.FarmModules) {
     window.FarmModules.registerModule('profile', ProfileModule);
-    console.log('✅ Profile module registered with all fixes');
+    console.log('✅ Profile module registered with Firebase persistence');
 }
 
 // 🔥 QUICK FIX FOR LOGOUT BUTTON - Run this in console if needed
