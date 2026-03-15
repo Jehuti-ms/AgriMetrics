@@ -23,7 +23,7 @@ class FarmManagementApp {
         console.log('✅ Initializing app...');
         
         // Show loading screen
-       // this.showLoading();
+           this.showLoading();
         
         // Setup Firebase auth listener FIRST
         await this.setupAuthListener();
@@ -413,7 +413,7 @@ class FarmManagementApp {
         console.log('🏠 App container shown');
     }
 
-  /* showLoading() {
+    showLoading() {
     if (!document.getElementById('app-loading')) {
         const loadingDiv = document.createElement('div');
         loadingDiv.id = 'app-loading';
@@ -433,6 +433,7 @@ class FarmManagementApp {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                overflow: hidden;
             ">
                 <div style="
                     width: 50px;
@@ -441,17 +442,17 @@ class FarmManagementApp {
                     border-top: 5px solid #4CAF50;
                     border-radius: 50%;
                     animation: spin 1s linear infinite;
-                    margin-bottom: 20px;
-                    transform: translate(0, 0); 
+                    margin: 0 auto 20px auto;
+                    display: block;
                 "></div>
-                <div style="color: #666; font-size: 16px; text-align: center;">Loading AgriMetrics...</div>
+                <div style="color: #666; font-size: 16px; text-align: center; width: 100%;">Loading AgriMetrics...</div>
             </div>
         `;
         document.body.appendChild(loadingDiv);
     } else {
         document.getElementById('app-loading').style.display = 'flex';
     }
-} */
+},
     
     hideLoading() {
         const loadingDiv = document.getElementById('app-loading');
@@ -934,7 +935,7 @@ class FarmManagementApp {
         console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
         
         try {
-           // this.showLoading();
+            this.showLoading();
             
             this.closeSideMenu();
             
