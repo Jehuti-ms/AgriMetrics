@@ -170,7 +170,7 @@ const StyleManager = {
 
 
     // Add this method to your StyleManager
-/*applyAuthCentering: function() {
+applyAuthCentering: function() {
     console.log('🎯 Applying auth centering fixes');
     
     // Create a style element for auth centering
@@ -192,14 +192,14 @@ const StyleManager = {
             z-index: 99999 !important;
         }
 
-        /* Show with perfect centering 
+        /* Show with perfect centering */
         #auth-container.active {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
         }
 
-        /* Auth forms container - perfectly centered 
+        /* Auth forms container - perfectly centered */
         .auth-forms {
             background: white !important;
             border-radius: 16px !important;
@@ -213,7 +213,7 @@ const StyleManager = {
             position: relative !important;
         }
 
-        /* Individual forms 
+        /* Individual forms */
         .auth-form {
             display: none !important;
             width: 100% !important;
@@ -223,7 +223,7 @@ const StyleManager = {
             display: block !important;
         }
 
-        /* Fix html/body 
+        /* Fix html/body */
         html, body {
             margin: 0 !important;
             padding: 0 !important;
@@ -232,7 +232,7 @@ const StyleManager = {
             
         }
 
-        /* Mobile responsiveness 
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .auth-forms {
                 padding: 30px 25px !important;
@@ -249,7 +249,7 @@ const StyleManager = {
             }
         }
 
-        /* For very short screens 
+        /* For very short screens */
         @media (max-height: 600px) {
             .auth-forms {
                 max-height: 95vh !important;
