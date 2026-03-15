@@ -337,7 +337,7 @@ const ProductionModule = {
         if (savedData) {
             this.productionData = JSON.parse(savedData);
         } else {
-            this.productionData = this.getDemoData();
+            this.productionData = [];
             this.saveData();
         }
         console.log('📊 Loaded production data:', this.productionData.length, 'records');
@@ -575,60 +575,7 @@ const ProductionModule = {
         }
     },
 
-    getDemoData() {
-        const today = new Date().toISOString().split('T')[0];
-        
-        const getPreviousDate = (daysAgo) => {
-            const date = new Date();
-            date.setDate(date.getDate() - daysAgo);
-            return date.toISOString().split('T')[0];
-        };
-        
-        return [
-            { 
-                id: 1, 
-                date: today,
-                product: 'eggs', 
-                quantity: 450, 
-                unit: 'pieces', 
-                quality: 'grade-a', 
-                batch: 'BATCH-001',
-                notes: 'Morning collection' 
-            },
-            { 
-                id: 2, 
-                date: getPreviousDate(1),
-                product: 'broilers', 
-                quantity: 150, 
-                unit: 'birds',
-                quality: 'grade-a', 
-                batch: 'BATCH-002',
-                notes: 'Weekly harvest' 
-            },
-            { 
-                id: 3, 
-                date: getPreviousDate(2),
-                product: 'tomatoes', 
-                quantity: 120, 
-                unit: 'kg', 
-                quality: 'grade-a', 
-                batch: 'BATCH-003',
-                notes: 'Greenhouse harvest' 
-            },
-            { 
-                id: 4, 
-                date: getPreviousDate(3),
-                product: 'milk', 
-                quantity: 120, 
-                unit: 'liters', 
-                quality: 'grade-b', 
-                batch: 'BATCH-004',
-                notes: 'Morning milking' 
-            }
-        ];
-    },
-
-    renderModule() {
+   renderModule() {
         if (!this.element) return;
 
         this.element.innerHTML = `
