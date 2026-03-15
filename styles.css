@@ -4567,5 +4567,12 @@ body.dark-mode {
     }
 }*/
 
+/* Hide all spinners except your good one */
+.spinner:not(#capture-loading-overlay *),
+.loader:not(#capture-loading-overlay *),
+[class*="spinner"]:not(#capture-loading-overlay *),
+[class*="loader"]:not(#capture-loading-overlay *) {
+    display: none !important;
+}
 
 
