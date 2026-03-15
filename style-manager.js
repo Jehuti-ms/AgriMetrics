@@ -200,7 +200,7 @@ const StyleManager = {
         }
 
         /* Auth forms container - perfectly centered */
-        .auth-forms {
+    /*    .auth-forms {
             background: white !important;
             border-radius: 16px !important;
             padding: 40px !important;
