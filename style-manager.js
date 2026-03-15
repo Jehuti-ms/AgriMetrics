@@ -170,7 +170,7 @@ const StyleManager = {
 
 
     // Add this method to your StyleManager
-applyAuthCentering: function() {
+/*applyAuthCentering: function() {
     console.log('🎯 Applying auth centering fixes');
     
     // Create a style element for auth centering
@@ -193,7 +193,7 @@ applyAuthCentering: function() {
         }
 
         /* Show with perfect centering */
-        #auth-container.active {
+        /*#auth-container.active {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -214,7 +214,7 @@ applyAuthCentering: function() {
         }
 
         /* Individual forms */
-        .auth-form {
+      /*  .auth-form {
             display: none !important;
             width: 100% !important;
         }
@@ -224,7 +224,7 @@ applyAuthCentering: function() {
         }
 
         /* Fix html/body */
-        html, body {
+   /*     html, body {
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
@@ -233,7 +233,7 @@ applyAuthCentering: function() {
         }
 
         /* Mobile responsiveness */
-        @media (max-width: 768px) {
+       /* @media (max-width: 768px) {
             .auth-forms {
                 padding: 30px 25px !important;
                 width: 95% !important;
@@ -250,7 +250,7 @@ applyAuthCentering: function() {
         }
 
         /* For very short screens */
-        @media (max-height: 600px) {
+       /* @media (max-height: 600px) {
             .auth-forms {
                 max-height: 95vh !important;
                 padding: 20px !important;
@@ -261,6 +261,8 @@ applyAuthCentering: function() {
     document.head.appendChild(style);
     console.log('✅ Auth centering styles applied');
 }, */
+
+
     /**
      * Initialize the StyleManager
      */
