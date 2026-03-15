@@ -4614,7 +4614,7 @@ body.dark-mode {
 /* ===== SIGNIN CENTERING FIX ===== */
 
 /* Auth container - full screen flexbox */
-/*#auth-container {
+#auth-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -4626,14 +4626,14 @@ body.dark-mode {
 }
 
 /* Show with perfect centering */
-/*#auth-container.active {
+#auth-container.active {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
 /* Auth forms container */
-/*.auth-forms {
+.auth-forms {
     background: white !important;
     border-radius: 16px !important;
     padding: 40px !important;
@@ -4646,7 +4646,7 @@ body.dark-mode {
 }
 
 /* Individual forms */
-/*.auth-form {
+.auth-form {
     display: none !important;
     width: 100% !important;
 }
@@ -4656,7 +4656,7 @@ body.dark-mode {
 }
 
 /* Mobile responsiveness */
-/*@media (max-width: 768px) {
+@media (max-width: 768px) {
     .auth-forms {
         padding: 30px 25px !important;
         width: 95% !important;
@@ -4670,12 +4670,12 @@ body.dark-mode {
         width: 100% !important;
         margin: 0 16px !important;
     }
-} */
+} 
 
 /* For very short screens */
-/*@media (max-height: 600px) {
+@media (max-height: 600px) {
     .auth-forms {
         max-height: 95vh !important;
         padding: 20px !important;
     }
-}*/
+}
