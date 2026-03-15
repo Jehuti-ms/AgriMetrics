@@ -229,7 +229,7 @@ const StyleManager = {
             padding: 0 !important;
             width: 100% !important;
             height: 100% !important;
-            overflow-x: hidden !important;
+            
         }
 
         /* Mobile responsiveness 
