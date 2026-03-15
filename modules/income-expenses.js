@@ -1664,6 +1664,7 @@ switchCamera: function() {
 
     // Capture photo standard cropper using library
 // Update your capturePhoto function
+// Update your capturePhoto function
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
@@ -1715,13 +1716,20 @@ capturePhoto: function() {
         // Ask if user wants to crop
         setTimeout(() => {
             if (confirm('Would you like to crop this photo?')) {
-                // CRITICAL: Stop camera first
+                // CRITICAL: Completely remove camera elements
                 this.stopCamera();
                 
-                // COMPLETELY REMOVE the camera section from DOM
+                // Remove camera section completely
                 const cameraSection = document.getElementById('camera-section');
                 if (cameraSection) {
-                    cameraSection.remove(); // This removes it completely
+                    cameraSection.remove(); // This removes it from DOM entirely
+                }
+                
+                // Also remove any lingering video elements
+                if (video) {
+                    video.srcObject = null;
+                    video.removeAttribute('src');
+                    video.load();
                 }
                 
                 // Hide the import modal
@@ -1735,7 +1743,7 @@ capturePhoto: function() {
                 setTimeout(() => {
                     // Show cropper
                     this.showStandardCropper(file);
-                }, 50);
+                }, 100);
             } else {
                 this.saveReceiptFromFile(file, imageUrl);
             }
@@ -1800,19 +1808,27 @@ cropperLibraryLoaded: false,
 showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
     
-    // Force hide camera and modal
+    // Force remove ALL camera elements first
     const cameraSection = document.getElementById('camera-section');
     if (cameraSection) {
         cameraSection.remove();
     }
     
+    // Also remove any stray video elements
+    const video = document.getElementById('camera-preview');
+    if (video) {
+        video.srcObject = null;
+        video.remove();
+    }
+    
     const importModal = document.getElementById('import-receipts-modal');
     if (importModal) {
         importModal.style.display = 'none';
+        importModal.classList.add('hidden');
     }
     
     this.stopCamera();
-    this.currentImageFile = file;
+    this.currentImageFile = file
     
     const reader = new FileReader();
     reader.onload = (e) => {
