@@ -314,66 +314,26 @@ const OrdersModule = {
     },
 
     // Enhanced loadData
-    loadData() {
-        const savedOrders = localStorage.getItem('farm-orders');
-        const savedCustomers = localStorage.getItem('farm-customers');
-        
-        this.orders = savedOrders ? JSON.parse(savedOrders) : this.getDemoOrders();
-        this.customers = savedCustomers ? JSON.parse(savedCustomers) : this.getDemoCustomers();
-        
-        // Always ensure we have at least the demo customers if none exist
-        if (this.customers.length === 0) {
-            this.customers = this.getDemoCustomers();
-            this.saveData();
-        }
-        
-        // Broadcast data loaded
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('orders-data-loaded', {
-                module: 'orders',
-                timestamp: new Date().toISOString(),
-                ordersCount: this.orders.length,
-                customersCount: this.customers.length
-            });
-        }
-    },
-
-    // getDemoOrders method
-    getDemoOrders() {
-        return [
-            {
-                id: 1,
-                customerId: 1,
-                date: '2024-03-15',
-                items: [
-                    { productId: 'eggs', productName: 'Fresh Eggs', quantity: 50, price: 0.25 }
-                ],
-                totalAmount: 12.50,
-                status: 'completed',
-                notes: 'Regular weekly order'
-            },
-            {
-                id: 2,
-                customerId: 2,
-                date: '2024-03-14',
-                items: [
-                    { productId: 'broilers', productName: 'Broiler Chickens', quantity: 10, price: 8.50 }
-                ],
-                totalAmount: 85.00,
-                status: 'pending',
-                notes: 'New restaurant client'
-            }
-        ];
-    },
-
-    // getDemoCustomers method
-    getDemoCustomers() {
-        return [
-            { id: 1, name: 'Local Market', contact: '555-0123', address: '123 Main St', email: 'market@local.com' },
-            { id: 2, name: 'Restaurant A', contact: '555-0456', address: '456 Oak Ave', email: 'orders@restauranta.com' },
-            { id: 3, name: 'Grocery Store B', contact: '555-0789', address: '789 Pine St', email: 'produce@grocerystore.com' }
-        ];
-    },
+   loadData() {
+    const savedOrders = localStorage.getItem('farm-orders');
+    const savedCustomers = localStorage.getItem('farm-customers');
+    
+    // Load from localStorage or start with empty arrays
+    this.orders = savedOrders ? JSON.parse(savedOrders) : [];
+    this.customers = savedCustomers ? JSON.parse(savedCustomers) : [];
+    
+    // Don't add demo customers automatically - let user add their own
+    
+    // Broadcast data loaded
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('orders-data-loaded', {
+            module: 'orders',
+            timestamp: new Date().toISOString(),
+            ordersCount: this.orders.length,
+            customersCount: this.customers.length
+        });
+    }
+},
 
     // Theme change handler
     onThemeChange(theme) {
