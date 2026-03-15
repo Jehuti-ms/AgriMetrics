@@ -4611,39 +4611,29 @@ body.dark-mode {
     50% { transform: scale(1.05); }
 }
 
-/* ===== ULTIMATE AUTH CENTERING FIX ===== */
-/* (your auth centering code here) */
+/* ===== SIGNIN CENTERING FIX ===== */
 
-/* ===== ULTIMATE AUTH CENTERING FIX ===== */
-
-/* Override ALL existing styles */
-#auth-container,
-body #auth-container,
-html body #auth-container,
-#auth-container.active,
-body #auth-container.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+/* Auth container - full screen flexbox */
+#auth-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%) !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    z-index: 999999 !important;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20) !important;
+    display: none !important;
+    z-index: 999998 !important; /* Just below splash screen */
 }
 
-/* Force remove any inline display style */
-#auth-container[style*="display: block"] {
+/* Show with perfect centering */
+#auth-container.active {
     display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* Auth forms container */
-.auth-forms,
-body .auth-forms {
+.auth-forms {
     background: white !important;
     border-radius: 16px !important;
     padding: 40px !important;
@@ -4653,19 +4643,19 @@ body .auth-forms {
     overflow-y: auto !important;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
     margin: 0 auto !important;
-    position: relative !important;
 }
 
-/* Fix html/body - REMOVED overflow: hidden */
-html, body {
-    margin: 0 !important;
-    padding: 0 !important;
+/* Individual forms */
+.auth-form {
+    display: none !important;
     width: 100% !important;
-    height: 100% !important;
-    /* overflow: hidden !important;  <- REMOVED THIS LINE */
 }
 
-/* Mobile */
+.auth-form.active {
+    display: block !important;
+}
+
+/* Mobile responsiveness */
 @media (max-width: 768px) {
     .auth-forms {
         padding: 30px 25px !important;
@@ -4679,5 +4669,13 @@ html, body {
         border-radius: 12px !important;
         width: 100% !important;
         margin: 0 16px !important;
+    }
+}
+
+/* For very short screens */
+@media (max-height: 600px) {
+    .auth-forms {
+        max-height: 95vh !important;
+        padding: 20px !important;
     }
 }
