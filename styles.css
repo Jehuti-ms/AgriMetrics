@@ -4567,99 +4567,56 @@ body.dark-mode {
     }
 }*/
 
-/* ===== ABSOLUTE CENTERING FOR AUTH SCREEN ===== */
-
-/* Force full-screen container 
-#auth-container {
+/* ===== SPLASH SCREEN PROTECTION ===== */
+#splash-screen {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
-    display: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    z-index: 9998 !important;
-}
-
-/* Show with flexbox centering 
-#auth-container.active {
+    background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%) !important;
+    z-index: 9999999 !important; /* Higher than auth container */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    transition: opacity 0.5s ease, visibility 0.5s ease !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-/* Auth forms container - perfectly centered 
-.auth-forms {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    width: 90%;
-    max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    
-    /* Remove any margins/padding that could affect centering 
-    margin: 0 auto !important;
-    position: relative !important;
-    
-    /* Reset any transforms 
-    transform: none !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
+#splash-screen.hidden,
+#splash-screen:not(.active) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
-/* Individual forms 
-.auth-form {
-    display: none;
-    width: 100%;
+.splash-logo {
+    text-align: center !important;
+    padding: 40px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 24px !important;
+    animation: splashPulse 2s infinite ease-in-out !important;
 }
 
-.auth-form.active {
-    display: block;
+.splash-logo img {
+    width: 400px !important;
+    max-width: 90% !important;
+    height: auto !important;
 }
 
-/* Fix any potential body/html issues 
-html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
-/* Mobile responsiveness 
-@media (max-width: 768px) {
-    .auth-forms {
-        padding: 30px 25px;
-        width: 95%;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-forms {
-        padding: 25px 20px;
-        border-radius: 12px;
-        width: 100%;
-        margin: 0 16px !important;
-    }
-}
-
-/* For very short screens 
-@media (max-height: 600px) {
-    .auth-forms {
-        max-height: 95vh;
-        padding: 20px;
-    }
+@keyframes splashPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 /* ===== ULTIMATE AUTH CENTERING FIX ===== */
+/* (your auth centering code here) */
 
-/* Override ALL existing styles 
+/* ===== ULTIMATE AUTH CENTERING FIX ===== */
+
+/* Override ALL existing styles */
 #auth-container,
 body #auth-container,
 html body #auth-container,
@@ -4677,17 +4634,14 @@ body #auth-container.active {
     margin: 0 !important;
     padding: 0 !important;
     z-index: 999999 !important;
-    
-    /* Remove any inline styles 
-    style: all !important;
 }
 
-/* Force remove any inline display style 
+/* Force remove any inline display style */
 #auth-container[style*="display: block"] {
     display: flex !important;
 }
 
-/* Auth forms container 
+/* Auth forms container */
 .auth-forms,
 body .auth-forms {
     background: white !important;
@@ -4700,23 +4654,18 @@ body .auth-forms {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
     margin: 0 auto !important;
     position: relative !important;
-    transform: none !important;
-    top: auto !important;
-    left: auto !important;
-    right: auto !important;
-    bottom: auto !important;
 }
 
-/* Fix html/body 
+/* Fix html/body - REMOVED overflow: hidden */
 html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    overflow: hidden !important;
+    /* overflow: hidden !important;  <- REMOVED THIS LINE */
 }
 
-/* Mobile 
+/* Mobile */
 @media (max-width: 768px) {
     .auth-forms {
         padding: 30px 25px !important;
@@ -4732,80 +4681,3 @@ html, body {
         margin: 0 16px !important;
     }
 }
-
-/* ===== EMERGENCY AUTH CENTERING ===== */
-
-/* Auth Container - Full screen 
-#auth-container,
-body #auth-container {
-    /* DON'T use all: initial - it's too aggressive */
-    
-    /* Force full screen 
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    
-    /* Gradient background 
-    background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20) !important;
-    
-    /* Centering 
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 999999 !important;
-    
-    /* Reset only what's needed 
-    margin: 0 !important;
-    padding: 0 !important;
-    box-sizing: border-box !important;
-}
-
-/* Center the auth forms 
-.auth-forms,
-body .auth-forms {
-    background: white !important;
-    border-radius: 16px !important;
-    padding: 40px !important;
-    width: 90% !important;
-    max-width: 420px !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
-    margin: 0 auto !important;
-}
-
-/* Hide other auth forms 
-.auth-form {
-    display: none !important;
-}
-
-.auth-form.active {
-    display: block !important;
-}
-
-/* Mobile adjustments 
-@media (max-width: 768px) {
-    .auth-forms {
-        width: 95% !important;
-        padding: 30px 25px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-forms {
-        width: 100% !important;
-        padding: 25px 20px !important;
-        border-radius: 12px !important;
-    }
-}
-
-/* Fix html/body - DON'T reset everything */
-/* html, body {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-} */
-
