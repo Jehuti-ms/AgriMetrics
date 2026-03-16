@@ -112,6 +112,81 @@ body {
     flex-direction: column !important;
 }
 
+/* ===== AUTH CONTAINER ===== */
+#auth-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    padding: 1rem;
+}
+
+.auth-forms {
+    background: var(--surface-color);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+}
+
+.auth-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
 /* ===== SOCIAL MEDIA LOGIN ===== */
 .btn-social {
     display: flex;
@@ -398,6 +473,24 @@ header {
     transform: scale(1.05) !important;
 }
 
+/* ========== SIDE MENU ========= */
+/*#side-menu {
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 80px) !important;
+    background: var(--surface-color) !important;
+    border-left: 1px solid var(--border-color) !important;
+    transform: translateX(280px) !important;
+    transition: transform 0.3s ease !important;
+    z-index: 10001 !important;
+    overflow-y: auto !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1) !important;
+} */
 
 #side-menu {
   position: fixed;          /* lock to viewport */
@@ -1793,6 +1886,95 @@ header {
     transform: translateY(0);
 }
 
+/* ===== SPLASH SCREEN STYLING ===== */
+#splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#splash-screen.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.splash-logo {
+  animation: splashPulse 2s infinite ease-in-out;
+  text-align: center;
+}
+
+.splash-logo img {
+  max-width: 400px;
+  width: 80%;
+  height: auto;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes splashPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Hide splash screen after animation */
+#splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ===== AUTH CONTAINER ===== */
+#auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#auth-container.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.auth-forms {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+#auth-container.active .auth-forms {
+  transform: translateY(0);
+  opacity: 1;
+}
+
 /* Remember me checkbox styling */
 #remember-me {
     width: 16px;
@@ -1870,6 +2052,202 @@ body.auth-visible #auth-container {
   display: flex !important;
 }
 
+/* ============== Splash Screen ============= */
+/* Simple Splash Screen */
+/*#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+} */
+/* SPLASH SCREEN - Updated to match app styling */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,      /* Primary green from your app */
+        #2E7D32 25%,     /* Darker green */
+        #1B5E20 50%,     /* Forest green */
+        #0D47A1 100%     /* Deep blue accent */
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+}
+
+#splash-screen.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.splash-logo {
+    text-align: center;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    animation: logoFloat 3s ease-in-out infinite;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.splash-logo img {
+    width: 400px;
+    height: auto;
+    max-width: 90%;
+    filter: 
+        drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4))
+        brightness(1.1);
+    transition: transform 0.5s ease;
+}
+
+/* Animation for the logo */
+@keyframes logoFloat {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.1),
+            inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    }
+    50% {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 
+            0 30px 60px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.15),
+            inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    }
+}
+
+/* Loading animation */
+.splash-logo::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgba(76, 175, 80, 0) 0%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(76, 175, 80, 0) 100%
+    );
+    margin: 30px auto 0;
+    border-radius: 2px;
+    animation: loadingBar 2s ease-in-out infinite;
+}
+
+@keyframes loadingBar {
+    0%, 100% {
+        transform: scaleX(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scaleX(1.2);
+        opacity: 1;
+    }
+}
+
+/* Subtle background pattern */
+#splash-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(29, 233, 182, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(41, 121, 255, 0.1) 0%, transparent 50%);
+    animation: backgroundPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes backgroundPulse {
+    0% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
+
+/* Hide splash screen smoothly */
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Fade out animation */
+#splash-screen.fade-out {
+    animation: splashFadeOut 0.5s ease-out forwards;
+}
+
+@keyframes splashFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .splash-logo {
+        padding: 30px 20px;
+        border-radius: 20px;
+    }
+    
+    .splash-logo img {
+        width: 300px;
+    }
+    
+    @keyframes logoFloat {
+        0%, 100% {
+            transform: translateY(0) scale(1);
+        }
+        50% {
+            transform: translateY(-5px) scale(1.01);
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .splash-logo {
+        padding: 20px 15px;
+        border-radius: 16px;
+    }
+    
+    .splash-logo img {
+        width: 250px;
+    }
+    
+    .splash-logo::after {
+        width: 40px;
+        height: 3px;
+        margin-top: 20px;
+    }
+}
 
 /* ======== Remember me checkbox styling =========== */
 #remember-me {
@@ -1896,6 +2274,84 @@ body.auth-visible #auth-container {
 #remember-me:checked + span {
     color: #667eea;
     font-weight: 500;
+}
+
+/* =========== Display States for Auth ========== */
+/* Add to styles.css */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+#splash-screen.active {
+    display: flex;
+}
+
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+}
+
+#auth-container.active {
+    display: flex;
+}
+
+#app-container {
+    display: none; /* Hidden by default */
+}
+
+#app-container:not(.hidden) {
+    display: block;
+}
+
+/* Make signup form container scrollable */
+#signup-form .auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 30px; /* Reduced padding for more space */
+    width: 90%;
+    max-width: 420px;
+    max-height: 85vh; /* Slightly taller than other forms */
+    overflow-y: auto; /* Enable scrolling */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Regular auth forms (signin, forgot password) */
+#signin-form .auth-forms,
+#forgot-password-form .auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 90%;
+    max-width: 420px;
+    overflow: visible; /* No scrolling for shorter forms */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 /* Custom scrollbar for signup form */
@@ -1928,6 +2384,256 @@ body.auth-visible #auth-container {
         max-height: 80vh;
         padding: 20px 25px;
     }
+}
+
+/* ===== AUTH CONTAINER CENTERING FIX ===== */
+
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: auto; /* Allow scrolling if needed */
+}
+
+#auth-container.active {
+    display: flex;
+}
+
+/* Force flexbox centering */
+#auth-container.active {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Auth forms wrapper - FIXED CENTERING */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    
+    /* Perfect centering */
+    margin: auto !important;
+    align-self: center !important;
+    
+    /* Remove any transform that might affect positioning */
+    transform: none !important;
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .auth-forms {
+        padding: 50px;
+        max-width: 450px;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .auth-forms {
+        padding: 30px 25px;
+        max-height: 85vh;
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 25px 20px;
+        max-height: 90vh;
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    #auth-container {
+        padding: 10px;
+    }
+}
+
+/* Emergency centering fix - if nothing else works */
+.auth-forms.force-center {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+}
+
+/* Debug border (remove in production) */
+#auth-container.debug {
+    border: 2px solid red;
+}
+
+.auth-forms.debug {
+    border: 2px solid blue;
+}
+
+/* ===== SPLASH SCREEN ===== */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Hide splash when not active */
+#splash-screen:not(.active) {
+    display: none;
+}
+
+/* ===== AUTH CONTAINER CENTERING FIX ===== */
+
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: auto; /* Allow scrolling if needed */
+}
+
+#auth-container.active {
+    display: flex;
+}
+
+/* Force flexbox centering */
+#auth-container.active {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Auth forms wrapper - FIXED CENTERING */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    
+    /* Perfect centering */
+    margin: auto !important;
+    align-self: center !important;
+    
+    /* Remove any transform that might affect positioning */
+    transform: none !important;
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .auth-forms {
+        padding: 50px;
+        max-width: 450px;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .auth-forms {
+        padding: 30px 25px;
+        max-height: 85vh;
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 25px 20px;
+        max-height: 90vh;
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    #auth-container {
+        padding: 10px;
+    }
+}
+
+/* Emergency centering fix - if nothing else works */
+.auth-forms.force-center {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+}
+
+/* Debug border (remove in production) */
+#auth-container.debug {
+    border: 2px solid red;
+}
+
+.auth-forms.debug {
+    border: 2px solid blue;
+}
+
+/* ===== SPLASH SCREEN ===== */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Hide splash when not active */
+#splash-screen:not(.active) {
+    display: none;
 }
 
 /* ========== Dark Mode Fix =========== */
@@ -2899,6 +3605,7 @@ body.dark-mode {
 }
 
 /* ===== CAPTURE BUTTONS TEXT FLOW FIX ===== */
+
 /* Base styles for camera controls */
 .camera-controls {
     display: flex;
@@ -3031,6 +3738,7 @@ body.dark-mode {
 }
 
 /* ===== ICON-ONLY FALLBACK ===== */
+
 /* If text is still overflowing, show icon only */
 @media (max-width: 280px) {
     .camera-controls {
@@ -3821,672 +4529,41 @@ body.dark-mode {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Mini Sync Status - Won't break layout */
+/*.sync-status-mini {
+    font-size: 11px;
+    margin-top: 5px;
+    padding: 2px 0;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}*/
 
-/* ===== SPLASH SCREEN - YOUR ORIGINAL VERSION WITH ANIMATION ===== */
-#splash-screen {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,
-        #2E7D32 25%,
-        #1B5E20 50%,
-        #0D47A1 100%
-    ) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 9999 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out !important;
+/* Optional hover effect for sync button */
+/*#agrimetrics-sync-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(33,150,243,0.4);
 }
 
-/* Hidden state */
-#splash-screen.hidden {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
+#agrimetrics-sync-button:active {
+    transform: translateY(0);
 }
 
-/* Logo container with animation */
-.splash-logo {
-    text-align: center !important;
-    padding: 40px !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    border-radius: 24px !important;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
-    animation: logoFloat 3s ease-in-out infinite !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-}
-
-/* Logo image */
-.splash-logo img {
-    width: 400px !important;
-    max-width: 90% !important;
-    height: auto !important;
-    filter: 
-        drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4))
-        brightness(1.1) !important;
-}
-
-/* Float animation */
-@keyframes logoFloat {
-    0%, 100% {
-        transform: translateY(0) scale(1);
-        box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.1),
-            inset 0 1px 1px rgba(255, 255, 255, 0.2);
-    }
-    50% {
-        transform: translateY(-10px) scale(1.02);
-        box-shadow: 
-            0 30px 60px rgba(0, 0, 0, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.15),
-            inset 0 1px 1px rgba(255, 255, 255, 0.3);
-    }
-}
-
-/* Loading bar animation */
-.splash-logo::after {
-    content: '' !important;
-    display: block !important;
-    width: 60px !important;
-    height: 4px !important;
-    background: linear-gradient(90deg, 
-        rgba(76, 175, 80, 0) 0%,
-        rgba(255, 255, 255, 0.8) 50%,
-        rgba(76, 175, 80, 0) 100%
-    ) !important;
-    margin: 30px auto 0 !important;
-    border-radius: 2px !important;
-    animation: loadingBar 2s ease-in-out infinite !important;
-}
-
-/* Loading bar animation */
-@keyframes loadingBar {
-    0%, 100% {
-        transform: scaleX(0.8);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scaleX(1.2);
-        opacity: 1;
-    }
-}
-
-/* Background pattern animation */
-#splash-screen::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    background-image: 
-        radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(29, 233, 182, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(41, 121, 255, 0.1) 0%, transparent 50%) !important;
-    animation: backgroundPulse 8s ease-in-out infinite alternate !important;
-    pointer-events: none !important;
-}
-
-/* Background pulse animation */
-@keyframes backgroundPulse {
-    0% {
-        opacity: 0.3;
-        transform: scale(1);
-    }
-    100% {
-        opacity: 0.6;
-        transform: scale(1.1);
-    }
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .splash-logo {
-        padding: 30px 20px !important;
-        border-radius: 20px !important;
+/* Mobile adjustments */
+/*@media (max-width: 480px) {
+    #agrimetrics-mini-sync {
+        bottom: 10px;
+        right: 10px;
+        padding: 4px 10px;
+        font-size: 11px;
     }
     
-    .splash-logo img {
-        width: 300px !important;
+    #agrimetrics-sync-button {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
     }
-    
-    @keyframes logoFloat {
-        0%, 100% {
-            transform: translateY(0) scale(1);
-        }
-        50% {
-            transform: translateY(-5px) scale(1.01);
-        }
-    }
-}
-
-@media (max-width: 480px) {
-    .splash-logo {
-        padding: 20px 15px !important;
-        border-radius: 16px !important;
-    }
-    
-    .splash-logo img {
-        width: 250px !important;
-    }
-    
-    .splash-logo::after {
-        width: 40px !important;
-        height: 3px !important;
-        margin-top: 20px !important;
-    }
-}
-
-/* ===== AUTH CONTAINER ===== */
-#auth-container {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,
-        #2E7D32 25%,
-        #1B5E20 50%,
-        #0D47A1 100%
-    ) !important;
-    z-index: 999998 !important;
-    
-    /* CRITICAL: These 3 lines do the centering */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    
-    /* Hidden by default */
-    display: none !important;
-}
-
-/* When active, show with flex (centering already in parent) */
-#auth-container.active {
-    display: flex !important;
-}
-
-/* Auth forms wrapper - the white card */
-.auth-forms {
-    background: white !important;
-    border-radius: 16px !important;
-    padding: 40px !important;
-    width: 90% !important;
-    max-width: 420px !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
-    
-    /* No margin auto needed - parent flex handles centering */
-    /* Remove any transforms that might affect positioning */
-    transform: none !important;
-    
-    /* Ensure it respects parent flex centering */
-    flex-shrink: 0 !important;
-}
-
-/* Form-specific adjustments */
-#signup-form .auth-forms {
-    max-height: 85vh !important;
-    padding: 30px !important;
-}
-
-#signin-form .auth-forms,
-#forgot-password-form .auth-forms {
-    overflow: visible !important;
-}
-
-.auth-form {
-    display: none !important;
-}
-
-.auth-form.active {
-    display: block !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .auth-forms {
-        padding: 30px 25px !important;
-        width: 95% !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-forms {
-        padding: 25px 20px !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-    }
-}
-
-/* ===== BODY STATE MANAGEMENT ===== */
-body.app-active #splash-screen {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-body.app-active #auth-container {
-    display: none !important;
-}
-
-body.app-active #app-container {
-    display: block !important;
-}
-
-body.auth-visible #splash-screen {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-}
-
-body.auth-visible #auth-container {
-    display: flex !important;
-}
-
-body.auth-visible #app-container {
-    display: none !important;
-}
-
-body.loading #splash-screen {
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-body.loading #auth-container,
-body.loading #app-container {
-    display: none !important;
-}
-
-/* ===== AUTH FORM STYLING ===== */
-
-/* Form title */
-.auth-form h2 {
-    text-align: center !important;
-    margin-bottom: 24px !important;
-    color: #2E7D32 !important; /* Dark green */
-    font-size: 28px !important;
-    font-weight: 700 !important;
-}
-
-/* Social login buttons */
-.btn-social {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 12px !important;
-    width: 100% !important;
-    padding: 14px 20px !important;
-    margin-bottom: 16px !important;
-    border-radius: 12px !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    border: none !important;
-    outline: none !important;
-}
-
-.btn-social.google {
-    background: linear-gradient(135deg, #DB4437, #F4B400) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(219, 68, 55, 0.3) !important;
-}
-
-.btn-social.google:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(219, 68, 55, 0.4) !important;
-}
-
-.btn-social.apple {
-    background: linear-gradient(135deg, #000000, #333333) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-.btn-social.apple:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
-}
-
-/* Divider */
-.auth-divider {
-    display: flex !important;
-    align-items: center !important;
-    margin: 24px 0 !important;
-    color: #666 !important;
-    font-size: 14px !important;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-    content: '' !important;
-    flex: 1 !important;
-    height: 1px !important;
-    background: linear-gradient(90deg, transparent, #4CAF50, transparent) !important;
-}
-
-.auth-divider span {
-    padding: 0 16px !important;
-    font-weight: 600 !important;
-    color: #2E7D32 !important;
-}
-
-/* Form groups */
-.form-group {
-    margin-bottom: 20px !important;
-}
-
-.form-group label {
-    display: block !important;
-    margin-bottom: 8px !important;
-    font-weight: 600 !important;
-    color: #2E7D32 !important;
-    font-size: 14px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-}
-
-.form-group input {
-    width: 100% !important;
-    padding: 14px 16px !important;
-    border: 2px solid #E8F5E9 !important;
-    border-radius: 12px !important;
-    font-size: 15px !important;
-    transition: all 0.3s ease !important;
-    background: #F9F9F9 !important;
-    color: #333 !important;
-    outline: none !important;
-}
-
-.form-group input:focus {
-    border-color: #4CAF50 !important;
-    background: white !important;
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1) !important;
-}
-
-.form-group input::placeholder {
-    color: #999 !important;
-    font-size: 14px !important;
-}
-
-/* Remember me checkbox */
-.checkbox-wrapper {
-    display: flex !important;
-    align-items: center !important;
-    margin: 16px 0 !important;
-}
-
-.checkbox-wrapper input[type="checkbox"] {
-    width: 18px !important;
-    height: 18px !important;
-    margin-right: 10px !important;
-    cursor: pointer !important;
-    accent-color: #4CAF50 !important;
-}
-
-.checkbox-wrapper label {
-    color: #555 !important;
-    font-size: 14px !important;
-    cursor: pointer !important;
-    font-weight: 500 !important;
-}
-
-/* Sign In button */
-.btn-primary {
-    width: 100% !important;
-    padding: 16px !important;
-    background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 12px !important;
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    margin: 8px 0 16px 0 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4) !important;
-    background: linear-gradient(135deg, #2E7D32, #1B5E20) !important;
-}
-
-.btn-primary:active {
-    transform: translateY(0) !important;
-}
-
-/* Auth links */
-.auth-links {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    margin-top: 16px !important;
-    padding-top: 16px !important;
-    border-top: 1px solid #E8F5E9 !important;
-}
-
-.auth-links a {
-    color: #4CAF50 !important;
-    text-decoration: none !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-}
-
-.auth-links a:hover {
-    color: #2E7D32 !important;
-    background: rgba(76, 175, 80, 0.1) !important;
-    text-decoration: none !important;
-}
-
-/* Error messages */
-.error-message {
-    background: #FFEBEE !important;
-    color: #D32F2F !important;
-    padding: 12px 16px !important;
-    border-radius: 8px !important;
-    margin-bottom: 16px !important;
-    font-size: 14px !important;
-    border-left: 4px solid #D32F2F !important;
-    font-weight: 500 !important;
-}
-
-/* Success messages */
-.success-message {
-    background: #E8F5E9 !important;
-    color: #2E7D32 !important;
-    padding: 12px 16px !important;
-    border-radius: 8px !important;
-    margin-bottom: 16px !important;
-    font-size: 14px !important;
-    border-left: 4px solid #2E7D32 !important;
-    font-weight: 500 !important;
-}
-
-/* Dark mode support */
-.dark-mode .auth-forms {
-    background: #1E293B !important;
-}
-
-.dark-mode .auth-form h2 {
-    color: #4ADE80 !important;
-}
-
-.dark-mode .form-group label {
-    color: #4ADE80 !important;
-}
-
-.dark-mode .form-group input {
-    background: #334155 !important;
-    border-color: #475569 !important;
-    color: #F1F5F9 !important;
-}
-
-.dark-mode .form-group input:focus {
-    border-color: #4ADE80 !important;
-    background: #1E293B !important;
-    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.1) !important;
-}
-
-.dark-mode .form-group input::placeholder {
-    color: #94A3B8 !important;
-}
-
-.dark-mode .checkbox-wrapper label {
-    color: #CBD5E1 !important;
-}
-
-.dark-mode .auth-divider span {
-    color: #4ADE80 !important;
-}
-
-.dark-mode .auth-divider::before,
-.dark-mode .auth-divider::after {
-    background: linear-gradient(90deg, transparent, #4ADE80, transparent) !important;
-}
-
-.dark-mode .auth-links {
-    border-top-color: #475569 !important;
-}
-
-.dark-mode .auth-links a {
-    color: #4ADE80 !important;
-}
-
-.dark-mode .auth-links a:hover {
-    background: rgba(74, 222, 128, 0.1) !important;
-    color: #22C55E !important;
-}
-
-/* ===== FIX CHECKBOX IN LABEL ===== */
-#signin-form label[style*="display: flex"] {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    margin: 20px 0 !important;
-    padding: 0 !important;
-    cursor: pointer !important;
-    width: 100% !important;
-}
-
-#signin-form label[style*="display: flex"] input[type="checkbox"] {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    margin: 0 !important;
-    accent-color: #4CAF50 !important;
-}
-
-#signin-form label[style*="display: flex"] span {
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    color: #555 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    line-height: 1.4 !important;
-}
-
-/* Dark mode support */
-.dark-mode #signin-form label[style*="display: flex"] span {
-    color: #CBD5E1 !important;
-}
-
-/* ===== UPDATED GOOGLE BUTTON WITH SPLASH SCREEN GRADIENT ===== */
-
-.btn-social.google {
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,      /* Light green - top left */
-        #2E7D32 25%,     /* Medium green */
-        #1B5E20 50%,     /* Forest green */
-        #0D47A1 100%     /* Deep blue - bottom right */
-    ) !important; 
-    color: white !important;
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3) !important;
-    position: relative !important;
-    overflow: hidden !important;
-    transition: all 0.3s ease !important;
-}
-
-/* Add a subtle shine effect */
-.btn-social.google::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-    ) !important;
-    transition: left 0.5s ease !important;
-}
-
-.btn-social.google:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(13, 71, 161, 0.4) !important;
-    background: linear-gradient(135deg, 
-        #2E7D32 0%,
-        #1B5E20 25%,
-        #0D47A1 50%,
-        #4CAF50 100%
-    ) !important;
-}
-
-.btn-social.google:hover::before {
-    left: 100% !important;
-}
-
-.btn-social.google:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 2px 10px rgba(13, 71, 161, 0.3) !important;
-}
-
-/* Optional: Add the Google icon styling 
-.btn-social.google::after {
-    content: "G" !important;
-    font-weight: bold !important;
-    font-size: 18px !important;
-    margin-right: 8px !important;
-    background: white !important;
-    color: #0D47A1 !important;
-    width: 24px !important;
-    height: 24px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-} */
-
-/* If you want the exact splash screen effect with blue in top left instead */
-.btn-social.google.alternate {
-    background: linear-gradient(135deg, 
-        #0D47A1 0%,      /* Deep blue - top left 
-        #1B5E20 25%,     /* Forest green 
-        #2E7D32 50%,     /* Medium green 
-        #4CAF50 100%     /* Light green - bottom right 
-    ) !important;
-}
+}*/
 
