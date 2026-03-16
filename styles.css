@@ -112,81 +112,6 @@ body {
     flex-direction: column !important;
 }
 
-/* ===== AUTH CONTAINER ===== */
-#auth-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    padding: 1rem;
-} 
-
-.auth-forms {
-    background: var(--surface-color);
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    width: 100%;
-    max-width: 400px;
-}
-
-.auth-form {
-    display: none;
-}
-
-.auth-form.active {
-    display: block;
-}
-
-.auth-form h2 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: var(--primary-color);
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.form-group input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    font-size: 1rem;
-    transition: border-color 0.3s;
-    background: var(--surface-color);
-    color: var(--text-primary);
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-.auth-links {
-    display: flex;
-    justify-content: space-between;
-    margin: 1rem 0;
-}
-
-.auth-links a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-.auth-links a:hover {
-    text-decoration: underline;
-}
-
 /* ===== SOCIAL MEDIA LOGIN ===== */
 .btn-social {
     display: flex;
@@ -1945,188 +1870,6 @@ body.auth-visible #auth-container {
   display: flex !important;
 }
 
-/* SPLASH SCREEN - Updated to match app styling 
-#splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,      /* Primary green from your app 
-        #2E7D32 25%,     /* Darker green 
-        #1B5E20 50%,     /* Forest green 
-        #0D47A1 100%     /* Deep blue accent 
-    );
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-}
-
-#splash-screen.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.splash-logo {
-    text-align: center;
-    padding: 40px;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 24px;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 1px rgba(255, 255, 255, 0.2);
-    animation: logoFloat 3s ease-in-out infinite;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.splash-logo img {
-    width: 400px;
-    height: auto;
-    max-width: 90%;
-    filter: 
-        drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4))
-        brightness(1.1);
-    transition: transform 0.5s ease;
-}
-
-/* Animation for the logo 
-@keyframes logoFloat {
-    0%, 100% {
-        transform: translateY(0) scale(1);
-        box-shadow: 
-            0 20px 40px rgba(0, 0, 0, 0.3),
-            0 0 0 1px rgba(255, 255, 255, 0.1),
-            inset 0 1px 1px rgba(255, 255, 255, 0.2);
-    }
-    50% {
-        transform: translateY(-10px) scale(1.02);
-        box-shadow: 
-            0 30px 60px rgba(0, 0, 0, 0.4),
-            0 0 0 1px rgba(255, 255, 255, 0.15),
-            inset 0 1px 1px rgba(255, 255, 255, 0.3);
-    }
-}
-
-/* Loading animation 
-.splash-logo::after {
-    content: '';
-    display: block;
-    width: 60px;
-    height: 4px;
-    background: linear-gradient(90deg, 
-        rgba(76, 175, 80, 0) 0%,
-        rgba(255, 255, 255, 0.8) 50%,
-        rgba(76, 175, 80, 0) 100%
-    );
-    margin: 30px auto 0;
-    border-radius: 2px;
-    animation: loadingBar 2s ease-in-out infinite;
-}
-
-@keyframes loadingBar {
-    0%, 100% {
-        transform: scaleX(0.8);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scaleX(1.2);
-        opacity: 1;
-    }
-}
-
-/* Subtle background pattern 
-#splash-screen::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: 
-        radial-gradient(circle at 20% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(29, 233, 182, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(41, 121, 255, 0.1) 0%, transparent 50%);
-    animation: backgroundPulse 8s ease-in-out infinite alternate;
-}
-
-/*@keyframes backgroundPulse {
-    0% {
-        opacity: 0.3;
-        transform: scale(1);
-    }
-    100% {
-        opacity: 0.6;
-        transform: scale(1.1);
-    }
-}
-
-/* Hide splash screen smoothly 
-#splash-screen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Fade out animation 
-#splash-screen.fade-out {
-    animation: splashFadeOut 0.5s ease-out forwards;
-}
-
-@keyframes splashFadeOut {
-    0% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(1.1);
-    }
-}
-
-/* Responsive adjustments 
-@media (max-width: 768px) {
-    .splash-logo {
-        padding: 30px 20px;
-        border-radius: 20px;
-    }
-    
-    .splash-logo img {
-        width: 300px;
-    }
-    
-    @keyframes logoFloat {
-        0%, 100% {
-            transform: translateY(0) scale(1);
-        }
-        50% {
-            transform: translateY(-5px) scale(1.01);
-        }
-    }
-}
-
-@media (max-width: 480px) {
-    .splash-logo {
-        padding: 20px 15px;
-        border-radius: 16px;
-    }
-    
-    .splash-logo img {
-        width: 250px;
-    }
-    
-    .splash-logo::after {
-        width: 40px;
-        height: 3px;
-        margin-top: 20px;
-    }
-}
 
 /* ======== Remember me checkbox styling =========== */
 #remember-me {
@@ -2153,45 +1896,6 @@ body.auth-visible #auth-container {
 #remember-me:checked + span {
     color: #667eea;
     font-weight: 500;
-}
-
-
-
-
-#auth-container.active {
-    display: flex;
-}
-
-#app-container {
-    display: none; 
-}
-
-#app-container:not(.hidden) {
-    display: block;
-}
-
-/* Make signup form container scrollable */
-#signup-form .auth-forms {
-    background: white;
-    border-radius: 16px;
-    padding: 30px; /* Reduced padding for more space */
-    width: 90%;
-    max-width: 420px;
-    max-height: 85vh; /* Slightly taller than other forms */
-    overflow-y: auto; /* Enable scrolling */
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-/* Regular auth forms (signin, forgot password) */
-#signin-form .auth-forms,
-#forgot-password-form .auth-forms {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    width: 90%;
-    max-width: 420px;
-    overflow: visible; /* No scrolling for shorter forms */
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 /* Custom scrollbar for signup form */
@@ -2224,208 +1928,6 @@ body.auth-visible #auth-container {
         max-height: 80vh;
         padding: 20px 25px;
     }
-}
-
-/* ===== AUTH CONTAINER CENTERING FIX ===== */
-
-#auth-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,
-        #2E7D32 25%,
-        #1B5E20 50%,
-        #0D47A1 100%
-    );
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9998;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: auto; /* Allow scrolling if needed */
-}
-
-#auth-container.active {
-    display: flex;
-}
-
-/* Force flexbox centering */
-#auth-container.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Auth forms wrapper - FIXED CENTERING */
-.auth-forms {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
-    
-    /* Perfect centering */
-    margin: auto !important;
-    align-self: center !important;
-    
-    /* Remove any transform that might affect positioning */
-    transform: none !important;
-}
-
-/* Large screens */
-@media (min-width: 1200px) {
-    .auth-forms {
-        padding: 50px;
-        max-width: 450px;
-    }
-}
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-    .auth-forms {
-        padding: 30px 25px;
-        max-height: 85vh;
-        width: 95%;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-forms {
-        padding: 25px 20px;
-        max-height: 90vh;
-        width: 100%;
-        border-radius: 12px;
-    }
-    
-    #auth-container {
-        padding: 10px;
-    }
-}
-
-/* Emergency centering fix - if nothing else works */
-.auth-forms.force-center {
-    position: relative !important;
-    top: 0 !important;
-    left: 0 !important;
-    transform: none !important;
-}
-
-/* Debug border (remove in production) */
-#auth-container.debug {
-    border: 2px solid red;
-}
-
-.auth-forms.debug {
-    border: 2px solid blue;
-}
-
-/* ===== AUTH CONTAINER CENTERING FIX ===== */
-
-#auth-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,
-        #2E7D32 25%,
-        #1B5E20 50%,
-        #0D47A1 100%
-    );
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9998;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: auto; /* Allow scrolling if needed */
-}
-
-#auth-container.active {
-    display: flex;
-}
-
-/* Force flexbox centering */
-#auth-container.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-/* Auth forms wrapper - FIXED CENTERING */
-.auth-forms {
-    background: white;
-    border-radius: 16px;
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
-    
-    /* Perfect centering */
-    margin: auto !important;
-    align-self: center !important;
-    
-    /* Remove any transform that might affect positioning */
-    transform: none !important;
-}
-
-/* Large screens */
-@media (min-width: 1200px) {
-    .auth-forms {
-        padding: 50px;
-        max-width: 450px;
-    }
-}
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-    .auth-forms {
-        padding: 30px 25px;
-        max-height: 85vh;
-        width: 95%;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-forms {
-        padding: 25px 20px;
-        max-height: 90vh;
-        width: 100%;
-        border-radius: 12px;
-    }
-    
-    #auth-container {
-        padding: 10px;
-    }
-}
-
-/* Emergency centering fix - if nothing else works */
-.auth-forms.force-center {
-    position: relative !important;
-    top: 0 !important;
-    left: 0 !important;
-    transform: none !important;
-}
-
-/* Debug border (remove in production) */
-#auth-container.debug {
-    border: 2px solid red;
-}
-
-.auth-forms.debug {
-    border: 2px solid blue;
 }
 
 /* ========== Dark Mode Fix =========== */
@@ -4320,7 +3822,7 @@ body.dark-mode {
 }
 
 
-/* ===== SPLASH SCREEN PROTECTION ===== */
+/* ============= SPLASH SCREEN ============ */
 #splash-screen {
     position: fixed !important;
     top: 0 !important;
@@ -4333,7 +3835,7 @@ body.dark-mode {
         #1B5E20 50%,
         #0D47A1 100%
     ) !important;
-    z-index: 9999999 !important;
+    z-index: 999999 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4342,35 +3844,14 @@ body.dark-mode {
     visibility: visible !important;
 }
 
-#splash-screen.hidden,
-#splash-screen:not(.active) {
+#splash-screen.hidden {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
 }
 
-.splash-logo {
-    text-align: center !important;
-    padding: 40px !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
-    border-radius: 24px !important;
-    animation: splashPulse 2s infinite ease-in-out !important;
-}
-
-.splash-logo img {
-    width: 400px !important;
-    max-width: 90% !important;
-    height: auto !important;
-}
-
-@keyframes splashPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-/* ===== ULTIMATE AUTH CENTERING - NO JAVASCRIPT NEEDED ===== */
-#auth-container.active {
+/* ===== AUTH CONTAINER ===== */
+#auth-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -4382,12 +3863,14 @@ body.dark-mode {
         #1B5E20 50%,
         #0D47A1 100%
     ) !important;
-    display: flex !important;
+    z-index: 999998 !important;
+    display: none !important;
     align-items: center !important;
     justify-content: center !important;
-    z-index: 999999 !important;
-    margin: 0 !important;
-    padding: 0 !important;
+}
+
+#auth-container.active {
+    display: flex !important;
 }
 
 .auth-forms {
@@ -4400,4 +3883,71 @@ body.dark-mode {
     overflow-y: auto !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
     margin: 0 auto !important;
+}
+
+/* Form-specific adjustments */
+#signup-form .auth-forms {
+    max-height: 85vh;
+    padding: 30px;
+}
+
+#signin-form .auth-forms,
+#forgot-password-form .auth-forms {
+    overflow: visible;
+}
+
+.auth-form {
+    display: none !important;
+}
+
+.auth-form.active {
+    display: block !important;
+}
+
+/* ===== APP CONTAINER ===== */
+#app-container {
+    display: none !important;
+}
+
+#app-container.active {
+    display: block !important;
+}
+
+/* ===== BODY STATE MANAGEMENT ===== */
+body.app-active #splash-screen {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+body.app-active #auth-container {
+    display: none !important;
+}
+
+body.app-active #app-container {
+    display: block !important;
+}
+
+body.auth-visible #splash-screen {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+body.auth-visible #auth-container {
+    display: flex !important;
+}
+
+body.auth-visible #app-container {
+    display: none !important;
+}
+
+body.loading #splash-screen {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+body.loading #auth-container,
+body.loading #app-container {
+    display: none !important;
 }
