@@ -2315,7 +2315,7 @@ body.auth-visible #auth-container {
     }
 }
 
-/* ===== AUTH CONTAINER CENTERING FIX ===== 
+/* ===== AUTH CONTAINER CENTERING FIX ===== */
 
 #auth-container {
     position: fixed;
@@ -2416,7 +2416,7 @@ body.auth-visible #auth-container {
     border: 2px solid blue;
 }
 
-/* ===== AUTH CONTAINER CENTERING FIX ===== 
+/* ===== AUTH CONTAINER CENTERING FIX ===== */
 
 #auth-container {
     position: fixed;
