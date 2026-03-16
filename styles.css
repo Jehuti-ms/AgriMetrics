@@ -3234,3 +3234,32 @@ body.auth-visible .auth-forms,
     transform: none !important;
 }
 
+/* ===== NUCLEAR CENTERING FIX - OVERRIDE INLINE STYLES ===== */
+#auth-container[style*="display: block"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+#auth-container > div[style*="table-cell"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    vertical-align: middle !important;
+}
+
+#auth-container > div[style*="table-cell"] > .auth-forms {
+    margin: 0 auto !important;
+    transform: none !important;
+    width: 90% !important;
+    max-width: 420px !important;
+}
+
+/* Force remove any table-cell behavior */
+#auth-container > div[style*="table-cell"] {
+    display: flex !important;
+    vertical-align: middle !important;
+}
