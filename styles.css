@@ -2299,3 +2299,50 @@ body.loading #app-container {
 .dark-mode .auth-links a {
     color: #4ADE80 !important;
 }
+
+/* ===== FINAL FIX - KILL SPLASH SCREEN PSEUDO-ELEMENT WHEN HIDDEN ===== */
+body.auth-visible #splash-screen,
+body.auth-visible #splash-screen *,
+body.auth-visible #splash-screen::before,
+body.auth-visible #splash-screen::after {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -999999 !important;
+    content: none !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Ensure auth container is on top and clickable */
+body.auth-visible #auth-container {
+    display: flex !important;
+    z-index: 999999 !important;
+}
+
+body.auth-visible .auth-forms {
+    position: relative !important;
+    z-index: 1000000 !important;
+}
+
+body.auth-visible input,
+body.auth-visible button,
+body.auth-visible .btn,
+body.auth-visible a {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 1000001 !important;
+}
+
+/* Specific fix for the Google button */
+body.auth-visible #google-signin-btn,
+body.auth-visible .btn-social.google {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 1000002 !important;
+}
