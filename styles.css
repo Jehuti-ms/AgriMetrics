@@ -112,6 +112,81 @@ body {
     flex-direction: column !important;
 }
 
+/* ===== AUTH CONTAINER ===== */
+#auth-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    padding: 1rem;
+} 
+
+.auth-forms {
+    background: var(--surface-color);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+    background: var(--surface-color);
+    color: var(--text-primary);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.auth-links {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+}
+
+.auth-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
 /* ===== SOCIAL MEDIA LOGIN ===== */
 .btn-social {
     display: flex;
@@ -398,19 +473,39 @@ header {
     transform: scale(1.05) !important;
 }
 
+/* ========== SIDE MENU ========= */
+/*#side-menu {
+    position: fixed !important;
+    top: 80px !important;
+    right: 0 !important;
+    width: 280px !important;
+    height: calc(100vh - 80px) !important;
+    background: var(--surface-color) !important;
+    border-left: 1px solid var(--border-color) !important;
+    transform: translateX(280px) !important;
+    transition: transform 0.3s ease !important;
+    z-index: 10001 !important;
+    overflow-y: auto !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    box-shadow: -5px 0 20px rgba(0,0,0,0.1) !important;
+} */
+
 #side-menu {
-    position: fixed;
-    top: var(--navbar-height, 80px);
-    right: 0;
-    width: 280px;
-    height: calc(100vh - var(--navbar-height, 80px));
-    overflow-y: auto;
-    background: var(--surface-color);
-    border-left: 1px solid var(--border-color);
-    transform: translateX(280px);
-    transition: transform 0.3s ease;
-    z-index: 10001;
+  position: fixed;          /* lock to viewport */
+  top: var(--navbar-height, 80px); /* start below navbar */
+  right: 0;
+  width: 280px;
+  height: calc(100vh - var(--navbar-height, 80px)); /* fill remaining viewport */
+  overflow-y: auto;         /* scroll internally if too long */
+  background: var(--surface-color);
+  border-left: 1px solid var(--border-color);
+  transform: translateX(280px);
+  transition: transform 0.3s ease;
+  z-index: 10001;
 }
+
 
 #side-menu.open {
     transform: translateX(0) !important;
@@ -558,9 +653,10 @@ header {
 }
 
 /* ===== DASHBOARD FILTER BUTTON ACTIVE STATE ===== */
+/* Active State - Green Theme Highlight ONLY */
 .time-filter-btn.active,
 .time-filter-btn[data-active="true"] {
-    background: #22c55e !important;
+    background: #22c55e !important; /* Your green color */
     color: white !important;
     border-color: #22c55e !important;
 }
@@ -604,6 +700,7 @@ header {
     color: white !important;
 }
 
+/* Stats Grid */
 .stats-grid-pwa {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -712,6 +809,7 @@ header {
     background: var(--dm-background) !important;
 }
 
+/* Glass Cards - Consolidated Dark Mode */
 .glass-card,
 .stat-card-pwa,
 .quick-action-btn-pwa,
@@ -748,6 +846,7 @@ header {
     color: var(--dm-text-primary) !important;
 }
 
+/* List Items - Consolidated Dark Mode */
 .transaction-item-pwa,
 .inventory-item-pwa,
 .record-item-pwa,
@@ -1105,6 +1204,7 @@ header {
     gap: 8px;
 }
 
+/* Health specific styles */
 .mortality-icon.natural { background: rgba(34, 197, 94, 0.1); }
 .mortality-icon.disease { background: rgba(239, 68, 68, 0.1); }
 .mortality-icon.predator { background: rgba(245, 158, 11, 0.1); }
@@ -1242,9 +1342,9 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a);
-    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25); /* Changed */
+    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a); /* ADDED */
+    color: white; /* ADDED */
     border-radius: 16px 16px 0 0;
 }
 
@@ -1272,8 +1372,8 @@ header {
 }
 
 .popout-modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+   background: rgba(255, 255, 255, 0.2); /* Changed */
+   color: white; /* Changed */
 }
 
 .popout-modal-body {
@@ -1360,6 +1460,7 @@ header {
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
+    /* Navigation */
     .top-nav {
         padding: 0 16px;
         height: 60px;
@@ -1412,6 +1513,7 @@ header {
         font-size: 18px;
     }
     
+    /* Module containers */
     .module-container,
     .dashboard-container,
     .income-expenses-module,
@@ -1426,6 +1528,7 @@ header {
         padding: 16px !important;
     }
     
+    /* Stack form grids */
     .form-grid-pwa,
     .form-grid,
     .orders-filters-grid-pwa,
@@ -1433,6 +1536,7 @@ header {
         grid-template-columns: 1fr !important;
     }
     
+    /* Stack stats grids */
     .stats-grid,
     .stats-grid-pwa,
     .health-stats-grid,
@@ -1441,6 +1545,7 @@ header {
         grid-template-columns: 1fr !important;
     }
     
+    /* Adjust headers */
     .welcome-section,
     .module-header,
     .module-header-pwa,
@@ -1459,6 +1564,7 @@ header {
         font-size: 20px !important;
     }
     
+    /* Fix popout modals */
     .popout-modal-content {
         width: 95% !important;
         margin: 10px !important;
@@ -1470,6 +1576,7 @@ header {
         margin: 10px !important;
     }
     
+    /* Stack action buttons */
     .action-buttons {
         flex-direction: column !important;
         gap: 10px !important;
@@ -1524,6 +1631,7 @@ header {
         display: none;
     }
     
+    /* Further reduce padding */
     .module-container,
     .dashboard-container,
     .income-expenses-module {
@@ -1542,12 +1650,14 @@ header {
         font-size: 18px !important;
     }
     
+    /* Make everything single column */
     .quick-action-grid,
     .quick-grid-pwa,
     .orders-actions-grid-pwa {
         grid-template-columns: 1fr !important;
     }
     
+    /* Reduce button padding */
     .btn,
     .btn-primary,
     .btn-outline {
@@ -1555,6 +1665,7 @@ header {
         font-size: 14px !important;
     }
     
+    /* Smaller form inputs */
     .form-input,
     .form-input-pwa {
         padding: 12px !important;
@@ -1643,7 +1754,7 @@ header {
     }
 }
 
-/* ========== Logout button styling =========== */
+/* ========== Logout button styling - should be in main stylesheet =========== */
 #profile-logout-btn {
     display: flex;
     align-items: center;
@@ -1678,7 +1789,7 @@ header {
     font-size: 14px;
 }
 
-/* ========= Logout Modal Styling ========= */
+/* ========= Logout Modal Styling - add to main CSS ========= */
 #logout-confirmation {
     position: fixed;
     top: 0;
@@ -1686,7 +1797,7 @@ header {
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    display: none;
+    display: none; /* Hidden by default */
     align-items: center;
     justify-content: center;
     z-index: 1000;
@@ -1775,7 +1886,173 @@ header {
     transform: translateY(0);
 }
 
-/* ===== SPLASH SCREEN - Updated to match app styling ===== */
+/* ===== SPLASH SCREEN STYLING ===== 
+#splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+#splash-screen.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.splash-logo {
+  animation: splashPulse 2s infinite ease-in-out;
+  text-align: center;
+}
+
+.splash-logo img {
+  max-width: 400px;
+  width: 80%;
+  height: auto;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes splashPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Hide splash screen after animation 
+#splash-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+} */
+
+/* ===== AUTH CONTAINER ===== */
+/*#auth-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+} */
+
+/*#auth-container.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.auth-forms {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+#auth-container.active .auth-forms {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Remember me checkbox styling */
+#remember-me {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+/* Hover effect */
+#remember-me:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Label styling */
+#remember-me + span {
+    color: #555;
+    font-size: 14px;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+#remember-me:checked + span {
+    color: #667eea;
+    font-weight: 500;
+}
+
+/* ===== AUTH FORM STATES ===== */
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+}
+
+/* ===== INITIAL LOADING STATES ===== */
+/* Initially hide everything */
+body.loading {
+  overflow: hidden;
+}
+
+body.loading #app-container,
+body.loading #auth-container {
+  display: none;
+}
+
+/* Show splash screen first, then auth if needed */
+body.auth-visible #splash-screen {
+  opacity: 0;
+  visibility: hidden;
+}
+
+body.auth-visible #auth-container {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Show/Hide based on body classes */
+body.app-active #splash-screen,
+body.app-active #auth-container {
+  display: none !important; /* Use display:none instead of opacity/visibility */
+}
+
+body.app-active #app-container {
+  display: block !important;
+}
+
+body.auth-visible #app-container,
+body.auth-visible #splash-screen {
+  display: none !important;
+}
+
+body.auth-visible #auth-container {
+  display: flex !important;
+}
+
+/* SPLASH SCREEN - Updated to match app styling 
 #splash-screen {
     position: fixed;
     top: 0;
@@ -1783,10 +2060,10 @@ header {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, 
-        #4CAF50 0%,
-        #2E7D32 25%,
-        #1B5E20 50%,
-        #0D47A1 100%
+        #4CAF50 0%,      /* Primary green from your app 
+        #2E7D32 25%,     /* Darker green 
+        #1B5E20 50%,     /* Forest green 
+        #0D47A1 100%     /* Deep blue accent 
     );
     display: flex;
     align-items: center;
@@ -1826,6 +2103,7 @@ header {
     transition: transform 0.5s ease;
 }
 
+/* Animation for the logo 
 @keyframes logoFloat {
     0%, 100% {
         transform: translateY(0) scale(1);
@@ -1843,6 +2121,7 @@ header {
     }
 }
 
+/* Loading animation 
 .splash-logo::after {
     content: '';
     display: block;
@@ -1869,6 +2148,7 @@ header {
     }
 }
 
+/* Subtle background pattern 
 #splash-screen::before {
     content: '';
     position: absolute;
@@ -1881,10 +2161,9 @@ header {
         radial-gradient(circle at 80% 20%, rgba(29, 233, 182, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 40% 40%, rgba(41, 121, 255, 0.1) 0%, transparent 50%);
     animation: backgroundPulse 8s ease-in-out infinite alternate;
-    pointer-events: none;
 }
 
-@keyframes backgroundPulse {
+/*@keyframes backgroundPulse {
     0% {
         opacity: 0.3;
         transform: scale(1);
@@ -1895,13 +2174,30 @@ header {
     }
 }
 
+/* Hide splash screen smoothly 
 #splash-screen.hidden {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
 }
 
-/* Responsive adjustments */
+/* Fade out animation 
+#splash-screen.fade-out {
+    animation: splashFadeOut 0.5s ease-out forwards;
+}
+
+@keyframes splashFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.1);
+    }
+}
+
+/* Responsive adjustments 
 @media (max-width: 768px) {
     .splash-logo {
         padding: 30px 20px;
@@ -1939,58 +2235,70 @@ header {
     }
 }
 
-/* ===== AUTH CONTAINER CENTERING FIX ===== */
-#auth-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, 
-        #4CAF50 0%,
-        #2E7D32 25%,
-        #1B5E20 50%,
-        #0D47A1 100%
-    );
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9998;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow: auto;
+/* ======== Remember me checkbox styling =========== */
+#remember-me {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #667eea;
 }
+
+/* Hover effect */
+#remember-me:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Label styling */
+#remember-me + span {
+    color: #555;
+    font-size: 14px;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+#remember-me:checked + span {
+    color: #667eea;
+    font-weight: 500;
+}
+
+
+
 
 #auth-container.active {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: flex;
 }
 
-.auth-forms {
+#app-container {
+    display: none; 
+}
+
+#app-container:not(.hidden) {
+    display: block;
+}
+
+/* Make signup form container scrollable */
+#signup-form .auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 30px; /* Reduced padding for more space */
+    width: 90%;
+    max-width: 420px;
+    max-height: 85vh; /* Slightly taller than other forms */
+    overflow-y: auto; /* Enable scrolling */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Regular auth forms (signin, forgot password) */
+#signin-form .auth-forms,
+#forgot-password-form .auth-forms {
     background: white;
     border-radius: 16px;
     padding: 40px;
-    width: 100%;
+    width: 90%;
     max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
+    overflow: visible; /* No scrolling for shorter forms */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
-    margin: auto !important;
-    align-self: center !important;
-    transform: none !important;
-}
-
-/* Form-specific adjustments */
-#signup-form .auth-forms {
-    max-height: 85vh;
-    padding: 30px;
-}
-
-#signin-form .auth-forms,
-#forgot-password-form .auth-forms {
-    overflow: visible;
 }
 
 /* Custom scrollbar for signup form */
@@ -2014,7 +2322,7 @@ header {
 
 /* Adjust form spacing for signup */
 #signup-form .form-group {
-    margin-bottom: 18px;
+    margin-bottom: 18px; /* Slightly more spacing between fields */
 }
 
 /* On mobile, reduce form height */
@@ -2023,6 +2331,60 @@ header {
         max-height: 80vh;
         padding: 20px 25px;
     }
+}
+
+/* ===== AUTH CONTAINER CENTERING FIX ===== */
+
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: auto; /* Allow scrolling if needed */
+}
+
+#auth-container.active {
+    display: flex;
+}
+
+/* Force flexbox centering */
+#auth-container.active {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Auth forms wrapper - FIXED CENTERING */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    
+    /* Perfect centering */
+    margin: auto !important;
+    align-self: center !important;
+    
+    /* Remove any transform that might affect positioning */
+    transform: none !important;
 }
 
 /* Large screens */
@@ -2055,54 +2417,128 @@ header {
     }
 }
 
-/* ===== AUTH FORM STATES ===== */
-.auth-form {
+/* Emergency centering fix - if nothing else works */
+.auth-forms.force-center {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+}
+
+/* Debug border (remove in production) */
+#auth-container.debug {
+    border: 2px solid red;
+}
+
+.auth-forms.debug {
+    border: 2px solid blue;
+}
+
+/* ===== AUTH CONTAINER CENTERING FIX ===== */
+
+#auth-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
     display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: auto; /* Allow scrolling if needed */
 }
 
-.auth-form.active {
-    display: block;
+#auth-container.active {
+    display: flex;
 }
 
-/* ===== INITIAL LOADING STATES ===== */
-body.loading {
-    overflow: hidden;
-}
-
-body.loading #app-container,
-body.loading #auth-container {
-    display: none;
-}
-
-body.auth-visible #splash-screen {
-    opacity: 0;
-    visibility: hidden;
-}
-
-body.auth-visible #auth-container {
-    opacity: 1;
-    visibility: visible;
-}
-
-body.app-active #splash-screen,
-body.app-active #auth-container {
-    display: none !important;
-}
-
-body.app-active #app-container {
-    display: block !important;
-}
-
-body.auth-visible #app-container,
-body.auth-visible #splash-screen {
-    display: none !important;
-}
-
-body.auth-visible #auth-container {
+/* Force flexbox centering */
+#auth-container.active {
     display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-/* ========== Dark Mode Fixes ========== */
+/* Auth forms wrapper - FIXED CENTERING */
+.auth-forms {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    
+    /* Perfect centering */
+    margin: auto !important;
+    align-self: center !important;
+    
+    /* Remove any transform that might affect positioning */
+    transform: none !important;
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+    .auth-forms {
+        padding: 50px;
+        max-width: 450px;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .auth-forms {
+        padding: 30px 25px;
+        max-height: 85vh;
+        width: 95%;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 25px 20px;
+        max-height: 90vh;
+        width: 100%;
+        border-radius: 12px;
+    }
+    
+    #auth-container {
+        padding: 10px;
+    }
+}
+
+/* Emergency centering fix - if nothing else works */
+.auth-forms.force-center {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+}
+
+/* Debug border (remove in production) */
+#auth-container.debug {
+    border: 2px solid red;
+}
+
+.auth-forms.debug {
+    border: 2px solid blue;
+}
+
+/* ========== Dark Mode Fix =========== */
+/* ===== DARK MODE FIXES FOR SALES MODAL ===== */
+
+/* Fix ALL popout modal inputs in dark mode */
 .dark-mode .popout-modal .form-input {
     background-color: #2d3748 !important;
     color: #e2e8f0 !important;
@@ -2113,6 +2549,7 @@ body.auth-visible #auth-container {
     color: #a0aec0 !important;
 }
 
+/* Fix the blue background sections */
 .dark-mode div[style*="background: #f0f9ff"] {
     background-color: #1e293b !important;
     border-color: #475569 !important;
@@ -2122,6 +2559,7 @@ body.auth-visible #auth-container {
     border-color: #475569 !important;
 }
 
+/* Fix the red background section (meat details) */
 .dark-mode div[style*="background: #fef3f3"] {
     background-color: #2c1a1a !important;
     border-color: #7f1d1d !important;
@@ -2131,6 +2569,7 @@ body.auth-visible #auth-container {
     border-color: #7f1d1d !important;
 }
 
+/* Fix text colors in blue section */
 .dark-mode div[style*="color: #0ea5e9"] {
     color: #7dd3fc !important;
 }
@@ -2139,6 +2578,7 @@ body.auth-visible #auth-container {
     color: #93c5fd !important;
 }
 
+/* Fix text colors in red section */
 .dark-mode div[style*="color: #dc2626"] {
     color: #fca5a5 !important;
 }
@@ -2147,7 +2587,114 @@ body.auth-visible #auth-container {
     color: #fdba74 !important;
 }
 
+/* Fix form labels and hints */
+.dark-mode .popout-modal .form-label {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal .form-hint {
+    color: #a0aec0 !important;
+}
+
+/* Fix the info box background */
+.dark-mode div[style*="background: #dbeafe"] {
+    background-color: #1e293b !important;
+}
+
+.dark-mode div[style*="color: #1e40af"] {
+    color: #93c5fd !important;
+}
+
+.dark-mode div[style*="color: #4b5563"] {
+    color: #a0aec0 !important;
+}
+
+/* Fix gray background boxes */
+.dark-mode div[style*="background: #f3f4f6"] {
+    background-color: #374151 !important;
+}
+
+.dark-mode div[style*="color: #6b7280"] {
+    color: #9ca3af !important;
+}
+
+/* Fix the sale total section */
+.dark-mode div[style*="background: var(--glass-bg)"] {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark-mode div[style*="border: 1px solid var(--glass-border)"] {
+    border-color: #475569 !important;
+}
+
+/* Fix the dollar sign and unit labels */
+.dark-mode span[style*="color: var(--text-secondary)"] {
+    color: #94a3b8 !important;
+}
+
+/* Fix select dropdown arrow in dark mode */
+.dark-mode .popout-modal .form-input[type="select"] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23e2e8f0' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E") !important;
+}
+
+/* Fix buttons in popout modal footer */
+.dark-mode .popout-modal-footer .btn-outline {
+    border-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-footer .btn-outline:hover {
+    background-color: #4a5568 !important;
+}
+
+/* Fix popout modal background */
+.dark-mode .popout-modal {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.dark-mode .popout-modal-content {
+    background-color: #1a202c !important;
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-header {
+    border-bottom-color: #2d3748 !important;
+}
+
+.dark-mode .popout-modal-title {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-close {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .popout-modal-close:hover {
+    color: #fca5a5 !important;
+}
+
+/* Override the inline styles for dark mode */
+.dark-mode div[style*="background: #f0f9ff"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+.dark-mode div[style*="border: 1px solid #bae6fd"] {
+    border-color: #475569 !important;
+}
+
+/* Also fix the text colors inside */
+.dark-mode div[style*="color: #0ea5e9"] {
+    color: #7dd3fc !important;
+}
+
+.dark-mode div[style*="color: #0369a1"] {
+    color: #93c5fd !important;
+}
+
 /* ===== SMART GAP FIX ===== */
+
+/* Remove padding from containers ONLY */
 body {
     padding-top: 0 !important;
 }
@@ -2160,16 +2707,28 @@ body {
     padding-top: 0 !important;
 }
 
+/* TARGET ONLY: The first element after navbar that's a module header */
 #content-area > .module-header:first-child,
 #content-area > .welcome-section:first-child,
 #content-area > .dashboard-header:first-child,
 #content-area > [class*="header"]:first-child {
     margin-top: 0 !important;
-    padding-top: 10px !important;
+    padding-top: 10px !important; /* Small breathing room */
+}
+
+/* DON'T touch anything else! */
+#content-area > * {
+    /* Leave other elements alone */
+}
+
+/* If module uses a specific container class as first child */
+#content-area > .glass-card.module-header,
+#content-area > .card.module-header {
+    margin-top: 0 !important;
 }
 
 /* ===== RESPONSIVE BRAND TEXT ICON SCROLLING ===== */
-@media (max-width: 768px) {
+ @media (max-width: 768px) {
     .nav-items {
         gap: 2px;
         padding: 0 4px;
@@ -2203,19 +2762,30 @@ body {
     }
 }
 
-/* ===== NAV ITEM STYLING ENHANCEMENTS ===== */
+    /* ========== NAV ITEM STYLING ENHANCEMENTS ========= */
+/* ===== FIX NAV BUTTON OUTLINES & ADD GREEN GLOW ===== */
+
+/* 1. REMOVE ALL browser default button styling */
 .nav-item {
+    /* Remove ALL outlines and borders */
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
+    
+    /* Remove browser default button styling */
     background: none !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     appearance: none !important;
+    
+    /* Remove tap highlight on mobile */
     -webkit-tap-highlight-color: transparent !important;
+    
+    /* Reset cursor */
     cursor: pointer !important;
 }
 
+/* 2. Remove focus states COMPLETELY */
 .nav-item:focus,
 .nav-item:focus-visible,
 .nav-item:focus-within {
@@ -2225,24 +2795,34 @@ body {
     background: none !important;
 }
 
+/* 3. Remove active state blue color */
 .nav-item:active {
     color: inherit !important;
     background: rgba(76, 175, 80, 0.1) !important;
     transform: translateY(1px);
 }
 
+/* 4. VISIBLE GREEN GLOW for active state */
 .nav-item.active {
+    /* Solid green background */
     background: rgba(76, 175, 80, 0.2) !important;
+    
+    /* Green border */
     border: 2px solid #4CAF50 !important;
     border-radius: 8px !important;
+    
+    /* Strong glow effect */
     box-shadow: 
         0 0 10px rgba(76, 175, 80, 0.6),
         0 0 20px rgba(76, 175, 80, 0.4),
         inset 0 0 10px rgba(76, 175, 80, 0.2) !important;
+    
+    /* Make it pop */
     position: relative;
     z-index: 10;
 }
 
+/* 5. Add pulsing outer glow */
 .nav-item.active::before {
     content: '';
     position: absolute;
@@ -2267,18 +2847,21 @@ body {
     }
 }
 
+/* 6. Make icon and text green in active state */
 .nav-item.active span {
     color: #4CAF50 !important;
     font-weight: 600 !important;
     text-shadow: 0 0 5px rgba(76, 175, 80, 0.5) !important;
 }
 
+/* 7. Specifically style the emoji/icon */
 .nav-item.active span:first-child {
     transform: scale(1.15);
     filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.7));
     transition: transform 0.3s ease;
 }
 
+/* 8. Hover effect for non-active items */
 .nav-item:hover:not(.active) {
     background: rgba(76, 175, 80, 0.08) !important;
     transform: translateY(-2px);
@@ -2289,6 +2872,7 @@ body {
     color: #4CAF50 !important;
 }
 
+/* 9. Fix for dark mode toggle button */
 #dark-mode-toggle.nav-item.active {
     background: rgba(251, 191, 36, 0.2) !important;
     border-color: #FBBF24 !important;
@@ -2300,6 +2884,11 @@ body {
 #dark-mode-toggle.nav-item.active span {
     color: #FBBF24 !important;
     text-shadow: 0 0 5px rgba(251, 191, 36, 0.5) !important;
+}
+
+/* 10. Fix for logout button (different color) */
+#navbar-logout-btn.nav-item {
+    /* Logout button specific styling */
 }
 
 #navbar-logout-btn.nav-item.active {
@@ -2315,6 +2904,7 @@ body {
     text-shadow: 0 0 5px rgba(239, 68, 68, 0.5) !important;
 }
 
+/* 11. Fix for hamburger menu */
 #hamburger-menu.nav-item.active {
     background: rgba(139, 92, 246, 0.2) !important;
     border-color: #8B5CF6 !important;
@@ -2327,42 +2917,125 @@ body {
     color: #8B5CF6 !important;
     text-shadow: 0 0 5px rgba(139, 92, 246, 0.5) !important;
 }
-
+    
 /* Mobile phones */
 @media (max-width: 480px) {
-    .nav-item span:last-child,
-    .nav-brand span:last-child {
-        display: none;
-    }
-    
-    .top-nav {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
-    }
-    
-    .nav-list {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-    }
-    
-    .nav-item {
-        flex: 0 0 auto;
-        padding: 8px !important;
-        scroll-snap-align: center;
-        text-align: center;
-    }
+  /* Hide text labels, keep only icons */
+  .nav-item span:last-child,
+  .nav-brand span:last-child {
+    display: none;
+  }
+
+  /* Scrollable nav strip */
+  .top-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .nav-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;              /* prevent shrinking */
+    padding: 8px !important;
+    scroll-snap-align: center;   /* snap each icon neatly */
+    text-align: center;          /* center the icon */
+  }
 }
 
 .nav-item:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px var(--primary-color);
-    border-radius: 8px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-color);
+  border-radius: 8px;
+}
+
+/* ========== Nav Scroll ===========*/
+.nav-items-scroll {
+  display: flex;
+  align-items: center;   /* vertically centers items */
+  height: 3.5rem;        /* lock to navbar height */
+  overflow-x: auto;
+  background: var(--nav-bg, #fff);
+  border-bottom: 1px solid var(--border-color, #ddd);
+}
+
+.nav-items {
+  display: flex;
+ justify-content: space-around; /* pushes first item left, last item right */
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.nav-item {
+  flex: 0 0 auto; /* prevents items from shrinking */
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text-color, #333);
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+body.dark-mode {
+  --nav-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --border-color: #333;
+  --hover-bg: #2a2a2a;
+  --accent-bg: #333;
+  --accent-color: #4fc3f7;
+}
+
+body.dark-mode .nav-item.active {
+  background: var(--accent-bg);
+  color: var(--accent-color);
+}
+
+/* ============ Theme Aware Gradient ============== */
+.nav-items-scroll {
+  position: relative;
+  overflow-x: auto;
+}
+
+.nav-items-scroll::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2rem;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to left, var(--nav-bg), transparent);
+}
+
+.nav-items-scroll::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2rem;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--nav-bg), transparent);
+}
+
+body.dark-mode {
+  --nav-bg: #1e1e1e;
 }
 
 /* ===== FIX MODULE HEADER POSITIONING ===== */
+
+/* Remove all top padding from module containers */
 .dashboard-container,
 .income-expenses-module,
 .module-container,
@@ -2374,13 +3047,11 @@ body {
 .profile-module,
 .inventory-module,
 .health-module {
-    padding-top: 0 !important;
+    padding-top: 0 !important; /* Remove top padding */
     min-height: calc(100vh - 80px);
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
 }
 
+/* Make headers sit right below navbar */
 .dashboard-container .welcome-section,
 .income-expenses-module .module-header-pwa,
 .module-container .module-header,
@@ -2390,15 +3061,45 @@ body {
 .sales-module .module-header-pwa,
 .section.active .module-header,
 .profile-module .profile-header-pwa {
-    margin-top: 0 !important;
+    margin-top: 0 !important; /* Remove negative top margin */
     margin-left: -20px;
     margin-right: -20px;
     padding-top: 25px;
     padding-bottom: 25px;
 }
 
+/* Keep the existing padding on sides and bottom */
+.dashboard-container,
+.income-expenses-module,
+.module-container,
+.orders-module,
+.feed-module,
+.production-module,
+.sales-module,
+.section.active,
+.profile-module,
+.inventory-module,
+.health-module {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+}
+
 /* Responsive fixes */
 @media (max-width: 768px) {
+    .dashboard-container .welcome-section,
+    .income-expenses-module .module-header-pwa,
+    .module-container .module-header,
+    .orders-module .orders-header-pwa,
+    .feed-module .module-header-pwa,
+    .production-module .production-header-pwa,
+    .sales-module .module-header-pwa,
+    .section.active .module-header,
+    .profile-module .profile-header-pwa {
+        margin-left: -16px;
+        margin-right: -16px;
+    }
+    
     .dashboard-container,
     .income-expenses-module,
     .module-container,
@@ -2414,7 +3115,9 @@ body {
         padding-right: 16px;
         padding-bottom: 16px;
     }
-    
+}
+
+@media (max-width: 480px) {
     .dashboard-container .welcome-section,
     .income-expenses-module .module-header-pwa,
     .module-container .module-header,
@@ -2424,12 +3127,10 @@ body {
     .sales-module .module-header-pwa,
     .section.active .module-header,
     .profile-module .profile-header-pwa {
-        margin-left: -16px;
-        margin-right: -16px;
+        margin-left: -12px;
+        margin-right: -12px;
     }
-}
-
-@media (max-width: 480px) {
+    
     .dashboard-container,
     .income-expenses-module,
     .module-container,
@@ -2445,48 +3146,48 @@ body {
         padding-right: 12px;
         padding-bottom: 12px;
     }
-    
-    .dashboard-container .welcome-section,
-    .income-expenses-module .module-header-pwa,
-    .module-container .module-header,
-    .orders-module .orders-header-pwa,
-    .feed-module .module-header-pwa,
-    .production-module .production-header-pwa,
-    .sales-module .module-header-pwa,
-    .section.active .module-header,
-    .profile-module .profile-header-pwa {
-        margin-left: -12px;
-        margin-right: -12px;
-    }
 }
 
 /* ===== HEADER ACTION BUTTONS FIX ===== */
-.income-expenses-module .module-header-pwa .header-actions,
-.sales-module .module-header-pwa .header-actions {
+
+/* Target Income & Expenses module header actions */
+.income-expenses-module .module-header-pwa .header-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-end; /* Align buttons to the right on larger screens */
     gap: 8px;
     margin-top: 15px;
     align-items: center;
 }
 
-.income-expenses-module .module-header-pwa .header-actions .btn,
-.sales-module .module-header-pwa .header-actions .btn {
-    padding: 10px 20px !important;
-    font-size: 13px !important;
-    border: none !important;
-    border-radius: 8px !important;
-    min-height: 36px !important;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+/* Target Sales module header actions */
+.sales-module .module-header-pwa .header-actions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right on larger screens */
+    gap: 8px;
+    margin-top: 15px;
+    align-items: center;
 }
 
+/* Smaller buttons in header actions */
+.income-expenses-module .module-header-pwa .header-actions .btn,
+.sales-module .module-header-pwa .header-actions .btn {
+    padding: 10px 20px !important; /* Smaller padding */
+    font-size: 13px !important; /* Smaller font size */
+    border: none !important; /* Remove all borders */
+    border-radius: 8px !important; /* Smaller border radius */
+    min-height: 36px !important; /* Smaller height */
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important; /* Subtle shadow instead of border */
+}
+
+/* Primary button in header - no border */
 .income-expenses-module .module-header-pwa .header-actions .btn-primary,
 .sales-module .module-header-pwa .header-actions .btn-primary {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1)) !important;
     color: white !important;
+    border: none !important;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important; /* Subtle glass effect border */
 }
 
 .income-expenses-module .module-header-pwa .header-actions .btn-primary:hover,
@@ -2496,18 +3197,30 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Outline button in header - remove border, make glass effect */
 .income-expenses-module .module-header-pwa .header-actions .btn-outline,
 .sales-module .module-header-pwa .header-actions .btn-outline {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important;
     color: white !important;
+    border: none !important;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important; /* Subtle glass effect */
 }
 
+.income-expenses-module .module-header-pwa .header-actions .btn-outline:hover,
+.sales-module .module-header-pwa .header-actions .btn-outline:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.15)) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
 @media (max-width: 768px) {
+    /* Stack buttons vertically on mobile */
     .income-expenses-module .module-header-pwa .header-actions,
     .sales-module .module-header-pwa .header-actions {
-        justify-content: flex-start !important;
+        justify-content: flex-start !important; /* Left align on mobile */
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
@@ -2515,12 +3228,24 @@ body {
     
     .income-expenses-module .module-header-pwa .header-actions .btn,
     .sales-module .module-header-pwa .header-actions .btn {
-        width: 100% !important;
+        width: 100% !important; /* Full width on mobile */
         justify-content: center;
     }
 }
 
+/* For larger screens, keep buttons inline */
+@media (min-width: 769px) {
+    .income-expenses-module .module-header-pwa .header-actions,
+    .sales-module .module-header-pwa .header-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
 /* ===== CONSISTENCY WITH OTHER MODULES ===== */
+
+/* Apply similar styling to other modules with header actions */
 .module-container .module-header .header-actions,
 .orders-module .orders-header-pwa .header-actions,
 .feed-module .module-header-pwa .header-actions,
@@ -2542,6 +3267,7 @@ body {
     min-height: 36px !important;
 }
 
+/* Glass effect buttons for all modules */
 .module-container .module-header .header-actions .btn-primary,
 .orders-module .orders-header-pwa .header-actions .btn-primary,
 .feed-module .module-header-pwa .header-actions .btn-primary,
@@ -2553,7 +3279,10 @@ body {
 }
 
 /* ===== SMALL SCREEN BUTTON OVERFLOW FIXES ===== */
+
+/* Ultra-small mobile devices (320px and below) */
 @media (max-width: 320px) {
+    /* Force full width modals */
     #import-receipts-modal .popout-modal-content,
     #transaction-modal .popout-modal-content {
         width: 100vw !important;
@@ -2561,6 +3290,7 @@ body {
         border-radius: 0 !important;
     }
     
+    /* Shrink modal headers */
     .popout-modal-header {
         padding: 12px 16px !important;
     }
@@ -2573,6 +3303,7 @@ body {
         max-width: 180px;
     }
     
+    /* CRITICAL: Prevent button overflow */
     .popout-modal-footer {
         display: flex !important;
         flex-direction: column !important;
@@ -2582,6 +3313,7 @@ body {
         box-sizing: border-box !important;
     }
     
+    /* Force buttons to stay within container */
     .popout-modal-footer .btn {
         width: 100% !important;
         min-width: 0 !important;
@@ -2595,6 +3327,15 @@ body {
         white-space: nowrap !important;
     }
     
+    /* Button text overflow prevention */
+    .popout-modal-footer .btn span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Camera controls on small screens */
     .camera-controls {
         flex-direction: column !important;
         padding: 0 8px !important;
@@ -2607,28 +3348,59 @@ body {
         padding: 10px 8px !important;
     }
     
+    /* Shrink form inputs */
     .form-input,
     .form-input-pwa {
         padding: 10px 12px !important;
-        font-size: 16px !important;
-        min-height: 44px !important;
+        font-size: 16px !important; /* Prevents iOS zoom */
+        min-height: 44px !important; /* Touch target size */
     }
     
+    /* Reduce spacing */
     .popout-modal-body {
         padding: 12px !important;
     }
     
+    /* Shrink receipt upload area */
     #receipt-upload-area {
         min-height: 80px !important;
         padding: 12px !important;
     }
     
+    /* Shrink camera preview */
     .camera-preview {
         height: 200px !important;
     }
 }
 
+/* Extra small phones in landscape */
+@media (max-width: 480px) and (orientation: landscape) {
+    #import-receipts-modal .popout-modal-content,
+    #transaction-modal .popout-modal-content {
+        max-height: 95vh !important;
+    }
+    
+    .popout-modal-body {
+        max-height: calc(95vh - 120px) !important;
+        padding: 10px !important;
+    }
+    
+    /* Horizontal button layout for landscape */
+    .popout-modal-footer {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    
+    .popout-modal-footer .btn {
+        flex: 1 !important;
+        min-width: 45% !important;
+    }
+}
+
 /* ===== BUTTON CONTAINER OVERFLOW PREVENTION ===== */
+
+/* This is the KEY fix for button overflow */
 .popout-modal-footer {
     display: flex;
     flex-wrap: wrap;
@@ -2641,6 +3413,7 @@ body {
     overflow: hidden;
 }
 
+/* Ensure buttons never exceed container */
 .popout-modal-footer .btn {
     flex: 1;
     min-width: 120px;
@@ -2649,8 +3422,25 @@ body {
     text-align: center;
 }
 
+/* Special handling for 2-button layouts */
+.popout-modal-footer:has(.btn:nth-child(2):last-child) {
+    justify-content: space-between;
+}
+
+.popout-modal-footer:has(.btn:nth-child(2):last-child) .btn {
+    flex: 0 1 calc(50% - 6px);
+    min-width: calc(50% - 6px);
+}
+
+/* 3+ button layouts */
+.popout-modal-footer:has(.btn:nth-child(3)) {
+    justify-content: space-around;
+}
+
 /* ===== SCROLLING PREVENTION FOR SMALL HEIGHT SCREENS ===== */
+
 @media (max-height: 600px) {
+    /* Very short screens (like some mobile browsers with address bar) */
     #import-receipts-modal .popout-modal-content,
     #transaction-modal .popout-modal-content {
         max-height: 95vh !important;
@@ -2664,6 +3454,7 @@ body {
         -webkit-overflow-scrolling: touch !important;
     }
     
+    /* Compact form elements */
     .form-grid-pwa,
     .form-grid {
         gap: 10px !important;
@@ -2677,6 +3468,8 @@ body {
 }
 
 /* ===== SAFE AREA INSETS FOR NOTCHED PHONES ===== */
+
+/* iPhone X and newer with notches */
 @supports (padding: max(0px)) {
     .popout-modal-footer {
         padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
@@ -2690,6 +3483,8 @@ body {
 }
 
 /* ===== EMERGENCY OVERFLOW FIXES ===== */
+
+/* Last resort: prevent any element from exceeding viewport */
 @media (max-width: 480px) {
     * {
         max-width: 100vw !important;
@@ -2702,12 +3497,15 @@ body {
         overflow: visible !important;
     }
     
+    /* Force buttons to shrink text if needed */
     .popout-modal-footer .btn {
         overflow: hidden !important;
     }
 }
 
 /* ===== CAPTURE BUTTONS TEXT FLOW FIX ===== */
+
+/* Base styles for camera controls */
 .camera-controls {
     display: flex;
     gap: 12px;
@@ -2726,7 +3524,7 @@ body {
     font-size: 14px;
     font-weight: 600;
     text-align: center;
-    white-space: normal;
+    white-space: normal; /* Allow text wrapping */
     word-wrap: break-word;
     overflow-wrap: break-word;
     line-height: 1.3;
@@ -2737,6 +3535,7 @@ body {
     text-align: center;
 }
 
+/* Button text container */
 .camera-controls .btn span {
     display: block;
     width: 100%;
@@ -2744,6 +3543,8 @@ body {
 }
 
 /* ===== BUTTON OVERFLOW FIXES - SIMPLIFIED ===== */
+
+/* 1. PREVENT ALL BUTTON OVERFLOWS */
 .btn {
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -2752,6 +3553,7 @@ body {
     text-overflow: ellipsis !important;
 }
 
+/* 2. SPECIFIC PROCESS RECEIPTS BUTTON */
 #process-receipts-btn {
     display: flex !important;
     align-items: center !important;
@@ -2760,6 +3562,7 @@ body {
     min-width: 0 !important;
 }
 
+/* 3. MODAL FOOTER LAYOUT */
 .popout-modal-footer {
     display: flex !important;
     flex-wrap: wrap !important;
@@ -2769,6 +3572,7 @@ body {
     box-sizing: border-box !important;
 }
 
+/* 4. MOBILE - STACK BUTTONS */
 @media (max-width: 768px) {
     .popout-modal-footer {
         flex-direction: column !important;
@@ -2783,12 +3587,14 @@ body {
         font-size: 14px !important;
     }
     
+    /* Process Receipts button specific */
     #process-receipts-btn {
         width: 100% !important;
         padding: 12px 16px !important;
     }
 }
 
+/* 5. EXTRA SMALL SCREENS */
 @media (max-width: 320px) {
     .popout-modal-content {
         width: 100vw !important;
@@ -2807,6 +3613,7 @@ body {
     }
 }
 
+/* 6. NUCLEAR OPTION - If nothing else works */
 .btn-force-contain {
     all: unset !important;
     display: flex !important;
@@ -2830,6 +3637,8 @@ body {
 }
 
 /* ===== ICON-ONLY FALLBACK ===== */
+
+/* If text is still overflowing, show icon only */
 @media (max-width: 280px) {
     .camera-controls {
         display: grid;
@@ -2857,58 +3666,83 @@ body {
 }
 
 /* ===== INCOME/EXPENSES MODALS - MATCH APP GREEN THEME ===== */
+/* Make popout-modals behave like sales module modal */
 .popout-modal:not(.hidden) {
+    /* Match sales module modal positioning */
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
+    
+    /* Match sales module backdrop */
     background: var(--modal-backdrop, rgba(0, 0, 0, 0.7)) !important;
     backdrop-filter: var(--backdrop-blur-light, blur(8px)) !important;
+    
+    /* Center like sales module */
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
+    
+    /* High z-index like sales module */
     z-index: 10000 !important;
+    
+    /* Visibility */
     opacity: 1 !important;
     visibility: visible !important;
 }
 
+/* Modal content - match sales module styling */
 .popout-modal-content {
+    /* Match sales module modal styling */
     background: var(--modal-bg, var(--surface-color, #ffffff)) !important;
     color: var(--modal-body-text, var(--text-primary, #1a1a1a)) !important;
     border: 1px solid var(--modal-border, var(--border-color, #e5e7eb)) !important;
     border-radius: var(--border-radius, 12px) !important;
     box-shadow: var(--modal-shadow, 0 20px 40px rgba(0, 0, 0, 0.15)) !important;
+    
+    /* Responsive sizing - like sales module */
     width: 95% !important;
     max-width: 600px !important;
     max-height: 90vh !important;
+    
+    /* Flex layout */
     display: flex !important;
     flex-direction: column !important;
 }
 
+/* Modal header - UPDATE TO MATCH APP GREEN GRADIENT THEME */
 .popout-modal-header {
+    /* App green gradient - using your primary colors */
     background: var(--modal-header-bg, 
         linear-gradient(135deg, 
             var(--primary-color, #22c55e) 0%, 
             var(--complementary-teal, #14b8a6) 50%, 
             var(--primary-dark, #16a34a) 100%
         )) !important;
+    
+    /* Enhanced gradient with smooth transition */
     background-size: 200% 200% !important;
     animation: gradientShift 8s ease infinite !important;
+    
     color: var(--modal-header-text, #ffffff) !important;
     border-bottom: 1px solid var(--modal-header-border, rgba(255, 255, 255, 0.25)) !important;
     padding: 1.5rem 2rem !important;
     border-radius: var(--border-radius, 12px) var(--border-radius, 12px) 0 0 !important;
+    
+    /* Subtle shine effect */
     position: relative !important;
     overflow: hidden !important;
 }
 
+/* Subtle shine animation for gradient */
 @keyframes gradientShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
+/* Optional: Add a subtle shine overlay */
 .popout-modal-header::before {
     content: '';
     position: absolute;
@@ -2938,10 +3772,11 @@ body {
     font-weight: 700 !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
     letter-spacing: -0.02em !important;
-    position: relative !important;
+    position: relative !important; /* Ensures it's above the overlay */
     z-index: 2 !important;
 }
 
+/* Modal body */
 .popout-modal-body {
     background: var(--modal-body-bg, var(--surface-color, #ffffff)) !important;
     color: var(--modal-body-text, var(--text-primary, #1a1a1a)) !important;
@@ -2951,6 +3786,7 @@ body {
     max-height: calc(90vh - 140px) !important;
 }
 
+/* Modal footer */
 .popout-modal-footer {
     background: var(--modal-footer-bg, var(--background-color, #f8faf9)) !important;
     color: var(--modal-footer-text, var(--text-primary, #1a1a1a)) !important;
@@ -2962,6 +3798,7 @@ body {
     gap: 1rem !important;
 }
 
+/* Close button - update to match green theme */
 .popout-modal-close {
     background: var(--modal-close-bg, rgba(255, 255, 255, 0.25)) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -3000,6 +3837,7 @@ body {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
 }
 
+/* Dark mode green gradient - darker, richer tones */
 .dark-mode .popout-modal-header {
     background: linear-gradient(135deg, 
         var(--primary-dark, #15803d) 0%, 
@@ -3080,6 +3918,7 @@ body {
 }
 
 /* ===== SPECIFIC MODAL TYPES ===== */
+/* Income modal specific - slight variation */
 .popout-modal[data-modal-type="income"] .popout-modal-header {
     background: linear-gradient(135deg, 
         var(--primary-color, #22c55e) 0%, 
@@ -3087,6 +3926,7 @@ body {
     ) !important;
 }
 
+/* Expenses modal specific - slight variation */
 .popout-modal[data-modal-type="expense"] .popout-modal-header {
     background: linear-gradient(135deg, 
         var(--complementary-teal, #14b8a6) 0%, 
@@ -3094,6 +3934,7 @@ body {
     ) !important;
 }
 
+/* FIX MODAL HEADER COLOR */
 .popout-modal-header {
     background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
     color: white !important;
@@ -3109,29 +3950,35 @@ body {
     background: rgba(255, 255, 255, 0.2) !important;
 }
 
+/* Dark mode */
 .dark-mode .popout-modal-header {
     background: linear-gradient(135deg, #15803d, #0d9488, #115e59) !important;
 }
 
 /* ===== FIX BUTTON TEXT COLORS ===== */
+
+/* Process Receipts button - force white text */
 #process-receipts-btn,
 #process-receipts-btn .btn-text,
 #process-receipts-btn .btn-icon {
     color: white !important;
 }
 
+/* All primary buttons should have white text */
 .btn-primary,
 .btn-primary .btn-text,
 .btn-primary .btn-icon {
     color: white !important;
 }
 
+/* Buttons inside modal headers should have white text */
 .popout-modal-header .btn,
 .popout-modal-header .btn .btn-text,
 .popout-modal-header .btn .btn-icon {
     color: white !important;
 }
 
+/* Hover states */
 #process-receipts-btn:hover .btn-text,
 .btn-primary:hover .btn-text,
 .popout-modal-header .btn:hover .btn-text {
@@ -3139,17 +3986,21 @@ body {
     opacity: 0.9;
 }
 
+/* Force modal visibility fix */
 .popout-modal:not(.hidden) {
     display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
 }
 
+/* Fix for dynamically created modals */
 .popout-modal[style*="display: none"]:not(.hidden) {
     display: flex !important;
 }
 
 /* ===== CAMERA SCANNER MODULE - FIXES ===== */
+
+/* Camera scanner container */
 .camera-scanner-container {
     width: 100%;
     max-width: 800px;
@@ -3163,6 +4014,7 @@ body {
     box-shadow: 0 4px 20px var(--shadow-color);
 }
 
+/* Camera video preview */
 .camera-preview {
     width: 100%;
     max-width: 600px;
@@ -3180,6 +4032,7 @@ body {
     object-fit: cover;
 }
 
+/* Camera controls - FIXED */
 .camera-controls {
     display: flex;
     flex-wrap: wrap;
@@ -3209,6 +4062,7 @@ body {
     min-height: 48px;
 }
 
+/* Camera selector - FIXED */
 .camera-selector {
     width: 100%;
     max-width: 600px;
@@ -3242,6 +4096,7 @@ body {
     padding-right: 50px;
 }
 
+/* Scan results container */
 .scan-results {
     width: 100%;
     max-width: 600px;
@@ -3252,6 +4107,7 @@ body {
     border-radius: 12px;
 }
 
+/* QR code overlay */
 .qr-overlay {
     position: absolute;
     top: 50%;
@@ -3271,6 +4127,8 @@ body {
 }
 
 /* ===== RESPONSIVE FIXES FOR CAMERA MODULE ===== */
+
+/* Tablets and smaller desktops */
 @media (max-width: 1024px) {
     .camera-scanner-container {
         max-width: 700px;
@@ -3297,6 +4155,7 @@ body {
     }
 }
 
+/* Tablets */
 @media (max-width: 768px) {
     .camera-scanner-container {
         max-width: 100%;
@@ -3339,6 +4198,7 @@ body {
     }
 }
 
+/* Mobile phones */
 @media (max-width: 480px) {
     .camera-preview {
         height: 250px;
@@ -3369,6 +4229,7 @@ body {
     }
 }
 
+/* Extra small phones */
 @media (max-width: 320px) {
     .camera-preview {
         height: 200px;
@@ -3390,6 +4251,7 @@ body {
         height: 140px;
     }
     
+    /* Icon-only fallback for very small screens */
     .camera-controls.icon-only .btn span {
         display: none;
     }
@@ -3432,6 +4294,8 @@ body {
 }
 
 /* ===== BUTTON TEXT FIXES ===== */
+
+/* Ensure button text never overflows */
 .btn span {
     display: inline-block;
     max-width: 100%;
@@ -3440,6 +4304,7 @@ body {
     white-space: nowrap;
 }
 
+/* For buttons with icons and text */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -3453,6 +4318,7 @@ body {
 }
 
 /* ===== FIX FOR CAMERA OPTION IN POPOUT MODALS ===== */
+
 .popout-modal .camera-scanner-container {
     max-width: 100%;
     padding: 0;
@@ -3473,6 +4339,7 @@ body {
     max-width: 100%;
 }
 
+/* Fix for modal footer buttons */
 .popout-modal-footer .btn {
     min-width: 140px;
 }
@@ -3484,13 +4351,14 @@ body {
     }
 }
 
+/* Camera specific improvements */
 .camera-preview video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     background: #000;
     display: block;
-    transform: scaleX(1);
+    transform: scaleX(1); /* Remove mirror for rear camera */
 }
 
 .camera-preview {
@@ -3503,6 +4371,7 @@ body {
     min-height: 300px;
 }
 
+/* Camera controls styling */
 .camera-controls {
     display: flex;
     gap: 12px;
@@ -3522,6 +4391,7 @@ body {
     gap: 8px;
 }
 
+/* Camera status indicator */
 #camera-status {
     background: var(--primary-color-10);
     color: var(--primary-color);
@@ -3531,6 +4401,7 @@ body {
     font-weight: 500;
 }
 
+/* Capture button special styling */
 #capture-photo {
     background: linear-gradient(135deg, var(--primary-color), #4f46e5);
     border: none;
@@ -3543,6 +4414,7 @@ body {
     transform: scale(1.05);
 }
 
+/* Section transitions */
 .camera-section, .upload-section, .recent-section {
     transition: all 0.3s ease-in-out;
 }
@@ -3556,28 +4428,122 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== RESET NAVBAR TO WORKING STATE ===== */
-.top-nav {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    overflow: visible !important;
-    flex-wrap: wrap !important;
+/* Mini Sync Status - Won't break layout */
+/*.sync-status-mini {
+    font-size: 11px;
+    margin-top: 5px;
+    padding: 2px 0;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}*/
+
+/* Optional hover effect for sync button */
+/*#agrimetrics-sync-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(33,150,243,0.4);
 }
 
-.nav-items {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 10px !important;
+#agrimetrics-sync-button:active {
+    transform: translateY(0);
 }
 
-@media (max-width: 768px) {
-    .top-nav {
-        overflow-x: auto !important;
-        flex-wrap: nowrap !important;
+/* Mobile adjustments */
+/*@media (max-width: 480px) {
+    #agrimetrics-mini-sync {
+        bottom: 10px;
+        right: 10px;
+        padding: 4px 10px;
+        font-size: 11px;
     }
     
-    .nav-items {
-        flex-wrap: nowrap !important;
+    #agrimetrics-sync-button {
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        font-size: 12px;
     }
+}*/
+
+/* ===== SPLASH SCREEN PROTECTION ===== */
+#splash-screen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    ) !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: opacity 0.5s ease, visibility 0.5s ease !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#splash-screen.hidden,
+#splash-screen:not(.active) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.splash-logo {
+    text-align: center !important;
+    padding: 40px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border-radius: 24px !important;
+    animation: splashPulse 2s infinite ease-in-out !important;
+}
+
+.splash-logo img {
+    width: 400px !important;
+    max-width: 90% !important;
+    height: auto !important;
+}
+
+@keyframes splashPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ===== ULTIMATE AUTH CENTERING - NO JAVASCRIPT NEEDED ===== */
+#auth-container.active {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    ) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 999999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.auth-forms {
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 40px !important;
+    width: 90% !important;
+    max-width: 420px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+    margin: 0 auto !important;
 }
