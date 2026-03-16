@@ -314,6 +314,7 @@ header {
     height: 80px;
 }
 
+/* ===== TOP NAVIGATION ===== */
 .top-nav {
     height: 80px;
     background: var(--surface-color);
@@ -322,17 +323,18 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    z-index: 10000 !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
+    z-index: 10000 !important;
 }
 
 .nav-brand {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-shrink: 0; /* Prevents brand from shrinking */
 }
 
 .brand-text-container {
@@ -355,16 +357,26 @@ header {
     line-height: 1.2;
 }
 
+/* Right side container - THIS IS KEY */
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto; /* Pushes everything to the right */
+}
+
 .nav-items {
     display: flex;
-    gap: 15px;
+    gap: 8px;
     align-items: center;
+    margin-right: 10px; /* Space before logout/hamburger */
 }
 
 .nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     padding: 8px 12px;
@@ -372,6 +384,7 @@ header {
     cursor: pointer;
     transition: background-color 0.2s;
     color: var(--text-primary);
+    min-width: 60px; /* Consistent width */
 }
 
 .nav-item:hover {
@@ -385,20 +398,136 @@ header {
 }
 
 .nav-label {
-    font-size: 12px;
+    font-size: 11px;
     margin-top: 4px;
+    white-space: nowrap;
 }
 
+/* Logout button in navbar */
+#navbar-logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    height: 40px;
+    margin-right: 8px;
+}
+
+#navbar-logout-btn:hover {
+    background: linear-gradient(135deg, #ff5555 0%, #dd0000 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 68, 68, 0.3);
+}
+
+/* Hamburger menu */
 #hamburger-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 6px;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
+    color: var(--text-primary);
 }
 
 #hamburger-menu:hover {
-    background: rgba(59, 130, 246, 0.1) !important;
+    background: rgba(59, 130, 246, 0.2) !important;
     transform: scale(1.05) !important;
 }
 
+#hamburger-menu .nav-label {
+    display: none; /* Hide label on hamburger */
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .top-nav {
+        height: 60px;
+        padding: 0 12px;
+    }
+    
+    .nav-right {
+        gap: 5px;
+    }
+    
+    .nav-items {
+        gap: 4px;
+        margin-right: 5px;
+    }
+    
+    .nav-item {
+        padding: 6px 8px !important;
+        min-width: 50px !important;
+    }
+    
+    .nav-label {
+        display: none; /* Hide text labels on mobile, show only icons */
+    }
+    
+    .brand-subtitle {
+        display: none;
+    }
+    
+    .brand-text {
+        font-size: 18px;
+    }
+    
+    #navbar-logout-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        height: 36px;
+    }
+    
+    #navbar-logout-btn span:last-child {
+        display: none; /* Hide "Logout" text on mobile, show only icon */
+    }
+}
+
+@media (max-width: 480px) {
+    .top-nav {
+        padding: 0 8px;
+        height: 56px;
+    }
+    
+    .nav-items {
+        gap: 2px;
+    }
+    
+    .nav-item {
+        padding: 4px 6px !important;
+        min-width: 45px !important;
+    }
+    
+    .brand-text {
+        font-size: 16px;
+    }
+    
+    #navbar-logout-btn {
+        padding: 4px 8px;
+        height: 32px;
+        margin-right: 4px;
+    }
+    
+    #hamburger-menu {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* ========= Side Menu ========= */
 #side-menu {
     position: fixed;
     top: var(--navbar-height, 80px);
