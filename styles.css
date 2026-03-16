@@ -112,7 +112,7 @@ body {
     flex-direction: column !important;
 }
 
-/* ===== AUTH CONTAINER ===== */
+/* ===== AUTH CONTAINER ===== 
 #auth-container {
     min-height: 100vh;
     display: flex;
@@ -2333,7 +2333,7 @@ body.auth-visible #auth-container {
     }
 }
 
-/* ===== AUTH CONTAINER CENTERING FIX ===== */
+/* ===== AUTH CONTAINER CENTERING FIX ===== 
 
 #auth-container {
     position: fixed;
@@ -2367,7 +2367,7 @@ body.auth-visible #auth-container {
     justify-content: center !important;
 }
 
-/* Auth forms wrapper - FIXED CENTERING */
+/* Auth forms wrapper - FIXED CENTERING 
 .auth-forms {
     background: white;
     border-radius: 16px;
@@ -2434,7 +2434,7 @@ body.auth-visible #auth-container {
     border: 2px solid blue;
 }
 
-/* ===== AUTH CONTAINER CENTERING FIX ===== */
+/* ===== AUTH CONTAINER CENTERING FIX ===== 
 
 #auth-container {
     position: fixed;
