@@ -4238,3 +4238,93 @@ body.loading #app-container {
     background: rgba(74, 222, 128, 0.1) !important;
     color: #22C55E !important;
 }
+
+/* ===== ULTIMATE CHECKBOX FIX - ADD AT END OF FILE ===== */
+
+/* Target specifically the sign-in form checkbox */
+#signin-form .checkbox-wrapper,
+.checkbox-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-height: 40px !important;
+    margin: 20px 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Force checkbox to stay left */
+#signin-form .checkbox-wrapper input[type="checkbox"],
+.checkbox-wrapper input[type="checkbox"] {
+    display: inline-block !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    max-width: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 2px solid #4CAF50 !important;
+    border-radius: 4px !important;
+    background: white !important;
+    cursor: pointer !important;
+    accent-color: #4CAF50 !important;
+    flex: 0 0 auto !important;
+    order: 1 !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    float: none !important;
+    clear: none !important;
+}
+
+/* Force text to stay right next to checkbox */
+#signin-form .checkbox-wrapper label,
+.checkbox-wrapper label {
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #555 !important;
+    cursor: pointer !important;
+    line-height: 1.4 !important;
+    flex: 0 1 auto !important;
+    order: 2 !important;
+    white-space: nowrap !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Remove any possible pseudo-elements that could cause issues */
+.checkbox-wrapper::before,
+.checkbox-wrapper::after,
+.checkbox-wrapper input::before,
+.checkbox-wrapper input::after,
+.checkbox-wrapper label::before,
+.checkbox-wrapper label::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Kill any hidden text nodes or extra elements */
+.checkbox-wrapper {
+    font-size: 0 !important; /* Hide any stray text */
+}
+
+.checkbox-wrapper label {
+    font-size: 14px !important; /* Reset label font */
+}
+
+/* Dark mode support */
+.dark-mode .checkbox-wrapper label {
+    color: #CBD5E1 !important;
+}
+
+/* Debug borders - remove after fixed */
+/* .checkbox-wrapper { border: 2px solid red !important; } */
+/* .checkbox-wrapper input { border: 2px solid blue !important; } */
+/* .checkbox-wrapper label { border: 2px solid green !important; } */
