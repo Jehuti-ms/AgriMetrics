@@ -2069,6 +2069,310 @@ body.auth-visible #auth-container {
     color: #fdba74 !important;
 }
 
+/* ===== SIGN-IN FORM STYLING ===== */
+
+/* Form title */
+#signin-form h2,
+.auth-form h2 {
+    text-align: center !important;
+    margin-bottom: 24px !important;
+    color: #2E7D32 !important;
+    font-size: 28px !important;
+    font-weight: 700 !important;
+}
+
+/* Google button with splash screen gradient */
+#google-signin-btn,
+.btn-social.google {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    padding: 14px 20px !important;
+    margin-bottom: 20px !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    border: none !important;
+    outline: none !important;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    ) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+#google-signin-btn:hover,
+.btn-social.google:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(13, 71, 161, 0.4) !important;
+    background: linear-gradient(135deg, 
+        #2E7D32 0%,
+        #1B5E20 25%,
+        #0D47A1 50%,
+        #4CAF50 100%
+    ) !important;
+}
+
+/* Google icon */
+#google-signin-btn .social-icon,
+.btn-social.google .social-icon {
+    background: white !important;
+    color: #0D47A1 !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+}
+
+/* Divider */
+#signin-form .auth-divider,
+.auth-divider {
+    display: flex !important;
+    align-items: center !important;
+    margin: 24px 0 !important;
+    color: #666 !important;
+    font-size: 14px !important;
+}
+
+#signin-form .auth-divider::before,
+#signin-form .auth-divider::after,
+.auth-divider::before,
+.auth-divider::after {
+    content: '' !important;
+    flex: 1 !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, #4CAF50, transparent) !important;
+}
+
+#signin-form .auth-divider span,
+.auth-divider span {
+    padding: 0 16px !important;
+    font-weight: 600 !important;
+    color: #2E7D32 !important;
+}
+
+/* Form groups */
+#signin-form .form-group,
+.auth-form .form-group {
+    margin-bottom: 20px !important;
+}
+
+#signin-form .form-group label,
+.auth-form .form-group label {
+    display: block !important;
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    color: #2E7D32 !important;
+    font-size: 14px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+#signin-form .form-group input,
+.auth-form .form-group input {
+    width: 100% !important;
+    padding: 14px 16px !important;
+    border: 2px solid #E8F5E9 !important;
+    border-radius: 12px !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    background: #F9F9F9 !important;
+    color: #333 !important;
+    outline: none !important;
+}
+
+#signin-form .form-group input:focus,
+.auth-form .form-group input:focus {
+    border-color: #4CAF50 !important;
+    background: white !important;
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1) !important;
+}
+
+/* FIXED CHECKBOX - NO STACKING */
+#signin-form .checkbox-wrapper,
+.checkbox-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 20px 0 !important;
+}
+
+#signin-form .checkbox-wrapper input[type="checkbox"],
+.checkbox-wrapper input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    margin: 0 !important;
+    accent-color: #4CAF50 !important;
+    flex-shrink: 0 !important;
+}
+
+#signin-form .checkbox-wrapper label,
+#signin-form .checkbox-wrapper span,
+.checkbox-wrapper label,
+.checkbox-wrapper span {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #555 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+}
+
+/* If using label as wrapper */
+#signin-form label[style*="display: flex"] {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 20px 0 !important;
+    padding: 0 !important;
+    cursor: pointer !important;
+    width: 100% !important;
+}
+
+#signin-form label[style*="display: flex"] input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    margin: 0 !important;
+    accent-color: #4CAF50 !important;
+    flex-shrink: 0 !important;
+}
+
+#signin-form label[style*="display: flex"] span {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #555 !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}
+
+/* Sign In button */
+#signin-form .btn-primary,
+.auth-form .btn-primary {
+    width: 100% !important;
+    padding: 16px !important;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    margin: 8px 0 16px 0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3) !important;
+}
+
+#signin-form .btn-primary:hover,
+.auth-form .btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4) !important;
+    background: linear-gradient(135deg, #2E7D32, #1B5E20) !important;
+}
+
+/* Auth links */
+#signin-form .auth-links,
+.auth-form .auth-links {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-top: 16px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid #E8F5E9 !important;
+}
+
+#signin-form .auth-links a,
+.auth-form .auth-links a {
+    color: #4CAF50 !important;
+    text-decoration: none !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+#signin-form .auth-links a:hover,
+.auth-form .auth-links a:hover {
+    color: #2E7D32 !important;
+    background: rgba(76, 175, 80, 0.1) !important;
+}
+
+/* Dark mode support */
+.dark-mode #signin-form h2,
+.dark-mode .auth-form h2 {
+    color: #4ADE80 !important;
+}
+
+.dark-mode #signin-form .form-group label,
+.dark-mode .auth-form .form-group label {
+    color: #4ADE80 !important;
+}
+
+.dark-mode #signin-form .form-group input,
+.dark-mode .auth-form .form-group input {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #F1F5F9 !important;
+}
+
+.dark-mode #signin-form .form-group input:focus,
+.dark-mode .auth-form .form-group input:focus {
+    border-color: #4ADE80 !important;
+    background: #1E293B !important;
+    box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.1) !important;
+}
+
+.dark-mode #signin-form .checkbox-wrapper label,
+.dark-mode #signin-form .checkbox-wrapper span,
+.dark-mode .checkbox-wrapper label,
+.dark-mode .checkbox-wrapper span,
+.dark-mode #signin-form label[style*="display: flex"] span {
+    color: #CBD5E1 !important;
+}
+
+.dark-mode #signin-form .auth-divider span,
+.dark-mode .auth-divider span {
+    color: #4ADE80 !important;
+}
+
+.dark-mode #signin-form .auth-divider::before,
+.dark-mode #signin-form .auth-divider::after,
+.dark-mode .auth-divider::before,
+.dark-mode .auth-divider::after {
+    background: linear-gradient(90deg, transparent, #4ADE80, transparent) !important;
+}
+
+.dark-mode #signin-form .auth-links,
+.dark-mode .auth-form .auth-links {
+    border-top-color: #475569 !important;
+}
+
+.dark-mode #signin-form .auth-links a,
+.dark-mode .auth-form .auth-links a {
+    color: #4ADE80 !important;
+}
+
+.dark-mode #signin-form .auth-links a:hover,
+.dark-mode .auth-form .auth-links a:hover {
+    background: rgba(74, 222, 128, 0.1) !important;
+    color: #22C55E !important;
+}
+
 /* ===== SMART GAP FIX ===== */
 body {
     padding-top: 0 !important;
