@@ -4473,7 +4473,12 @@ body.dark-mode {
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    ) !important;
     z-index: 9999999 !important;
     display: flex !important;
     align-items: center !important;
