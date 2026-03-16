@@ -4517,7 +4517,12 @@ body.dark-mode {
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20) !important;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    ) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -4536,9 +4541,4 @@ body.dark-mode {
     overflow-y: auto !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
     margin: 0 auto !important;
-}
-
-/* Fix for any conflicting styles */
-body.auth-visible #auth-container.active {
-    display: flex !important;
 }
