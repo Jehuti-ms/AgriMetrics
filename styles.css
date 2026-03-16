@@ -112,7 +112,7 @@ body {
     flex-direction: column !important;
 }
 
-/* ===== AUTH CONTAINER ===== 
+/* ===== AUTH CONTAINER ===== */
 #auth-container {
     min-height: 100vh;
     display: flex;
