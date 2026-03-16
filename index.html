@@ -578,31 +578,35 @@
 
 </script>
 
-    <script>
-    // FORCE sign-in form to show after splash screen
+ <script>
+    // FORCE CENTER THE SIGN-IN FORM
     (function() {
-        // Wait for page to load
-        window.addEventListener('load', function() {
-            console.log('Page loaded, forcing sign-in form to show...');
-            
-            // Hide splash screen
-            var splash = document.getElementById('splash-screen');
-            if (splash) {
-                splash.classList.add('hidden');
+        function centerAuthForm() {
+            var container = document.getElementById('auth-container');
+            if (container) {
+                // Remove inline styles that conflict
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.justifyContent = 'center';
+                container.style.textAlign = 'center';
+                
+                // Find the inner div with table-cell
+                var innerDiv = container.querySelector('div[style*="table-cell"]');
+                if (innerDiv) {
+                    innerDiv.style.display = 'flex';
+                    innerDiv.style.alignItems = 'center';
+                    innerDiv.style.justifyContent = 'center';
+                    innerDiv.style.width = '100%';
+                    innerDiv.style.height = '100%';
+                }
             }
-            
-            // Show auth container
-            var authContainer = document.getElementById('auth-container');
-            if (authContainer) {
-                authContainer.classList.add('active');
-            }
-            
-            // Set body class
-            document.body.classList.remove('loading');
-            document.body.classList.add('auth-visible');
-            
-            console.log('Sign-in form should now be visible');
-        });
+        }
+        
+        // Run when page loads
+        window.addEventListener('load', centerAuthForm);
+        
+        // Run again after a short delay (for dynamic content)
+        setTimeout(centerAuthForm, 500);
     })();
 </script>
     
