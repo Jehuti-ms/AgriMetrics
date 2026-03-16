@@ -578,35 +578,56 @@
 
 </script>
 
- <script>
-    // FORCE CENTER THE SIGN-IN FORM
+<script>
+    // COMPLETELY RESTRUCTURE THE AUTH CONTAINER FOR CENTERING
     (function() {
-        function centerAuthForm() {
+        function fixAuthCentering() {
             var container = document.getElementById('auth-container');
-            if (container) {
-                // Remove inline styles that conflict
-                container.style.display = 'flex';
-                container.style.alignItems = 'center';
-                container.style.justifyContent = 'center';
-                container.style.textAlign = 'center';
-                
-                // Find the inner div with table-cell
-                var innerDiv = container.querySelector('div[style*="table-cell"]');
-                if (innerDiv) {
-                    innerDiv.style.display = 'flex';
-                    innerDiv.style.alignItems = 'center';
-                    innerDiv.style.justifyContent = 'center';
-                    innerDiv.style.width = '100%';
-                    innerDiv.style.height = '100%';
-                }
-            }
+            if (!container) return;
+            
+            // Save the auth-forms content
+            var authForms = container.querySelector('.auth-forms');
+            if (!authForms) return;
+            
+            var formsContent = authForms.innerHTML;
+            var formsClass = authForms.className;
+            
+            // Clear the container
+            container.innerHTML = '';
+            container.style.cssText = '';
+            container.className = 'active';
+            
+            // Set proper styles
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.background = 'linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20, #0D47A1)';
+            container.style.zIndex = '999999';
+            container.style.display = 'flex';
+            container.style.alignItems = 'center';
+            container.style.justifyContent = 'center';
+            container.style.padding = '20px';
+            container.style.boxSizing = 'border-box';
+            
+            // Create new centered structure
+            var newAuthForms = document.createElement('div');
+            newAuthForms.className = formsClass;
+            newAuthForms.style.cssText = 'background: white; border-radius: 16px; padding: 40px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin: 0 auto;';
+            newAuthForms.innerHTML = formsContent;
+            
+            // Add to container
+            container.appendChild(newAuthForms);
+            
+            console.log('Auth container forcefully centered');
         }
         
         // Run when page loads
-        window.addEventListener('load', centerAuthForm);
+        window.addEventListener('load', fixAuthCentering);
         
-        // Run again after a short delay (for dynamic content)
-        setTimeout(centerAuthForm, 500);
+        // Run again after a short delay
+        setTimeout(fixAuthCentering, 300);
     })();
 </script>
     
