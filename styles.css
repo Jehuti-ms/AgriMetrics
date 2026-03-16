@@ -1883,7 +1883,7 @@ header {
     }
 }
 
-#splash-screen::before {
+#splash-screen.active::before {
     content: '' !important;
     position: absolute !important;
     top: 0 !important;
@@ -1896,6 +1896,12 @@ header {
         radial-gradient(circle at 40% 40%, rgba(41, 121, 255, 0.1) 0%, transparent 50%) !important;
     animation: backgroundPulse 8s ease-in-out infinite alternate !important;
     pointer-events: none !important;
+}
+
+/* When splash is hidden, hide its pseudo-element too */
+#splash-screen.hidden::before,
+#splash-screen:not(.active)::before {
+    display: none !important;
 }
 
 @keyframes backgroundPulse {
