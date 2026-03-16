@@ -4274,12 +4274,12 @@ body.loading #app-container {
 
 /* ===== UPDATED GOOGLE BUTTON WITH SPLASH SCREEN GRADIENT ===== */
 
-/*.btn-social.google {
+.btn-social.google {
     background: linear-gradient(135deg, 
-        #4CAF50 0%,      /* Light green - top left 
-        #2E7D32 25%,     /* Medium green 
-        #1B5E20 50%,     /* Forest green 
-        #0D47A1 100%     /* Deep blue - bottom right 
+        #4CAF50 0%,      /* Light green - top left */
+        #2E7D32 25%,     /* Medium green */
+        #1B5E20 50%,     /* Forest green */
+        #0D47A1 100%     /* Deep blue - bottom right */
     ) !important; */
     color: white !important;
     border: none !important;
@@ -4342,12 +4342,13 @@ body.loading #app-container {
     border-radius: 50% !important;
 }
 
-/* If you want the exact splash screen effect with blue in top left instead */
-.btn-social.google.alternate {
+/* If you want the exact splash screen effect with blue in top left instead 
+/*.btn-social.google.alternate {
     background: linear-gradient(135deg, 
-        #0D47A1 0%,      /* Deep blue - top left */
-        #1B5E20 25%,     /* Forest green */
-        #2E7D32 50%,     /* Medium green */
-        #4CAF50 100%     /* Light green - bottom right */
+        #0D47A1 0%,      /* Deep blue - top left 
+        #1B5E20 25%,     /* Forest green 
+        #2E7D32 50%,     /* Medium green 
+        #4CAF50 100%     /* Light green - bottom right 
     ) !important;
 }
+*/
