@@ -3118,3 +3118,71 @@ body.auth-visible .auth-forms {
     margin: 0 auto !important;
     transform: none !important;
 }
+
+/* ===== RESTORE ORIGINAL NAVBAR BEHAVIOR ===== */
+.top-nav {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0 20px !important;
+}
+
+.nav-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+/* Make the scroll wrapper behave like the original nav-items */
+.nav-items-scroll {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: flex-end !important; /* This pushes items right */
+}
+
+.nav-items {
+    display: flex !important;
+    gap: 15px !important; /* Original gap */
+    align-items: center !important;
+    margin-left: auto !important; /* Push to the right */
+}
+
+/* Actions container - should be after nav-items */
+.nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-left: 15px !important; /* Space before actions */
+}
+
+/* Original button styles */
+.nav-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    background: none !important;
+    border: none !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    color: var(--text-primary) !important;
+}
+
+/* Logout button */
+#navbar-logout-btn {
+    background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%) !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .nav-label {
+        display: none !important;
+    }
+    
+    .nav-item {
+        padding: 6px 8px !important;
+    }
+}
