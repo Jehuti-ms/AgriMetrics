@@ -2346,3 +2346,22 @@ body.auth-visible .btn-social.google {
     position: relative !important;
     z-index: 1000002 !important;
 }
+
+/* ===== SIMPLE CHECKBOX FIX ===== */
+#signin-form .form-group label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+}
+
+#signin-form .form-group label input[type="checkbox"] {
+    margin: 0 !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+}
+
+#signin-form .form-group label span {
+    white-space: nowrap !important;
+}
