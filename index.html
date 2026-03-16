@@ -587,6 +587,34 @@
     }, 3000);
 
 </script>
+
+    <script>
+    // FORCE sign-in form to show after splash screen
+    (function() {
+        // Wait for page to load
+        window.addEventListener('load', function() {
+            console.log('Page loaded, forcing sign-in form to show...');
+            
+            // Hide splash screen
+            var splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.classList.add('hidden');
+            }
+            
+            // Show auth container
+            var authContainer = document.getElementById('auth-container');
+            if (authContainer) {
+                authContainer.classList.add('active');
+            }
+            
+            // Set body class
+            document.body.classList.remove('loading');
+            document.body.classList.add('auth-visible');
+            
+            console.log('Sign-in form should now be visible');
+        });
+    })();
+</script>
     
 </body>
 </html>
