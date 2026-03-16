@@ -3556,4 +3556,32 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ===== SIMPLE NAVBAR SCROLLING FIX ===== */
+@media (max-width: 768px) {
+    .top-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+    
+    .nav-items {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+    
+    .nav-item {
+        flex-shrink: 0;
+    }
+    
+    .nav-actions {
+        flex-shrink: 0;
+        display: flex;
+        gap: 8px;
+        margin-left: auto;
+    }
+}
+
 
