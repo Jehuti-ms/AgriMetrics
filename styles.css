@@ -3555,3 +3555,29 @@ body {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===== RESET NAVBAR TO WORKING STATE ===== */
+.top-nav {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    overflow: visible !important;
+    flex-wrap: wrap !important;
+}
+
+.nav-items {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+}
+
+@media (max-width: 768px) {
+    .top-nav {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .nav-items {
+        flex-wrap: nowrap !important;
+    }
+}
