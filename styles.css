@@ -473,24 +473,6 @@ header {
     transform: scale(1.05) !important;
 }
 
-/* ========== SIDE MENU ========= */
-/*#side-menu {
-    position: fixed !important;
-    top: 80px !important;
-    right: 0 !important;
-    width: 280px !important;
-    height: calc(100vh - 80px) !important;
-    background: var(--surface-color) !important;
-    border-left: 1px solid var(--border-color) !important;
-    transform: translateX(280px) !important;
-    transition: transform 0.3s ease !important;
-    z-index: 10001 !important;
-    overflow-y: auto !important;
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    box-shadow: -5px 0 20px rgba(0,0,0,0.1) !important;
-} */
 
 #side-menu {
   position: fixed;          /* lock to viewport */
@@ -2367,7 +2349,7 @@ body.auth-visible #auth-container {
     justify-content: center !important;
 }
 
-/* Auth forms wrapper - FIXED CENTERING 
+/* Auth forms wrapper - FIXED CENTERING */
 .auth-forms {
     background: white;
     border-radius: 16px;
