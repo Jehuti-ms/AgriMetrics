@@ -3864,15 +3864,22 @@ body.dark-mode {
         #0D47A1 100%
     ) !important;
     z-index: 999998 !important;
-    display: none !important;
+    
+    /* CRITICAL: These 3 lines do the centering */
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    
+    /* Hidden by default */
+    display: none !important;
 }
 
+/* When active, show with flex (centering already in parent) */
 #auth-container.active {
     display: flex !important;
 }
 
+/* Auth forms wrapper - the white card */
 .auth-forms {
     background: white !important;
     border-radius: 16px !important;
@@ -3882,18 +3889,24 @@ body.dark-mode {
     max-height: 90vh !important;
     overflow-y: auto !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
-    margin: 0 auto !important;
+    
+    /* No margin auto needed - parent flex handles centering */
+    /* Remove any transforms that might affect positioning */
+    transform: none !important;
+    
+    /* Ensure it respects parent flex centering */
+    flex-shrink: 0 !important;
 }
 
 /* Form-specific adjustments */
 #signup-form .auth-forms {
-    max-height: 85vh;
-    padding: 30px;
+    max-height: 85vh !important;
+    padding: 30px !important;
 }
 
 #signin-form .auth-forms,
 #forgot-password-form .auth-forms {
-    overflow: visible;
+    overflow: visible !important;
 }
 
 .auth-form {
@@ -3904,13 +3917,20 @@ body.dark-mode {
     display: block !important;
 }
 
-/* ===== APP CONTAINER ===== */
-#app-container {
-    display: none !important;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .auth-forms {
+        padding: 30px 25px !important;
+        width: 95% !important;
+    }
 }
 
-#app-container.active {
-    display: block !important;
+@media (max-width: 480px) {
+    .auth-forms {
+        padding: 25px 20px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+    }
 }
 
 /* ===== BODY STATE MANAGEMENT ===== */
