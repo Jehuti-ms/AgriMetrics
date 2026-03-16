@@ -4272,3 +4272,82 @@ body.loading #app-container {
     color: #CBD5E1 !important;
 }
 
+/* ===== UPDATED GOOGLE BUTTON WITH SPLASH SCREEN GRADIENT ===== */
+
+/*.btn-social.google {
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,      /* Light green - top left 
+        #2E7D32 25%,     /* Medium green 
+        #1B5E20 50%,     /* Forest green 
+        #0D47A1 100%     /* Deep blue - bottom right 
+    ) !important; */
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Add a subtle shine effect */
+.btn-social.google::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    ) !important;
+    transition: left 0.5s ease !important;
+}
+
+.btn-social.google:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(13, 71, 161, 0.4) !important;
+    background: linear-gradient(135deg, 
+        #2E7D32 0%,
+        #1B5E20 25%,
+        #0D47A1 50%,
+        #4CAF50 100%
+    ) !important;
+}
+
+.btn-social.google:hover::before {
+    left: 100% !important;
+}
+
+.btn-social.google:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 10px rgba(13, 71, 161, 0.3) !important;
+}
+
+/* Optional: Add the Google icon styling 
+.btn-social.google::after {
+    content: "G" !important;
+    font-weight: bold !important;
+    font-size: 18px !important;
+    margin-right: 8px !important;
+    background: white !important;
+    color: #0D47A1 !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+}
+
+/* If you want the exact splash screen effect with blue in top left instead */
+.btn-social.google.alternate {
+    background: linear-gradient(135deg, 
+        #0D47A1 0%,      /* Deep blue - top left */
+        #1B5E20 25%,     /* Forest green */
+        #2E7D32 50%,     /* Medium green */
+        #4CAF50 100%     /* Light green - bottom right */
+    ) !important;
+}
