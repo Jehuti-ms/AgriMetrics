@@ -1868,95 +1868,6 @@ header {
     transform: translateY(0);
 }
 
-/* ===== SPLASH SCREEN STYLING ===== 
-#splash-screen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-
-#splash-screen.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.splash-logo {
-  animation: splashPulse 2s infinite ease-in-out;
-  text-align: center;
-}
-
-.splash-logo img {
-  max-width: 400px;
-  width: 80%;
-  height: auto;
-  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
-}
-
-@keyframes splashPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* Hide splash screen after animation 
-#splash-screen.hidden {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-} */
-
-/* ===== AUTH CONTAINER ===== */
-/*#auth-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9998;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
-} */
-
-/*#auth-container.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.auth-forms {
-  background: white;
-  border-radius: 16px;
-  padding: 40px;
-  width: 90%;
-  max-width: 420px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  transform: translateY(20px);
-  opacity: 0;
-  transition: transform 0.5s ease, opacity 0.5s ease;
-}
-
-#auth-container.active .auth-forms {
-  transform: translateY(0);
-  opacity: 1;
-}
-
 /* Remember me checkbox styling */
 #remember-me {
     width: 16px;
@@ -3486,7 +3397,6 @@ body.dark-mode {
 }
 
 /* ===== CAPTURE BUTTONS TEXT FLOW FIX ===== */
-
 /* Base styles for camera controls */
 .camera-controls {
     display: flex;
@@ -3619,7 +3529,6 @@ body.dark-mode {
 }
 
 /* ===== ICON-ONLY FALLBACK ===== */
-
 /* If text is still overflowing, show icon only */
 @media (max-width: 280px) {
     .camera-controls {
@@ -4410,43 +4319,6 @@ body.dark-mode {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Mini Sync Status - Won't break layout */
-/*.sync-status-mini {
-    font-size: 11px;
-    margin-top: 5px;
-    padding: 2px 0;
-    transition: color 0.3s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}*/
-
-/* Optional hover effect for sync button */
-/*#agrimetrics-sync-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(33,150,243,0.4);
-}
-
-#agrimetrics-sync-button:active {
-    transform: translateY(0);
-}
-
-/* Mobile adjustments */
-/*@media (max-width: 480px) {
-    #agrimetrics-mini-sync {
-        bottom: 10px;
-        right: 10px;
-        padding: 4px 10px;
-        font-size: 11px;
-    }
-    
-    #agrimetrics-sync-button {
-        bottom: 10px;
-        right: 10px;
-        padding: 6px 12px;
-        font-size: 12px;
-    }
-}*/
 
 /* ===== SPLASH SCREEN PROTECTION ===== */
 #splash-screen {
