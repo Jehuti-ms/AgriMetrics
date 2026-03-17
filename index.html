@@ -264,11 +264,11 @@
 <!-- 8. Upload System -->
 <script src="upload/upload-system.js"></script>
 
-<!-- 9. Main App -->
-<script src="app.js"></script>
-
-<!-- 10. SIGN-IN FIX (LOADED AFTER AUTH) -->
+<!-- 9. SIGN-IN FIX (LOAD BEFORE APP) -->
 <script src="signin-fix.js"></script>
+
+<!-- 10. Main App -->
+<script src="app.js"></script>
 
 <!-- 11. Modules -->
 <script src="modules/dashboard.js"></script>
@@ -400,8 +400,8 @@
     }
 </style>
 
-    <script>
-        
+<script>   
+    
 // ==================== AGRI SYNC INDICATOR - SELF CONTAINED ====================
 (function() {
     // Get elements
@@ -497,25 +497,6 @@
         }, 1500);
     };
     </script>
-
-    <script>
-    // AFTER 3 SECONDS, SHOW AUTH
-    setTimeout(() => {
-        console.log('⏰ Switching to auth screen');
-        document.body.className = 'auth-visible';
-        
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.classList.remove('active');
-            splash.classList.add('hidden');
-        }
-        
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            authContainer.classList.add('active');
-        }
-    }, 3000);
-</script>
-   
+  
 </body>
 </html>
