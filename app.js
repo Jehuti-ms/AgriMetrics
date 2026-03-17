@@ -1074,7 +1074,7 @@ hideLoading() {
         }
     }
 }
-    
+}
 // ==================== AGRIMETRICS SYNC MANAGER ====================
 let agrimetricsSyncWorker = null;
 
