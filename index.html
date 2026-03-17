@@ -439,6 +439,47 @@
 </button>
 
 <script>
+
+    <script>
+    // OVERRIDE FIREBASE AUTO-LOGIN - RUNS FIRST
+    (function() {
+        console.log('🔧 PREVENTING AUTO-LOGIN');
+        
+        // Block Firebase from auto-signing in
+        Object.defineProperty(window, 'firebase', {
+            get: function() {
+                return window._firebase;
+            },
+            set: function(value) {
+                console.log('🔥 Firebase loaded, intercepting...');
+                window._firebase = value;
+                
+                // Once Firebase is loaded, prevent auto-signin
+                setTimeout(() => {
+                    if (window._firebase && window._firebase.auth) {
+                        console.log('🚫 Signing out immediately');
+                        window._firebase.auth().signOut().catch(() => {});
+                    }
+                }, 0);
+            }
+        });
+        
+        // Clear storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Set initial state
+        document.body.className = 'loading';
+        
+        // Show splash
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.remove('hidden');
+            splash.classList.add('active');
+        }
+    })();
+
+    
 // ==================== AGRI SYNC INDICATOR - SELF CONTAINED ====================
 (function() {
     // Get elements
@@ -806,6 +847,25 @@
             }
         }, 3000);
     })();
+</script>
+
+    <script>
+    // AFTER 3 SECONDS, SHOW AUTH
+    setTimeout(() => {
+        console.log('⏰ Switching to auth screen');
+        document.body.className = 'auth-visible';
+        
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.remove('active');
+            splash.classList.add('hidden');
+        }
+        
+        const authContainer = document.getElementById('auth-container');
+        if (authContainer) {
+            authContainer.classList.add('active');
+        }
+    }, 3000);
 </script>
     
 </body>
