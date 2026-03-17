@@ -516,40 +516,6 @@
         }
     }, 3000);
 </script>
-    <script>
-    // OVERRIDE broken sign-in handler
-    (function() {
-        const form = document.getElementById('signin-form-element');
-        
-        // Remove all existing listeners
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
-        
-        // Add working listener
-        newForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('✅ Fixed sign-in handler');
-            
-            const email = document.getElementById('signin-email').value;
-            const password = document.getElementById('signin-password').value;
-            const remember = document.getElementById('remember-me').checked;
-            
-            if (remember) {
-                localStorage.setItem('rememberedEmail', email);
-            }
-            
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    console.log('✅ Sign in successful!', userCredential.user.email);
-                })
-                .catch((error) => {
-                    console.log('❌ Sign in error:', error.code, error.message);
-                    alert('Sign in failed: ' + error.message);
-                });
-        });
-        
-        console.log('✅ Fixed sign-in handler installed');
-    })();
-</script>
+   
 </body>
 </html>
