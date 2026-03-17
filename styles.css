@@ -2923,29 +2923,3 @@ body.auth-visible #splash-screen::before {
     content: none !important;
 }
 
-/* ===== CLEAN CENTERING FIX ===== */
-.auth-forms {
-    margin: 0 auto !important;
-}
-
-#auth-container {
-    margin: 0 !important;
-    padding: 20px !important;
-}
-
-body {
-    margin: 0 !important;
-}
-
-/* Mobile overrides */
-@media (max-width: 768px) {
-    .auth-forms {
-        margin: 0 auto !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-forms {
-        margin: 0 auto !important;
-    }
-}
