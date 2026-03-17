@@ -750,6 +750,63 @@
     
     console.log('=== DIAGNOSTIC END ===');
 </script>
+    <script>
+    // FORCE LOGOUT AND SHOW SPLASH SCREEN
+    (function() {
+        console.log('🚀 Force logout and show splash screen');
+        
+        // Sign out from Firebase
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().signOut().then(() => {
+                console.log('✅ Signed out from Firebase');
+            }).catch((error) => {
+                console.log('❌ Sign out error:', error);
+            });
+        }
+        
+        // Clear all storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Set body to loading
+        document.body.className = 'loading';
+        
+        // Show splash screen
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.remove('hidden');
+            splash.classList.add('active');
+            console.log('✅ Splash screen activated');
+        }
+        
+        // Hide auth container
+        const authContainer = document.getElementById('auth-container');
+        if (authContainer) {
+            authContainer.classList.remove('active');
+        }
+        
+        // Hide app container
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) {
+            appContainer.style.display = 'none';
+        }
+        
+        // After 3 seconds, show auth screen
+        setTimeout(() => {
+            console.log('⏰ Showing auth screen');
+            document.body.className = 'auth-visible';
+            
+            if (splash) {
+                splash.classList.remove('active');
+                splash.classList.add('hidden');
+            }
+            
+            if (authContainer) {
+                authContainer.classList.add('active');
+            }
+        }, 3000);
+    })();
+</script>
     
 </body>
 </html>
