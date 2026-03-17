@@ -11,9 +11,7 @@ class FarmManagementApp {
         this.setupInit();
         this.initializeMenu();
     }
-
-    
-    
+   
     setupInit() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initializeApp());
@@ -1087,7 +1085,8 @@ handleUserAuthenticated(user) {
         }
     }
 }
-    
+}
+
 // ==================== AGRIMETRICS SYNC MANAGER ====================
 let agrimetricsSyncWorker = null;
 
