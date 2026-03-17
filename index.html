@@ -499,9 +499,9 @@
     </script>
 
 <script>
-    // ===== SIMPLE, RELIABLE AUTH & PERSISTENCE =====
+    // ===== EXACT WORKING FLOW =====
     (function() {
-        console.log('🔧 Setting up simple auth...');
+        console.log('🔧 Setting up auth flow...');
         
         // Wait for Firebase
         function init() {
@@ -510,62 +510,60 @@
                 return;
             }
             
-            // Set persistence to LOCAL (survives browser restart)
+            // Set persistence
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                 .then(() => {
-                    console.log('✅ Persistence set');
+                    // ALWAYS start with splash screen
+                    showSplashScreen();
                     
-                    // Show splash screen FIRST on every load
-                    showSplash();
-                    
-                    // Then check user after splash
+                    // Check user after 2 seconds
                     setTimeout(() => {
                         const user = firebase.auth().currentUser;
                         if (user) {
-                            console.log('✅ Already logged in as:', user.email);
-                            hideSplashShowApp();
+                            console.log('✅ User logged in, showing loading then app');
+                            showLoadingThenApp();
                         } else {
-                            console.log('👤 No user, showing auth');
-                            hideSplashShowAuth();
+                            console.log('👤 No user, showing auth form');
+                            showAuthForm();
                         }
-                    }, 2000); // Show splash for 2 seconds
+                    }, 2000);
                 })
                 .catch(console.error);
             
-            // Listen for auth changes (for login/logout)
+            // Listen for sign-in events
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
-                    console.log('✅ User logged in');
-                    // Only switch to app if we're not already there
-                    if (document.body.className !== 'app-active') {
-                        hideSplashShowApp();
-                    }
-                } else {
-                    console.log('👤 User logged out');
-                    // Show splash then auth on logout
-                    showSplash();
+                    console.log('✅ Sign-in detected');
+                    // When user just signed in, show splash then loading then app
+                    showSplashScreen();
                     setTimeout(() => {
-                        hideSplashShowAuth();
+                        showLoadingThenApp();
                     }, 1500);
                 }
             });
         }
         
-        function showSplash() {
+        function showSplashScreen() {
             document.body.className = 'loading';
             document.getElementById('splash-screen').style.display = 'flex';
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'none';
         }
         
-        function hideSplashShowApp() {
-            document.body.className = 'app-active';
+        function showLoadingThenApp() {
+            // Show loading screen with spinner
+            document.body.className = 'loading';
+            // Make sure splash is hidden, loading is visible
             document.getElementById('splash-screen').style.display = 'none';
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('app-container').style.display = 'block';
+            
+            // After 1 second of loading, show app
+            setTimeout(() => {
+                document.body.className = 'app-active';
+                document.getElementById('app-container').style.display = 'block';
+            }, 1000);
         }
         
-        function hideSplashShowAuth() {
+        function showAuthForm() {
             document.body.className = 'auth-visible';
             document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('auth-container').style.display = 'flex';
@@ -578,6 +576,17 @@
             const emailField = document.getElementById('signin-email');
             if (emailField) emailField.value = savedEmail;
         }
+        
+        // Save email when sign-in form is submitted
+        document.getElementById('signin-form-element')?.addEventListener('submit', function() {
+            const remember = document.getElementById('remember-me')?.checked;
+            const email = document.getElementById('signin-email')?.value;
+            if (remember && email) {
+                localStorage.setItem('rememberedEmail', email);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+        });
         
         // Start
         init();
