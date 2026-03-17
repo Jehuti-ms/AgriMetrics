@@ -498,111 +498,75 @@
     };
     </script>
 
-    <script>
-    // AFTER 3 SECONDS, SHOW AUTH
-    setTimeout(() => {
-        console.log('⏰ Switching to auth screen');
-        document.body.className = 'auth-visible';
-        
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.classList.remove('active');
-            splash.classList.add('hidden');
-        }
-        
-        const authContainer = document.getElementById('auth-container');
-        if (authContainer) {
-            authContainer.classList.add('active');
-        }
-    }, 3000);
-</script>
-    <script>
-    // OVERRIDE broken sign-in handler
+<script>
+    // ===== SIMPLE, RELIABLE AUTH & PERSISTENCE =====
     (function() {
-        const form = document.getElementById('signin-form-element');
+        console.log('🔧 Setting up simple auth...');
         
-        // Remove all existing listeners
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
-        
-        // Add working listener
-        newForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('✅ Fixed sign-in handler');
-            
-            const email = document.getElementById('signin-email').value;
-            const password = document.getElementById('signin-password').value;
-            const remember = document.getElementById('remember-me').checked;
-            
-            if (remember) {
-                localStorage.setItem('rememberedEmail', email);
+        // Wait for Firebase
+        function init() {
+            if (!firebase || !firebase.auth) {
+                setTimeout(init, 100);
+                return;
             }
             
-            firebase.auth().signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    console.log('✅ Sign in successful!', userCredential.user.email);
-                })
-                .catch((error) => {
-                    console.log('❌ Sign in error:', error.code, error.message);
-                    alert('Sign in failed: ' + error.message);
-                });
-        });
-        
-        console.log('✅ Fixed sign-in handler installed');
-    })();
-</script>
-    <script>
-    // FIX PERSISTENCE AND REMEMBER ME
-    (function() {
-        console.log('🔧 Setting up persistence...');
-        
-        // Set Firebase persistence to LOCAL (survives browser restart)
-        if (firebase && firebase.auth) {
+            // Set persistence to LOCAL (survives browser restart)
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                 .then(() => {
-                    console.log('✅ Firebase persistence set to LOCAL');
+                    console.log('✅ Persistence set');
+                    
+                    // Check current user
+                    const user = firebase.auth().currentUser;
+                    if (user) {
+                        console.log('✅ Already logged in as:', user.email);
+                        showApp();
+                    } else {
+                        console.log('👤 No user, showing splash then auth');
+                        showSplashThenAuth();
+                    }
                 })
-                .catch((error) => {
-                    console.log('❌ Persistence error:', error);
-                });
-        }
-        
-        // Fix remember me checkbox
-        const rememberCheckbox = document.getElementById('remember-me');
-        const emailInput = document.getElementById('signin-email');
-        
-        // Load saved email if exists
-        const savedEmail = localStorage.getItem('rememberedEmail');
-        if (savedEmail && emailInput) {
-            emailInput.value = savedEmail;
-            if (rememberCheckbox) rememberCheckbox.checked = true;
-        }
-        
-        // Save email when form is submitted with remember me checked
-        const form = document.getElementById('signin-form-element');
-        if (form) {
-            form.addEventListener('submit', function() {
-                if (rememberCheckbox && rememberCheckbox.checked) {
-                    localStorage.setItem('rememberedEmail', emailInput.value);
+                .catch(console.error);
+            
+            // Listen for auth changes
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    console.log('✅ Auth state: logged in');
+                    showApp();
                 } else {
-                    localStorage.removeItem('rememberedEmail');
+                    console.log('👤 Auth state: logged out');
                 }
             });
         }
         
-        // Monitor auth state
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                console.log('✅ User is signed in:', user.email);
-                // Force app to show
-                document.body.className = 'app-active';
+        function showApp() {
+            document.body.className = 'app-active';
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
+        }
+        
+        function showSplashThenAuth() {
+            document.body.className = 'loading';
+            document.getElementById('splash-screen').style.display = 'flex';
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'none';
+            
+            setTimeout(() => {
+                document.body.className = 'auth-visible';
                 document.getElementById('splash-screen').style.display = 'none';
-                document.getElementById('auth-container').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-            } else {
-                console.log('👤 User is signed out');
-            }
-        });
+                document.getElementById('auth-container').style.display = 'flex';
+            }, 2000);
+        }
+        
+        // Handle remember me
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        if (savedEmail) {
+            const emailField = document.getElementById('signin-email');
+            if (emailField) emailField.value = savedEmail;
+        }
+        
+        // Start
+        init();
     })();
 </script>
 </body>
