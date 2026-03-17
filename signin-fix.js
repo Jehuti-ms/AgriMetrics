@@ -1,4 +1,4 @@
-// signin-fix.js - FIXED VERSION
+// signin-fix.js - FIXED VERSION WITH PROPER BUTTON RESET
 console.log('🔧 Sign-in fix loading...');
 
 (function() {
@@ -37,11 +37,13 @@ console.log('🔧 Sign-in fix loading...');
                 return;
             }
             
-            // Show loading - BUT KEEP BUTTON TEXT VISIBLE
+            // Get button and store original text
             const btn = this.querySelector('button[type="submit"]');
-            const originalText = btn.textContent;
-            btn.innerHTML = '<span style="opacity: 0.7;">⟳</span> Signing in...';
+            const originalText = btn.innerHTML;
+            
+            // Disable button and show loading state
             btn.disabled = true;
+            btn.innerHTML = '<span style="opacity: 0.7;">⏳</span> Signing in...';
             
             try {
                 if (remember) {
@@ -53,7 +55,7 @@ console.log('🔧 Sign-in fix loading...');
                 await firebase.auth().signInWithEmailAndPassword(email, password);
                 console.log('✅ Sign-in successful - app will handle redirect');
                 
-                // Don't do anything else - app.js will handle the UI
+                // Don't reset button here - page will redirect/reload
                 
             } catch (error) {
                 console.error('❌ Sign-in error:', error.code);
@@ -73,11 +75,21 @@ console.log('🔧 Sign-in fix loading...');
                 
                 alert(message);
                 
-                // Reset button
-                btn.innerHTML = originalText;
+                // IMPORTANT: Reset button on error
                 btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         });
+        
+        // ALSO: Add a safety timeout to reset any stuck buttons on page load
+        setTimeout(() => {
+            const stuckBtn = document.querySelector('.auth-form .btn-primary[disabled]');
+            if (stuckBtn) {
+                console.log('🔓 Found stuck disabled button, resetting...');
+                stuckBtn.disabled = false;
+                stuckBtn.innerHTML = 'Sign In';
+            }
+        }, 1000);
         
         // Pre-fill remembered email
         const remembered = localStorage.getItem('rememberedEmail');
