@@ -1,4 +1,4 @@
-// signin-fix.js - WORKING VERSION
+// signin-fix.js - FIXED VERSION
 console.log('🔧 Sign-in fix loading...');
 
 (function() {
@@ -24,6 +24,7 @@ console.log('🔧 Sign-in fix loading...');
         // Add our handler
         newForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            e.stopPropagation();
             
             console.log('🚀 Sign-in attempt');
             
@@ -36,15 +37,16 @@ console.log('🔧 Sign-in fix loading...');
                 return;
             }
             
-            // Show loading
+            // Show loading - BUT KEEP BUTTON TEXT VISIBLE
             const btn = this.querySelector('button[type="submit"]');
             const originalText = btn.textContent;
-            btn.textContent = 'Signing in...';
+            btn.innerHTML = '<span style="opacity: 0.7;">⟳</span> Signing in...';
             btn.disabled = true;
             
             try {
                 if (remember) {
                     localStorage.setItem('rememberedEmail', email);
+                    localStorage.setItem('rememberMe', 'true');
                 }
                 
                 console.log('🔐 Attempting Firebase sign-in...');
@@ -71,7 +73,8 @@ console.log('🔧 Sign-in fix loading...');
                 
                 alert(message);
                 
-                btn.textContent = originalText;
+                // Reset button
+                btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         });
