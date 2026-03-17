@@ -2922,3 +2922,22 @@ body.auth-visible #splash-screen::before {
     display: none !important;
     content: none !important;
 }
+
+/* ===== FORCE MARGIN RESET ===== */
+.auth-forms {
+    margin: 0 auto !important;
+    margin-top: 0 !important;
+    margin-right: auto !important;
+    margin-bottom: 0 !important;
+    margin-left: auto !important;
+}
+
+/* Also check for any margin on body or parent elements */
+body {
+    margin: 0 !important;
+}
+
+#auth-container {
+    margin: 0 !important;
+    padding: 20px;
+}
