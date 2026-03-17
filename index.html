@@ -399,8 +399,7 @@
     }
 </style>
 
-    <script>
-        
+  <script>
 // ==================== AGRI SYNC INDICATOR - SELF CONTAINED ====================
 (function() {
     // Get elements
@@ -494,8 +493,38 @@
             }, 2000);
             
         }, 1500);
+    };
+    
+    // Initialize on load
+    function init() {
+        if (isUserLoggedIn()) {
+            indicator.style.display = 'flex';
+            if (button) button.style.display = 'flex';
+            window.updateAgriSyncStatus('Connected', 'connected');
+        } else {
+            indicator.style.display = 'none';
+            if (button) button.style.display = 'none';
+        }
     }
-    </script>
+    
+    // Listen for storage events (login/logout in other tabs)
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'agrimetricsUser' || e.key === 'currentUser' || e.key === 'user') {
+            init();
+        }
+    });
+    
+    // Initialize
+    init();
+    
+    // Check for updates every 30 seconds
+    setInterval(() => {
+        if (isUserLoggedIn()) {
+            loadLastSyncTime();
+        }
+    }, 30000);
+})();
+</script>
   
 </body>
 </html>
