@@ -973,7 +973,7 @@ hideLoading() {
         }, 300);
     }
     
-   async performLogout() {
+  async performLogout() {
     console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
     
     try {
@@ -1037,6 +1037,17 @@ hideLoading() {
             if (signin) signin.classList.add('active');
             if (signup) signup.classList.remove('active');
             if (forgot) forgot.classList.remove('active');
+            
+            // ADD THIS - Reset any stuck disabled buttons
+            setTimeout(() => {
+                const stuckBtn = document.querySelector('.auth-form .btn-primary[disabled]');
+                if (stuckBtn) {
+                    console.log('🔓 Resetting stuck disabled button after logout');
+                    stuckBtn.disabled = false;
+                    stuckBtn.innerHTML = 'Sign In';
+                }
+            }, 100);
+            
             console.log('🔐 Auth container shown');
         }
         
@@ -1071,10 +1082,20 @@ hideLoading() {
         if (authContainer) {
             authContainer.style.display = 'flex';
             authContainer.classList.add('active');
+            
+            // ALSO add reset here in case of error
+            setTimeout(() => {
+                const stuckBtn = document.querySelector('.auth-form .btn-primary[disabled]');
+                if (stuckBtn) {
+                    console.log('🔓 Resetting stuck button after error');
+                    stuckBtn.disabled = false;
+                    stuckBtn.innerHTML = 'Sign In';
+                }
+            }, 100);
         }
     }
 }
-}
+    
 // ==================== AGRIMETRICS SYNC MANAGER ====================
 let agrimetricsSyncWorker = null;
 
