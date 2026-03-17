@@ -60,12 +60,20 @@
 </head>
 <body>
    
-    <!-- Splash Screen -->
-        <div id="splash-screen" class="active">
+   
+    <!-- Splash Screen - WITH INLINE STYLES -->
+        <div id="splash-screen" class="active" style="display: flex; opacity: 1; visibility: visible; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
+            <div class="splash-logo">
+                <img src="icons/agrimetrics-splash-white.png" alt="AgriMetrics Logo" style="width:400px; height:auto;">
+            </div>
+        </div>
+
+     <!-- Splash Screen -->
+      <!--   <div id="splash-screen" class="active">
           <div class="splash-logo">
            <img src="icons/agrimetrics-splash-white.png" alt="AgriMetrics Logo" style="width:400px; height:auto;">
           </div>
-        </div>
+        </div> --
 
         <!-- Auth Container -->
            <!-- <div id="auth-container" class="active">
