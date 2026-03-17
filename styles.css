@@ -2,7 +2,6 @@
 
 /* ===== ROOT VARIABLES ===== */
 :root {
-    /* Light mode */
     --primary-color: #22c55e;
     --primary-dark: #16a34a;
     --primary-light: #4ade80;
@@ -117,15 +116,15 @@ body {
 }
 
 .btn-social.google {
-    background-color: #34A853;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20, #0D47A1);
     color: white;
     border: none;
 }
 
 .btn-social.google:hover {
-    background-color: #2E8B47;
+    background: linear-gradient(135deg, #2E7D32, #1B5E20, #0D47A1, #4CAF50);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(13,71,161,0.3);
 }
 
 .btn-social.apple {
