@@ -710,6 +710,46 @@
         }, 3000);
     })();
 </script>
+
+    <script>
+    // DIAGNOSTIC - Find what's controlling the auth flow
+    console.log('=== DIAGNOSTIC START ===');
+    
+    // Check all scripts that might control auth
+    document.querySelectorAll('script').forEach(script => {
+        if (script.src) {
+            console.log('Script loaded:', script.src);
+        }
+    });
+    
+    // Check for any auth functions
+    console.log('Auth functions:', {
+        showAuth: typeof window.showAuthScreen,
+        showApp: typeof window.showApp,
+        initAuth: typeof window.initAuth
+    });
+    
+    // Check localStorage
+    console.log('localStorage user:', localStorage.getItem('user'));
+    console.log('localStorage token:', localStorage.getItem('token'));
+    console.log('sessionStorage user:', sessionStorage.getItem('user'));
+    
+    // Check if Firebase is loaded
+    console.log('Firebase:', typeof firebase);
+    
+    // Force show splash screen manually
+    setTimeout(function() {
+        console.log('Manual override - forcing splash screen');
+        document.body.className = 'loading';
+        var splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.remove('hidden');
+            splash.classList.add('active');
+        }
+    }, 1000);
+    
+    console.log('=== DIAGNOSTIC END ===');
+</script>
     
 </body>
 </html>
