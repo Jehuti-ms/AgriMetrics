@@ -7,10 +7,20 @@ class FarmManagementApp {
         this.currentSection = 'dashboard';
         this.userPreferences = {};
         this.authInitialized = false;
+        this.isLoggingOut = false;
         this.setupInit();
         this.initializeMenu();
     }
 
+    safeShowLoading() {
+    // Only show loading if we're NOT logging out
+    if (!this.isLoggingOut) {
+        this.showLoading();
+    } else {
+        console.log('⏭️ Skipping loading spinner - currently logging out');
+    }
+}
+    
     setupInit() {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initializeApp());
@@ -229,8 +239,8 @@ async initializeApp() {
 handleUserAuthenticated(user) {
     console.log('🎉 User authenticated, showing app...');
     
-    // Show loading spinner immediately
-    this.showLoading();
+    // Use safe show loading - it will check if we're logging out
+    this.safeShowLoading();
     
     this.currentUser = user;
     this.authInitialized = true;
@@ -476,13 +486,6 @@ handleUserAuthenticated(user) {
     document.body.appendChild(loadingDiv);
 }
 
-hideLoading() {
-    console.log('🔄 Hiding loading spinner');
-    const loadingDiv = document.getElementById('app-loading');
-    if (loadingDiv) {
-        loadingDiv.remove();
-    }
-}
     
     hideLoading() {
     console.log('🔄 Hiding loading spinner');
@@ -970,96 +973,106 @@ hideLoading() {
         }, 300);
     }
     
-    async performLogout() {
-        console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
+   async performLogout() {
+    console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
+    
+    // SET LOGOUT FLAG at the VERY BEGINNING
+    this.isLoggingOut = true;
+    
+    try {
+        // HIDE any existing spinner immediately
+        this.hideLoading();
         
-        try {
-            this.showLoading();
-            
-            this.closeSideMenu();
-            
-            const rememberEmail = localStorage.getItem('farm_system_remember_email');
-            const rememberCheckbox = document.getElementById('remember-me');
-            
-            const itemsToPreserve = {};
-            
-            if (rememberEmail && rememberCheckbox && rememberCheckbox.checked) {
-                itemsToPreserve.farm_system_remember_email = rememberEmail;
-                console.log('💾 Preserving remember me email');
-            }
-            
-            localStorage.clear();
-            
-            Object.keys(itemsToPreserve).forEach(key => {
-                localStorage.setItem(key, itemsToPreserve[key]);
-            });
-            
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-                console.log('🔥 Signing out from Firebase...');
-                await firebase.auth().signOut();
-                console.log('✅ Firebase signout successful');
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } else {
-                console.log('⚠️ Firebase not available, proceeding anyway');
-            }
-            
-            this.currentUser = null;
-            this.authInitialized = false;
-            
-            console.log('🔄 Forcing UI to auth screen...');
-            
-            const appContainer = document.getElementById('app-container');
-            const authContainer = document.getElementById('auth-container');
-            const splash = document.getElementById('splash-screen');
-            
-            if (appContainer) {
-                appContainer.style.display = 'none';
-                console.log('📦 App container hidden');
-            }
-            
-            if (splash) {
-                splash.style.display = 'none';
-            }
-            
-            if (authContainer) {
-                authContainer.style.display = 'block';
-                const signin = document.getElementById('signin-form');
-                const signup = document.getElementById('signup-form');
-                const forgot = document.getElementById('forgot-password-form');
-                if (signin) signin.classList.add('active');
-                if (signup) signup.classList.remove('active');
-                if (forgot) forgot.classList.remove('active');
-                console.log('🔐 Auth container shown');
-            }
-            
-            const contentArea = document.getElementById('content-area');
-            if (contentArea) {
-                contentArea.innerHTML = '';
-            }
-            
-            const header = document.querySelector('header');
-            if (header) {
-                header.remove();
-            }
-            
-            document.body.classList.remove('dark-mode', 'light-mode');
-            
-            this.hideLoading();
-            
-            console.log('🎉 Logout sequence complete!');
-            
-        } catch (error) {
-            console.error('❌ Logout error:', error);
-            this.hideLoading();
-            
-            const appContainer = document.getElementById('app-container');
-            const authContainer = document.getElementById('auth-container');
-            if (appContainer) appContainer.style.display = 'none';
-            if (authContainer) authContainer.style.display = 'block';
+        this.closeSideMenu();
+        
+        const rememberEmail = localStorage.getItem('farm_system_remember_email');
+        const rememberCheckbox = document.getElementById('remember-me');
+        
+        const itemsToPreserve = {};
+        
+        if (rememberEmail && rememberCheckbox && rememberCheckbox.checked) {
+            itemsToPreserve.farm_system_remember_email = rememberEmail;
+            console.log('💾 Preserving remember me email');
         }
+        
+        localStorage.clear();
+        
+        Object.keys(itemsToPreserve).forEach(key => {
+            localStorage.setItem(key, itemsToPreserve[key]);
+        });
+        
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            console.log('🔥 Signing out from Firebase...');
+            await firebase.auth().signOut();
+            console.log('✅ Firebase signout successful');
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } else {
+            console.log('⚠️ Firebase not available, proceeding anyway');
+        }
+        
+        this.currentUser = null;
+        this.authInitialized = false;
+        
+        console.log('🔄 Forcing UI to auth screen...');
+        
+        const appContainer = document.getElementById('app-container');
+        const authContainer = document.getElementById('auth-container');
+        const splash = document.getElementById('splash-screen');
+        
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            console.log('📦 App container hidden');
+        }
+        
+        if (splash) {
+            splash.style.display = 'none';
+        }
+        
+        if (authContainer) {
+            authContainer.style.display = 'block';
+            const signin = document.getElementById('signin-form');
+            const signup = document.getElementById('signup-form');
+            const forgot = document.getElementById('forgot-password-form');
+            if (signin) signin.classList.add('active');
+            if (signup) signup.classList.remove('active');
+            if (forgot) forgot.classList.remove('active');
+            console.log('🔐 Auth container shown');
+        }
+        
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.innerHTML = '';
+        }
+        
+        const header = document.querySelector('header');
+        if (header) {
+            header.remove();
+        }
+        
+        document.body.classList.remove('dark-mode', 'light-mode');
+        
+        // Final safety: hide loading spinner
+        this.hideLoading();
+        
+        console.log('🎉 Logout sequence complete!');
+        
+    } catch (error) {
+        console.error('❌ Logout error:', error);
+        this.hideLoading();
+        
+        const appContainer = document.getElementById('app-container');
+        const authContainer = document.getElementById('auth-container');
+        if (appContainer) appContainer.style.display = 'none';
+        if (authContainer) authContainer.style.display = 'block';
+    } finally {
+        // RESET LOGOUT FLAG after a delay
+        setTimeout(() => {
+            this.isLoggingOut = false;
+            console.log('🔓 Logout flag reset');
+        }, 1000);
     }
 }
-
+    
 // ==================== AGRIMETRICS SYNC MANAGER ====================
 let agrimetricsSyncWorker = null;
 
