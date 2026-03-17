@@ -503,6 +503,9 @@
     (function() {
         console.log('🔧 Setting up auth flow...');
         
+        // Track if this is a logout event
+        let isLoggingOut = false;
+        
         // Wait for Firebase
         function init() {
             if (!firebase || !firebase.auth) {
@@ -513,20 +516,22 @@
             // Set persistence
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
                 .then(() => {
-                    // ALWAYS start with splash screen
-                    showSplashScreen();
-                    
-                    // Check user after 2 seconds
-                    setTimeout(() => {
-                        const user = firebase.auth().currentUser;
-                        if (user) {
-                            console.log('✅ User logged in, showing loading then app');
-                            showLoadingThenApp();
-                        } else {
-                            console.log('👤 No user, showing auth form');
-                            showAuthForm();
-                        }
-                    }, 2000);
+                    // ALWAYS start with splash screen on initial load
+                    if (!isLoggingOut) {
+                        showSplashScreen();
+                        
+                        // Check user after 2 seconds
+                        setTimeout(() => {
+                            const user = firebase.auth().currentUser;
+                            if (user) {
+                                console.log('✅ User logged in, showing loading then app');
+                                showLoadingThenApp();
+                            } else {
+                                console.log('👤 No user, showing auth form');
+                                showAuthForm();
+                            }
+                        }, 2000);
+                    }
                 })
                 .catch(console.error);
             
@@ -534,11 +539,18 @@
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
                     console.log('✅ Sign-in detected');
+                    isLoggingOut = false;
                     // When user just signed in, show splash then loading then app
                     showSplashScreen();
                     setTimeout(() => {
                         showLoadingThenApp();
                     }, 1500);
+                } else {
+                    // This is a logout
+                    console.log('👤 Logout detected');
+                    isLoggingOut = true;
+                    // On logout, go directly to auth form - NO LOADING SCREEN
+                    showAuthForm();
                 }
             });
         }
@@ -553,7 +565,6 @@
         function showLoadingThenApp() {
             // Show loading screen with spinner
             document.body.className = 'loading';
-            // Make sure splash is hidden, loading is visible
             document.getElementById('splash-screen').style.display = 'none';
             
             // After 1 second of loading, show app
