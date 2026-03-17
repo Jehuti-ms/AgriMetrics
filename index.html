@@ -515,47 +515,61 @@
                 .then(() => {
                     console.log('✅ Persistence set');
                     
-                    // Check current user
-                    const user = firebase.auth().currentUser;
-                    if (user) {
-                        console.log('✅ Already logged in as:', user.email);
-                        showApp();
-                    } else {
-                        console.log('👤 No user, showing splash then auth');
-                        showSplashThenAuth();
-                    }
+                    // Show splash screen FIRST on every load
+                    showSplash();
+                    
+                    // Then check user after splash
+                    setTimeout(() => {
+                        const user = firebase.auth().currentUser;
+                        if (user) {
+                            console.log('✅ Already logged in as:', user.email);
+                            hideSplashShowApp();
+                        } else {
+                            console.log('👤 No user, showing auth');
+                            hideSplashShowAuth();
+                        }
+                    }, 2000); // Show splash for 2 seconds
                 })
                 .catch(console.error);
             
-            // Listen for auth changes
+            // Listen for auth changes (for login/logout)
             firebase.auth().onAuthStateChanged(function(user) {
                 if (user) {
-                    console.log('✅ Auth state: logged in');
-                    showApp();
+                    console.log('✅ User logged in');
+                    // Only switch to app if we're not already there
+                    if (document.body.className !== 'app-active') {
+                        hideSplashShowApp();
+                    }
                 } else {
-                    console.log('👤 Auth state: logged out');
+                    console.log('👤 User logged out');
+                    // Show splash then auth on logout
+                    showSplash();
+                    setTimeout(() => {
+                        hideSplashShowAuth();
+                    }, 1500);
                 }
             });
         }
         
-        function showApp() {
+        function showSplash() {
+            document.body.className = 'loading';
+            document.getElementById('splash-screen').style.display = 'flex';
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'none';
+        }
+        
+        function hideSplashShowApp() {
             document.body.className = 'app-active';
             document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'block';
         }
         
-        function showSplashThenAuth() {
-            document.body.className = 'loading';
-            document.getElementById('splash-screen').style.display = 'flex';
-            document.getElementById('auth-container').style.display = 'none';
+        function hideSplashShowAuth() {
+            document.body.className = 'auth-visible';
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'flex';
             document.getElementById('app-container').style.display = 'none';
-            
-            setTimeout(() => {
-                document.body.className = 'auth-visible';
-                document.getElementById('splash-screen').style.display = 'none';
-                document.getElementById('auth-container').style.display = 'flex';
-            }, 2000);
         }
         
         // Handle remember me
