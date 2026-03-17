@@ -343,7 +343,26 @@ body {
     background: linear-gradient(135deg, #1A252F, #2C3E50);
 }
 
-/* Password Strength Indicator */
+/* ===== BUTTON RESET SAFETY ===== */
+.auth-form .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    pointer-events: none;
+}
+
+/* Force re-enable any stuck buttons after 5 seconds (safety) */
+@keyframes forceButtonReset {
+    to {
+        /* This is just a trigger for JavaScript */
+    }
+}
+
+/* Add this to your existing button styles */
+.auth-form .btn-primary {
+    transition: all 0.3s ease;
+}
+
+/* =========== Password Strength Indicator ============ */
 .password-strength-container {
     margin-top: 8px;
 }
