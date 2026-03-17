@@ -228,6 +228,10 @@ async initializeApp() {
 
 handleUserAuthenticated(user) {
     console.log('🎉 User authenticated, showing app...');
+    
+    // Show loading spinner immediately
+    this.showLoading();
+    
     this.currentUser = user;
     this.authInitialized = true;
     
@@ -269,9 +273,25 @@ handleUserAuthenticated(user) {
         window.DataService.initialize().then(() => {
             // Then initialize app components
             this.initializeAppComponents();
+            
+            // Hide loading spinner after everything is loaded
+            setTimeout(() => {
+                this.hideLoading();
+            }, 500);
+        }).catch(error => {
+            console.error('❌ Data Service initialization error:', error);
+            this.initializeAppComponents();
+            setTimeout(() => {
+                this.hideLoading();
+            }, 500);
         });
     } else {
         this.initializeAppComponents();
+        
+        // Hide loading spinner after components are initialized
+        setTimeout(() => {
+            this.hideLoading();
+        }, 500);
     }
 }
 
@@ -480,11 +500,20 @@ handleUserAuthenticated(user) {
 }
     
     hideLoading() {
-        const loadingDiv = document.getElementById('app-loading');
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
-        }
+    console.log('🔄 Hiding loading spinner');
+    const loadingDiv = document.getElementById('app-loading');
+    if (loadingDiv) {
+        loadingDiv.style.display = 'none';
+        loadingDiv.remove();
     }
+    
+    // Also remove any other potential loading elements
+    document.querySelectorAll('[id*="loading"], [class*="loading"]').forEach(el => {
+        if (el.id === 'app-loading' || (el.id && el.id.includes('loading')) || (el.className && el.className.includes('loading'))) {
+            el.remove();
+        }
+    });
+}
 
     initializeStyleManager() {
         if (window.StyleManager && typeof StyleManager.init === 'function') {
