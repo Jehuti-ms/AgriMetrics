@@ -42,10 +42,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
-    <!-- Cropper libary edition -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
     <!-- Add this to your HTML head -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
@@ -68,38 +64,9 @@
         </div>
 
         <!-- Auth Container -->
-           <!-- <div id="auth-container" class="active">
-              <div class="auth-forms"> -->
-
-        <!-- Auth Container - SIMPLE TABLE CENTERING (WORKS EVERY TIME) -->
-            <div id="auth-container" class="active" style="
-                position: fixed; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: 100%; 
-                background: linear-gradient(135deg, #4CAF50, #2E7D32, #1B5E20);
-                display: table;
-                text-align: center;
-                z-index: 999999;
-            ">
-                <div style="
-                    display: table-cell;
-                    vertical-align: middle;
-                    text-align: center;
-                ">
-                    <div class="auth-forms" style="
-                        background: white;
-                        border-radius: 16px;
-                        padding: 40px;
-                        width: 90%;
-                        max-width: 420px;
-                        margin: 0 auto;
-                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                        text-align: left;
-                        display: inline-block;
-                    ">
-                       
+            <div id="auth-container">
+              <div class="auth-forms">
+            
                <!-- Sign In Form -->
                     <div id="signin-form" class="auth-form active">
                       <h2>Sign In</h2>
@@ -273,9 +240,6 @@
 
 <!-- 1. Firebase Configuration -->
 <script src="firebase/firebase-config.js"></script>
-
-<!-- Data Service (NEW) -->
-<script src="data-service.js"></script>
 <script src="firebase/firebase-auth.js"></script>
 
 <!-- 2. Simple Remember Me (load early) -->
@@ -316,10 +280,7 @@
 <script src="modules/profile.js"></script>
 
 <!-- 10. Sign-in Fix (loaded last) -->
-<script src="signin-fix.js"></script> 
-    
-<!-- 11. Auth Fix (loaded after signin-fix) -->
- <!-- <script src="auth-fix.js"></script> -->
+<script src="signin-fix.js"></script>
 
     <!-- Minimal Floating Sync Indicator - Self-contained, won't break anything -->
 <style>
