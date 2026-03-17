@@ -187,62 +187,102 @@ body {
     text-decoration: underline;
 }
 
-/* ===== SOCIAL MEDIA LOGIN ===== */
-.btn-social {
+/* ===== BEAUTIFUL GRADIENT BUTTONS FOR AUTH FORM ===== */
+/* Google Sign-in Button with Splash Screen Gradient */
+#google-signin-btn,
+.btn-social.google {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     width: 100%;
     padding: 14px 20px;
-    margin-bottom: 12px;
-    border-radius: 8px;
+    margin-bottom: 20px;
+    border-radius: 12px;
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
     border: none;
     outline: none;
-}
-
-.btn-social.google {
-    background-color: #34A853;
+    background: linear-gradient(135deg, 
+        #4CAF50 0%,
+        #2E7D32 25%,
+        #1B5E20 50%,
+        #0D47A1 100%
+    );
     color: white;
-    border: none;
+    box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
+#google-signin-btn:hover,
 .btn-social.google:hover {
-    background-color: #2E8B47;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(13, 71, 161, 0.4);
+    background: linear-gradient(135deg, 
+        #2E7D32 0%,
+        #1B5E20 25%,
+        #0D47A1 50%,
+        #4CAF50 100%
+    );
 }
 
-.btn-social.apple {
-    background-color: #2C3E50;
-    color: white;
-    border: none;
-}
-
-.btn-social.apple:hover {
-    background-color: #1A252F;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.social-icon {
-    font-weight: bold;
-    font-size: 18px;
-    display: inline-flex;
+/* Google icon styling */
+#google-signin-btn .social-icon,
+.btn-social.google .social-icon {
+    background: white;
+    color: #0D47A1;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
+    font-weight: bold;
+    font-size: 16px;
 }
 
+/* Primary Submit Button (Sign In / Sign Up) */
+.auth-form .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 8px 0 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-form .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+    background: linear-gradient(135deg, #2E7D32, #1B5E20);
+}
+
+/* Active/pressed state */
+.auth-form .btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* Divider with gradient */
 .auth-divider {
     display: flex;
     align-items: center;
     margin: 24px 0;
-    color: var(--text-secondary);
+    color: #666;
+    font-size: 14px;
 }
 
 .auth-divider::before,
@@ -250,11 +290,57 @@ body {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--border-color);
+    background: linear-gradient(90deg, transparent, #4CAF50, transparent);
 }
 
 .auth-divider span {
     padding: 0 16px;
+    font-weight: 600;
+    color: #2E7D32;
+}
+
+/* Dark mode support */
+.dark-mode #google-signin-btn,
+.dark-mode .btn-social.google {
+    background: linear-gradient(135deg, #2E7D32, #1B5E20, #0D47A1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode #google-signin-btn:hover,
+.dark-mode .btn-social.google:hover {
+    background: linear-gradient(135deg, #1B5E20, #0D47A1, #2E7D32);
+}
+
+.dark-mode .auth-form .btn-primary {
+    background: linear-gradient(135deg, #2E7D32, #1B5E20);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .auth-form .btn-primary:hover {
+    background: linear-gradient(135deg, #1B5E20, #0D47A1);
+}
+
+.dark-mode .auth-divider span {
+    color: #4ADE80;
+}
+
+.dark-mode .auth-divider::before,
+.dark-mode .auth-divider::after {
+    background: linear-gradient(90deg, transparent, #4ADE80, transparent);
+}
+
+/* Apple button (if you have it) */
+.btn-social.apple {
+    background: linear-gradient(135deg, #2C3E50, #1A252F);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-social.apple:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #1A252F, #2C3E50);
 }
 
 /* Password Strength Indicator */
