@@ -12,14 +12,7 @@ class FarmManagementApp {
         this.initializeMenu();
     }
 
-    safeShowLoading() {
-    // Only show loading if we're NOT logging out
-    if (!this.isLoggingOut) {
-        this.showLoading();
-    } else {
-        console.log('⏭️ Skipping loading spinner - currently logging out');
-    }
-}
+    
     
     setupInit() {
         if (document.readyState === 'loading') {
@@ -239,8 +232,8 @@ async initializeApp() {
 handleUserAuthenticated(user) {
     console.log('🎉 User authenticated, showing app...');
     
-    // Use safe show loading - it will check if we're logging out
-    this.safeShowLoading();
+    // Show loading spinner immediately
+    this.showLoading(); // Just call this directly
     
     this.currentUser = user;
     this.authInitialized = true;
@@ -468,7 +461,7 @@ handleUserAuthenticated(user) {
         console.log('🏠 App container shown');
     }
 
-   showLoading() {
+  showLoading() {
     console.log('🔄 Showing loading spinner');
     
     // Remove any existing loading div first
@@ -486,6 +479,13 @@ handleUserAuthenticated(user) {
     document.body.appendChild(loadingDiv);
 }
 
+hideLoading() {
+    console.log('🔄 Hiding loading spinner');
+    const loadingDiv = document.getElementById('app-loading');
+    if (loadingDiv) {
+        loadingDiv.remove();
+    }
+}
     
     hideLoading() {
     console.log('🔄 Hiding loading spinner');
@@ -976,11 +976,9 @@ handleUserAuthenticated(user) {
    async performLogout() {
     console.log('🔐 PERFORMING LOGOUT SEQUENCE...');
     
-    // SET LOGOUT FLAG at the VERY BEGINNING
-    this.isLoggingOut = true;
-    
     try {
-        // HIDE any existing spinner immediately
+        // DO NOT show loading spinner during logout
+        // Just hide any existing one
         this.hideLoading();
         
         this.closeSideMenu();
@@ -1021,15 +1019,18 @@ handleUserAuthenticated(user) {
         
         if (appContainer) {
             appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
             console.log('📦 App container hidden');
         }
         
         if (splash) {
             splash.style.display = 'none';
+            splash.classList.remove('active');
         }
         
         if (authContainer) {
-            authContainer.style.display = 'block';
+            authContainer.style.display = 'flex';
+            authContainer.classList.add('active');
             const signin = document.getElementById('signin-form');
             const signup = document.getElementById('signup-form');
             const forgot = document.getElementById('forgot-password-form');
@@ -1049,7 +1050,8 @@ handleUserAuthenticated(user) {
             header.remove();
         }
         
-        document.body.classList.remove('dark-mode', 'light-mode');
+        document.body.classList.remove('dark-mode', 'light-mode', 'app-active');
+        document.body.classList.add('auth-visible');
         
         // Final safety: hide loading spinner
         this.hideLoading();
@@ -1062,14 +1064,14 @@ handleUserAuthenticated(user) {
         
         const appContainer = document.getElementById('app-container');
         const authContainer = document.getElementById('auth-container');
-        if (appContainer) appContainer.style.display = 'none';
-        if (authContainer) authContainer.style.display = 'block';
-    } finally {
-        // RESET LOGOUT FLAG after a delay
-        setTimeout(() => {
-            this.isLoggingOut = false;
-            console.log('🔓 Logout flag reset');
-        }, 1000);
+        if (appContainer) {
+            appContainer.style.display = 'none';
+            appContainer.classList.add('hidden');
+        }
+        if (authContainer) {
+            authContainer.style.display = 'flex';
+            authContainer.classList.add('active');
+        }
     }
 }
     
