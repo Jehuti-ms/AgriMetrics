@@ -2941,3 +2941,26 @@ body {
     margin: 0 !important;
     padding: 20px;
 }
+
+/* ===== KILL THE 9px MARGIN ===== */
+.auth-forms {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+/* Override any media queries */
+@media (max-width: 768px) {
+    .auth-forms {
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .auth-forms {
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
