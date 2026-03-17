@@ -86,3 +86,17 @@ if (typeof firebase !== 'undefined') {
     console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>');
     console.error('<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js"></script>');
 }
+
+// Add this at the bottom of firebase-config.js
+window.firebaseReady = new Promise((resolve) => {
+    if (window.firebase && firebase.auth) {
+        resolve();
+    } else {
+        const checkFirebase = setInterval(() => {
+            if (window.firebase && firebase.auth) {
+                clearInterval(checkFirebase);
+                resolve();
+            }
+        }, 50);
+    }
+});
