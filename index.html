@@ -661,6 +661,55 @@
         }, 3000); // Show splash for 3 seconds
     })();
 </script>
+
+    <script>
+    // FORCE SPLASH SCREEN THEN AUTH SCREEN
+    (function() {
+        // Override any auto-login
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        
+        // Set body to loading
+        document.body.className = 'loading';
+        
+        // Show splash screen
+        var splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.remove('hidden');
+            splash.classList.add('active');
+        }
+        
+        // Hide auth container
+        var authContainer = document.getElementById('auth-container');
+        if (authContainer) {
+            authContainer.classList.remove('active');
+        }
+        
+        // Hide app container
+        var appContainer = document.getElementById('app-container');
+        if (appContainer) {
+            appContainer.style.display = 'none';
+        }
+        
+        // After 3 seconds, show auth screen
+        setTimeout(function() {
+            document.body.className = 'auth-visible';
+            
+            if (splash) {
+                splash.classList.remove('active');
+                splash.classList.add('hidden');
+            }
+            
+            if (authContainer) {
+                authContainer.classList.add('active');
+            }
+            
+            if (appContainer) {
+                appContainer.style.display = 'none';
+            }
+        }, 3000);
+    })();
+</script>
     
 </body>
 </html>
