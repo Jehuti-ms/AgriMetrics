@@ -458,44 +458,29 @@ handleUserAuthenticated(user) {
         console.log('🏠 App container shown');
     }
 
-    showLoading() {
-    if (!document.getElementById('app-loading')) {
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = 'app-loading';
-        loadingDiv.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: white;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                overflow: hidden;
-            ">
-                <div style="
-                    width: 50px;
-                    height: 50px;
-                    border: 5px solid #f3f3f3;
-                    border-top: 5px solid #4CAF50;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                    margin: 0 auto 20px auto;
-                    display: block;
-                "></div>
-                <div style="color: #666; font-size: 16px; text-align: center; width: 100%;">Loading AgriMetrics...</div>
-            </div>
-        `;
-        document.body.appendChild(loadingDiv);
-    } else {
-        document.getElementById('app-loading').style.display = 'flex';
+   showLoading() {
+    console.log('🔄 Showing loading spinner');
+    
+    // Remove any existing loading div first
+    const existing = document.getElementById('app-loading');
+    if (existing) {
+        existing.remove();
+    }
+    
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'app-loading';
+    loadingDiv.innerHTML = `
+        <div class="spinner"></div>
+        <div class="loading-text">Loading AgriMetrics...</div>
+    `;
+    document.body.appendChild(loadingDiv);
+}
+
+hideLoading() {
+    console.log('🔄 Hiding loading spinner');
+    const loadingDiv = document.getElementById('app-loading');
+    if (loadingDiv) {
+        loadingDiv.remove();
     }
 }
     
