@@ -2923,46 +2923,29 @@ body.auth-visible #splash-screen::before {
     content: none !important;
 }
 
-/* ===== FORCE MARGIN RESET ===== */
+/* ===== CLEAN CENTERING FIX ===== */
 .auth-forms {
     margin: 0 auto !important;
-    margin-top: 0 !important;
-    margin-right: auto !important;
-    margin-bottom: 0 !important;
-    margin-left: auto !important;
-}
-
-/* Also check for any margin on body or parent elements */
-body {
-    margin: 0 !important;
 }
 
 #auth-container {
     margin: 0 !important;
-    padding: 20px;
+    padding: 20px !important;
 }
 
-/* ===== KILL THE 9px MARGIN ===== */
-.auth-forms {
-    margin-left: auto !important;
-    margin-right: auto !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
+body {
+    margin: 0 !important;
 }
 
-/* Override any media queries */
+/* Mobile overrides */
 @media (max-width: 768px) {
     .auth-forms {
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin: 0 auto !important;
     }
 }
 
 @media (max-width: 480px) {
     .auth-forms {
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin: 0 auto !important;
     }
 }
-
-
