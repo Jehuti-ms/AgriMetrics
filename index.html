@@ -630,6 +630,37 @@
         setTimeout(fixAuthCentering, 300);
     })();
 </script>
+
+    <script>
+    // FORCE SPLASH SCREEN TO SHOW ON STARTUP
+    (function() {
+        // Set body class to loading to show splash screen
+        document.body.className = 'loading';
+        
+        // Make sure splash screen has active class
+        var splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.add('active');
+        }
+        
+        // After 3 seconds, switch to auth screen
+        setTimeout(function() {
+            document.body.className = 'auth-visible';
+            
+            // Make sure auth container is active
+            var authContainer = document.getElementById('auth-container');
+            if (authContainer) {
+                authContainer.classList.add('active');
+            }
+            
+            // Hide splash
+            if (splash) {
+                splash.classList.remove('active');
+                splash.classList.add('hidden');
+            }
+        }, 3000); // Show splash for 3 seconds
+    })();
+</script>
     
 </body>
 </html>
