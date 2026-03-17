@@ -551,5 +551,59 @@
         console.log('✅ Fixed sign-in handler installed');
     })();
 </script>
+    <script>
+    // FIX PERSISTENCE AND REMEMBER ME
+    (function() {
+        console.log('🔧 Setting up persistence...');
+        
+        // Set Firebase persistence to LOCAL (survives browser restart)
+        if (firebase && firebase.auth) {
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    console.log('✅ Firebase persistence set to LOCAL');
+                })
+                .catch((error) => {
+                    console.log('❌ Persistence error:', error);
+                });
+        }
+        
+        // Fix remember me checkbox
+        const rememberCheckbox = document.getElementById('remember-me');
+        const emailInput = document.getElementById('signin-email');
+        
+        // Load saved email if exists
+        const savedEmail = localStorage.getItem('rememberedEmail');
+        if (savedEmail && emailInput) {
+            emailInput.value = savedEmail;
+            if (rememberCheckbox) rememberCheckbox.checked = true;
+        }
+        
+        // Save email when form is submitted with remember me checked
+        const form = document.getElementById('signin-form-element');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (rememberCheckbox && rememberCheckbox.checked) {
+                    localStorage.setItem('rememberedEmail', emailInput.value);
+                } else {
+                    localStorage.removeItem('rememberedEmail');
+                }
+            });
+        }
+        
+        // Monitor auth state
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                console.log('✅ User is signed in:', user.email);
+                // Force app to show
+                document.body.className = 'app-active';
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+            } else {
+                console.log('👤 User is signed out');
+            }
+        });
+    })();
+</script>
 </body>
 </html>
