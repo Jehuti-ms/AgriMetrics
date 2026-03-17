@@ -19,34 +19,38 @@ class FarmManagementApp {
         }
     }
     
-    async initializeApp() {
-        console.log('✅ Initializing app...');
-        
-        // Show loading screen
-           this.showLoading();
-        
-        // Setup Firebase auth listener FIRST
-        await this.setupAuthListener();
-        
-        // Check if user is already authenticated
-        this.checkInitialAuth();
-
-        // Ensure menu starts hidden
-        setTimeout(() => {
-            this.initializeMenuPosition();
-        }, 100);
-
-        // Fix content position
-        setTimeout(() => {
-            this.fixContentPosition();
-        }, 150);
-
-        // Setup responsive form fixes on resize
-        window.addEventListener('resize', () => {
-            setTimeout(() => this.fixOverflowingForms(), 100);
-        });
-    }
-
+async initializeApp() {
+    console.log('✅ Initializing app...');
+    
+    // Show SPLASH SCREEN first
+    document.body.className = 'loading';
+    document.getElementById('splash-screen')?.classList.add('active');
+    
+    // Wait 2 seconds for splash to show
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Setup Firebase auth listener
+    await this.setupAuthListener();
+    
+    // Check if user is already authenticated
+    this.checkInitialAuth();
+    
+    // Ensure menu starts hidden
+    setTimeout(() => {
+        this.initializeMenuPosition();
+    }, 100);
+    
+    // Fix content position
+    setTimeout(() => {
+        this.fixContentPosition();
+    }, 150);
+    
+    // Setup responsive form fixes on resize
+    window.addEventListener('resize', () => {
+        setTimeout(() => this.fixOverflowingForms(), 100);
+    });
+}
+    
     fixContentPosition() {
         console.log('📐 Fixing content position...');
         
