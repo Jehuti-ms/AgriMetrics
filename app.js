@@ -1073,7 +1073,7 @@ hideLoading() {
             authContainer.classList.add('active');
         }
     }
-},
+}
     
 // ==================== AGRIMETRICS SYNC MANAGER ====================
 let agrimetricsSyncWorker = null;
