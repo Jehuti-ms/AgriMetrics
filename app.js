@@ -478,15 +478,7 @@ handleUserAuthenticated(user) {
     `;
     document.body.appendChild(loadingDiv);
 }
-
-hideLoading() {
-    console.log('🔄 Hiding loading spinner');
-    const loadingDiv = document.getElementById('app-loading');
-    if (loadingDiv) {
-        loadingDiv.remove();
-    }
-}
-    
+   
     hideLoading() {
     console.log('🔄 Hiding loading spinner');
     const loadingDiv = document.getElementById('app-loading');
@@ -709,7 +701,7 @@ hideLoading() {
 
         let header = appContainer.querySelector('header');
         if (header) header.remove();
-        
+    
         header = document.createElement('header');
         appContainer.insertBefore(header, appContainer.firstChild);
 
