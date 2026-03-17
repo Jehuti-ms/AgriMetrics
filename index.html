@@ -224,6 +224,45 @@
             </div>
         </div>
 
+        <!-- Cropper Modal -->
+        <div id="cropper-modal" class="popout-modal hidden">
+            <div class="popout-modal-content">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title">Crop Image</h3>
+                    <button class="popout-modal-close" onclick="closeCropper()">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div class="cropper-container">
+                        <img id="cropper-image" src="" alt="Image to crop" class="cropper-image">
+                    </div>
+                    
+                    <!-- Cropper Controls -->
+                    <div class="cropper-controls">
+                        <div class="cropper-rotate-controls">
+                            <button class="btn-rotate" onclick="rotateCropper(-90)" title="Rotate Left">↺</button>
+                            <button class="btn-rotate" onclick="rotateCropper(90)" title="Rotate Right">↻</button>
+                        </div>
+                        <div class="cropper-rotate-controls">
+                            <button class="btn-rotate" onclick="scaleCropper(-1)" title="Flip Horizontal">↔</button>
+                            <button class="btn-rotate" onclick="scaleCropper(1)" title="Flip Vertical">↕</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Aspect Ratio Controls -->
+                    <div class="cropper-controls" style="margin-top: 10px;">
+                        <button class="btn" onclick="setAspectRatio(1)">1:1</button>
+                        <button class="btn" onclick="setAspectRatio(4/3)">4:3</button>
+                        <button class="btn" onclick="setAspectRatio(16/9)">16:9</button>
+                        <button class="btn" onclick="setAspectRatio(NaN)">Free</button>
+                    </div>
+                </div>
+                <div class="popout-modal-footer">
+                    <button class="btn btn-outline" onclick="closeCropper()">Cancel</button>
+                    <button class="btn btn-primary" onclick="cropAndSave()">Crop & Save</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content -->
         <main id="content-area">
             <!-- Content will be loaded here by modules -->
