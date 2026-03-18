@@ -5043,10 +5043,10 @@ body.dark-mode {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }*/
 
-/* ===== ENHANCED CROPPER MODAL STYLES - JUST BIGGER ===== */
+/* ===== ENHANCED CROPPER MODAL STYLES - FULLY FUNCTIONAL & BIG ===== */
 .cropper-modal-content {
-    max-width: 1000px;
-    width: 95%;
+    max-width: 1200px;
+    width: 98%;
     max-height: 98vh;
 }
 
@@ -5060,8 +5060,8 @@ body.dark-mode {
 
 .cropper-wrapper {
     flex: 1;
-    min-height: 70vh;  /* Increased from 55vh */
-    max-height: 85vh;  /* Increased from 70vh */
+    min-height: 75vh;
+    max-height: 90vh;
     background: #1a1a1a;
     border-radius: 12px;
     overflow: hidden;
@@ -5071,11 +5071,11 @@ body.dark-mode {
 
 .cropper-image {
     max-width: 100%;
-    max-height: 85vh;  /* Increased from 70vh */
+    max-height: 90vh;
     display: block;
 }
 
-/* Controls - UNCHANGED, working perfectly */
+/* Controls */
 .cropper-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -5113,10 +5113,6 @@ body.dark-mode {
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
-.cropper-action-btn:active {
-    transform: scale(0.95);
-}
-
 .cropper-aspect-group {
     display: flex;
     flex-wrap: wrap;
@@ -5130,11 +5126,11 @@ body.dark-mode {
     padding: 12px 16px;
     font-weight: 600;
     border-radius: 30px;
-    transition: all 0.2s ease;
     background: #4CAF50;
     color: white;
     border: none;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .cropper-aspect-btn:hover {
@@ -5154,7 +5150,18 @@ body.dark-mode {
     padding: 14px;
 }
 
-/* Cropper.js specific overrides - UNCHANGED, working perfectly */
+/* ===== CRITICAL CROPPER VISIBILITY FIXES ===== */
+.cropper-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.cropper-view-box {
+    outline: 2px solid #4CAF50 !important;
+    outline-color: rgba(76, 175, 80, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
+}
+
 .cropper-point {
     width: 20px !important;
     height: 20px !important;
@@ -5165,32 +5172,29 @@ body.dark-mode {
     opacity: 1 !important;
 }
 
-.cropper-view-box {
-    outline: 2px solid #4CAF50 !important;
-    outline-color: rgba(76, 175, 80, 0.75) !important;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
+.cropper-line {
+    background-color: #4CAF50 !important;
+}
+
+.cropper-dashed {
+    border-color: rgba(255,255,255,0.5) !important;
 }
 
 .cropper-modal {
     background: rgba(0,0,0,0.65) !important;
 }
 
-.cropper-line {
-    background-color: #4CAF50 !important;
-}
-
 .cropper-face {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }
 
-/* Dark mode support - UNCHANGED */
+/* Dark mode support */
 .dark-mode .cropper-button-group {
     background: #2d3748;
 }
 
 .dark-mode .cropper-action-btn {
     background: linear-gradient(135deg, #2E7D32, #1B5E20);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .dark-mode .cropper-aspect-btn {
@@ -5206,11 +5210,11 @@ body.dark-mode {
     border: 1px solid #2d3748;
 }
 
-/* Responsive adjustments - UPDATED for bigger sizes */
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .cropper-wrapper {
-        min-height: 60vh;  /* Increased from 45vh */
-        max-height: 70vh;  /* Increased from 55vh */
+        min-height: 65vh;
+        max-height: 75vh;
     }
     
     .cropper-action-btn {
@@ -5229,13 +5233,12 @@ body.dark-mode {
 @media (max-width: 480px) {
     .cropper-modal-content {
         width: 100%;
-        max-height: 100vh;
         border-radius: 0;
     }
     
     .cropper-wrapper {
-        min-height: 50vh;  /* Increased from 40vh */
-        max-height: 60vh;  /* Increased from 50vh */
+        min-height: 55vh;
+        max-height: 65vh;
     }
     
     .cropper-action-btn {
@@ -5243,98 +5246,4 @@ body.dark-mode {
         height: 40px;
         font-size: 16px;
     }
-    
-    .cropper-toolbar {
-        gap: 8px;
-    }
-    
-    .cropper-button-group {
-        padding: 6px 8px;
-    }
-}
-
-/* ===== FORCE CROPPER MODAL TO USE FULL SIZE ===== */
-#cropper-modal.popout-modal .popout-modal-content {
-    max-width: 1200px !important;
-    width: 98% !important;
-    max-height: 98vh !important;
-    height: auto !important;
-}
-
-#cropper-modal .cropper-wrapper {
-    min-height: 75vh !important;
-    max-height: 90vh !important;
-}
-
-#cropper-modal .cropper-image {
-    max-height: 90vh !important;
-}
-
-/* Ensure cropper container fills the space */
-#cropper-modal .cropper-container {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-/* ===== FIX CROPPER IMAGE VISIBILITY ===== */
-#cropper-modal .cropper-container {
-    background: #1a1a1a !important;
-}
-
-#cropper-modal .cropper-canvas {
-    background: #1a1a1a !important;
-}
-
-#cropper-modal .cropper-canvas img {
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-#cropper-modal .cropper-drag-box {
-    background: rgba(0, 0, 0, 0.3) !important;
-}
-
-#cropper-modal .cropper-crop-box {
-    background: transparent !important;
-}
-
-/* Make the image visible immediately */
-#cropper-modal .cropper-image {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
-}
-
-/* ===== MAKE CROPPER GRID AND OUTLINE VISIBLE ===== */
-#cropper-modal .cropper-view-box {
-    outline: 2px solid #4CAF50 !important;
-    outline-color: rgba(76, 175, 80, 0.75) !important;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
-}
-
-#cropper-modal .cropper-point {
-    width: 20px !important;
-    height: 20px !important;
-    background: #4CAF50 !important;
-    border: 3px solid white !important;
-    border-radius: 50% !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
-    opacity: 1 !important;
-    z-index: 10000 !important;
-}
-
-#cropper-modal .cropper-line {
-    background-color: #4CAF50 !important;
-}
-
-#cropper-modal .cropper-dashed {
-    border-color: rgba(255,255,255,0.5) !important;
-}
-
-#cropper-modal .cropper-face {
-    background-color: rgba(76, 175, 80, 0.1) !important;
-}
-
-#cropper-modal .cropper-drag-box {
-    background: rgba(0, 0, 0, 0.1) !important;
 }
