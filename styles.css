@@ -5043,7 +5043,7 @@ body.dark-mode {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }*/
 
-/* ===== ENHANCED CROPPER MODAL STYLES - FULLY FUNCTIONAL & BIG ===== */
+/* ===== ENHANCED CROPPER MODAL STYLES - BIG & FULLY VISIBLE ===== */
 .cropper-modal-content {
     max-width: 1200px;
     width: 98%;
@@ -5113,6 +5113,10 @@ body.dark-mode {
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
+.cropper-action-btn:active {
+    transform: scale(0.95);
+}
+
 .cropper-aspect-group {
     display: flex;
     flex-wrap: wrap;
@@ -5126,11 +5130,11 @@ body.dark-mode {
     padding: 12px 16px;
     font-weight: 600;
     border-radius: 30px;
+    transition: all 0.2s ease;
     background: #4CAF50;
     color: white;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
 .cropper-aspect-btn:hover {
@@ -5154,6 +5158,16 @@ body.dark-mode {
 .cropper-container {
     width: 100% !important;
     height: 100% !important;
+    background: #1a1a1a !important;
+}
+
+.cropper-canvas {
+    background: #1a1a1a !important;
+}
+
+.cropper-canvas img {
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
 .cropper-view-box {
@@ -5188,6 +5202,14 @@ body.dark-mode {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }
 
+.cropper-drag-box {
+    background: rgba(0,0,0,0.1) !important;
+}
+
+.cropper-bg {
+    background: #1a1a1a !important;
+}
+
 /* Dark mode support */
 .dark-mode .cropper-button-group {
     background: #2d3748;
@@ -5195,6 +5217,7 @@ body.dark-mode {
 
 .dark-mode .cropper-action-btn {
     background: linear-gradient(135deg, #2E7D32, #1B5E20);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .dark-mode .cropper-aspect-btn {
@@ -5208,6 +5231,18 @@ body.dark-mode {
 .dark-mode .cropper-wrapper {
     background: #000;
     border: 1px solid #2d3748;
+}
+
+.dark-mode .cropper-container {
+    background: #000 !important;
+}
+
+.dark-mode .cropper-canvas {
+    background: #000 !important;
+}
+
+.dark-mode .cropper-bg {
+    background: #000 !important;
 }
 
 /* Responsive adjustments */
@@ -5233,6 +5268,7 @@ body.dark-mode {
 @media (max-width: 480px) {
     .cropper-modal-content {
         width: 100%;
+        max-height: 100vh;
         border-radius: 0;
     }
     
@@ -5246,4 +5282,13 @@ body.dark-mode {
         height: 40px;
         font-size: 16px;
     }
+    
+    .cropper-toolbar {
+        gap: 8px;
+    }
+    
+    .cropper-button-group {
+        padding: 6px 8px;
+    }
 }
+
