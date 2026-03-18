@@ -1594,20 +1594,31 @@ showSimpleImageViewer: function(file) {
             reader.readAsDataURL(file);
         };
         
-        // Retake button - go back to camera
+       // Retake button - go back to camera
         document.getElementById('retake-image-btn').onclick = () => {
             console.log('↺ Retaking photo');
             modal.remove();
             
-            // Reopen the import modal and show camera
+            // Go directly back to camera, not to import methods
             const importModal = document.getElementById('import-receipts-modal');
             if (importModal) {
                 importModal.style.display = 'flex';
                 importModal.classList.remove('hidden');
                 
-                // Trigger camera option click
+                // Show camera interface directly
                 setTimeout(() => {
-                    document.getElementById('camera-option')?.click();
+                    // Hide quick actions and upload sections, show camera
+                    const quickActions = document.getElementById('quick-actions-view');
+                    const uploadSection = document.getElementById('upload-section');
+                    const cameraSection = document.getElementById('camera-section');
+                    
+                    if (quickActions) quickActions.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    if (cameraSection) {
+                        cameraSection.style.display = 'block';
+                        // Initialize camera
+                        this.initializeCamera();
+                    }
                 }, 100);
             }
         };
