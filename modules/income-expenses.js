@@ -2275,7 +2275,7 @@ saveReceiptFromFile: function(file, dataURL) {
         console.log('✅ Saved to localStorage:', receipt.id);
     },
 
-  saveReceiptFromFile: function(file, imageUrl) {
+saveReceiptFromFile: function(file, imageUrl) {
     console.log('💾 Saving receipt without cropping:', file.name);
     
     const reader = new FileReader();
@@ -2296,7 +2296,6 @@ saveReceiptFromFile: function(file, dataURL) {
             userId: user?.uid || 'local-only',
             uploadedAt: new Date().toISOString(),
             transactionId: this.currentTransactionId || null,
-            // Add any other fields your existing receipts have
         };
         
         console.log('📝 Receipt object created:', receipt);
