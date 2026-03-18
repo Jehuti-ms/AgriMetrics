@@ -2275,43 +2275,63 @@ saveReceiptFromFile: function(file, dataURL) {
         console.log('✅ Saved to localStorage:', receipt.id);
     },
 
-    async saveReceiptToFirebase(receipt) {
-        if (!this.isFirebaseAvailable || !window.db) {
-            throw new Error('Firebase not available');
-        }
+   saveReceiptFromFile: function(file, imageUrl) {
+    console.log('💾 Saving receipt without cropping:', file.name);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const base64Data = e.target.result.split(',')[1]; // Get base64 without header
         
+        // Get current user
         const user = window.firebase?.auth?.().currentUser;
-        if (!user) {
-            throw new Error('User not authenticated');
-        }
         
-        console.log('📤 Saving receipt to Firestore (base64):', receipt.id);
+        // Create receipt with property names that match your existing structure
+        const receipt = {
+            id: 'receipt_' + Date.now(),
+            name: file.name,
+            base64Data: base64Data,
+            size: file.size,
+            type: file.type,
+            status: 'active',
+            userId: user?.uid || 'local-only',
+            uploadedAt: new Date().toISOString(),
+            transactionId: this.currentTransactionId || null,
+            // Add any other fields your existing receipts have
+        };
         
-        try {
-            const firebaseReceipt = {
-                id: receipt.id,
-                name: receipt.name,
-                base64Data: receipt.base64Data,
-                size: receipt.size,
-                type: receipt.type,
-                status: receipt.status,
-                userId: user.uid,
-                uploadedAt: receipt.uploadedAt,
-                storageType: 'firestore-base64',
-                metadata: receipt.metadata
-            };
-            
-            await window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt);
-            
-            console.log('✅ Saved to Firestore:', receipt.id);
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Firestore save error:', error);
-            throw error;
+        console.log('📝 Receipt object created:', receipt);
+        
+        // Save to localStorage using your existing function
+        this.saveReceiptLocally(receipt);
+        
+        // Show notification
+        this.showNotification('📸 Receipt saved!', 'success');
+        
+        // Try to save to Firebase if user is authenticated
+        if (user) {
+            this.saveReceiptToFirebase(receipt)
+                .then(() => {
+                    console.log('✅ Receipt saved to Firebase successfully');
+                    
+                    // Update the receipt in localStorage to mark as synced
+                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+                    const updatedReceipts = localReceipts.map(r => 
+                        r.id === receipt.id ? {...r, synced: true} : r
+                    );
+                    localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+                })
+                .catch(error => {
+                    console.error('❌ Failed to save to Firebase:', error);
+                    this.showNotification('Saved locally (offline mode)', 'info');
+                });
+        } else {
+            console.log('📱 User not authenticated, saved only locally');
+            this.showNotification('Saved locally (login to sync)', 'info');
         }
-    },
-
+    };
+    reader.readAsDataURL(file);
+},
+    
     showCaptureLoading(show) {
         let overlay = document.getElementById('capture-loading-overlay');
         
