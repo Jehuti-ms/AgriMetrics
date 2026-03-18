@@ -2094,40 +2094,7 @@ saveReceiptFromFile: function(file, dataURL) {
         reader.readAsDataURL(file);
     },
 
-    saveReceiptFromFile(file, dataURL) {
-        console.log('💾 Saving receipt without cropping:', file.name);
-        
-        const receiptId = `camera_${Date.now()}`;
-        
-        const receipt = {
-            id: receiptId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            dataURL: dataURL,
-            status: 'pending',
-            uploadedAt: new Date().toISOString(),
-            source: 'camera',
-            cropped: false
-        };
-        
-        this.saveReceiptLocally(receipt);
-        this.saveReceiptToFirebase(receipt)
-            .then(() => {
-                this.showNotification('✅ Receipt saved!', 'success');
-                this.updateModalReceiptsList();
-                this.updateReceiptQueueUI();
-                this.showCaptureSuccess(receipt);
-            })
-            .catch(error => {
-                console.error('❌ Firebase save error:', error);
-                this.showNotification('✅ Receipt saved locally!', 'success');
-                this.updateModalReceiptsList();
-                this.updateReceiptQueueUI();
-                this.showCaptureSuccess(receipt);
-            });
-    },
-   
+       
    initializeCamera() {
     console.log('📷 Initializing camera...');
     
@@ -2275,62 +2242,6 @@ saveReceiptFromFile: function(file, dataURL) {
         console.log('✅ Saved to localStorage:', receipt.id);
     },
 
-saveReceiptFromFile: function(file, imageUrl) {
-    console.log('💾 Saving receipt without cropping:', file.name);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const base64Data = e.target.result.split(',')[1]; // Get base64 without header
-        
-        // Get current user
-        const user = window.firebase?.auth?.().currentUser;
-        
-        // Create receipt with property names that match your existing structure
-        const receipt = {
-            id: 'receipt_' + Date.now(),
-            name: file.name,
-            base64Data: base64Data,
-            size: file.size,
-            type: file.type,
-            status: 'active',
-            userId: user?.uid || 'local-only',
-            uploadedAt: new Date().toISOString(),
-            transactionId: this.currentTransactionId || null,
-        };
-        
-        console.log('📝 Receipt object created:', receipt);
-        
-        // Save to localStorage using your existing function
-        this.saveReceiptLocally(receipt);
-        
-        // Show notification
-        this.showNotification('📸 Receipt saved!', 'success');
-        
-        // Try to save to Firebase if user is authenticated
-        if (user) {
-            // REMOVE 'this.' - call the global function directly
-            saveReceiptToFirebase(receipt)
-                .then(() => {
-                    console.log('✅ Receipt saved to Firebase successfully');
-                    
-                    // Update the receipt in localStorage to mark as synced
-                    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-                    const updatedReceipts = localReceipts.map(r => 
-                        r.id === receipt.id ? {...r, synced: true} : r
-                    );
-                    localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
-                })
-                .catch(error => {
-                    console.error('❌ Failed to save to Firebase:', error);
-                    this.showNotification('Saved locally (offline mode)', 'info');
-                });
-        } else {
-            console.log('📱 User not authenticated, saved only locally');
-            this.showNotification('Saved locally (login to sync)', 'info');
-        }
-    };
-    reader.readAsDataURL(file);
-},
     
     showCaptureLoading(show) {
         let overlay = document.getElementById('capture-loading-overlay');
