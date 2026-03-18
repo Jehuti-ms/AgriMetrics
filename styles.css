@@ -4839,7 +4839,9 @@ body.dark-mode {
     max-width: 1000px;
     width: 95%;
     max-height: 98vh;
-    height: 98vh;
+    height: 98vh;  /* Force modal to use full viewport height */
+    display: flex;
+    flex-direction: column;
 }
 
 .cropper-modal-body {
@@ -4847,28 +4849,47 @@ body.dark-mode {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    max-height: calc(98vh - 130px);
-    height: calc(98vh - 130px);
+    flex: 1;  /* Take all available space */
+    min-height: 0;  /* Allow flex item to shrink */
 }
 
 .cropper-wrapper {
-    flex: 1;
-    min-height: 0;  
-    height: 100%;    
-    max-height: none; 
+    flex: 1 1 auto;  /* Grow and shrink as needed */
+    min-height: 0;   /* Allow flex item to shrink below content size */
     background: #1a1a1a;
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    display: flex;           /* Center the image */
+    align-items: center;
+    justify-content: center;
 }
 
 .cropper-image {
     max-width: 100%;
-    max-height: 100%;  
+    max-height: 100%;  /* Let image use full container height */
     width: auto;
     height: auto;
     display: block;
+}
+
+/* Make the cropper container inside also use full height */
+.cropper-container {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+}
+
+/* The actual cropper image container */
+.cropper-wrap-box {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.cropper-canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .cropper-toolbar {
