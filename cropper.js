@@ -385,3 +385,106 @@ console.log('📷 Functions available:', {
     cropAndSave: typeof window.cropAndSave === 'function',
     rotateCropper: typeof window.rotateCropper === 'function'
 });
+
+// ==================== CROPPER EVENT LISTENERS ====================
+function setupCropperEventListeners() {
+    console.log('📷 Setting up cropper event listeners');
+    
+    // Close button
+    const closeBtn = document.getElementById('cropper-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', window.closeCropper);
+    }
+    
+    // Rotate buttons
+    const rotateLeft = document.getElementById('cropper-rotate-left');
+    if (rotateLeft) {
+        rotateLeft.addEventListener('click', () => window.rotateCropper(-90));
+    }
+    
+    const rotateRight = document.getElementById('cropper-rotate-right');
+    if (rotateRight) {
+        rotateRight.addEventListener('click', () => window.rotateCropper(90));
+    }
+    
+    // Flip buttons
+    const flipHorizontal = document.getElementById('cropper-flip-horizontal');
+    if (flipHorizontal) {
+        flipHorizontal.addEventListener('click', () => window.scaleCropper('horizontal'));
+    }
+    
+    const flipVertical = document.getElementById('cropper-flip-vertical');
+    if (flipVertical) {
+        flipVertical.addEventListener('click', () => window.scaleCropper('vertical'));
+    }
+    
+    // Zoom buttons
+    const zoomOut = document.getElementById('cropper-zoom-out');
+    if (zoomOut) {
+        zoomOut.addEventListener('click', window.zoomOut);
+    }
+    
+    const zoomIn = document.getElementById('cropper-zoom-in');
+    if (zoomIn) {
+        zoomIn.addEventListener('click', window.zoomIn);
+    }
+    
+    // Reset button
+    const reset = document.getElementById('cropper-reset');
+    if (reset) {
+        reset.addEventListener('click', window.resetCropper);
+    }
+    
+    // Aspect ratio buttons
+    const ratio1_1 = document.getElementById('cropper-ratio-1-1');
+    if (ratio1_1) {
+        ratio1_1.addEventListener('click', () => window.setAspectRatio(1));
+    }
+    
+    const ratio4_3 = document.getElementById('cropper-ratio-4-3');
+    if (ratio4_3) {
+        ratio4_3.addEventListener('click', () => window.setAspectRatio(4/3));
+    }
+    
+    const ratio16_9 = document.getElementById('cropper-ratio-16-9');
+    if (ratio16_9) {
+        ratio16_9.addEventListener('click', () => window.setAspectRatio(16/9));
+    }
+    
+    const ratioFree = document.getElementById('cropper-ratio-free');
+    if (ratioFree) {
+        ratioFree.addEventListener('click', () => window.setAspectRatio('free'));
+    }
+    
+    // Cancel and Save buttons
+    const cancelBtn = document.getElementById('cropper-cancel');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', window.closeCropper);
+    }
+    
+    const saveBtn = document.getElementById('cropper-save');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', window.cropAndSave);
+    }
+    
+    console.log('📷 Cropper event listeners setup complete');
+}
+
+// Also update the DOMContentLoaded event to call the setup
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📷 DOM ready, checking cropper modal...');
+    const modal = document.getElementById('cropper-modal');
+    console.log('📷 Cropper modal found:', modal !== null);
+    
+    if (modal) {
+        console.log('📷 Modal classes:', modal.className);
+    }
+    
+    // Check if cropper image exists
+    const img = document.getElementById('cropper-image');
+    console.log('📷 Cropper image found:', img !== null);
+    
+    // Setup event listeners
+    setupCropperEventListeners();
+});
+
