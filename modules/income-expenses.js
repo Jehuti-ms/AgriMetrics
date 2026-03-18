@@ -3773,7 +3773,7 @@ unload: function() {
                     this.exportTransactions();
                     break;
             }
-        };
+        }
         
         this._globalChangeHandler = (e) => {
             if (e.target.id === 'transaction-filter') {
