@@ -1418,59 +1418,75 @@ capturePhoto: function() {
             captureBtn.style.opacity = '1';
         }
         
-        // Ask if user wants to crop
+        // ===== AGGRESSIVE CAMERA CLEANUP =====
+        
+        // 1. Stop all tracks
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
+            this.cameraStream = null;
+        }
+        
+        // 2. Clear video element
+        if (video) {
+            video.srcObject = null;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+        
+        // 3. Remove camera section completely
+        const cameraSection = document.getElementById('camera-section');
+        if (cameraSection) {
+            cameraSection.remove();
+        }
+        
+        // 4. Also remove any camera elements from DOM
+        const anyVideo = document.querySelector('video');
+        if (anyVideo && anyVideo.id === 'camera-preview') {
+            anyVideo.remove();
+        }
+        
+        // 5. Hide import modal
+        const importModal = document.getElementById('import-receipts-modal');
+        if (importModal) {
+            importModal.style.display = 'none';
+            importModal.classList.add('hidden');
+        }
+        
+        // Small delay to ensure cleanup
         setTimeout(() => {
-            if (confirm('Would you like to crop this photo?')) {
-                // ===== AGGRESSIVE CAMERA CLEANUP =====
+            // Check if cropper is available
+            if (typeof window.openCropper === 'function') {
+                console.log('📷 Opening cropper with captured image');
                 
-                // 1. Stop all tracks
-                if (this.cameraStream) {
-                    this.cameraStream.getTracks().forEach(track => {
-                        track.stop();
-                        track.enabled = false;
-                    });
-                    this.cameraStream = null;
-                }
-                
-                // 2. Clear video element
-                if (video) {
-                    video.srcObject = null;
-                    video.pause();
-                    video.removeAttribute('src');
-                    video.load();
-                }
-                
-                // 3. Remove camera section completely
-                const cameraSection = document.getElementById('camera-section');
-                if (cameraSection) {
-                    cameraSection.remove();
-                }
-                
-                // 4. Also remove any camera elements from DOM
-                const anyVideo = document.querySelector('video');
-                if (anyVideo && anyVideo.id === 'camera-preview') {
-                    anyVideo.remove();
-                }
-                
-                // 5. Hide import modal
-                const importModal = document.getElementById('import-receipts-modal');
-                if (importModal) {
-                    importModal.style.display = 'none';
-                    importModal.classList.add('hidden');
-                }
-                
-                // Small delay to ensure cleanup
-                setTimeout(() => {
-                    // Show simple viewer
-                    this.showSimpleImageViewer(file);
-                }, 200);
+                // Convert blob to data URL for cropper
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    window.openCropper(e.target.result, function(croppedFile) {
+                        console.log('📷 Cropped file received:', croppedFile);
+                        
+                        // Create preview URL for cropped image
+                        const croppedImageUrl = URL.createObjectURL(croppedFile);
+                        
+                        // Show simple viewer with cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }.bind(this), 100);
+                        
+                    }.bind(this), file.name);
+                }.bind(this);
+                reader.readAsDataURL(blob);
             } else {
-                this.saveReceiptFromFile(file, imageUrl);
+                console.warn('⚠️ Cropper not available, using original image');
+                this.showSimpleImageViewer(file);
             }
             this.isCapturing = false;
-        }, 200);
+        }.bind(this), 200);
         
-    }, 'image/jpeg', 0.9);
+    }.bind(this), 'image/jpeg', 0.9);
 },
 
     // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
