@@ -3664,7 +3664,7 @@ unload: function() {
         }
         
                   
-          this._globalClickHandler = (e) => {
+       this._globalClickHandler = (e) => {
     // ===== NEW: Handle transaction item clicks for editing =====
     const transactionItem = e.target.closest('.transaction-item');
     if (transactionItem) {
