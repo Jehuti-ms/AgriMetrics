@@ -5275,3 +5275,32 @@ body.dark-mode {
     width: 100% !important;
     height: 100% !important;
 }
+
+/* ===== FIX CROPPER IMAGE VISIBILITY ===== */
+#cropper-modal .cropper-container {
+    background: #1a1a1a !important;
+}
+
+#cropper-modal .cropper-canvas {
+    background: #1a1a1a !important;
+}
+
+#cropper-modal .cropper-canvas img {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#cropper-modal .cropper-drag-box {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+#cropper-modal .cropper-crop-box {
+    background: transparent !important;
+}
+
+/* Make the image visible immediately */
+#cropper-modal .cropper-image {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
