@@ -5043,7 +5043,7 @@ body.dark-mode {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }*/
 
-/* ===== ENHANCED CROPPER MODAL - LARGE & FUNCTIONAL ===== */
+/* ===== ENHANCED CROPPER MODAL - LARGE & FULLY FUNCTIONAL ===== */
 #cropper-modal .popout-modal-content {
     max-width: 1000px !important;
     width: 95% !important;
@@ -5080,7 +5080,7 @@ body.dark-mode {
     display: block !important;
 }
 
-/* Cropper Controls */
+/* Cropper Controls - from working version */
 #cropper-modal .cropper-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -5118,6 +5118,10 @@ body.dark-mode {
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
+#cropper-modal .cropper-action-btn:active {
+    transform: scale(0.95);
+}
+
 #cropper-modal .cropper-aspect-group {
     display: flex;
     flex-wrap: wrap;
@@ -5135,10 +5139,13 @@ body.dark-mode {
     color: white;
     border: none;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 #cropper-modal .cropper-aspect-btn:hover {
     background: #2E7D32;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 #cropper-modal .cropper-modal-footer {
@@ -5152,7 +5159,7 @@ body.dark-mode {
     padding: 14px;
 }
 
-/* ===== CRITICAL CROPPER VISIBILITY FIXES - GLOBAL ===== */
+/* ===== CRITICAL CROPPER VISIBILITY FIXES - from working version ===== */
 .cropper-container {
     touch-action: none !important;
     overflow: hidden !important;
@@ -5214,23 +5221,7 @@ body.dark-mode {
     display: none !important;
 }
 
-/* ===== DARK MODE SUPPORT FOR CROPPER ===== */
-.dark-mode .cropper-view-box {
-    outline-color: rgba(74, 222, 128, 0.75) !important;
-}
-
-.dark-mode .cropper-point {
-    background: #4ade80 !important;
-}
-
-.dark-mode .cropper-line {
-    background-color: #4ade80 !important;
-}
-
-.dark-mode .cropper-face {
-    background-color: rgba(74, 222, 128, 0.1) !important;
-}
-
+/* ===== DARK MODE SUPPORT ===== */
 .dark-mode #cropper-modal .cropper-button-group {
     background: #2d3748;
 }
@@ -5249,6 +5240,23 @@ body.dark-mode {
 
 .dark-mode #cropper-modal .cropper-wrapper {
     background: #000;
+    border: 1px solid #2d3748;
+}
+
+.dark-mode .cropper-view-box {
+    outline-color: rgba(74, 222, 128, 0.75) !important;
+}
+
+.dark-mode .cropper-point {
+    background: #4ade80 !important;
+}
+
+.dark-mode .cropper-line {
+    background-color: #4ade80 !important;
+}
+
+.dark-mode .cropper-face {
+    background-color: rgba(74, 222, 128, 0.1) !important;
 }
 
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
@@ -5281,6 +5289,12 @@ body.dark-mode {
 }
 
 @media (max-width: 480px) {
+    #cropper-modal .popout-modal-content {
+        width: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+    }
+    
     #cropper-modal .cropper-wrapper {
         max-height: 55vh !important;
         min-height: 35vh !important;
@@ -5302,18 +5316,19 @@ body.dark-mode {
         font-size: 13px !important;
     }
     
-    #cropper-modal .popout-modal-content {
-        width: 100% !important;
-        border-radius: 0 !important;
+    #cropper-modal .cropper-toolbar {
+        gap: 8px !important;
+    }
+    
+    #cropper-modal .cropper-button-group {
+        padding: 6px 8px !important;
     }
 }
 
-/* Landscape mode on phones */
+/* Landscape mode */
 @media (max-width: 768px) and (orientation: landscape) {
     #cropper-modal .cropper-wrapper {
         max-height: 70vh !important;
         min-height: 45vh !important;
     }
 }
-
-
