@@ -2275,7 +2275,7 @@ saveReceiptFromFile: function(file, dataURL) {
         console.log('✅ Saved to localStorage:', receipt.id);
     },
 
-   saveReceiptFromFile: function(file, imageUrl) {
+  saveReceiptFromFile: function(file, imageUrl) {
     console.log('💾 Saving receipt without cropping:', file.name);
     
     const reader = new FileReader();
@@ -2309,7 +2309,8 @@ saveReceiptFromFile: function(file, dataURL) {
         
         // Try to save to Firebase if user is authenticated
         if (user) {
-            this.saveReceiptToFirebase(receipt)
+            // REMOVE 'this.' - call the global function directly
+            saveReceiptToFirebase(receipt)
                 .then(() => {
                     console.log('✅ Receipt saved to Firebase successfully');
                     
