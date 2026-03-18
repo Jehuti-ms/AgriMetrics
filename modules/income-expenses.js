@@ -2023,6 +2023,7 @@ injectCropperStyles: function() {
 
     
 // Save receipt from file (keep your existing method)
+// Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
     console.log('💾 Saving receipt:', file.name);
     
@@ -2039,17 +2040,30 @@ saveReceiptFromFile: function(file, dataURL) {
         cropped: false
     };
     
+    // Always save locally first
     this.saveReceiptLocally(receipt);
+    
+    // Try Firebase save
+    if (this.isFirebaseAvailable) {
+        this.saveReceiptToFirebase(receipt)
+            .then(success => {
+                if (success) {
+                    console.log('✅ Receipt synced to Firebase');
+                } else {
+                    console.log('📱 Receipt saved locally only');
+                }
+            })
+            .catch(err => {
+                console.log('⚠️ Firebase save failed, keeping local only:', err);
+            });
+    } else {
+        console.log('📱 Firebase not available, saved locally only');
+    }
+    
+    // Update UI
     this.updateReceiptQueueUI();
     this.updateModalReceiptsList();
     this.showCaptureSuccess(receipt);
-    
-    // Try Firebase
-    if (this.isFirebaseAvailable) {
-        this.saveReceiptToFirebase(receipt).catch(err => {
-            console.log('Firebase save failed, keeping local');
-        });
-    }
 },
     
     saveCroppedReceipt(file, imageUrl) {
@@ -2242,6 +2256,56 @@ saveReceiptFromFile: function(file, dataURL) {
         console.log('✅ Saved to localStorage:', receipt.id);
     },
 
+    saveReceiptToFirebase: async function(receipt) {
+    console.log('📤 Attempting to save receipt to Firebase:', receipt.id);
+    
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('❌ Firebase not available, skipping save');
+        return false;
+    }
+    
+    try {
+        const user = window.firebase?.auth?.().currentUser;
+        if (!user) {
+            console.log('❌ No authenticated user, skipping Firebase save');
+            return false;
+        }
+        
+        // Prepare receipt for Firestore
+        const firebaseReceipt = {
+            id: receipt.id,
+            name: receipt.name,
+            dataURL: receipt.dataURL,
+            size: receipt.size,
+            type: receipt.type,
+            status: receipt.status || 'pending',
+            userId: user.uid,
+            uploadedAt: receipt.uploadedAt || new Date().toISOString(),
+            source: receipt.source || 'camera',
+            cropped: receipt.cropped || false,
+            transactionId: receipt.transactionId || null,
+            syncedAt: new Date().toISOString()
+        };
+        
+        // Save to Firestore
+        await window.db.collection('receipts').doc(receipt.id).set(firebaseReceipt);
+        
+        console.log('✅ Receipt saved to Firebase successfully:', receipt.id);
+        
+        // Update local storage to mark as synced
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        const updatedReceipts = localReceipts.map(r => 
+            r.id === receipt.id ? {...r, synced: true, syncedAt: new Date().toISOString()} : r
+        );
+        localStorage.setItem('local-receipts', JSON.stringify(updatedReceipts));
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error saving receipt to Firebase:', error);
+        return false;
+    }
+},
     
     showCaptureLoading(show) {
         let overlay = document.getElementById('capture-loading-overlay');
