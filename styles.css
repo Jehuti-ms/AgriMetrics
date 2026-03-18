@@ -5252,3 +5252,26 @@ body.dark-mode {
         padding: 6px 8px;
     }
 }
+
+/* ===== FORCE CROPPER MODAL TO USE FULL SIZE ===== */
+#cropper-modal.popout-modal .popout-modal-content {
+    max-width: 1200px !important;
+    width: 98% !important;
+    max-height: 98vh !important;
+    height: auto !important;
+}
+
+#cropper-modal .cropper-wrapper {
+    min-height: 75vh !important;
+    max-height: 90vh !important;
+}
+
+#cropper-modal .cropper-image {
+    max-height: 90vh !important;
+}
+
+/* Ensure cropper container fills the space */
+#cropper-modal .cropper-container {
+    width: 100% !important;
+    height: 100% !important;
+}
