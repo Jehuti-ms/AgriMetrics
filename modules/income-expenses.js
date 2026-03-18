@@ -1580,21 +1580,135 @@ showSimpleImageViewer: function(file) {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✓ Save to Receipt</button>
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✓ Save to Receipt</button>
                     
-                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✎ Edit Crop</button>
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✎ Edit Crop</button>
                     
-                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">↺ Retake Photo</button>
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">↺ Retake Photo</button>
                     
-                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✕ Cancel</button>
+                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer;">✕ Cancel</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Add hover effects
-        const buttons = modal.querySelectorAll('button');
+        // Get button references
+        const saveBtn = document.getElementById('save-image-btn');
+        const editBtn = document.getElementById('edit-image-btn');
+        const retakeBtn = document.getElementById('retake-image-btn');
+        const cancelBtn = document.getElementById('cancel-image-btn');
+        
+        // Save button - save to receipt
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                console.log('💾 Saving image to receipt');
+                modal.remove();
+                
+                // Call the original save function
+                const imageUrl = URL.createObjectURL(file);
+                this.saveReceiptFromFile(file, imageUrl);
+            };
+        }
+        
+        // Edit button - go back to cropper
+        if (editBtn) {
+            editBtn.onclick = () => {
+                console.log('✎ Editing crop again');
+                modal.remove();
+                
+                // Re-open cropper with the same image
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (typeof window.openCropper === 'function') {
+                        window.openCropper(e.target.result, (croppedFile) => {
+                            console.log('📷 Re-cropped file received');
+                            
+                            // Show viewer again with new cropped image
+                            setTimeout(() => {
+                                this.showSimpleImageViewer(croppedFile);
+                            }, 100);
+                            
+                        }, file.name);
+                    }
+                };
+                reader.readAsDataURL(file);
+            };
+        }
+        
+        // Retake button - go back to camera
+        if (retakeBtn) {
+            retakeBtn.onclick = () => {
+                console.log('↺ Retaking photo - going back to camera');
+                modal.remove();
+                
+                // Stop any existing camera first
+                this.stopCamera();
+                
+                // Show the import modal
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'flex';
+                    importModal.classList.remove('hidden');
+                    
+                    // Hide quick actions and upload sections
+                    const quickActions = document.getElementById('quick-actions-view');
+                    const uploadSection = document.getElementById('upload-section');
+                    
+                    if (quickActions) quickActions.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    
+                    // Show camera section
+                    const cameraSection = document.getElementById('camera-section');
+                    if (cameraSection) {
+                        cameraSection.style.display = 'block';
+                        
+                        // Small delay to ensure DOM is ready
+                        setTimeout(() => {
+                            this.initializeCamera();
+                            console.log('📷 Camera re-initialized for retake');
+                        }, 200);
+                    } else {
+                        // Fallback: trigger camera option click
+                        setTimeout(() => {
+                            document.getElementById('camera-option')?.click();
+                        }, 200);
+                    }
+                }
+            };
+        }
+        
+        // Cancel button - go back to main menu
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                console.log('✕ Cancelled - going back to import methods');
+                modal.remove();
+                
+                // Show the import modal with quick actions
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'flex';
+                    importModal.classList.remove('hidden');
+                    
+                    // Hide camera and upload sections
+                    const cameraSection = document.getElementById('camera-section');
+                    const uploadSection = document.getElementById('upload-section');
+                    
+                    if (cameraSection) cameraSection.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    
+                    // Show quick actions
+                    const quickActions = document.getElementById('quick-actions-view');
+                    if (quickActions) quickActions.style.display = 'block';
+                    
+                    // Also show recent receipts
+                    const recentSection = document.getElementById('recent-section');
+                    if (recentSection) recentSection.style.display = 'block';
+                }
+            };
+        }
+        
+        // Add hover effects separately (doesn't interfere with click handlers)
         buttons.forEach(btn => {
             btn.addEventListener('mouseenter', () => {
                 btn.style.transform = 'translateY(-2px)';
@@ -1605,98 +1719,6 @@ showSimpleImageViewer: function(file) {
                 btn.style.boxShadow = 'none';
             });
         });
-        
-        // Save button - save to receipt
-        document.getElementById('save-image-btn').onclick = () => {
-            console.log('💾 Saving image to receipt');
-            modal.remove();
-            
-            // Call the original save function
-            const imageUrl = URL.createObjectURL(file);
-            this.saveReceiptFromFile(file, imageUrl);
-        };
-        
-        // Edit button - go back to cropper
-        document.getElementById('edit-image-btn').onclick = () => {
-            console.log('✎ Editing crop again');
-            modal.remove();
-            
-            // Re-open cropper with the same image
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (typeof window.openCropper === 'function') {
-                    window.openCropper(e.target.result, (croppedFile) => {
-                        console.log('📷 Re-cropped file received');
-                        
-                        // Show viewer again with new cropped image
-                        setTimeout(() => {
-                            this.showSimpleImageViewer(croppedFile);
-                        }, 100);
-                        
-                    }, file.name);
-                }
-            };
-            reader.readAsDataURL(file);
-        };
-        
-        // IMPROVED RETAKE BUTTON - Go directly back to camera
-        document.getElementById('retake-image-btn').onclick = () => {
-            console.log('↺ Retaking photo - going back to camera');
-            modal.remove();
-            
-            // Stop any existing camera first
-            this.stopCamera();
-            
-            // Show the import modal
-            const importModal = document.getElementById('import-receipts-modal');
-            if (importModal) {
-                importModal.style.display = 'flex';
-                importModal.classList.remove('hidden');
-                
-                // Hide quick actions and upload sections
-                const quickActions = document.getElementById('quick-actions-view');
-                const uploadSection = document.getElementById('upload-section');
-                const recentSection = document.getElementById('recent-section');
-                
-                if (quickActions) quickActions.style.display = 'none';
-                if (uploadSection) uploadSection.style.display = 'none';
-                if (recentSection) recentSection.style.display = 'block';
-                
-                // Show camera section
-                const cameraSection = document.getElementById('camera-section');
-                if (cameraSection) {
-                    cameraSection.style.display = 'block';
-                    
-                    // Small delay to ensure DOM is ready
-                    setTimeout(() => {
-                        this.initializeCamera();
-                        console.log('📷 Camera re-initialized for retake');
-                    }, 200);
-                } else {
-                    console.error('❌ Camera section not found, falling back to camera option');
-                    // Fallback: trigger camera option click
-                    setTimeout(() => {
-                        document.getElementById('camera-option')?.click();
-                    }, 200);
-                }
-            }
-        };
-        
-        // Cancel button - go back to main menu
-        document.getElementById('cancel-image-btn').onclick = () => {
-            console.log('✕ Cancelled');
-            modal.remove();
-            
-            // Show the import modal with quick actions
-            const importModal = document.getElementById('import-receipts-modal');
-            if (importModal) {
-                importModal.style.display = 'flex';
-                importModal.classList.remove('hidden');
-                
-                const quickActions = document.getElementById('quick-actions-view');
-                if (quickActions) quickActions.style.display = 'block';
-            }
-        };
     };
     reader.readAsDataURL(file);
 },
