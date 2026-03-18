@@ -224,38 +224,54 @@
             </div>
         </div>
 
-       <!-- Cropper Modal -->
+      <!-- Cropper Modal -->
         <div id="cropper-modal" class="popout-modal hidden">
-            <div class="popout-modal-content">
+            <div class="popout-modal-content cropper-modal-content">
                 <div class="popout-modal-header">
                     <h3 class="popout-modal-title">Crop Image</h3>
                     <button class="popout-modal-close" id="cropper-close-btn">&times;</button>
                 </div>
-                <div class="popout-modal-body">
-                    <div class="cropper-container">
+                <div class="popout-modal-body cropper-modal-body">
+                    <!-- Image Container -->
+                    <div class="cropper-wrapper">
                         <img id="cropper-image" src="" alt="Image to crop" class="cropper-image">
                     </div>
                     
                     <!-- Cropper Controls -->
-                    <div class="cropper-controls">
-                        <button class="btn-rotate" id="cropper-rotate-left" title="Rotate Left">↺</button>
-                        <button class="btn-rotate" id="cropper-rotate-right" title="Rotate Right">↻</button>
-                        <button class="btn-rotate" id="cropper-flip-horizontal" title="Flip Horizontal">↔</button>
-                        <button class="btn-rotate" id="cropper-flip-vertical" title="Flip Vertical">↕</button>
-                        <button class="btn-rotate" id="cropper-zoom-out" title="Zoom Out">−</button>
-                        <button class="btn-rotate" id="cropper-zoom-in" title="Zoom In">+</button>
-                        <button class="btn-rotate" id="cropper-reset" title="Reset">↺</button>
+                    <div class="cropper-toolbar">
+                        <!-- Rotation Controls -->
+                        <div class="cropper-button-group">
+                            <button class="cropper-action-btn" id="cropper-rotate-left" title="Rotate Left">↺</button>
+                            <button class="cropper-action-btn" id="cropper-rotate-right" title="Rotate Right">↻</button>
+                        </div>
+                        
+                        <!-- Flip Controls -->
+                        <div class="cropper-button-group">
+                            <button class="cropper-action-btn" id="cropper-flip-horizontal" title="Flip Horizontal">↔</button>
+                            <button class="cropper-action-btn" id="cropper-flip-vertical" title="Flip Vertical">↕</button>
+                        </div>
+                        
+                        <!-- Zoom Controls -->
+                        <div class="cropper-button-group">
+                            <button class="cropper-action-btn" id="cropper-zoom-out" title="Zoom Out">−</button>
+                            <button class="cropper-action-btn" id="cropper-zoom-in" title="Zoom In">+</button>
+                        </div>
+                        
+                        <!-- Reset Button -->
+                        <div class="cropper-button-group">
+                            <button class="cropper-action-btn" id="cropper-reset" title="Reset">↺</button>
+                        </div>
                     </div>
                     
                     <!-- Aspect Ratio Controls -->
-                    <div class="cropper-controls" style="margin-top: 10px;">
-                        <button class="btn" id="cropper-ratio-1-1">1:1</button>
-                        <button class="btn" id="cropper-ratio-4-3">4:3</button>
-                        <button class="btn" id="cropper-ratio-16-9">16:9</button>
-                        <button class="btn" id="cropper-ratio-free">Free</button>
+                    <div class="cropper-aspect-group">
+                        <button class="cropper-aspect-btn" id="cropper-ratio-1-1">1:1</button>
+                        <button class="cropper-aspect-btn" id="cropper-ratio-4-3">4:3</button>
+                        <button class="cropper-aspect-btn" id="cropper-ratio-16-9">16:9</button>
+                        <button class="cropper-aspect-btn" id="cropper-ratio-free">Free</button>
                     </div>
                 </div>
-                <div class="popout-modal-footer">
+                <div class="popout-modal-footer cropper-modal-footer">
                     <button class="btn btn-outline" id="cropper-cancel">Cancel</button>
                     <button class="btn btn-primary" id="cropper-save">Crop & Save</button>
                 </div>
