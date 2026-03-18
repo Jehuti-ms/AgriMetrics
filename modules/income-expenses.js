@@ -1464,8 +1464,8 @@ capturePhoto: function() {
                 
                 // Convert blob to data URL for cropper
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    window.openCropper(e.target.result, function(croppedFile) {
+                reader.onload = (e) => {
+                    window.openCropper(e.target.result, (croppedFile) => {
                         console.log('📷 Cropped file received:', croppedFile);
                         
                         // Create preview URL for cropped image
@@ -1474,19 +1474,19 @@ capturePhoto: function() {
                         // Show simple viewer with cropped image
                         setTimeout(() => {
                             this.showSimpleImageViewer(croppedFile);
-                        }.bind(this), 100);
+                        }, 100);
                         
-                    }.bind(this), file.name);
-                }.bind(this);
+                    }, file.name);
+                };
                 reader.readAsDataURL(blob);
             } else {
                 console.warn('⚠️ Cropper not available, using original image');
                 this.showSimpleImageViewer(file);
             }
             this.isCapturing = false;
-        }.bind(this), 200);
+        }, 200);
         
-    }.bind(this), 'image/jpeg', 0.9);
+    }, 'image/jpeg', 0.9);
 },
 
     // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
