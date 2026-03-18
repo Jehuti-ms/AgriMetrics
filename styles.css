@@ -5043,7 +5043,7 @@ body.dark-mode {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }*/
 
-/* ===== ENHANCED CROPPER MODAL STYLES - LARGE & FUNCTIONAL ===== */
+/* ===== ENHANCED CROPPER MODAL - LARGE & FUNCTIONAL ===== */
 #cropper-modal .popout-modal-content {
     max-width: 1000px !important;
     width: 95% !important;
@@ -5080,7 +5080,7 @@ body.dark-mode {
     display: block !important;
 }
 
-/* Controls - keep the working button styles */
+/* Cropper Controls */
 #cropper-modal .cropper-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -5152,15 +5152,28 @@ body.dark-mode {
     padding: 14px;
 }
 
-/* ===== CRITICAL CROPPER.JS OVERRIDES - These make it work! ===== */
-/* Crop box outline - VISIBLE */
+/* ===== CRITICAL CROPPER VISIBILITY FIXES - GLOBAL ===== */
+.cropper-container {
+    touch-action: none !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+}
+
+.cropper-wrap-box,
+.cropper-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .cropper-view-box {
     outline: 2px solid #4CAF50 !important;
     outline-color: rgba(76, 175, 80, 0.75) !important;
     box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
+    border-radius: 0 !important;
 }
 
-/* Resize handles - VISIBLE */
 .cropper-point {
     width: 20px !important;
     height: 20px !important;
@@ -5169,64 +5182,55 @@ body.dark-mode {
     border-radius: 50% !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
     opacity: 1 !important;
+    z-index: 10000 !important;
 }
 
-/* Edge lines - VISIBLE */
 .cropper-line {
     background-color: #4CAF50 !important;
 }
 
-/* Background overlay */
+.cropper-dashed {
+    border-color: rgba(255,255,255,0.5) !important;
+}
+
 .cropper-modal {
     background: rgba(0,0,0,0.65) !important;
 }
 
-/* Crop face (area inside crop box) */
 .cropper-face {
     background-color: rgba(76, 175, 80, 0.1) !important;
-    cursor: move !important;
 }
 
-/* Make drag box work */
 .cropper-drag-box {
     background: rgba(0,0,0,0.2) !important;
     cursor: crosshair !important;
 }
 
-/* Ensure cropper container allows movement */
-.cropper-container {
-    touch-action: none !important;
+.cropper-crop-box {
+    cursor: move !important;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    #cropper-modal .cropper-wrapper {
-        max-height: 65vh !important;
-        min-height: 40vh !important;
-    }
-    
-    #cropper-modal .cropper-image {
-        max-height: 65vh !important;
-    }
-    
-    .cropper-point {
-        width: 25px !important;
-        height: 25px !important;
-    }
+.cropper-center {
+    display: none !important;
 }
 
-@media (max-width: 480px) {
-    #cropper-modal .cropper-wrapper {
-        max-height: 55vh !important;
-        min-height: 35vh !important;
-    }
-    
-    #cropper-modal .cropper-image {
-        max-height: 55vh !important;
-    }
+/* ===== DARK MODE SUPPORT FOR CROPPER ===== */
+.dark-mode .cropper-view-box {
+    outline-color: rgba(74, 222, 128, 0.75) !important;
 }
 
-/* Dark mode */
+.dark-mode .cropper-point {
+    background: #4ade80 !important;
+}
+
+.dark-mode .cropper-line {
+    background-color: #4ade80 !important;
+}
+
+.dark-mode .cropper-face {
+    background-color: rgba(74, 222, 128, 0.1) !important;
+}
+
 .dark-mode #cropper-modal .cropper-button-group {
     background: #2d3748;
 }
@@ -5245,6 +5249,71 @@ body.dark-mode {
 
 .dark-mode #cropper-modal .cropper-wrapper {
     background: #000;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    #cropper-modal .cropper-wrapper {
+        max-height: 65vh !important;
+        min-height: 40vh !important;
+    }
+    
+    #cropper-modal .cropper-image {
+        max-height: 65vh !important;
+    }
+    
+    #cropper-modal .cropper-action-btn {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 18px !important;
+    }
+    
+    #cropper-modal .cropper-aspect-btn {
+        min-width: 70px !important;
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+    }
+    
+    .cropper-point {
+        width: 25px !important;
+        height: 25px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #cropper-modal .cropper-wrapper {
+        max-height: 55vh !important;
+        min-height: 35vh !important;
+    }
+    
+    #cropper-modal .cropper-image {
+        max-height: 55vh !important;
+    }
+    
+    #cropper-modal .cropper-action-btn {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
+    }
+    
+    #cropper-modal .cropper-aspect-btn {
+        min-width: 60px !important;
+        padding: 8px 10px !important;
+        font-size: 13px !important;
+    }
+    
+    #cropper-modal .popout-modal-content {
+        width: 100% !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* Landscape mode on phones */
+@media (max-width: 768px) and (orientation: landscape) {
+    #cropper-modal .cropper-wrapper {
+        max-height: 70vh !important;
+        min-height: 45vh !important;
+    }
 }
 
 
