@@ -3663,7 +3663,8 @@ unload: function() {
             document.removeEventListener('change', this._globalChangeHandler);
         }
         
-        this._globalClickHandler = (e) => {
+                  
+          this._globalClickHandler = (e) => {
     // ===== NEW: Handle transaction item clicks for editing =====
     const transactionItem = e.target.closest('.transaction-item');
     if (transactionItem) {
@@ -3690,90 +3691,57 @@ unload: function() {
     console.log(`Button clicked: ${buttonId}`);
     
     switch(buttonId) {
-        // ... other cases ...
-        
+        case 'add-transaction':
+            this.showTransactionModal();
+            break;
+        case 'upload-receipt-btn':
+            this.showImportReceiptsModal();
+            break;
+        case 'add-income-btn':
+            this.showAddIncome();
+            break;
+        case 'add-expense-btn':
+            this.showAddExpense();
+            break;
+        case 'financial-report-btn':
+            this.generateFinancialReport();
+            break;
+        case 'category-analysis-btn':
+            this.generateCategoryAnalysis();
+            break;
+        case 'save-transaction':
+            this.saveTransaction();
+            break;
+        case 'delete-transaction':
+            this.deleteTransaction();
+            break;
+        case 'cancel-transaction':
+            this.hideTransactionModal();
+            break;
+        case 'close-transaction-modal':
+            this.hideTransactionModal();
+            break;
+        case 'close-import-receipts':
+            this.hideImportReceiptsModal();
+            break;
         case 'cancel-import-receipts':
             console.log('❌ Cancel import receipts clicked');
-            // Make sure hideImportReceiptsModal exists
-            if (typeof this.hideImportReceiptsModal === 'function') {
-                this.hideImportReceiptsModal();
-            } else {
-                console.error('❌ hideImportReceiptsModal is not a function');
-                // Fallback: try to close modal directly
-                const modal = document.getElementById('import-receipts-modal');
-                if (modal) {
-                    modal.style.display = 'none';
-                    modal.classList.add('hidden');
-                }
-                this.stopCamera();
-            }
+            this.hideImportReceiptsModal();
             break;
-            
-        // ... other cases ...
+        case 'refresh-receipts-btn':
+            this.loadReceiptsFromFirebase();
+            this.showNotification('Receipts refreshed', 'success');
+            break;
+        case 'process-all-receipts':
+            this.processPendingReceipts();
+            break;
+        case 'export-transactions':
+            this.exportTransactions();
+            break;
+        default:
+            console.log('Unhandled button:', buttonId);
     }
 };
-            
-            // Handle button clicks
-            const button = e.target.closest('button');
-            if (!button) return;
-            
-            const buttonId = button.id;
-            if (!buttonId) return;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log(`Button clicked: ${buttonId}`);
-            
-            switch(buttonId) {
-                case 'add-transaction':
-                    this.showTransactionModal();
-                    break;
-                case 'upload-receipt-btn':
-                    this.showImportReceiptsModal();
-                    break;
-                case 'add-income-btn':
-                    this.showAddIncome();
-                    break;
-                case 'add-expense-btn':
-                    this.showAddExpense();
-                    break;
-                case 'financial-report-btn':
-                    this.generateFinancialReport();
-                    break;
-                case 'category-analysis-btn':
-                    this.generateCategoryAnalysis();
-                    break;
-                case 'save-transaction':
-                    this.saveTransaction();
-                    break;
-                case 'delete-transaction':
-                    this.deleteTransaction();
-                    break;
-                case 'cancel-transaction':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-transaction-modal':
-                    this.hideTransactionModal();
-                    break;
-                case 'close-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'cancel-import-receipts':
-                    this.hideImportReceiptsModal();
-                    break;
-                case 'refresh-receipts-btn':
-                    this.loadReceiptsFromFirebase();
-                    this.showNotification('Receipts refreshed', 'success');
-                    break;
-                case 'process-all-receipts':
-                    this.processPendingReceipts();
-                    break;
-                case 'export-transactions':
-                    this.exportTransactions();
-                    break;
-            }
-        }
         
         this._globalChangeHandler = (e) => {
             if (e.target.id === 'transaction-filter') {
