@@ -98,7 +98,7 @@ window.openCropper = function(imageUrl, callback, fileName = 'cropped-image.jpg'
                 restore: false,
                 guides: true,
                 center: true,
-                highlight: false,
+                highlight: true,
                 cropBoxMovable: true,
                 cropBoxResizable: true,
                 toggleDragModeOnDblclick: false,
