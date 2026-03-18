@@ -4838,8 +4838,8 @@ body.dark-mode {
 .cropper-modal-content {
     max-width: 1000px;
     width: 95%;
-    max-height: 98vh;
-    height: 98vh;  /* Force modal to use full viewport height */
+    max-height: 98vh;  /* Keep this at 98vh (98% of viewport) */
+    height: 98vh;      /* Force modal to use 98% of viewport height */
     display: flex;
     flex-direction: column;
 }
@@ -4849,32 +4849,27 @@ body.dark-mode {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    flex: 1;  /* Take all available space */
-    min-height: 0;  /* Allow flex item to shrink */
+    flex: 1;
+    max-height: calc(98vh - 130px);  /* Keep consistent */
 }
 
 .cropper-wrapper {
-    flex: 1 1 auto;  /* Grow and shrink as needed */
-    min-height: 0;   /* Allow flex item to shrink below content size */
+    flex: 1;
+    min-height: 0;
     background: #1a1a1a;
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    display: flex;           /* Center the image */
-    align-items: center;
-    justify-content: center;
 }
 
 .cropper-image {
     max-width: 100%;
-    max-height: 100%;  /* Let image use full container height */
-    width: auto;
-    height: auto;
+    max-height: 100%;
     display: block;
 }
 
-/* Make the cropper container inside also use full height */
+/* Make the cropper container use full height */
 .cropper-container {
     width: 100% !important;
     height: 100% !important;
