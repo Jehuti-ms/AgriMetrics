@@ -1489,9 +1489,9 @@ capturePhoto: function() {
     }, 'image/jpeg', 0.9);
 },
 
-    // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
+   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 showSimpleImageViewer: function(file) {
-    console.log('🖼️ SIMPLE VIEWER - TEST FUNCTION');
+    console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
     // Force remove camera
     const cameraSection = document.getElementById('camera-section');
@@ -1507,28 +1507,126 @@ showSimpleImageViewer: function(file) {
     
     const reader = new FileReader();
     reader.onload = (e) => {
+        // Remove any existing viewer
+        const existingViewer = document.getElementById('image-review-modal');
+        if (existingViewer) existingViewer.remove();
+        
         const modal = document.createElement('div');
+        modal.id = 'image-review-modal';
         modal.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: black;
+            background: rgba(0,0,0,0.9);
             z-index: 1000000;
             display: flex;
             align-items: center;
             justify-content: center;
         `;
+        
         modal.innerHTML = `
-            <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; max-width: 90%;">
-                <img src="${e.target.result}" style="max-width: 100%; max-height: 70vh;">
-                <button id="close-modal" style="margin-top: 20px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+            <div style="background: white; padding: 25px; border-radius: 16px; text-align: center; max-width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <h3 style="margin-bottom: 20px; color: #2E7D32; font-weight: 600;">Review Image</h3>
+                
+                <div style="max-width: 100%; max-height: 50vh; overflow: hidden; margin-bottom: 20px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                    <img src="${e.target.result}" style="width: 100%; height: auto; display: block;">
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✓ Save to Receipt</button>
+                    
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✎ Edit Crop</button>
+                    
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">↺ Retake Photo</button>
+                    
+                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✕ Cancel</button>
+                </div>
             </div>
         `;
+        
         document.body.appendChild(modal);
         
-        document.getElementById('close-modal').onclick = () => modal.remove();
+        // Add hover effects
+        const buttons = modal.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'translateY(-2px)';
+                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'translateY(0)';
+                btn.style.boxShadow = 'none';
+            });
+        });
+        
+        // Save button - save to receipt
+        document.getElementById('save-image-btn').onclick = () => {
+            console.log('💾 Saving image to receipt');
+            modal.remove();
+            
+            // Call the original save function
+            const imageUrl = URL.createObjectURL(file);
+            this.saveReceiptFromFile(file, imageUrl);
+        };
+        
+        // Edit button - go back to cropper
+        document.getElementById('edit-image-btn').onclick = () => {
+            console.log('✎ Editing crop again');
+            modal.remove();
+            
+            // Re-open cropper with the same image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (typeof window.openCropper === 'function') {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Re-cropped file received');
+                        
+                        // Show viewer again with new cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        // Retake button - go back to camera
+        document.getElementById('retake-image-btn').onclick = () => {
+            console.log('↺ Retaking photo');
+            modal.remove();
+            
+            // Reopen the import modal and show camera
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                // Trigger camera option click
+                setTimeout(() => {
+                    document.getElementById('camera-option')?.click();
+                }, 100);
+            }
+        };
+        
+        // Cancel button - go back to main menu
+        document.getElementById('cancel-image-btn').onclick = () => {
+            console.log('✕ Cancelled');
+            modal.remove();
+            
+            // Show the import modal with quick actions
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                const quickActions = document.getElementById('quick-actions-view');
+                if (quickActions) quickActions.style.display = 'block';
+            }
+        };
     };
     reader.readAsDataURL(file);
 },
