@@ -5304,3 +5304,37 @@ body.dark-mode {
     visibility: visible !important;
     display: block !important;
 }
+
+/* ===== MAKE CROPPER GRID AND OUTLINE VISIBLE ===== */
+#cropper-modal .cropper-view-box {
+    outline: 2px solid #4CAF50 !important;
+    outline-color: rgba(76, 175, 80, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
+}
+
+#cropper-modal .cropper-point {
+    width: 20px !important;
+    height: 20px !important;
+    background: #4CAF50 !important;
+    border: 3px solid white !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    opacity: 1 !important;
+    z-index: 10000 !important;
+}
+
+#cropper-modal .cropper-line {
+    background-color: #4CAF50 !important;
+}
+
+#cropper-modal .cropper-dashed {
+    border-color: rgba(255,255,255,0.5) !important;
+}
+
+#cropper-modal .cropper-face {
+    background-color: rgba(76, 175, 80, 0.1) !important;
+}
+
+#cropper-modal .cropper-drag-box {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
