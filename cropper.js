@@ -259,7 +259,7 @@ window.resetCropper = function() {
 
 // Crop and save
 window.cropAndSave = function() {
-    console.log('📷 cropAndSave called');
+    console.log('📷 cropAndSave called - START');
     
     if (!window.cropperInstance) {
         console.error('❌ No cropper instance to crop');
@@ -291,6 +291,11 @@ window.cropAndSave = function() {
         canvas.toBlob(function(blob) {
             console.log('📷 Blob created, size:', blob.size, 'bytes');
             
+            if (!blob) {
+                console.error('❌ Failed to create blob');
+                return;
+            }
+            
             // Create file from blob
             const fileName = typeof currentImageFile === 'string' ? currentImageFile : 'cropped-image.jpg';
             const file = new File([blob], fileName, { 
@@ -299,11 +304,14 @@ window.cropAndSave = function() {
             });
             
             console.log('📷 File created:', file.name, file.size, 'bytes');
+            console.log('📷 Calling crop callback with file');
             
             // Call callback with cropped file
             if (cropCallback) {
-                console.log('📷 Calling crop callback');
                 cropCallback(file);
+                console.log('📷 Crop callback executed successfully');
+            } else {
+                console.error('❌ cropCallback is null when trying to call');
             }
             
             // Close modal
