@@ -260,6 +260,8 @@ window.resetCropper = function() {
 // Crop and save
 window.cropAndSave = function() {
     console.log('📷 cropAndSave called - START');
+    console.log('📷 cropperInstance exists:', !!window.cropperInstance);
+    console.log('📷 cropCallback exists:', !!cropCallback);
     
     if (!window.cropperInstance) {
         console.error('❌ No cropper instance to crop');
@@ -289,10 +291,11 @@ window.cropAndSave = function() {
         
         // Convert to blob
         canvas.toBlob(function(blob) {
-            console.log('📷 Blob created, size:', blob.size, 'bytes');
+            console.log('📷 Blob created, size:', blob ? blob.size : 'null', 'bytes');
             
             if (!blob) {
                 console.error('❌ Failed to create blob');
+                alert('Failed to create image blob');
                 return;
             }
             
@@ -310,6 +313,11 @@ window.cropAndSave = function() {
             if (cropCallback) {
                 cropCallback(file);
                 console.log('📷 Crop callback executed successfully');
+                
+                // Show success notification
+                if (typeof showAgrimetricsNotification === 'function') {
+                    showAgrimetricsNotification('Image cropped successfully!', 'success');
+                }
             } else {
                 console.error('❌ cropCallback is null when trying to call');
             }
@@ -323,38 +331,6 @@ window.cropAndSave = function() {
         console.error('❌ Error during crop and save:', error);
         alert('Error cropping image: ' + error.message);
     }
-};
-
-// Handle file input for cropping
-window.initCropperFromFileInput = function(fileInputId, callback) {
-    console.log('📷 initCropperFromFileInput called for:', fileInputId);
-    
-    const input = document.getElementById(fileInputId);
-    if (!input) {
-        console.error('❌ File input not found:', fileInputId);
-        return;
-    }
-    
-    input.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) {
-            console.log('📷 No file selected');
-            return;
-        }
-        
-        console.log('📷 File selected:', file.name, file.type, file.size, 'bytes');
-        currentImageFile = file;
-        
-        const reader = new FileReader();
-        reader.onload = function(readerEvent) {
-            console.log('📷 File read complete');
-            openCropper(readerEvent.target.result, callback, file.name);
-        };
-        reader.onerror = function(error) {
-            console.error('❌ FileReader error:', error);
-        };
-        reader.readAsDataURL(file);
-    });
 };
 
 // Handle paste event for images
