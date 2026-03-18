@@ -5043,7 +5043,7 @@ body.dark-mode {
     background-color: rgba(76, 175, 80, 0.1) !important;
 }*/
 
-/* ===== CROPPER MODAL STYLES ===== */
+/* ===== ENHANCED CROPPER MODAL STYLES - LARGE & FUNCTIONAL ===== */
 #cropper-modal .popout-modal-content {
     max-width: 1000px !important;
     width: 95% !important;
@@ -5062,12 +5062,13 @@ body.dark-mode {
 }
 
 #cropper-modal .cropper-wrapper {
-    max-height: 75vh !important;  /* Increased from 60vh to 75vh */
-    min-height: 50vh !important;  /* Added min-height for consistency */
+    max-height: 75vh !important;
+    min-height: 50vh !important;
     background: #1a1a1a !important;
-    border-radius: 8px !important;
+    border-radius: 12px !important;
     overflow: hidden !important;
     margin-bottom: 20px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -5075,11 +5076,11 @@ body.dark-mode {
 
 #cropper-modal .cropper-image {
     max-width: 100% !important;
-    max-height: 75vh !important;  /* Match the wrapper height */
+    max-height: 75vh !important;
     display: block !important;
 }
 
-/* Controls */
+/* Controls - keep the working button styles */
 #cropper-modal .cropper-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -5151,22 +5152,78 @@ body.dark-mode {
     padding: 14px;
 }
 
-/* Cropper.js overrides */
+/* ===== CRITICAL CROPPER.JS OVERRIDES - These make it work! ===== */
+/* Crop box outline - VISIBLE */
+.cropper-view-box {
+    outline: 2px solid #4CAF50 !important;
+    outline-color: rgba(76, 175, 80, 0.75) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
+}
+
+/* Resize handles - VISIBLE */
 .cropper-point {
     width: 20px !important;
     height: 20px !important;
     background: #4CAF50 !important;
     border: 3px solid white !important;
     border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
     opacity: 1 !important;
 }
 
-.cropper-view-box {
-    outline: 2px solid #4CAF50 !important;
+/* Edge lines - VISIBLE */
+.cropper-line {
+    background-color: #4CAF50 !important;
 }
 
+/* Background overlay */
 .cropper-modal {
     background: rgba(0,0,0,0.65) !important;
+}
+
+/* Crop face (area inside crop box) */
+.cropper-face {
+    background-color: rgba(76, 175, 80, 0.1) !important;
+    cursor: move !important;
+}
+
+/* Make drag box work */
+.cropper-drag-box {
+    background: rgba(0,0,0,0.2) !important;
+    cursor: crosshair !important;
+}
+
+/* Ensure cropper container allows movement */
+.cropper-container {
+    touch-action: none !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #cropper-modal .cropper-wrapper {
+        max-height: 65vh !important;
+        min-height: 40vh !important;
+    }
+    
+    #cropper-modal .cropper-image {
+        max-height: 65vh !important;
+    }
+    
+    .cropper-point {
+        width: 25px !important;
+        height: 25px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #cropper-modal .cropper-wrapper {
+        max-height: 55vh !important;
+        min-height: 35vh !important;
+    }
+    
+    #cropper-modal .cropper-image {
+        max-height: 55vh !important;
+    }
 }
 
 /* Dark mode */
@@ -5188,29 +5245,6 @@ body.dark-mode {
 
 .dark-mode #cropper-modal .cropper-wrapper {
     background: #000;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    #cropper-modal .cropper-wrapper {
-        max-height: 65vh !important;
-        min-height: 40vh !important;
-    }
-    
-    #cropper-modal .cropper-image {
-        max-height: 65vh !important;
-    }
-}
-
-@media (max-width: 480px) {
-    #cropper-modal .cropper-wrapper {
-        max-height: 55vh !important;
-        min-height: 35vh !important;
-    }
-    
-    #cropper-modal .cropper-image {
-        max-height: 55vh !important;
-    }
 }
 
 
