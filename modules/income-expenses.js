@@ -3217,6 +3217,25 @@ showReceiptCropperModal: function(file) {
         }, 100);
     },
 
+    // Add this function to your IncomeExpensesModule
+hideImportReceiptsModal: function() {
+    console.log('❌ Closing import receipts modal');
+    
+    this.stopCamera();
+    
+    const modal = document.getElementById('import-receipts-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+        console.log('✅ Modal hidden');
+    }
+    
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+},
+
    // When switching to upload interface
 showUploadInterface: function() {
     console.log('📁 Showing upload interface...');
@@ -3645,18 +3664,54 @@ unload: function() {
         }
         
         this._globalClickHandler = (e) => {
-            // ===== NEW: Handle transaction item clicks for editing =====
-            const transactionItem = e.target.closest('.transaction-item');
-            if (transactionItem) {
-                const transactionId = transactionItem.dataset.id;
-                if (transactionId) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('📝 Transaction item clicked for editing:', transactionId);
-                    this.editTransaction(transactionId);
-                    return; // Important: stop here so button clicks inside don't trigger twice
+    // ===== NEW: Handle transaction item clicks for editing =====
+    const transactionItem = e.target.closest('.transaction-item');
+    if (transactionItem) {
+        const transactionId = transactionItem.dataset.id;
+        if (transactionId) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📝 Transaction item clicked for editing:', transactionId);
+            this.editTransaction(transactionId);
+            return;
+        }
+    }
+    
+    // Handle button clicks
+    const button = e.target.closest('button');
+    if (!button) return;
+    
+    const buttonId = button.id;
+    if (!buttonId) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log(`Button clicked: ${buttonId}`);
+    
+    switch(buttonId) {
+        // ... other cases ...
+        
+        case 'cancel-import-receipts':
+            console.log('❌ Cancel import receipts clicked');
+            // Make sure hideImportReceiptsModal exists
+            if (typeof this.hideImportReceiptsModal === 'function') {
+                this.hideImportReceiptsModal();
+            } else {
+                console.error('❌ hideImportReceiptsModal is not a function');
+                // Fallback: try to close modal directly
+                const modal = document.getElementById('import-receipts-modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    modal.classList.add('hidden');
                 }
+                this.stopCamera();
             }
+            break;
+            
+        // ... other cases ...
+    }
+};
             
             // Handle button clicks
             const button = e.target.closest('button');
