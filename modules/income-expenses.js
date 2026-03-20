@@ -6248,7 +6248,9 @@ unload() {
     console.log('✅ Income & Expenses module unloaded');
 }
 
-    // Add this AFTER the module registration, before the closing script tag
+};
+
+ // Add this AFTER the module registration, before the closing script tag
 // ==================== GLOBAL CROPPER HELPER ====================
 window.openCropper = function(imageData, onCropped, fileName) {
     console.log('📷 Global cropper called');
@@ -6276,8 +6278,6 @@ function dataURLtoBlob(dataURL) {
     }
     return new Blob([u8arr], { type: mime });
 }
-};
-
 
 // =============== Register with FarmModules framework ===================
 if (window.FarmModules) {
