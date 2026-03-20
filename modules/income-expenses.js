@@ -1289,17 +1289,29 @@ initializeCamera: function() {
     video.setAttribute('autoplay', 'true');
     video.srcObject = null;
     
+    // Reset video element
+    video.pause();
+    video.load();
+    
     if (status) status.textContent = 'Requesting camera...';
     
     // Simple constraints for mobile
     const constraints = {
         video: {
-            facingMode: this.cameraFacingMode,
+            facingMode: this.cameraFacingMode || 'environment',
             width: { ideal: 720 },
             height: { ideal: 720 }
         },
         audio: false
     };
+    
+    // Check if camera is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ Camera API not supported');
+        if (status) status.textContent = 'Camera not supported';
+        this.showNotification('Camera not supported in this browser', 'error');
+        return;
+    }
     
     navigator.mediaDevices.getUserMedia(constraints)
         .then(stream => {
@@ -1307,7 +1319,12 @@ initializeCamera: function() {
             this.cameraStream = stream;
             video.srcObject = stream;
             
-            return video.play();
+            // Ensure video plays
+            return video.play().catch(e => {
+                console.warn('Video play warning:', e);
+                // Sometimes autoplay fails but video still works
+                return Promise.resolve();
+            });
         })
         .then(() => {
             console.log('✅ Camera playing');
@@ -1318,39 +1335,53 @@ initializeCamera: function() {
             const switchBtn = document.getElementById('switch-camera');
             if (switchBtn) {
                 const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                switchBtn.innerHTML = `<span class="btn-icon">🔄</span> Switch to ${nextMode}`;
+                switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
+            }
+            
+            // Ensure camera section is visible
+            const cameraSection = document.getElementById('camera-section');
+            if (cameraSection) {
+                cameraSection.style.display = 'block';
             }
         })
         .catch(error => {
             console.error('❌ Camera error:', error);
             
             let message = 'Camera access failed';
-            if (error.name === 'NotAllowedError') message = 'Camera permission denied';
-            else if (error.name === 'NotFoundError') message = 'No camera found';
-            else if (error.name === 'NotReadableError') message = 'Camera is busy';
+            if (error.name === 'NotAllowedError') {
+                message = 'Camera permission denied. Please allow camera access in browser settings.';
+            } else if (error.name === 'NotFoundError') {
+                message = 'No camera found on this device.';
+            } else if (error.name === 'NotReadableError') {
+                message = 'Camera is busy. Please close other apps using the camera.';
+            } else if (error.name === 'OverconstrainedError') {
+                message = 'Camera does not support required settings.';
+            }
             
             if (status) status.textContent = 'Camera unavailable';
             this.showNotification(message, 'error');
             
             // Show upload option after delay
             setTimeout(() => {
-                if (confirm('Camera not available. Upload file instead?')) {
+                if (confirm('Camera not available. Would you like to upload a file instead?')) {
                     this.showUploadInterface();
+                } else {
+                    // Go back to quick actions
+                    this.showQuickActionsView();
                 }
             }, 2000);
         });
 },
-
-stopCamera: function() {
-    console.log('🛑 Stopping camera aggressively...');
     
-    // 1. Stop all tracks in the stream
+stopCamera: function() {
+    console.log('🛑 Stopping camera...');
+    
+    // Stop all tracks in the stream
     if (this.cameraStream) {
         this.cameraStream.getTracks().forEach(track => {
             try {
                 track.stop();
                 track.enabled = false;
-                track.readyState = 'ended';
                 console.log(`✅ Stopped track: ${track.kind}`);
             } catch (e) {
                 console.warn('⚠️ Error stopping track:', e);
@@ -1359,9 +1390,9 @@ stopCamera: function() {
         this.cameraStream = null;
     }
     
-    // 2. Clear all video elements
-    const videoElements = document.querySelectorAll('video');
-    videoElements.forEach(video => {
+    // Clear video element
+    const video = document.getElementById('camera-preview');
+    if (video) {
         try {
             if (video.srcObject) {
                 video.srcObject.getTracks?.().forEach(track => {
@@ -1372,31 +1403,25 @@ stopCamera: function() {
             video.pause();
             video.removeAttribute('src');
             video.load();
-            console.log(`✅ Cleared video: ${video.id || 'unnamed'}`);
+            console.log('✅ Video element cleared');
         } catch (e) {
             console.warn('⚠️ Error clearing video:', e);
         }
-    });
-    
-    // 3. Specifically target the camera preview
-    const preview = document.getElementById('camera-preview');
-    if (preview) {
-        preview.srcObject = null;
-        preview.pause();
-        preview.removeAttribute('src');
-        preview.load();
     }
     
-    // 4. Remove any camera sections from DOM
+    // Hide camera section if it's visible
     const cameraSection = document.getElementById('camera-section');
     if (cameraSection) {
         cameraSection.style.display = 'none';
     }
     
-    // 5. Force garbage collection hint
-    this.cameraStream = null;
+    // Reset status if exists
+    const status = document.getElementById('camera-status');
+    if (status) {
+        status.textContent = 'Camera stopped';
+    }
     
-    console.log('✅ Camera fully stopped and cleaned up');
+    console.log('✅ Camera fully stopped');
 },
     
 // Switch camera
@@ -3278,21 +3303,68 @@ showQuickActionsView: function() {
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
-    // ... existing capture code ...
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const status = document.getElementById('camera-status');
+    const captureBtn = document.getElementById('capture-photo');
     
+    if (!video || !video.srcObject) {
+        this.showNotification('Camera not ready', 'error');
+        return;
+    }
+    
+    // Disable button during capture
+    this.isCapturing = true;
+    if (captureBtn) {
+        captureBtn.disabled = true;
+        captureBtn.style.opacity = '0.5';
+    }
+    
+    if (status) status.textContent = 'Capturing...';
+    
+    // Set canvas size
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    
+    // Draw video frame
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Flash effect
+    video.style.opacity = '0.7';
+    setTimeout(() => video.style.opacity = '1', 100);
+    
+    // Get image data
     canvas.toBlob((blob) => {
-        // ... existing code ...
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
         
-        // ADD THIS LINE right before opening cropper
-        this.stopCamera(); // Stop camera before showing cropper
+        if (status) status.textContent = 'Photo captured!';
+        this.showNotification('📸 Photo captured!', 'success');
         
+        // Re-enable button
+        if (captureBtn) {
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '1';
+        }
+        
+        // ===== CRITICAL: Stop camera BEFORE showing cropper =====
+        this.stopCamera();
+        
+        // ===== FIX: Call showStandardCropper directly instead of window.openCropper =====
         setTimeout(() => {
             // Check if cropper is available
-            if (typeof window.openCropper === 'function') {
+            if (typeof this.showStandardCropper === 'function') {
                 console.log('📷 Opening cropper with captured image');
-                // ... rest of cropper code ...
+                this.showStandardCropper(file);
+            } else {
+                console.warn('⚠️ showStandardCropper not available, using simple viewer');
+                // Fallback to simple viewer if cropper not available
+                this.showSimpleImageViewer(file);
             }
+            this.isCapturing = false;
         }, 200);
+        
     }, 'image/jpeg', 0.9);
 },
 
@@ -3430,36 +3502,31 @@ unload: function() {
         }, 100);
     },
 
-   showCameraInterface: function() {
+  showCameraInterface: function() {
     console.log('📷 Showing camera interface...');
     
-    const cameraSection = document.getElementById('camera-section');
+    // Hide other sections
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
+    const cameraSection = document.getElementById('camera-section');
     
     if (uploadSection) uploadSection.style.display = 'none';
     if (quickActionsSection) quickActionsSection.style.display = 'none';
+    
+    // Show camera section
     if (cameraSection) {
         cameraSection.style.display = 'block';
         
-        // Quick check if camera might be available
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            const status = document.getElementById('camera-status');
-            if (status) status.textContent = 'Camera not supported';
-            this.showNotification('Camera not supported in this browser', 'warning');
-            
-            // Show upload option after 3 seconds
-            setTimeout(() => {
-                if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                    this.showUploadInterface();
-                }
-            }, 3000);
-        } else {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
             this.initializeCamera();
-        }
-        
+        }, 100);
+    } else {
+        console.error('❌ Camera section not found');
+        this.showNotification('Camera section not found', 'error');
     }
+    
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
@@ -6191,7 +6258,37 @@ unload() {
     
     console.log('✅ Income & Expenses module unloaded');
 }
+
+    // Add this AFTER the module registration, before the closing script tag
+// ==================== GLOBAL CROPPER HELPER ====================
+window.openCropper = function(imageData, onCropped, fileName) {
+    console.log('📷 Global cropper called');
+    
+    const module = window.IncomeExpensesModule;
+    if (module && module.showStandardCropper) {
+        // Convert dataURL to blob then to file
+        const blob = dataURLtoBlob(imageData);
+        const file = new File([blob], fileName || 'image.jpg', { type: 'image/jpeg' });
+        module.showStandardCropper(file);
+    } else {
+        console.error('❌ IncomeExpensesModule not available or showStandardCropper missing');
+    }
 };
+
+// Helper function to convert dataURL to Blob
+function dataURLtoBlob(dataURL) {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+}
+};
+
 
 // =============== Register with FarmModules framework ===================
 if (window.FarmModules) {
