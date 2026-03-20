@@ -1440,6 +1440,7 @@ switchCamera: function() {
     setTimeout(() => this.initializeCamera(), 300);
 },
 
+// ==================== CAMERA CAPTURE METHOD ====================
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
@@ -1448,12 +1449,19 @@ capturePhoto: function() {
     const status = document.getElementById('camera-status');
     const captureBtn = document.getElementById('capture-photo');
     
+    // Check if camera is ready
     if (!video || !video.srcObject) {
-        this.showNotification('Camera not ready', 'error');
+        this.showNotification('Camera not ready. Please wait or try again.', 'error');
         return;
     }
     
-    // Disable button
+    // Check if video has dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+        this.showNotification('Camera not ready. Video stream not initialized.', 'error');
+        return;
+    }
+    
+    // Disable button during capture
     this.isCapturing = true;
     if (captureBtn) {
         captureBtn.disabled = true;
@@ -1462,103 +1470,83 @@ capturePhoto: function() {
     
     if (status) status.textContent = 'Capturing...';
     
-    // Set canvas size
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     
-    // Draw video frame
+    // Draw the video frame
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Flash effect
     video.style.opacity = '0.7';
-    setTimeout(() => video.style.opacity = '1', 100);
+    setTimeout(() => {
+        if (video) video.style.opacity = '1';
+    }, 100);
     
-    // Get image data
+    // Convert canvas to blob and create file
     canvas.toBlob((blob) => {
-        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const imageUrl = URL.createObjectURL(blob);
+        if (!blob) {
+            console.error('Failed to capture image');
+            if (status) status.textContent = 'Capture failed';
+            this.showNotification('Failed to capture image', 'error');
+            
+            if (captureBtn) {
+                captureBtn.disabled = false;
+                captureBtn.style.opacity = '1';
+            }
+            this.isCapturing = false;
+            return;
+        }
+        
+        // Create file from blob
+        const fileName = `receipt_${Date.now()}.jpg`;
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
         
         if (status) status.textContent = 'Photo captured!';
         this.showNotification('📸 Photo captured!', 'success');
         
-        // Re-enable button
+        // Re-enable capture button
         if (captureBtn) {
             captureBtn.disabled = false;
             captureBtn.style.opacity = '1';
         }
+        this.isCapturing = false;
         
-        // ===== AGGRESSIVE CAMERA CLEANUP =====
+        // IMPORTANT: Stop camera BEFORE showing cropper
+        this.stopCamera();
         
-        // 1. Stop all tracks
-        if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => {
-                track.stop();
-                track.enabled = false;
-            });
-            this.cameraStream = null;
-        }
-        
-        // 2. Clear video element
-        if (video) {
-            video.srcObject = null;
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-        }
-        
-        // 3. Remove camera section completely
-        const cameraSection = document.getElementById('camera-section');
-        if (cameraSection) {
-            cameraSection.remove();
-        }
-        
-        // 4. Also remove any camera elements from DOM
-        const anyVideo = document.querySelector('video');
-        if (anyVideo && anyVideo.id === 'camera-preview') {
-            anyVideo.remove();
-        }
-        
-        // 5. Hide import modal
-        const importModal = document.getElementById('import-receipts-modal');
-        if (importModal) {
-            importModal.style.display = 'none';
-            importModal.classList.add('hidden');
-        }
-        
-        // Small delay to ensure cleanup
+        // Show the image with cropping options
         setTimeout(() => {
-            // Check if cropper is available
-            if (typeof window.openCropper === 'function') {
-                console.log('📷 Opening cropper with captured image');
-                
-                // Convert blob to data URL for cropper
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    window.openCropper(e.target.result, (croppedFile) => {
-                        console.log('📷 Cropped file received:', croppedFile);
-                        
-                        // Create preview URL for cropped image
-                        const croppedImageUrl = URL.createObjectURL(croppedFile);
-                        
-                        // Show simple viewer with cropped image
-                        setTimeout(() => {
-                            this.showSimpleImageViewer(croppedFile);
-                        }, 100);
-                        
-                    }, file.name);
-                };
-                reader.readAsDataURL(blob);
-            } else {
-                console.warn('⚠️ Cropper not available, using original image');
-                this.showSimpleImageViewer(file);
-            }
-            this.isCapturing = false;
-        }, 200);
+            this.showCropperOrViewer(file);
+        }, 300);
         
     }, 'image/jpeg', 0.9);
 },
 
+// Helper method to show cropper or simple viewer
+showCropperOrViewer: function(file) {
+    console.log('📷 Showing cropper or viewer for:', file.name);
+    
+    // Check if we can load cropper
+    if (typeof this.loadCropperLibrary === 'function') {
+        this.loadCropperLibrary().then(() => {
+            if (typeof this.showStandardCropper === 'function') {
+                console.log('✂️ Opening cropper with captured image');
+                this.showStandardCropper(file);
+            } else {
+                console.warn('⚠️ showStandardCropper not available, using simple viewer');
+                this.showSimpleImageViewer(file);
+            }
+        }).catch((err) => {
+            console.error('❌ Failed to load cropper:', err);
+            this.showSimpleImageViewer(file);
+        });
+    } else {
+        this.showSimpleImageViewer(file);
+    }
+},
+    
   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
@@ -1624,6 +1612,9 @@ showSimpleImageViewer: function(file) {
         const retakeBtn = document.getElementById('retake-image-btn');
         const cancelBtn = document.getElementById('cancel-image-btn');
         
+        // Collect all buttons for hover effects
+        const allButtons = [saveBtn, editBtn, retakeBtn, cancelBtn];
+        
         // Save button - save to receipt
         if (saveBtn) {
             saveBtn.onclick = () => {
@@ -1645,16 +1636,12 @@ showSimpleImageViewer: function(file) {
                 // Re-open cropper with the same image
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    if (typeof window.openCropper === 'function') {
-                        window.openCropper(e.target.result, (croppedFile) => {
-                            console.log('📷 Re-cropped file received');
-                            
-                            // Show viewer again with new cropped image
-                            setTimeout(() => {
-                                this.showSimpleImageViewer(croppedFile);
-                            }, 100);
-                            
-                        }, file.name);
+                    if (typeof this.showStandardCropper === 'function') {
+                        console.log('📷 Opening cropper for editing');
+                        this.showStandardCropper(file);
+                    } else {
+                        console.warn('Cropper not available');
+                        this.showSimpleImageViewer(file);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1733,16 +1720,18 @@ showSimpleImageViewer: function(file) {
             };
         }
         
-        // Add hover effects separately (doesn't interfere with click handlers)
-        buttons.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'translateY(0)';
-                btn.style.boxShadow = 'none';
-            });
+        // Add hover effects to all buttons
+        allButtons.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-2px)';
+                    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = 'none';
+                });
+            }
         });
     };
     reader.readAsDataURL(file);
