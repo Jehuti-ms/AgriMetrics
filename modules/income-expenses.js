@@ -1,8 +1,10 @@
-// modules/income-expenses.js - FULLY WORKING VERSION
+// modules/income-expenses.js - COMPLETE WORKING VERSION WITH PROPER REGISTRATION
 console.log('💰 Loading Income & Expenses module...');
 
 const IncomeExpensesModule = {
-    name: 'income-expenses',
+    name: 'income-expenses',  // This must match the name used in navigation
+    displayName: 'Income & Expenses',  // Display name for UI
+    icon: '💰',
     initialized: false,
     element: null,
     transactions: [],
@@ -793,11 +795,15 @@ const IncomeExpensesModule = {
             categories[t.category][t.type] += t.amount;
         });
         
+        if (Object.keys(categories).length === 0) {
+            return '<div class="empty-state">No category data yet</div>';
+        }
+        
         return Object.entries(categories).map(([cat, data]) => `
-            <div class="category-item">
-                <div class="category-name">${cat}</div>
-                <div class="category-income">Income: ${this.formatCurrency(data.income)}</div>
-                <div class="category-expense">Expense: ${this.formatCurrency(data.expense)}</div>
+            <div class="category-item" style="margin-bottom: 12px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <div class="category-name" style="font-weight: bold;">${cat}</div>
+                <div class="category-income" style="color: #4CAF50;">Income: ${this.formatCurrency(data.income)}</div>
+                <div class="category-expense" style="color: #f44336;">Expense: ${this.formatCurrency(data.expense)}</div>
                 <div class="category-net">Net: ${this.formatCurrency(data.income - data.expense)}</div>
             </div>
         `).join('');
@@ -836,17 +842,27 @@ const IncomeExpensesModule = {
 
     // ==================== MODAL CONTROLS ====================
     showTransactionModal() {
-        document.getElementById('transaction-modal').classList.remove('hidden');
-        document.getElementById('transaction-date').value = new Date().toISOString().split('T')[0];
-        document.getElementById('delete-transaction').style.display = 'none';
-        document.getElementById('transaction-modal-title').textContent = 'Add Transaction';
-        this.receiptPreview = null;
-        this.clearReceiptPreview();
+        const modal = document.getElementById('transaction-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            const dateInput = document.getElementById('transaction-date');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            const deleteBtn = document.getElementById('delete-transaction');
+            if (deleteBtn) deleteBtn.style.display = 'none';
+            const title = document.getElementById('transaction-modal-title');
+            if (title) title.textContent = 'Add Transaction';
+            this.receiptPreview = null;
+            this.clearReceiptPreview();
+        }
     },
 
     hideTransactionModal() {
-        document.getElementById('transaction-modal').classList.add('hidden');
-        document.getElementById('transaction-form').reset();
+        const modal = document.getElementById('transaction-modal');
+        if (modal) modal.classList.add('hidden');
+        const form = document.getElementById('transaction-form');
+        if (form) form.reset();
         this.receiptPreview = null;
         this.clearReceiptPreview();
     },
@@ -854,14 +870,19 @@ const IncomeExpensesModule = {
     showImportReceiptsModal() {
         this.stopCamera();
         const modal = document.getElementById('import-receipts-modal');
-        modal.classList.remove('hidden');
-        document.getElementById('camera-section').classList.add('hidden');
-        document.getElementById('upload-section').classList.remove('hidden');
+        if (modal) {
+            modal.classList.remove('hidden');
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            if (cameraSection) cameraSection.classList.add('hidden');
+            if (uploadSection) uploadSection.classList.remove('hidden');
+        }
     },
 
     hideImportReceiptsModal() {
         this.stopCamera();
-        document.getElementById('import-receipts-modal').classList.add('hidden');
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) modal.classList.add('hidden');
     },
 
     showReceiptPreviewInTransactionModal(receipt) {
@@ -884,48 +905,89 @@ const IncomeExpensesModule = {
     // ==================== EVENT LISTENERS ====================
     setupEventListeners() {
         // Main buttons
-        document.getElementById('add-transaction')?.addEventListener('click', () => this.showTransactionModal());
-        document.getElementById('import-receipts-btn')?.addEventListener('click', () => this.showImportReceiptsModal());
-        document.getElementById('add-income-btn')?.addEventListener('click', () => {
+        const addTransaction = document.getElementById('add-transaction');
+        if (addTransaction) addTransaction.addEventListener('click', () => this.showTransactionModal());
+        
+        const importReceipts = document.getElementById('import-receipts-btn');
+        if (importReceipts) importReceipts.addEventListener('click', () => this.showImportReceiptsModal());
+        
+        const addIncome = document.getElementById('add-income-btn');
+        if (addIncome) addIncome.addEventListener('click', () => {
             this.showTransactionModal();
-            document.getElementById('transaction-type').value = 'income';
+            const typeSelect = document.getElementById('transaction-type');
+            if (typeSelect) typeSelect.value = 'income';
+            this.updateCategoryOptions('income');
         });
-        document.getElementById('add-expense-btn')?.addEventListener('click', () => {
+        
+        const addExpense = document.getElementById('add-expense-btn');
+        if (addExpense) addExpense.addEventListener('click', () => {
             this.showTransactionModal();
-            document.getElementById('transaction-type').value = 'expense';
+            const typeSelect = document.getElementById('transaction-type');
+            if (typeSelect) typeSelect.value = 'expense';
+            this.updateCategoryOptions('expense');
         });
-        document.getElementById('export-transactions-btn')?.addEventListener('click', () => this.exportTransactions());
+        
+        const financialReport = document.getElementById('financial-report-btn');
+        if (financialReport) financialReport.addEventListener('click', () => this.generateFinancialReport());
+        
+        const exportTransactions = document.getElementById('export-transactions-btn');
+        if (exportTransactions) exportTransactions.addEventListener('click', () => this.exportTransactions());
         
         // Transaction modal
-        document.getElementById('save-transaction')?.addEventListener('click', () => this.saveTransaction());
-        document.getElementById('delete-transaction')?.addEventListener('click', () => {
-            const id = document.getElementById('transaction-id').value;
+        const saveTransaction = document.getElementById('save-transaction');
+        if (saveTransaction) saveTransaction.addEventListener('click', () => this.saveTransaction());
+        
+        const deleteTransaction = document.getElementById('delete-transaction');
+        if (deleteTransaction) deleteTransaction.addEventListener('click', () => {
+            const id = document.getElementById('transaction-id')?.value;
             if (id) this.deleteTransaction(parseInt(id));
         });
-        document.getElementById('cancel-transaction')?.addEventListener('click', () => this.hideTransactionModal());
+        
+        const cancelTransaction = document.getElementById('cancel-transaction');
+        if (cancelTransaction) cancelTransaction.addEventListener('click', () => this.hideTransactionModal());
         
         // Import modal
-        document.getElementById('camera-option')?.addEventListener('click', () => {
-            document.getElementById('camera-section').classList.remove('hidden');
-            document.getElementById('upload-section').classList.add('hidden');
+        const cameraOption = document.getElementById('camera-option');
+        if (cameraOption) cameraOption.addEventListener('click', () => {
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            if (cameraSection) cameraSection.classList.remove('hidden');
+            if (uploadSection) uploadSection.classList.add('hidden');
             this.initializeCamera();
         });
-        document.getElementById('upload-option')?.addEventListener('click', () => {
-            document.getElementById('upload-section').classList.remove('hidden');
-            document.getElementById('camera-section').classList.add('hidden');
+        
+        const uploadOption = document.getElementById('upload-option');
+        if (uploadOption) uploadOption.addEventListener('click', () => {
+            const uploadSection = document.getElementById('upload-section');
+            const cameraSection = document.getElementById('camera-section');
+            if (uploadSection) uploadSection.classList.remove('hidden');
+            if (cameraSection) cameraSection.classList.add('hidden');
             this.stopCamera();
         });
-        document.getElementById('capture-photo')?.addEventListener('click', () => this.capturePhoto());
-        document.getElementById('switch-camera')?.addEventListener('click', () => this.switchCamera());
-        document.getElementById('cancel-camera')?.addEventListener('click', () => {
+        
+        const capturePhoto = document.getElementById('capture-photo');
+        if (capturePhoto) capturePhoto.addEventListener('click', () => this.capturePhoto());
+        
+        const switchCamera = document.getElementById('switch-camera');
+        if (switchCamera) switchCamera.addEventListener('click', () => this.switchCamera());
+        
+        const cancelCamera = document.getElementById('cancel-camera');
+        if (cancelCamera) cancelCamera.addEventListener('click', () => {
             this.stopCamera();
-            document.getElementById('camera-section').classList.add('hidden');
-            document.getElementById('upload-section').classList.remove('hidden');
+            const cameraSection = document.getElementById('camera-section');
+            const uploadSection = document.getElementById('upload-section');
+            if (cameraSection) cameraSection.classList.add('hidden');
+            if (uploadSection) uploadSection.classList.remove('hidden');
         });
-        document.getElementById('browse-btn')?.addEventListener('click', () => {
-            document.getElementById('file-input').click();
+        
+        const browseBtn = document.getElementById('browse-btn');
+        if (browseBtn) browseBtn.addEventListener('click', () => {
+            const fileInput = document.getElementById('file-input');
+            if (fileInput) fileInput.click();
         });
-        document.getElementById('file-input')?.addEventListener('change', (e) => {
+        
+        const fileInput = document.getElementById('file-input');
+        if (fileInput) fileInput.addEventListener('change', (e) => {
             this.handleFileUpload(e.target.files);
             e.target.value = '';
         });
@@ -957,12 +1019,15 @@ const IncomeExpensesModule = {
         
         // Receipt actions (delegated)
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.process-receipt')) {
-                const id = e.target.closest('.process-receipt').dataset.id;
+            const processBtn = e.target.closest('.process-receipt');
+            if (processBtn) {
+                const id = processBtn.dataset.id;
                 if (id) this.processSingleReceipt(id);
             }
-            if (e.target.closest('.delete-receipt')) {
-                const id = e.target.closest('.delete-receipt').dataset.id;
+            
+            const deleteBtn = e.target.closest('.delete-receipt');
+            if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
                 if (id && confirm('Delete this receipt?')) {
                     this.receiptQueue = this.receiptQueue.filter(r => r.id !== id);
                     this.saveReceipts();
@@ -970,21 +1035,25 @@ const IncomeExpensesModule = {
                     this.showNotification('Receipt deleted', 'success');
                 }
             }
-            if (e.target.closest('.transaction-item')) {
-                const id = e.target.closest('.transaction-item').dataset.id;
+            
+            const transactionItem = e.target.closest('.transaction-item');
+            if (transactionItem) {
+                const id = transactionItem.dataset.id;
                 if (id) this.editTransaction(parseInt(id));
             }
         });
         
-        // Set today's date
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput && !dateInput.value) {            dateInput.value = new Date().toISOString().split('T')[0];
-        }
-        
         // Type change updates categories
-        document.getElementById('transaction-type')?.addEventListener('change', (e) => {
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.addEventListener('change', (e) => {
             this.updateCategoryOptions(e.target.value);
         });
+        
+        // Set today's date
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
     },
     
     updateCategoryOptions(type) {
@@ -1191,10 +1260,10 @@ const IncomeExpensesModule = {
                     <h3>📊 Financial Report</h3>
                     <button class="close-modal">&times;</button>
                 </div>
-                <div class="popout-modal-body">
+                <div class="popout-modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div class="report-summary">
                         <h4>Summary</h4>
-                        <div class="stats-grid" style="margin-bottom: 20px;">
+                        <div class="stats-grid" style="margin-bottom: 20px; grid-template-columns: repeat(3, 1fr);">
                             <div class="stat-card">
                                 <div>💰 Total Income</div>
                                 <div style="font-size: 24px; color: #4CAF50;">${this.formatCurrency(report.summary.totalIncome)}</div>
@@ -1213,22 +1282,22 @@ const IncomeExpensesModule = {
                         <div class="monthly-table">
                             <table style="width: 100%; border-collapse: collapse;">
                                 <thead>
-                                    <tr>
-                                        <th>Month</th>
-                                        <th>Income</th>
-                                        <th>Expenses</th>
-                                        <th>Net</th>
-                                        <th>Transactions</th>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 8px; text-align: left;">Month</th>
+                                        <th style="padding: 8px; text-align: right;">Income</th>
+                                        <th style="padding: 8px; text-align: right;">Expenses</th>
+                                        <th style="padding: 8px; text-align: right;">Net</th>
+                                        <th style="padding: 8px; text-align: center;">Transactions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${report.monthlyBreakdown.map(m => `
                                         <tr>
-                                            <td>${m.month}</td>
-                                            <td style="color: #4CAF50;">${this.formatCurrency(m.income)}</td>
-                                            <td style="color: #f44336;">${this.formatCurrency(m.expense)}</td>
-                                            <td style="color: ${m.net >= 0 ? '#4CAF50' : '#f44336'};">${this.formatCurrency(m.net)}</td>
-                                            <td>${m.count}</td>
+                                            <td style="padding: 8px;">${m.month}</td>
+                                            <td style="padding: 8px; text-align: right; color: #4CAF50;">${this.formatCurrency(m.income)}</td>
+                                            <td style="padding: 8px; text-align: right; color: #f44336;">${this.formatCurrency(m.expense)}</td>
+                                            <td style="padding: 8px; text-align: right; color: ${m.net >= 0 ? '#4CAF50' : '#f44336'};">${this.formatCurrency(m.net)}</td>
+                                            <td style="padding: 8px; text-align: center;">${m.count}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1239,22 +1308,22 @@ const IncomeExpensesModule = {
                         <div class="category-table">
                             <table style="width: 100%; border-collapse: collapse;">
                                 <thead>
-                                    <tr>
-                                        <th>Category</th>
-                                        <th>Income</th>
-                                        <th>Expenses</th>
-                                        <th>Net</th>
-                                        <th>Transactions</th>
+                                    <tr style="background: #f5f5f5;">
+                                        <th style="padding: 8px; text-align: left;">Category</th>
+                                        <th style="padding: 8px; text-align: right;">Income</th>
+                                        <th style="padding: 8px; text-align: right;">Expenses</th>
+                                        <th style="padding: 8px; text-align: right;">Net</th>
+                                        <th style="padding: 8px; text-align: center;">Transactions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${report.categoryBreakdown.map(c => `
                                         <tr>
-                                            <td>${c.category}</td>
-                                            <td style="color: #4CAF50;">${this.formatCurrency(c.income)}</td>
-                                            <td style="color: #f44336;">${this.formatCurrency(c.expense)}</td>
-                                            <td style="color: ${c.net >= 0 ? '#4CAF50' : '#f44336'};">${this.formatCurrency(c.net)}</td>
-                                            <td>${c.count}</td>
+                                            <td style="padding: 8px;">${c.category}</td>
+                                            <td style="padding: 8px; text-align: right; color: #4CAF50;">${this.formatCurrency(c.income)}</td>
+                                            <td style="padding: 8px; text-align: right; color: #f44336;">${this.formatCurrency(c.expense)}</td>
+                                            <td style="padding: 8px; text-align: right; color: ${c.net >= 0 ? '#4CAF50' : '#f44336'};">${this.formatCurrency(c.net)}</td>
+                                            <td style="padding: 8px; text-align: center;">${c.count}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1273,8 +1342,11 @@ const IncomeExpensesModule = {
         document.body.appendChild(modal);
         
         // Export buttons
-        modal.querySelector('#export-report-csv')?.addEventListener('click', () => this.exportReportAsCSV(report));
-        modal.querySelector('#export-report-json')?.addEventListener('click', () => this.exportReportAsJSON(report));
+        const exportCSV = modal.querySelector('#export-report-csv');
+        if (exportCSV) exportCSV.addEventListener('click', () => this.exportReportAsCSV(report));
+        
+        const exportJSON = modal.querySelector('#export-report-json');
+        if (exportJSON) exportJSON.addEventListener('click', () => this.exportReportAsJSON(report));
         
         // Close modal
         modal.querySelectorAll('.close-modal').forEach(btn => {
@@ -1419,22 +1491,24 @@ const IncomeExpensesModule = {
     }
 };
 
-// Auto-initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (window.App && window.App.registerModule) {
-            window.App.registerModule(IncomeExpensesModule);
+// Register the module with the framework
+if (window.FarmModules && window.FarmModules.registerModule) {
+    console.log('💰 Registering income-expenses module with FarmModules...');
+    window.FarmModules.registerModule(IncomeExpensesModule);
+} else if (window.App && window.App.registerModule) {
+    console.log('💰 Registering income-expenses module with App...');
+    window.App.registerModule(IncomeExpensesModule);
+} else {
+    console.log('💰 Income & Expenses module loaded, waiting for framework...');
+    // Wait for framework to be ready
+    window.addEventListener('farmmodules-ready', () => {
+        if (window.FarmModules && window.FarmModules.registerModule) {
+            window.FarmModules.registerModule(IncomeExpensesModule);
         }
     });
-} else {
-    if (window.App && window.App.registerModule) {
-        window.App.registerModule(IncomeExpensesModule);
-    }
 }
 
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = IncomeExpensesModule;
-}
+// Also make it available globally for debugging
+window.IncomeExpensesModule = IncomeExpensesModule;
 
-console.log('✅ Income & Expenses module loaded successfully');
+console.log('✅ Income & Expenses module loaded and ready');
