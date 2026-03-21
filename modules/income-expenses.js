@@ -1593,13 +1593,77 @@ showSimpleImageViewer: function(file) {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✓ Save to Receipt</button>
+                    <button id="edit-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #2196F3, #1976D2);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        ✎ Edit Image
+                    </button>
                     
-                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✎ Edit Crop</button>
+                    <button id="save-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        ✓ Save
+                    </button>
                     
-                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">↺ Retake Photo</button>
+                    <button id="retake-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #FF9800, #F57C00);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        ↺ Retake
+                    </button>
                     
-                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer;">✕ Cancel</button>
+                    <button id="delete-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #ef4444, #dc2626);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        🗑️ Delete
+                    </button>
                 </div>
             </div>
         `;
@@ -1607,30 +1671,15 @@ showSimpleImageViewer: function(file) {
         document.body.appendChild(modal);
         
         // Get button references
-        const saveBtn = document.getElementById('save-image-btn');
         const editBtn = document.getElementById('edit-image-btn');
+        const saveBtn = document.getElementById('save-image-btn');
         const retakeBtn = document.getElementById('retake-image-btn');
-        const cancelBtn = document.getElementById('cancel-image-btn');
+        const deleteBtn = document.getElementById('delete-image-btn');
         
-        // Collect all buttons for hover effects
-        const allButtons = [saveBtn, editBtn, retakeBtn, cancelBtn];
-        
-        // Save button - save to receipt
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                console.log('💾 Saving image to receipt');
-                modal.remove();
-                
-                // Call the original save function
-                const imageUrl = URL.createObjectURL(file);
-                this.saveReceiptFromFile(file, imageUrl);
-            };
-        }
-        
-        // Edit button - go back to cropper
+        // Edit button - open cropper for editing
         if (editBtn) {
             editBtn.onclick = () => {
-                console.log('✎ Editing crop again');
+                console.log('✎ Edit button clicked - opening cropper');
                 modal.remove();
                 
                 // Re-open cropper with the same image
@@ -1648,10 +1697,22 @@ showSimpleImageViewer: function(file) {
             };
         }
         
+        // Save button - save to receipt
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                console.log('💾 Save button clicked');
+                modal.remove();
+                
+                // Save the image to receipt
+                const imageUrl = URL.createObjectURL(file);
+                this.saveReceiptFromFile(file, imageUrl);
+            };
+        }
+        
         // Retake button - go back to camera
         if (retakeBtn) {
             retakeBtn.onclick = () => {
-                console.log('↺ Retaking photo - going back to camera');
+                console.log('↺ Retake button clicked - going back to camera');
                 modal.remove();
                 
                 // Stop any existing camera first
@@ -1675,13 +1736,11 @@ showSimpleImageViewer: function(file) {
                     if (cameraSection) {
                         cameraSection.style.display = 'block';
                         
-                        // Small delay to ensure DOM is ready
                         setTimeout(() => {
                             this.initializeCamera();
                             console.log('📷 Camera re-initialized for retake');
                         }, 200);
                     } else {
-                        // Fallback: trigger camera option click
                         setTimeout(() => {
                             document.getElementById('camera-option')?.click();
                         }, 200);
@@ -1690,13 +1749,16 @@ showSimpleImageViewer: function(file) {
             };
         }
         
-        // Cancel button - go back to main menu
-        if (cancelBtn) {
-            cancelBtn.onclick = () => {
-                console.log('✕ Cancelled - going back to import methods');
+        // Delete button - discard image
+        if (deleteBtn) {
+            deleteBtn.onclick = () => {
+                console.log('🗑️ Delete button clicked');
                 modal.remove();
                 
-                // Show the import modal with quick actions
+                // Show confirmation
+                this.showNotification('Image discarded', 'info');
+                
+                // Go back to import methods
                 const importModal = document.getElementById('import-receipts-modal');
                 if (importModal) {
                     importModal.style.display = 'flex';
@@ -1713,7 +1775,6 @@ showSimpleImageViewer: function(file) {
                     const quickActions = document.getElementById('quick-actions-view');
                     if (quickActions) quickActions.style.display = 'block';
                     
-                    // Also show recent receipts
                     const recentSection = document.getElementById('recent-section');
                     if (recentSection) recentSection.style.display = 'block';
                 }
@@ -1721,11 +1782,12 @@ showSimpleImageViewer: function(file) {
         }
         
         // Add hover effects to all buttons
+        const allButtons = [editBtn, saveBtn, retakeBtn, deleteBtn];
         allButtons.forEach(btn => {
             if (btn) {
                 btn.addEventListener('mouseenter', () => {
                     btn.style.transform = 'translateY(-2px)';
-                    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                    btn.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
                 });
                 btn.addEventListener('mouseleave', () => {
                     btn.style.transform = 'translateY(0)';
