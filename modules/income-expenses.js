@@ -1489,8 +1489,8 @@ capturePhoto: function() {
     }, 'image/jpeg', 0.9);
 },
 
-   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
-showSimpleImageViewer: function(file) {
+    // ============ SIMPLE IMAGE VIEWER ==============
+ showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
     // Force remove camera
@@ -1535,102 +1535,75 @@ showSimpleImageViewer: function(file) {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✓ Save to Receipt</button>
-                    
-                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✎ Edit Crop</button>
-                    
-                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">↺ Retake Photo</button>
-                    
-                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✕ Cancel</button>
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✎ Edit Image</button>
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✓ Save</button>
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">↺ Retake</button>
+                    <button id="delete-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">🗑️ Delete</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
+        // Get button references
+        const editBtn = document.getElementById('edit-image-btn');
+        const saveBtn = document.getElementById('save-image-btn');
+        const retakeBtn = document.getElementById('retake-image-btn');
+        const deleteBtn = document.getElementById('delete-image-btn');
+        
         // Add hover effects
-        const buttons = modal.querySelectorAll('button');
-        buttons.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'translateY(0)';
-                btn.style.boxShadow = 'none';
-            });
+        const allButtons = [editBtn, saveBtn, retakeBtn, deleteBtn];
+        allButtons.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-2px)';
+                    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = 'none';
+                });
+            }
         });
         
-        // Save button - save to receipt
-        document.getElementById('save-image-btn').onclick = () => {
-            console.log('💾 Saving image to receipt');
-            modal.remove();
-            
-            // Call the original save function
-            const imageUrl = URL.createObjectURL(file);
-            this.saveReceiptFromFile(file, imageUrl);
-        };
-        
-        // Edit button - open cropper for editing
-            if (editBtn) {
-                editBtn.onclick = () => {
-                    console.log('✎ Edit button clicked - opening cropper');
-                    modal.remove();
-                    this.showStandardCropper(file);
-                };
-            }
-            
-            // Re-open cropper with the same image
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                if (typeof window.openCropper === 'function') {
-                    window.openCropper(e.target.result, (croppedFile) => {
-                        console.log('📷 Re-cropped file received');
-                        
-                        // Show viewer again with new cropped image
-                        setTimeout(() => {
-                            this.showSimpleImageViewer(croppedFile);
-                        }, 100);
-                        
-                    }, file.name);
-                }
+        // Edit button - open cropper
+        if (editBtn) {
+            editBtn.onclick = () => {
+                console.log('✎ Edit button clicked - opening cropper');
+                modal.remove();
+                this.showStandardCropper(file);
             };
-            reader.readAsDataURL(file);
-        };
+        }
+        
+        // Save button - save to receipt
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                console.log('💾 Save button clicked');
+                modal.remove();
+                const imageUrl = URL.createObjectURL(file);
+                this.saveReceiptFromFile(file, imageUrl);
+            };
+        }
         
         // Retake button - go back to camera
-        document.getElementById('retake-image-btn').onclick = () => {
-            console.log('↺ Retaking photo');
-            modal.remove();
-            
-            // Reopen the import modal and show camera
-            const importModal = document.getElementById('import-receipts-modal');
-            if (importModal) {
-                importModal.style.display = 'flex';
-                importModal.classList.remove('hidden');
-                
-                // Trigger camera option click
-                setTimeout(() => {
-                    document.getElementById('camera-option')?.click();
-                }, 100);
-            }
-        };
+        if (retakeBtn) {
+            retakeBtn.onclick = () => {
+                console.log('↺ Retake button clicked');
+                modal.remove();
+                this.stopCamera();
+                this.showCameraInterface();
+            };
+        }
         
-        // Cancel button - go back to main menu
-        document.getElementById('cancel-image-btn').onclick = () => {
-            console.log('✕ Cancelled');
-            modal.remove();
-            
-            // Show the import modal with quick actions
-            const importModal = document.getElementById('import-receipts-modal');
-            if (importModal) {
-                importModal.style.display = 'flex';
-                importModal.classList.remove('hidden');
-                
-                const quickActions = document.getElementById('quick-actions-view');
-                if (quickActions) quickActions.style.display = 'block';
-            }
-        };
+        // Delete button - discard image
+        if (deleteBtn) {
+            deleteBtn.onclick = () => {
+                console.log('🗑️ Delete button clicked');
+                modal.remove();
+                this.showNotification('Image discarded', 'info');
+                this.showImportReceiptsModal();
+            };
+        }
     };
     reader.readAsDataURL(file);
 },
@@ -1887,7 +1860,7 @@ cropperLibraryLoaded: false,
     reader.readAsDataURL(file);
 }, */
 
-    // ==================== FULL CROPPER METHOD WITH GREEN CIRCULAR BUTTONS ====================
+    // ==================== FULL CROPPER METHOD ====================
 showStandardCropper: function(file) {
     console.log('🔧 Opening FULL cropper for:', file.name);
     
@@ -1913,7 +1886,6 @@ showStandardCropper: function(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const imageUrl = e.target.result;
-        
         const modalId = 'crop-modal-' + Date.now();
         const modal = document.createElement('div');
         modal.id = modalId;
@@ -1935,266 +1907,33 @@ showStandardCropper: function(file) {
         `;
         
         modal.innerHTML = `
-            <div style="
-                background: white;
-                width: 95%;
-                max-width: 800px;
-                max-height: 90vh;
-                border-radius: 24px;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-                margin: auto;
-            ">
-                <!-- Header -->
-                <div style="
-                    background: linear-gradient(135deg, #22c55e, #16a34a);
-                    color: white;
-                    padding: 20px 24px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    border-radius: 24px 24px 0 0;
-                ">
-                    <h3 style="margin:0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                        <span>✂️</span> Crop & Edit Receipt
-                    </h3>
-                    <button id="close-${modalId}" style="
-                        background: rgba(255,255,255,0.2);
-                        border: none;
-                        color: white;
-                        font-size: 24px;
-                        cursor: pointer;
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s;
-                    ">&times;</button>
+            <div style="background: white; width: 95%; max-width: 800px; max-height: 90vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); margin: auto;">
+                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
+                    <h3 style="margin:0; font-size: 20px;">✂️ Crop & Edit Receipt</h3>
+                    <button id="close-${modalId}" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%;">&times;</button>
                 </div>
-                
-                <!-- Image Container -->
-                <div style="
-                    flex: 1;
-                    background: #1a1a2e;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: auto;
-                    position: relative;
-                    min-height: 300px;
-                    padding: 20px;
-                ">
+                <div style="flex: 1; background: #1a1a2e; display: flex; align-items: center; justify-content: center; overflow: auto; min-height: 300px; padding: 20px;">
                     <img id="crop-image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
                 </div>
-
-                <!-- Green Circular Controls -->
-                <div style="
-                    padding: 20px 24px;
-                    background: white;
-                    border-top: 1px solid #e5e7eb;
-                ">
-                    <!-- Row 1: Zoom and Rotation Controls -->
-                    <div style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 16px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
-                    ">
-                        <button id="zoom-in-${modalId}" class="crop-control-btn" title="Zoom In" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔍+</button>
-                        
-                        <button id="zoom-out-${modalId}" class="crop-control-btn" title="Zoom Out" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔍-</button>
-                        
-                        <button id="rotate-left-${modalId}" class="crop-control-btn" title="Rotate Left" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↺</button>
-                        
-                        <button id="rotate-right-${modalId}" class="crop-control-btn" title="Rotate Right" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↻</button>
-                        
-                        <button id="flip-horizontal-${modalId}" class="crop-control-btn" title="Flip Horizontal" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔄</button>
-                        
-                        <button id="flip-vertical-${modalId}" class="crop-control-btn" title="Flip Vertical" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↕️</button>
-                        
-                        <button id="reset-${modalId}" class="crop-control-btn" title="Reset All" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">⟳</button>
+                <div style="padding: 20px 24px; background: white; border-top: 1px solid #e5e7eb;">
+                    <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button id="zoom-in-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">🔍+</button>
+                        <button id="zoom-out-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">🔍-</button>
+                        <button id="rotate-left-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">↺</button>
+                        <button id="rotate-right-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">↻</button>
+                        <button id="flip-horizontal-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">🔄</button>
+                        <button id="flip-vertical-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">↕️</button>
+                        <button id="reset-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">⟳</button>
                     </div>
-                    
-                    <!-- Row 2: Aspect Ratio Presets -->
-                    <div style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 12px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
-                    ">
-                        <button id="aspect-free-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">Free</button>
-                        <button id="aspect-square-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">⬛ Square (1:1)</button>
-                        <button id="aspect-4-3-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">📱 4:3</button>
-                        <button id="aspect-16-9-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">🎬 16:9</button>
+                    <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <button id="aspect-free-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">Free</button>
+                        <button id="aspect-square-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">Square (1:1)</button>
+                        <button id="aspect-4-3-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">4:3</button>
+                        <button id="aspect-16-9-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">16:9</button>
                     </div>
-                    
-                    <!-- Action Buttons -->
                     <div style="display: flex; gap: 12px;">
-                        <button id="cancel-${modalId}" style="
-                            flex: 1;
-                            padding: 14px;
-                            background: #f5f5f5;
-                            color: #666;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 12px;
-                            font-weight: 600;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">Cancel</button>
-                        <button id="save-${modalId}" style="
-                            flex: 1;
-                            padding: 14px;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            color: white;
-                            border: none;
-                            border-radius: 12px;
-                            font-weight: 600;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">✓ Apply Crop</button>
+                        <button id="cancel-${modalId}" style="flex: 1; padding: 14px; background: #f5f5f5; color: #666; border: 1px solid #e5e7eb; border-radius: 12px; cursor: pointer;">Cancel</button>
+                        <button id="save-${modalId}" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; border-radius: 12px; cursor: pointer;">✓ Apply Crop</button>
                     </div>
                 </div>
             </div>
@@ -2204,13 +1943,9 @@ showStandardCropper: function(file) {
         
         const img = document.getElementById(`crop-image-${modalId}`);
         
-        // Initialize cropper
         img.onload = () => {
             setTimeout(() => {
-                if (this.cropperInstance) {
-                    this.cropperInstance.destroy();
-                }
-                
+                if (this.cropperInstance) this.cropperInstance.destroy();
                 this.cropperInstance = new Cropper(img, {
                     aspectRatio: NaN,
                     viewMode: 1,
@@ -2221,7 +1956,6 @@ showStandardCropper: function(file) {
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     background: false,
-                    modal: false,
                     movable: true,
                     rotatable: true,
                     scalable: true,
@@ -2229,136 +1963,56 @@ showStandardCropper: function(file) {
                     zoomOnWheel: true,
                     zoomOnTouch: true,
                 });
-                
-                console.log('✅ Cropper initialized with green circular controls');
             }, 100);
         };
         
-        // Add hover effects to circular buttons
-        const circularBtns = document.querySelectorAll(`#${modalId} .crop-control-btn`);
-        circularBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'scale(1.1)';
-                btn.style.boxShadow = '0 8px 20px rgba(34, 197, 94, 0.4)';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'scale(1)';
-                btn.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.3)';
-            });
-        });
-        
-        // Aspect ratio buttons hover
-        const aspectBtns = document.querySelectorAll(`#${modalId} .aspect-btn`);
-        aspectBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.background = 'rgba(34, 197, 94, 0.1)';
-                btn.style.borderColor = '#22c55e';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.background = '#f5f5f5';
-                btn.style.borderColor = '#e5e7eb';
-            });
-        });
-        
         // Control handlers
-        document.getElementById(`zoom-in-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.zoom(0.1);
-        };
-        
-        document.getElementById(`zoom-out-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.zoom(-0.1);
-        };
-        
-        document.getElementById(`rotate-left-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.rotate(-90);
-        };
-        
-        document.getElementById(`rotate-right-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.rotate(90);
-        };
-        
+        document.getElementById(`zoom-in-${modalId}`).onclick = () => this.cropperInstance?.zoom(0.1);
+        document.getElementById(`zoom-out-${modalId}`).onclick = () => this.cropperInstance?.zoom(-0.1);
+        document.getElementById(`rotate-left-${modalId}`).onclick = () => this.cropperInstance?.rotate(-90);
+        document.getElementById(`rotate-right-${modalId}`).onclick = () => this.cropperInstance?.rotate(90);
         document.getElementById(`flip-horizontal-${modalId}`).onclick = () => {
             if (this.cropperInstance) {
                 const scaleX = this.cropperInstance.getData().scaleX === -1 ? 1 : -1;
                 this.cropperInstance.scaleX(scaleX);
             }
         };
-        
         document.getElementById(`flip-vertical-${modalId}`).onclick = () => {
             if (this.cropperInstance) {
                 const scaleY = this.cropperInstance.getData().scaleY === -1 ? 1 : -1;
                 this.cropperInstance.scaleY(scaleY);
             }
         };
-        
-        document.getElementById(`reset-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.reset();
-            }
-        };
-        
-        // Aspect ratio presets
-        document.getElementById(`aspect-free-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(NaN);
-        };
-        
-        document.getElementById(`aspect-square-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(1);
-        };
-        
-        document.getElementById(`aspect-4-3-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(4/3);
-        };
-        
-        document.getElementById(`aspect-16-9-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(16/9);
-        };
+        document.getElementById(`reset-${modalId}`).onclick = () => this.cropperInstance?.reset();
+        document.getElementById(`aspect-free-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(NaN);
+        document.getElementById(`aspect-square-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(1);
+        document.getElementById(`aspect-4-3-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(4/3);
+        document.getElementById(`aspect-16-9-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(16/9);
         
         document.getElementById(`cancel-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.destroy();
-                this.cropperInstance = null;
-            }
+            if (this.cropperInstance) this.cropperInstance.destroy();
             modal.remove();
-            // Return to simple viewer
             this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`close-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.destroy();
-                this.cropperInstance = null;
-            }
+            if (this.cropperInstance) this.cropperInstance.destroy();
             modal.remove();
             this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`save-${modalId}`).onclick = () => {
             if (!this.cropperInstance) return;
-            
-            const croppedCanvas = this.cropperInstance.getCroppedCanvas({
-                maxWidth: 1200,
-                maxHeight: 1200,
-                fillColor: '#fff',
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-            
+            const croppedCanvas = this.cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
             croppedCanvas.toBlob((blob) => {
                 const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
-                
                 this.cropperInstance.destroy();
-                this.cropperInstance = null;
                 modal.remove();
-                
-                // Show the cropped image in the simple viewer
                 this.showSimpleImageViewer(croppedFile);
-                
                 this.showNotification('✅ Image cropped and ready to save!', 'success');
             }, 'image/jpeg', 0.95);
         };
     };
-    
     reader.readAsDataURL(file);
 },
     
