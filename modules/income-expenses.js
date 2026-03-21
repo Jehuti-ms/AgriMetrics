@@ -5372,9 +5372,10 @@ div[id^="crop-modal-"] > div > div:last-child {
     flex-wrap: wrap !important;
 }
 
-/* ==================== CROPPER MODAL CONTAINER FIXES ==================== */
+/* ==================== CROPPER MODAL CONTAINER FIXES - SCOPED ==================== */
+/* These styles ONLY apply to cropper modals, not the main page */
 
-/* Fix the main cropper modal container */
+/* Fix the main cropper modal container - ONLY for modals with crop-modal ID */
 div[id^="crop-modal-"] {
     position: fixed !important;
     top: 0 !important;
@@ -5406,6 +5407,19 @@ div[id^="crop-modal-"] > div {
     margin: auto !important;
 }
 
+/* Image container inside cropper */
+div[id^="crop-modal-"] > div > div:nth-child(2) {
+    flex: 1 !important;
+    background: #1a1a2e !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: auto !important;
+    min-height: 200px !important;
+    max-height: 50vh !important;
+    padding: 20px !important;
+}
+
 /* Controls container - should be at bottom */
 div[id^="crop-modal-"] > div > div:last-child {
     padding: 20px 24px !important;
@@ -5414,31 +5428,10 @@ div[id^="crop-modal-"] > div > div:last-child {
     flex-shrink: 0 !important;
 }
 
-/* Action buttons on mobile */
-@media (max-width: 768px) {
-    div[id^="crop-modal-"] {
-        padding: 10px !important;
-    }
-    
-    div[id^="crop-modal-"] > div {
-        max-height: 95vh !important;
-        border-radius: 16px !important;
-    }
-    
-    /* Make action buttons full width on mobile */
-    div[id^="crop-modal-"] > div > div:last-child > div:last-child {
-        flex-direction: column !important;
-        gap: 8px !important;
-    }
-    
-    div[id^="crop-modal-"] > div > div:last-child > div:last-child button {
-        width: 100% !important;
-    }
-}
+/* ==================== GREEN CIRCULAR BUTTONS - SCOPED ==================== */
+/* These styles ONLY apply to buttons inside cropper modals */
 
-/* ================= Button Styling ===================*/
-/* Green Circular Control Buttons */
-.crop-control-btn {
+div[id^="crop-modal-"] .crop-control-btn {
     width: 56px !important;
     height: 56px !important;
     border-radius: 50% !important;
@@ -5448,20 +5441,21 @@ div[id^="crop-modal-"] > div > div:last-child {
     font-size: 24px !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+    margin: 4px !important;
 }
 
-.crop-control-btn:hover {
+div[id^="crop-modal-"] .crop-control-btn:hover {
     transform: scale(1.1) !important;
     box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
     background: linear-gradient(135deg, #16a34a, #15803d) !important;
 }
 
 /* Aspect Ratio Buttons */
-.aspect-btn {
+div[id^="crop-modal-"] .aspect-btn {
     padding: 8px 16px !important;
     background: #f5f5f5 !important;
     border: 1px solid #e5e7eb !important;
@@ -5473,37 +5467,37 @@ div[id^="crop-modal-"] > div > div:last-child {
     color: #374151 !important;
 }
 
-.aspect-btn:hover {
+div[id^="crop-modal-"] .aspect-btn:hover {
     background: rgba(34, 197, 94, 0.1) !important;
     border-color: #22c55e !important;
     transform: translateY(-2px) !important;
 }
 
-/* Green Crop Box Outline */
-.cropper-view-box {
+/* Green Crop Box Outline - Scoped */
+div[id^="crop-modal-"] .cropper-view-box {
     outline: 2px solid #22c55e !important;
     outline-color: rgba(34, 197, 94, 0.75) !important;
 }
 
 /* Green Crop Lines */
-.cropper-line {
+div[id^="crop-modal-"] .cropper-line {
     background-color: #22c55e !important;
 }
 
 /* Green Dotted Guide Lines */
-.cropper-dashed {
+div[id^="crop-modal-"] .cropper-dashed {
     border-color: #22c55e !important;
     opacity: 0.5 !important;
 }
 
 /* Green Center Crosshair */
-.cropper-center::before,
-.cropper-center::after {
+div[id^="crop-modal-"] .cropper-center::before,
+div[id^="crop-modal-"] .cropper-center::after {
     background-color: #22c55e !important;
 }
 
 /* GREEN CIRCULAR CROP HANDLES */
-.cropper-point {
+div[id^="crop-modal-"] .cropper-point {
     width: 16px !important;
     height: 16px !important;
     background: #22c55e !important;
@@ -5514,13 +5508,13 @@ div[id^="crop-modal-"] > div > div:last-child {
     transition: all 0.2s ease !important;
 }
 
-.cropper-point:hover {
+div[id^="crop-modal-"] .cropper-point:hover {
     transform: scale(1.3) !important;
     background: #16a34a !important;
 }
 
 /* Large corner handle (bottom right) */
-.cropper-point.point-se {
+div[id^="crop-modal-"] .cropper-point.point-se {
     width: 24px !important;
     height: 24px !important;
     background: #22c55e !important;
@@ -5535,28 +5529,27 @@ div[id^="crop-modal-"] > div > div:last-child {
     }
     
     div[id^="crop-modal-"] > div {
-        width: 100% !important;
         max-height: 95vh !important;
         border-radius: 16px !important;
     }
     
-    .crop-control-btn {
+    div[id^="crop-modal-"] .crop-control-btn {
         width: 48px !important;
         height: 48px !important;
         font-size: 20px !important;
     }
     
-    .aspect-btn {
+    div[id^="crop-modal-"] .aspect-btn {
         padding: 6px 12px !important;
         font-size: 11px !important;
     }
     
-    .cropper-point {
+    div[id^="crop-modal-"] .cropper-point {
         width: 28px !important;
         height: 28px !important;
     }
     
-    .cropper-point.point-se {
+    div[id^="crop-modal-"] .cropper-point.point-se {
         width: 36px !important;
         height: 36px !important;
     }
@@ -5566,7 +5559,7 @@ div[id^="crop-modal-"] > div > div:last-child {
         min-height: 250px !important;
     }
     
-    /* Action buttons full width on mobile */
+    /* Make action buttons full width on mobile */
     div[id^="crop-modal-"] > div > div:last-child > div:last-child {
         flex-direction: column !important;
         gap: 8px !important;
@@ -5579,13 +5572,13 @@ div[id^="crop-modal-"] > div > div:last-child {
 
 /* Small mobile screens */
 @media (max-width: 480px) {
-    .crop-control-btn {
+    div[id^="crop-modal-"] .crop-control-btn {
         width: 44px !important;
         height: 44px !important;
         font-size: 18px !important;
     }
     
-    .aspect-btn {
+    div[id^="crop-modal-"] .aspect-btn {
         padding: 4px 10px !important;
         font-size: 10px !important;
     }
@@ -5593,18 +5586,6 @@ div[id^="crop-modal-"] > div > div:last-child {
     div[id^="crop-modal-"] > div > div:nth-child(2) {
         max-height: 35vh !important;
         min-height: 200px !important;
-    }
-}
-
-/* Animation for modal appearance */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
     }
 }
 
