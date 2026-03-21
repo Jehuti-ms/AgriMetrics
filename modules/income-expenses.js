@@ -1567,7 +1567,7 @@ showCropperOrViewer: function(file) {
     }
 },
     
-  // SIMPLE VIEWER - After capturePhoto
+  // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
@@ -1696,12 +1696,24 @@ showSimpleImageViewer: function(file) {
         const retakeBtn = document.getElementById('retake-image-btn');
         const deleteBtn = document.getElementById('delete-image-btn');
         
-        // Edit button - open cropper for editing (simplified)
+        // Edit button - open cropper for editing
         if (editBtn) {
             editBtn.onclick = () => {
                 console.log('✎ Edit button clicked - opening cropper');
                 modal.remove();
-                this.showStandardCropper(file);
+                
+                // Re-open cropper with the same image
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (typeof this.showStandardCropper === 'function') {
+                        console.log('📷 Opening cropper for editing');
+                        this.showStandardCropper(file);
+                    } else {
+                        console.warn('Cropper not available');
+                        this.showSimpleImageViewer(file);
+                    }
+                };
+                reader.readAsDataURL(file);
             };
         }
         
@@ -1710,6 +1722,8 @@ showSimpleImageViewer: function(file) {
             saveBtn.onclick = () => {
                 console.log('💾 Save button clicked');
                 modal.remove();
+                
+                // Save the image to receipt
                 const imageUrl = URL.createObjectURL(file);
                 this.saveReceiptFromFile(file, imageUrl);
             };
@@ -1720,8 +1734,38 @@ showSimpleImageViewer: function(file) {
             retakeBtn.onclick = () => {
                 console.log('↺ Retake button clicked - going back to camera');
                 modal.remove();
+                
+                // Stop any existing camera first
                 this.stopCamera();
-                this.showCameraInterface();
+                
+                // Show the import modal
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'flex';
+                    importModal.classList.remove('hidden');
+                    
+                    // Hide quick actions and upload sections
+                    const quickActions = document.getElementById('quick-actions-view');
+                    const uploadSection = document.getElementById('upload-section');
+                    
+                    if (quickActions) quickActions.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    
+                    // Show camera section
+                    const cameraSection = document.getElementById('camera-section');
+                    if (cameraSection) {
+                        cameraSection.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            this.initializeCamera();
+                            console.log('📷 Camera re-initialized for retake');
+                        }, 200);
+                    } else {
+                        setTimeout(() => {
+                            document.getElementById('camera-option')?.click();
+                        }, 200);
+                    }
+                }
             };
         }
         
@@ -1730,8 +1774,30 @@ showSimpleImageViewer: function(file) {
             deleteBtn.onclick = () => {
                 console.log('🗑️ Delete button clicked');
                 modal.remove();
+                
+                // Show confirmation
                 this.showNotification('Image discarded', 'info');
-                this.showQuickActionsView();
+                
+                // Go back to import methods
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'flex';
+                    importModal.classList.remove('hidden');
+                    
+                    // Hide camera and upload sections
+                    const cameraSection = document.getElementById('camera-section');
+                    const uploadSection = document.getElementById('upload-section');
+                    
+                    if (cameraSection) cameraSection.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    
+                    // Show quick actions
+                    const quickActions = document.getElementById('quick-actions-view');
+                    if (quickActions) quickActions.style.display = 'block';
+                    
+                    const recentSection = document.getElementById('recent-section');
+                    if (recentSection) recentSection.style.display = 'block';
+                }
             };
         }
         
@@ -3010,13 +3076,6 @@ saveReceiptFromFile: function(file, dataURL) {
         return;
     }
     
-    // Hide camera if it's showing
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection && cameraSection.style.display !== 'none') {
-        cameraSection.style.display = 'none';
-        this.stopCamera();
-    }
-    
     // Process each file
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -3034,62 +3093,6 @@ saveReceiptFromFile: function(file, dataURL) {
         } else {
             // For non-images (PDFs), process directly
             this.processReceiptFile(file);
-        }
-    }
-},
-
-    processReceiptFile: function(file) {
-    console.log('📄 Processing receipt file:', file.name);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const receipt = {
-            id: `receipt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            name: file.name,
-            dataURL: e.target.result,
-            size: file.size,
-            type: file.type,
-            status: 'pending',
-            uploadedAt: new Date().toISOString(),
-        };
-        
-        this.saveReceiptLocally(receipt);
-        this.updateReceiptQueueUI();
-        this.updateModalReceiptsList();
-        this.updateReceiptCount();
-        
-        this.showNotification(`✅ "${file.name}" uploaded successfully!`, 'success');
-    };
-    reader.readAsDataURL(file);
-},
-
-    updateReceiptCount: function() {
-    const pendingCount = this.receiptQueue.filter(r => r.status === 'pending').length;
-    const processBtn = document.getElementById('process-receipts-btn');
-    const processCount = document.getElementById('process-receipts-count');
-    const uploadBtn = document.getElementById('upload-receipt-btn');
-    
-    if (processBtn && processCount) {
-        if (pendingCount > 0) {
-            processBtn.classList.remove('hidden');
-            processCount.textContent = pendingCount;
-            processCount.classList.remove('hidden');
-        } else {
-            processBtn.classList.add('hidden');
-            processCount.classList.add('hidden');
-        }
-    }
-    
-    if (uploadBtn) {
-        const badge = uploadBtn.querySelector('.receipt-queue-badge');
-        if (pendingCount > 0) {
-            if (!badge) {
-                uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingCount}</span>`;
-            } else {
-                badge.textContent = pendingCount;
-            }
-        } else if (badge) {
-            badge.remove();
         }
     }
 },
@@ -3888,59 +3891,91 @@ unload: function() {
     },
     
     // ==================== EVENT HANDLERS ====================
-   setupImportReceiptsHandlers: function() {
-    // Upload option
-    const uploadOption = document.getElementById('upload-option');
-    if (uploadOption) {
-        uploadOption.onclick = () => this.showUploadInterface();
-    }
-    
-    // Camera option
-    const cameraOption = document.getElementById('camera-option');
-    if (cameraOption) {
-        cameraOption.onclick = () => this.showCameraInterface();
-    }
-    
-    // Cancel camera
-    const cancelCamera = document.getElementById('cancel-camera');
-    if (cancelCamera) {
-        cancelCamera.onclick = () => this.showQuickActionsView();
-    }
-    
-    // Back to main view
-    const backToMain = document.getElementById('back-to-main-view');
-    if (backToMain) {
-        backToMain.onclick = () => this.showQuickActionsView();
-    }
-    
-    // Capture photo
-    const capturePhoto = document.getElementById('capture-photo');
-    if (capturePhoto) {
-        capturePhoto.onclick = () => this.capturePhoto();
-    }
-    
-    // Switch camera
-    const switchCamera = document.getElementById('switch-camera');
-    if (switchCamera) {
-        switchCamera.onclick = () => this.switchCamera();
-    }
-    
-    // Refresh receipts
-    const refreshReceipts = document.getElementById('refresh-receipts');
-    if (refreshReceipts) {
-        refreshReceipts.onclick = () => {
+    setupImportReceiptsHandlers() {
+        console.log('Setting up import receipt handlers');
+        
+        const setupModalButton = (id, handler) => {
+            const button = document.getElementById(id);
+            if (button) {
+                console.log(`✅ Setting up modal button: ${id}`);
+                
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                newButton.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(`Modal button clicked: ${id}`);
+                    handler.call(this, e);
+                };
+                
+                return newButton;
+            } else {
+                console.log(`ℹ️ Modal button ${id} not found`);
+                return null;
+            }
+        };
+        
+        setupModalButton('upload-option', () => {
+            console.log('📁 Upload Files button clicked');
+            this.showUploadInterface();
+        });
+
+        setupModalButton('camera-option', () => {
+            console.log('🎯 Camera button clicked');
+            this.showCameraInterface();
+        });
+
+        setupModalButton('cancel-camera', () => {
+            console.log('❌ Cancel camera clicked');
+            this.showQuickActionsView();
+        });
+
+        setupModalButton('back-to-main-view', () => {
+            console.log('🔙 Back to main view clicked');
+            this.showQuickActionsView();
+        });
+
+        setupModalButton('capture-photo', () => this.capturePhoto());
+        setupModalButton('switch-camera', () => this.switchCamera());
+
+        setupModalButton('refresh-receipts', () => {
+            console.log('🔄 Refresh receipts clicked');
             const recentList = document.getElementById('recent-receipts-list');
             if (recentList) {
                 recentList.innerHTML = this.renderRecentReceiptsList();
             }
             this.showNotification('Receipts list refreshed', 'success');
-        };
-    }
-    
-    // Setup file input and drag & drop
-    this.setupFileInput();
-    setTimeout(() => this.setupDragAndDrop(), 500);
-},
+        });
+
+        const processBtn = document.getElementById('process-receipts-btn');
+        if (processBtn) {
+            processBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+                
+                if (pendingReceipts.length === 0) {
+                    this.showNotification('No pending receipts to process', 'info');
+                    return;
+                }
+                
+                if (confirm(`Process ${pendingReceipts.length} pending receipts?`)) {
+                    pendingReceipts.forEach((receipt, index) => {
+                        setTimeout(() => {
+                            this.processSingleReceipt(receipt.id);
+                        }, index * 500);
+                    });
+                }
+            };
+        }
+        
+        this.setupFileInput();
+        setTimeout(() => {
+            this.setupDragAndDrop();
+        }, 500);
+    },
 
     setupDragAndDrop() {
         console.log('🔧 Setting up drag and drop...');
@@ -3994,36 +4029,38 @@ unload: function() {
         console.log('✅ Drag and drop setup complete');
     },
 
-   setupFileInput: function() {
-    console.log('📁 Setting up file input...');
-    
-    let fileInput = document.getElementById('receipt-file-input');
-    if (!fileInput) {
-        fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'receipt-file-input';
-        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
-        fileInput.multiple = true;
-        fileInput.style.display = 'none';
-        document.body.appendChild(fileInput);
-        console.log('✅ Created new file input');
-    }
-    
-    // Remove existing listener to avoid duplicates
-    fileInput.removeEventListener('change', this._fileInputHandler);
-    
-    this._fileInputHandler = (e) => {
-        console.log('📁 File input changed!');
-        if (e.target.files && e.target.files.length > 0) {
-            console.log(`Processing ${e.target.files.length} file(s)`);
-            this.handleFileUpload(e.target.files);
-            e.target.value = ''; // Reset so same file can be uploaded again
+    setupFileInput() {
+        console.log('📁 Setting up file input...');
+        
+        let fileInput = document.getElementById('receipt-upload-input');
+        if (!fileInput) {
+            fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.id = 'receipt-upload-input';
+            fileInput.name = 'receipt-upload-input';
+            fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
+            fileInput.multiple = true;
+            fileInput.style.display = 'none';
+            fileInput.setAttribute('data-dynamic', 'true');
+            document.body.appendChild(fileInput);
+            console.log('✅ Created new file input');
         }
-    };
-    
-    fileInput.addEventListener('change', this._fileInputHandler);
-    console.log('✅ File input setup complete');
-},
+        
+        fileInput.onchange = null;
+        
+        const fileInputHandler = (e) => {
+            console.log('📁 File input changed!');
+            
+            if (e.target.files && e.target.files.length > 0) {
+                console.log(`Processing ${e.target.files.length} file(s)`);
+                this.handleFileUpload(e.target.files);
+                e.target.value = '';
+            }
+        };
+        
+        fileInput.addEventListener('change', fileInputHandler.bind(this));
+        console.log('✅ File input setup complete');
+    },
 
     setupEventListeners() {
         console.log('Setting up event listeners (event delegation)...');
@@ -4674,7 +4711,7 @@ unload: function() {
         }
     },
 
-       // ==================== UI RENDERING ====================
+    // ==================== UI RENDERING ====================
     renderModule() {
         if (!this.element) return;
 
@@ -4706,6 +4743,11 @@ unload: function() {
 
 .popout-modal.hidden {
     display: none !important;
+}
+
+/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal above */
+#import-receipts-modal {
+    /* All styles moved to .popout-modal above */
 }
 
 /* 2. MODAL CONTENT */
@@ -4835,13 +4877,18 @@ unload: function() {
 
 /* CANCEL BUTTON - USING YOUR VARIABLES */
 .popout-modal-footer .btn-outline {
+    /* Use your theme variables */
     background-color: var(--modal-footer-bg) !important;
     color: var(--modal-footer-text) !important;
     border: 1px solid var(--modal-input-border) !important;
+    
+    /* Consistent styling */
     border-radius: var(--radius-lg) !important;
     font-weight: 600 !important;
     padding: 12px 26px !important;
     transition: var(--transition-normal) !important;
+    
+    /* Remove any transform that might cause flickering */
     transform: none !important;
 }
 
@@ -4849,13 +4896,14 @@ unload: function() {
     background-color: var(--modal-btn-text-hover) !important;
     border-color: var(--text-secondary) !important;
     color: var(--modal-footer-text) !important;
+    /* Optional: subtle shadow instead of transform */
     box-shadow: var(--shadow-sm) !important;
 }
 
 /* Process Receipts button */
 #process-receipts-btn {
-    position: relative !important;
-    overflow: visible !important;
+    position: relative !important; /* For the badge positioning */
+    overflow: visible !important; /* Let badge show outside */
 }
 
 /* Process Receipts count badge */
@@ -4873,12 +4921,13 @@ unload: function() {
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
     min-width: 22px !important;
     height: 22px !important;
-    display: flex !important;
+    display: flex !important; /* ← Remove this inline display */
     align-items: center !important;
     justify-content: center !important;
     z-index: 10 !important;
 }
 
+/* Add this for hiding the badge */
 #process-receipts-count.hidden {
     display: none !important;
 }
@@ -4890,7 +4939,7 @@ unload: function() {
 /* ========== Responsive adjustments ========== */
 @media (max-width: 767px) {
     .popout-modal-footer .btn {
-        padding: 14px 16px !important;
+        padding: 14px 16px !important; /* Slightly taller on mobile */
         font-size: 15px !important;
     }
     
@@ -4948,593 +4997,476 @@ unload: function() {
     display: none !important;
 }
 
-/* ==================== BASE STYLES ==================== */
-.import-receipts-container { padding: 20px; }
-.section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
-.card-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.card-icon { font-size: 32px; margin-bottom: 4px; }
-.card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-.card-subtitle { font-size: 12px; color: var(--text-secondary); }
 
-.camera-section .glass-card { margin-bottom: 24px; }
-.camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-.camera-preview video { width: 100%; height: 100%; object-fit: cover; }
-.camera-controls { display: flex; gap: 12px; justify-content: center; }
+                
+                
+                /* ==================== BASE STYLES ==================== */
+                .import-receipts-container { padding: 20px; }
+                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
+                .card-icon { font-size: 32px; margin-bottom: 4px; }
+                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
+                
+                .camera-section .glass-card { margin-bottom: 24px; }
+                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+                .camera-controls { display: flex; gap: 12px; justify-content: center; }
+                
+                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
+                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
+                .upload-icon { font-size: 48px; margin-bottom: 16px; }
+                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
+                
+                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
+                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+                
+                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
+                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
+                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+                .receipt-info { flex: 1; }
+                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+                .receipt-status { font-weight: 600; }
+                .status-pending { color: #f59e0b; }
+                .status-processed { color: #10b981; }
+                .status-error { color: #ef4444; }
+                
+                .empty-state { text-align: center; padding: 40px 20px; }
+                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+                .header-flex { display: flex; justify-content: space-between; align-items: center; }
+                
+                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
+                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
+                
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                
+                #upload-receipt-btn * { pointer-events: none; }
+                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
+                
+                #receipt-upload-area:hover {
+                    border-color: var(--primary-color);
+                    background: var(--primary-color)10;
+                }
+                
+                #receipt-preview-container {
+                    transition: all 0.3s ease;
+                }
+                
+                #receipt-preview-container.hidden {
+                    display: none !important;
+                }
+                
+                #image-preview.hidden {
+                    display: none !important;
+                }
+                
+                .popout-modal {
+                    z-index: 9999;
+                }
+                
+                .receipt-preview-item {
+                    background: var(--glass-bg);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-top: 8px;
+                    border: 1px solid var(--glass-border);
+                }
 
-.upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
-.upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
-.upload-icon { font-size: 48px; margin-bottom: 16px; }
-.upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-.upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
+                .camera-preview {
+                    width: 100%;
+                    height: 400px;
+                    background: #000;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    margin-bottom: 20px;
+                    position: relative;
+                    display: block !important;
+                }
+                
+                .camera-preview video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover;
+                    display: block !important;
+                    background: #000 !important;
+                }
+                
+                #camera-section {
+                    display: none;
+                }
+                
+                #camera-section[style*="display: block"],
+                #camera-section[style*="display:block"] {
+                    display: block !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
+                
+                #camera-option {
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                }
+                
+                #camera-option:hover {
+                    border-color: var(--primary-color);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
 
-.upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-.progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
-.progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-.progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
-.progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+                @keyframes pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+                    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                }
 
-.receipts-grid { display: flex; flex-direction: column; gap: 12px; }
-.receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
-.receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-.receipt-info { flex: 1; }
-.receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-.receipt-status { font-weight: 600; }
-.status-pending { color: #f59e0b; }
-.status-processed { color: #10b981; }
-.status-error { color: #ef4444; }
+                .new-receipt {
+                    animation: pulse 2s infinite;
+                }
 
-.empty-state { text-align: center; padding: 40px 20px; }
-.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-.header-flex { display: flex; justify-content: space-between; align-items: center; }
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translate(-50%, -40%); }
+                    to { opacity: 1; transform: translate(-50%, -50%); }
+                }
 
-.receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
-.firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
+                .delete-receipt-btn {
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .delete-receipt-btn:hover {
+                    background-color: #dc2626 !important;
+                    color: white !important;
+                }
+                .btn-danger {
+                    background: #fef2f2;
+                    color: #dc2626;
+                    border: 1px solid #fecaca;
+                }
+                .btn-danger:hover {
+                    background: #fee2e2;
+                    border-color: #fca5a5;
+                }
+                .btn-sm {
+                    padding: 6px 12px;
+                    font-size: 14px;
+                    border-radius: 6px;
+                }
 
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                .delete-receipt-btn.deleting {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                    background-color: #9ca3af !important;
+                }
 
-#upload-receipt-btn * { pointer-events: none; }
-.firebase-badge, .receipt-queue-badge { pointer-events: none; }
+                .receipt-modal-scrollable {
+                    max-height: 70vh !important;
+                    overflow-y: auto !important;
+                    padding: 20px !important;
+                }
 
-#receipt-upload-area:hover {
-    border-color: var(--primary-color);
-    background: var(--primary-color)10;
-}
+                .receipt-content-wrapper {
+                    max-width: 800px !important;
+                    margin: 0 auto !important;
+                    white-space: pre-wrap !important;
+                    word-wrap: break-word !important;
+                    line-height: 1.5 !important;
+                    font-family: monospace !important;
+                    font-size: 14px !important;
+                }
 
-#receipt-preview-container {
-    transition: all 0.3s ease;
-}
+                .receipt-text-container {
+                    overflow-x: hidden !important;
+                    padding-right: 10px !important;
+                }
 
-#receipt-preview-container.hidden {
-    display: none !important;
-}
+                .receipt-modal-scrollable::-webkit-scrollbar {
+                    width: 8px !important;
+                }
 
-#image-preview.hidden {
-    display: none !important;
-}
+                .receipt-modal-scrollable::-webkit-scrollbar-track {
+                    background: rgba(0, 0, 0, 0.1) !important;
+                    border-radius: 4px !important;
+                }
 
-.popout-modal {
-    z-index: 9999;
-}
+                .receipt-modal-scrollable::-webkit-scrollbar-thumb {
+                    background: rgba(0, 0, 0, 0.3) !important;
+                    border-radius: 4px !important;
+                }
 
-.receipt-preview-item {
-    background: var(--glass-bg);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 8px;
-    border: 1px solid var(--glass-border);
-}
+                .receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
+                    background: rgba(0, 0, 0, 0.4) !important;
+                }
 
-.camera-preview {
-    width: 100%;
-    height: 400px;
-    background: #000;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
-    position: relative;
-    display: block !important;
-}
+                @media (max-width: 768px) {
+                    .receipt-modal-scrollable {
+                        max-height: 80vh !important;
+                        padding: 15px !important;
+                    }
+                    
+                    .receipt-content-wrapper {
+                        font-size: 12px !important;
+                    }
+                }
 
-.camera-preview video {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover;
-    display: block !important;
-    background: #000 !important;
-}
+                @media (max-width: 480px) {
+                    .receipt-modal-scrollable {
+                        max-height: 85vh !important;
+                        padding: 10px !important;
+                    }
+                }
 
-#camera-section {
-    display: none;
-}
+                .process-receipt-btn,
+                .delete-receipt-btn {
+                    display: inline-flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    position: relative !important;
+                    z-index: 10 !important;
+                }
 
-#camera-section[style*="display: block"],
-#camera-section[style*="display:block"] {
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
+                @media (min-width: 769px) {
+                    .pending-receipt-item {
+                        position: relative;
+                        padding-right: 200px !important;
+                    }
+                    
+                    .receipt-actions {
+                        position: absolute !important;
+                        right: 16px !important;
+                        top: 50% !important;
+                        transform: translateY(-50%) !important;
+                        display: flex !important;
+                        gap: 8px !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        z-index: 100 !important;
+                    }
+                    
+                    .receipt-actions .btn {
+                        min-width: 80px !important;
+                        height: 36px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        white-space: nowrap !important;
+                    }
+                }
 
-#camera-option {
-    border: 2px solid transparent;
-    transition: all 0.2s;
-}
+                @media (max-width: 768px) {
+                    .pending-receipt-item {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+                    
+                    .receipt-actions {
+                        display: flex !important;
+                        justify-content: flex-end;
+                        gap: 8px;
+                        margin-top: 12px;
+                    }
+                }
 
-#camera-option:hover {
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+                .receipt-card .receipt-actions,
+                .pending-receipt-item .receipt-actions {
+                    overflow: visible !important;
+                    clip: auto !important;
+                    clip-path: none !important;
+                    height: auto !important;
+                    width: auto !important;
+                }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
+                .upload-area {
+                    min-height: 200px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: var(--glass-bg) !important;
+                    border: 2px dashed var(--glass-border) !important;
+                    border-radius: 12px !important;
+                    padding: 40px 20px !important;
+                    cursor: pointer !important;
+                    transition: all 0.3s ease !important;
+                }
 
-.new-receipt {
-    animation: pulse 2s infinite;
-}
+                .upload-area:hover {
+                    border-color: var(--primary-color) !important;
+                    background: var(--primary-color)10 !important;
+                }
 
-@keyframes slideUp {
-    from { opacity: 0; transform: translate(-50%, -40%); }
-    to { opacity: 1; transform: translate(-50%, -50%); }
-}
+                .upload-icon {
+                    font-size: 64px !important;
+                    margin-bottom: 16px !important;
+                    color: var(--text-secondary) !important;
+                }
 
-.delete-receipt-btn {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.delete-receipt-btn:hover {
-    background-color: #dc2626 !important;
-    color: white !important;
-}
-.btn-danger {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-.btn-danger:hover {
-    background: #fee2e2;
-    border-color: #fca5a5;
-}
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 14px;
-    border-radius: 6px;
-}
+                .upload-section, .camera-section, .recent-section {
+                    min-height: 100px !important;
+                    margin-bottom: 24px !important;
+                }
 
-.delete-receipt-btn.deleting {
-    opacity: 0.7;
-    cursor: not-allowed;
-    background-color: #9ca3af !important;
-}
+                .glass-card {
+                    min-height: 150px !important;
+                }
 
-.receipt-modal-scrollable {
-    max-height: 70vh !important;
-    overflow-y: auto !important;
-    padding: 20px !important;
-}
+                .upload-system-container {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                    max-width: 100%;
+                    background: #ffffff;
+                    border-radius: 12px;
+                    padding: 20px;
+                    border: 1px solid #e5e7eb;
+                }
 
-.receipt-content-wrapper {
-    max-width: 800px !important;
-    margin: 0 auto !important;
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
-    line-height: 1.5 !important;
-    font-family: monospace !important;
-    font-size: 14px !important;
-}
+                .upload-dropzone {
+                    border: 2px dashed #d1d5db;
+                    border-radius: 10px;
+                    padding: 40px 20px;
+                    text-align: center;
+                    background: #f9fafb;
+                    margin-bottom: 20px;
+                    cursor: pointer;
+                }
 
-.receipt-text-container {
-    overflow-x: hidden !important;
-    padding-right: 10px !important;
-}
+                .upload-dropzone:hover {
+                    border-color: #4f46e5;
+                    background: #f0f1ff;
+                }
 
-.receipt-modal-scrollable::-webkit-scrollbar {
-    width: 8px !important;
-}
+                .dropzone-icon {
+                    font-size: 48px;
+                    color: #9ca3af;
+                    margin-bottom: 16px;
+                }
 
-.receipt-modal-scrollable::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1) !important;
-    border-radius: 4px !important;
-}
+                .dropzone-title {
+                    font-size: 18px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                    color: #374151;
+                }
 
-.receipt-modal-scrollable::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.3) !important;
-    border-radius: 4px !important;
-}
+                .dropzone-subtitle {
+                    color: #6b7280;
+                    margin-bottom: 20px;
+                }
 
-.receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.4) !important;
-}
-
-@media (max-width: 768px) {
-    .receipt-modal-scrollable {
-        max-height: 80vh !important;
-        padding: 15px !important;
+                 /* ==================== ADD THIS CROPPER CSS ==================== */
+    /* Cropper touch interaction fixes */
+    #receipt-cropper-modal {
+        touch-action: none;
     }
     
-    .receipt-content-wrapper {
-        font-size: 12px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .receipt-modal-scrollable {
-        max-height: 85vh !important;
-        padding: 10px !important;
-    }
-}
-
-.process-receipt-btn,
-.delete-receipt-btn {
-    display: inline-flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    position: relative !important;
-    z-index: 10 !important;
-}
-
-@media (min-width: 769px) {
-    .pending-receipt-item {
-        position: relative;
-        padding-right: 200px !important;
+    #receipt-cropper-image {
+        touch-action: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        max-width: 100%;
+        height: auto;
     }
     
-    .receipt-actions {
-        position: absolute !important;
-        right: 16px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        display: flex !important;
-        gap: 8px !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        z-index: 100 !important;
-    }
-    
-    .receipt-actions .btn {
-        min-width: 80px !important;
-        height: 36px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        white-space: nowrap !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .pending-receipt-item {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-    
-    .receipt-actions {
-        display: flex !important;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-top: 12px;
-    }
-}
-
-.receipt-card .receipt-actions,
-.pending-receipt-item .receipt-actions {
-    overflow: visible !important;
-    clip: auto !important;
-    clip-path: none !important;
-    height: auto !important;
-    width: auto !important;
-}
-
-.upload-area {
-    min-height: 200px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: var(--glass-bg) !important;
-    border: 2px dashed var(--glass-border) !important;
-    border-radius: 12px !important;
-    padding: 40px 20px !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-}
-
-.upload-area:hover {
-    border-color: var(--primary-color) !important;
-    background: var(--primary-color)10 !important;
-}
-
-.upload-icon {
-    font-size: 64px !important;
-    margin-bottom: 16px !important;
-    color: var(--text-secondary) !important;
-}
-
-.upload-section, .camera-section, .recent-section {
-    min-height: 100px !important;
-    margin-bottom: 24px !important;
-}
-
-.glass-card {
-    min-height: 150px !important;
-}
-
-.upload-system-container {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    max-width: 100%;
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid #e5e7eb;
-}
-
-.upload-dropzone {
-    border: 2px dashed #d1d5db;
-    border-radius: 10px;
-    padding: 40px 20px;
-    text-align: center;
-    background: #f9fafb;
-    margin-bottom: 20px;
-    cursor: pointer;
-}
-
-.upload-dropzone:hover {
-    border-color: #4f46e5;
-    background: #f0f1ff;
-}
-
-.dropzone-icon {
-    font-size: 48px;
-    color: #9ca3af;
-    margin-bottom: 16px;
-}
-
-.dropzone-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #374151;
-}
-
-.dropzone-subtitle {
-    color: #6b7280;
-    margin-bottom: 20px;
-}
-
-/* ==================== CROPPER STYLES - GREEN THEME WITH CIRCULAR BUTTONS ==================== */
-#receipt-cropper-modal {
-    touch-action: none;
-}
-
-#receipt-cropper-image {
-    touch-action: none !important;
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
-    max-width: 100%;
-    height: auto;
-}
-
-.cropper-container {
-    touch-action: none !important;
-    max-height: 55vh !important;
-    width: 100% !important;
-    background: #1a1a2e !important;
-}
-
-.cropper-canvas {
-    background: #1a1a2e !important;
-}
-
-.cropper-view-box {
-    outline: 2px solid #22c55e !important;
-    outline-color: rgba(34, 197, 94, 0.75) !important;
-}
-
-.cropper-line {
-    background-color: #22c55e !important;
-}
-
-.cropper-dashed {
-    border-color: #22c55e !important;
-    opacity: 0.5 !important;
-}
-
-.cropper-center::before,
-.cropper-center::after {
-    background-color: #22c55e !important;
-}
-
-.cropper-point {
-    width: 16px !important;
-    height: 16px !important;
-    background: #22c55e !important;
-    opacity: 1 !important;
-    border: 2px solid white !important;
-    border-radius: 50% !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-    transition: all 0.2s ease !important;
-}
-
-.cropper-point:hover {
-    transform: scale(1.3) !important;
-    background: #16a34a !important;
-}
-
-.cropper-point.point-se {
-    width: 24px !important;
-    height: 24px !important;
-    background: #22c55e !important;
-    border-radius: 50% !important;
-    opacity: 1 !important;
-}
-
-@media (max-width: 768px) {
-    .cropper-point {
-        width: 28px !important;
-        height: 28px !important;
-    }
-    .cropper-point.point-se {
-        width: 36px !important;
-        height: 36px !important;
-    }
-}
-
-.crop-control-btn {
-    width: 56px !important;
-    height: 56px !important;
-    border-radius: 50% !important;
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    border: none !important;
-    color: white !important;
-    font-size: 24px !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
-    margin: 4px !important;
-}
-
-.crop-control-btn:hover {
-    transform: scale(1.1) !important;
-    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
-    background: linear-gradient(135deg, #16a34a, #15803d) !important;
-}
-
-.crop-control-btn:active {
-    transform: scale(0.95) !important;
-}
-
-.aspect-btn {
-    padding: 8px 16px !important;
-    background: #f5f5f5 !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 20px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    color: #374151 !important;
-}
-
-.aspect-btn:hover {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-color: #22c55e !important;
-    transform: translateY(-2px) !important;
-}
-
-.aspect-btn.active {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    color: white !important;
-    border-color: transparent !important;
-}
-
-#cancel-receipt-crop, 
-#apply-receipt-crop {
-    min-height: 48px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    padding: 12px 24px;
-}
-
-#cancel-receipt-crop {
-    background: #f5f5f5;
-    color: #666;
-    border: 1px solid #e5e7eb;
-}
-
-#cancel-receipt-crop:hover {
-    background: #fee2e2;
-    border-color: #ef4444;
-    color: #dc2626;
-    transform: translateY(-2px);
-}
-
-#apply-receipt-crop {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: white;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
-#apply-receipt-crop:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
-}
-
-#cancel-receipt-crop:active, 
-#apply-receipt-crop:active {
-    transform: scale(0.98);
-}
-
-#cropper-container {
-    touch-action: none;
-    background: #1a1a2e;
-    min-height: 400px;
-    max-height: 55vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-}
-
-@media (max-width: 768px) {
-    .crop-control-btn {
-        width: 48px !important;
-        height: 48px !important;
-        font-size: 20px !important;
-    }
-    .aspect-btn {
-        padding: 6px 12px !important;
-        font-size: 11px !important;
-    }
-    #cropper-container {
-        min-height: 300px;
-        max-height: 45vh;
-    }
     .cropper-container {
-        max-height: 45vh !important;
+        touch-action: none !important;
+        max-height: 50vh !important;
     }
-}
-
-@media (max-width: 480px) {
-    .crop-control-btn {
-        width: 44px !important;
-        height: 44px !important;
-        font-size: 18px !important;
+    
+    .cropper-crop-box,
+    .cropper-drag-box,
+    .cropper-face,
+    .cropper-line,
+    .cropper-point {
+        touch-action: none !important;
     }
-    .crop-control-buttons {
-        gap: 8px !important;
+    
+    .cropper-point {
+        width: 30px !important;
+        height: 30px !important;
+        background: #4CAF50 !important;
+        opacity: 0.8 !important;
+        border: 2px solid white !important;
+        border-radius: 50% !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
     }
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
+    
+    /* Mobile-friendly control buttons */
+    .cropper-control-btn {
+        min-width: 60px;
+        min-height: 44px;
+        font-size: 20px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 4px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    
+    .cropper-control-btn:active {
+        background: #e0e0e0;
+        transform: scale(0.95);
     }
-}
-
-.cropper-modal-content {
-    animation: fadeInUp 0.3s ease-out !important;
-}
+    
+    #cancel-receipt-crop, #apply-receipt-crop {
+        min-height: 48px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    #cancel-receipt-crop {
+        background: #f44336;
+        color: white;
+    }
+    
+    #apply-receipt-crop {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    #cancel-receipt-crop:active, #apply-receipt-crop:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .cropper-point {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        .cropper-control-btn {
+            min-width: 70px;
+            min-height: 48px;
+            font-size: 22px;
+        }
+    }
+    
+    /* Cropper container sizing */
+    #cropper-container {
+        touch-action: none;
+        background: #f0f0f0;
+        min-height: 300px;
+        max-height: 50vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
             </style>
 
             <div class="module-container">
@@ -5724,18 +5656,23 @@ unload: function() {
                                         
                                         <!-- Expense Categories -->
                                         <optgroup label="💸 Expenses">
+                                            <!-- Animal-specific feed -->
                                             <option value="feed-broilers">Feed - Broilers</option>
                                             <option value="feed-layers">Feed - Layers</option>
                                             <option value="feed-ducks">Feed - Ducks</option>
                                             <option value="feed-sheep">Feed - Sheep</option>
                                             <option value="feed-goats">Feed - Goats</option>
                                             <option value="feed-rabbits">Feed - Rabbits</option>
+                                            
+                                            <!-- Medical/Vet by animal -->
                                             <option value="medical-broilers">Medical - Broilers</option>
                                             <option value="medical-layers">Medical - Layers</option>
                                             <option value="medical-ducks">Medical - Ducks</option>
                                             <option value="medical-sheep">Medical - Sheep</option>
                                             <option value="medical-goats">Medical - Goats</option>
                                             <option value="medical-rabbits">Medical - Rabbits</option>
+                                            
+                                            <!-- General farm expenses -->
                                             <option value="bedding">Bedding/Litter</option>
                                             <option value="equipment">Equipment</option>
                                             <option value="labor">Labor</option>
@@ -5833,12 +5770,10 @@ unload: function() {
                         </form>
                     </div>
                     <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
-                        <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
-                    </div>
+                    <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
+                    <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
                 </div>
-            </div>
         `;
 
         this.setupEventListeners();
@@ -5849,148 +5784,148 @@ unload: function() {
         }, 100);
     },
 
-renderImportReceiptsModal() {
-    return `
-        <div class="import-receipts-container">
-            <!-- GREEN GRADIENT HEADER -->
-            <div style="
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-                border-radius: 20px 20px 0 0;
-                z-index: 1000 !important;
-            "></div>
-            
-            <div class="quick-actions-section" style="padding-top: 8px;">
-                <h2 class="section-title">Upload Method</h2>
-                <div class="card-grid">
-                    <button class="card-button" id="camera-option">
-                        <div class="card-icon">📷</div>
-                        <span class="card-title">Take Photo</span>
-                        <span class="card-subtitle">Use camera</span>
-                    </button>
-                    <button class="card-button" id="upload-option">
-                        <div class="card-icon">📁</div>
-                        <span class="card-title">Upload Files</span>
-                        <span class="card-subtitle">From device</span>
-                    </button>
-                </div>
-            </div>
-        
-            <!-- UPLOAD SECTION -->
-            <div id="upload-section" style="display: none;">
-                <div class="upload-system-container" id="upload-system">
-                    <!-- BACK BUTTON HEADER -->
-                    <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
-                        <button class="btn btn-outline" id="back-to-main-view" 
-                                style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
-                            <span>←</span>
-                            <span>Back</span>
-                        </button>
-                        <div>
-                            <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
-                                📤 Upload Files
-                            </h3>
-                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
-                                Drag & drop or select files from your device
-                            </p>
-                        </div>
-                    </div>
+    renderImportReceiptsModal() {
+        return `
+               <div class="import-receipts-container">
+                    <!-- GREEN GRADIENT HEADER -->
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 4px;
+                        background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                        border-radius: 20px 20px 0 0;
+                        z-index: 1000 !important;
+                    "></div>
                     
-                    <!-- Receipts Upload Section -->
-                    <div class="upload-section active" data-mode="receipts">
-                        <div class="upload-header" style="margin-bottom: 24px;">
-                            <h3 class="upload-title">
-                                📄 Upload Receipts
-                            </h3>
-                            <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
+                    <div class="quick-actions-section" style="padding-top: 8px;">  <!-- ONLY KEEP THIS ONE -->
+                        <h2 class="section-title">Upload Method</h2>
+                        <div class="card-grid">
+                            <button class="card-button" id="camera-option">
+                                <div class="card-icon">📷</div>
+                                <span class="card-title">Take Photo</span>
+                                <span class="card-subtitle">Use camera</span>
+                            </button>
+                            <button class="card-button" id="upload-option">
+                                <div class="card-icon">📁</div>
+                                <span class="card-title">Upload Files</span>
+                                <span class="card-subtitle">From device</span>
+                            </button>
                         </div>
-                        
-                        <div class="upload-dropzone" id="receipt-dropzone">
-                            <div class="dropzone-content">
-                                <div class="dropzone-icon">
-                                    📁
-                                </div>
-                                <h4 class="dropzone-title">Drop receipt files here</h4>
-                                <p class="dropzone-subtitle">or click to browse</p>
-                                <div class="file-types">
-                                    <span class="file-type-badge">JPG</span>
-                                    <span class="file-type-badge">PNG</span>
-                                    <span class="file-type-badge">PDF</span>
-                                    <span class="file-type-badge">HEIC</span>
-                                </div>
-                            </div>
-                            <input type="file" id="receipt-file-input" 
-                                   accept="image/*,.pdf,.heic,.heif" 
-                                   multiple 
-                                   class="dropzone-input" style="display: none;">
-                        </div>
-                        
-                        <div class="uploaded-files-container" style="margin-top: 24px;">
-                            <h5 class="files-title">
-                                📎 Uploaded Receipts
-                                <span class="badge" id="receipt-count">0</span>
-                            </h5>
-                            <div class="files-list" id="receipt-files-list">
-                                <div class="empty-state">
-                                    📭
-                                    <p>No receipts uploaded yet</p>
-                                </div>
+                    </div>
+                
+                <!-- UPLOAD SECTION -->
+                <div id="upload-section" style="display: none;">
+                    <div class="upload-system-container" id="upload-system">
+                        <!-- BACK BUTTON HEADER -->
+                        <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+                            <button class="btn btn-outline" id="back-to-main-view" 
+                                    style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
+                                <span>←</span>
+                                <span>Back</span>
+                            </button>
+                            <div>
+                                <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
+                                    📤 Upload Files
+                                </h3>
+                                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
+                                    Drag & drop or select files from your device
+                                </p>
                             </div>
                         </div>
+                        
+                        <!-- Receipts Upload Section -->
+                        <div class="upload-section active" data-mode="receipts">
+                            <div class="upload-header" style="margin-bottom: 24px;">
+                                <h3 class="upload-title">
+                                    📄 Upload Receipts
+                                </h3>
+                                <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
+                            </div>
+                            
+                            <div class="upload-dropzone" id="receipt-dropzone">
+                                <div class="dropzone-content">
+                                    <div class="dropzone-icon">
+                                        📁
+                                    </div>
+                                    <h4 class="dropzone-title">Drop receipt files here</h4>
+                                    <p class="dropzone-subtitle">or click to browse</p>
+                                    <div class="file-types">
+                                        <span class="file-type-badge">JPG</span>
+                                        <span class="file-type-badge">PNG</span>
+                                        <span class="file-type-badge">PDF</span>
+                                        <span class="file-type-badge">HEIC</span>
+                                    </div>
+                                </div>
+                                <input type="file" id="receipt-file-input" 
+                                       accept="image/*,.pdf,.heic,.heif" 
+                                       multiple 
+                                       class="dropzone-input" style="display: none;">
+                            </div>
+                            
+                            <div class="uploaded-files-container" style="margin-top: 24px;">
+                                <h5 class="files-title">
+                                    📎 Uploaded Receipts
+                                    <span class="badge" id="receipt-count">0</span>
+                                </h5>
+                                <div class="files-list" id="receipt-files-list">
+                                    <div class="empty-state">
+                                        📭
+                                        <p>No receipts uploaded yet</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CAMERA SECTION -->
+                <div class="camera-section" id="camera-section" style="display: none;">
+                    <div class="glass-card">
+                        <div class="card-header header-flex">
+                            <h3>📷 Camera</h3>
+                            <div class="camera-status" id="camera-status">Ready</div>
+                        </div>
+                        <div class="camera-preview">
+                            <video id="camera-preview" autoplay playsinline></video>
+                            <canvas id="camera-canvas" style="display: none;"></canvas>
+                        </div>
+                        <div class="camera-controls">
+                            <button class="btn btn-outline" id="switch-camera">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Switch Camera</span>
+                            </button>
+                            <button class="btn btn-primary" id="capture-photo">
+                                <span class="btn-icon">📸</span>
+                                <span class="btn-text">Capture</span>
+                            </button>
+                            <button class="btn btn-outline" id="cancel-camera">
+                                <span class="btn-icon">✖️</span>
+                                <span class="btn-text">Back to Upload</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- RECENT SECTION -->
+                <div class="recent-section" id="recent-section" style="display: block;">
+                    <div class="glass-card">
+                        <div class="card-header header-flex">
+                            <h3>📋 Recent Receipts</h3>
+                            <button class="btn btn-outline" id="refresh-receipts">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Refresh</span>
+                            </button>
+                        </div>
+                        <div id="recent-receipts-list" class="receipts-list">
+                            ${this.renderRecentReceiptsList()}
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- CAMERA SECTION -->
-            <div class="camera-section" id="camera-section" style="display: none;">
-                <div class="glass-card">
-                    <div class="card-header header-flex">
-                        <h3>📷 Camera</h3>
-                        <div class="camera-status" id="camera-status">Ready</div>
-                    </div>
-                    <div class="camera-preview">
-                        <video id="camera-preview" autoplay playsinline></video>
-                        <canvas id="camera-canvas" style="display: none;"></canvas>
-                    </div>
-                    <div class="camera-controls">
-                        <button class="btn btn-outline" id="switch-camera">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Switch Camera</span>
-                        </button>
-                        <button class="btn btn-primary" id="capture-photo">
-                            <span class="btn-icon">📸</span>
-                            <span class="btn-text">Capture</span>
-                        </button>
-                        <button class="btn btn-outline" id="cancel-camera">
-                            <span class="btn-icon">✖️</span>
-                            <span class="btn-text">Back to Upload</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- RECENT SECTION -->
-            <div class="recent-section" id="recent-section" style="display: block;">
-                <div class="glass-card">
-                    <div class="card-header header-flex">
-                        <h3>📋 Recent Receipts</h3>
-                        <button class="btn btn-outline" id="refresh-receipts">
-                            <span class="btn-icon">🔄</span>
-                            <span class="btn-text">Refresh</span>
-                        </button>
-                    </div>
-                    <div id="recent-receipts-list" class="receipts-list">
-                        ${this.renderRecentReceiptsList()}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-},
+        `;
+    },
 
     renderPendingReceiptsList(receipts) {
         if (receipts.length === 0) {
