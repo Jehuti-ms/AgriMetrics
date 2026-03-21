@@ -1834,7 +1834,7 @@ showStandardCropper: function(file) {
         const modalId = 'crop-modal-' + Date.now();
         const modal = document.createElement('div');
         modal.id = modalId;
-        modal.style.cssText = `
+       modal.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
@@ -1846,20 +1846,24 @@ showStandardCropper: function(file) {
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(8px);
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
         `;
         
         modal.innerHTML = `
             <div style="
-                background: white;
-                width: 95%;
-                max-width: 750px;
-                height: 90vh;
-                border-radius: 24px;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-            ">
+            background: white;
+            width: 95%;
+            max-width: 750px;
+            max-height: 90vh;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            margin: auto;
+        ">
                 <!-- Header -->
                 <div style="
                     background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -1896,12 +1900,13 @@ showStandardCropper: function(file) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    overflow: hidden;
+                    overflow: auto;
                     position: relative;
                     min-height: 300px;
                 ">
                     <img id="crop-image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
                 </div>
+
                 
                 <!-- Green Circular Controls -->
                 <div style="
@@ -5293,33 +5298,185 @@ unload: function() {
                     color: #6b7280;
                     margin-bottom: 20px;
                 }
-/* ==================== CROPPER STYLES - GREEN THEME WITH CIRCULAR BUTTONS ==================== */
+                
+/* ==================== CROPPER MODAL LAYOUT FIXES ==================== */
 
-/* Cropper touch interaction fixes */
-#receipt-cropper-modal {
-    touch-action: none;
+/* Fix the main cropper modal container */
+#crop-modal, 
+div[id^="crop-modal-"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
 }
 
-#receipt-cropper-image {
-    touch-action: none !important;
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
-    max-width: 100%;
-    height: auto;
-}
-
-/* Cropper Container */
-.cropper-container {
-    touch-action: none !important;
-    max-height: 55vh !important;
+/* Fix the inner content container */
+div[id^="crop-modal-"] > div {
+    background: white !important;
     width: 100% !important;
-    background: #1a1a2e !important;
+    max-width: 800px !important;
+    height: auto !important;
+    max-height: 90vh !important;
+    border-radius: 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+    margin: auto !important;
 }
 
-/* Cropper Canvas */
-.cropper-canvas {
+/* Image container - scrollable */
+div[id^="crop-modal-"] > div > div:nth-child(2) {
+    flex: 1 !important;
     background: #1a1a2e !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: auto !important;
+    min-height: 200px !important;
+    max-height: 50vh !important;
+    padding: 20px !important;
+}
+
+/* Image inside container */
+div[id^="crop-modal-"] img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+}
+
+/* Controls container - should be at bottom */
+div[id^="crop-modal-"] > div > div:last-child {
+    padding: 20px 24px !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    flex-shrink: 0 !important;
+}
+
+/* Button containers - horizontal scroll on mobile if needed */
+.crop-controls-row {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+    flex-wrap: wrap !important;
+}
+
+/* ==================== CROPPER MODAL CONTAINER FIXES ==================== */
+
+/* Fix the main cropper modal container */
+div[id^="crop-modal-"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.95) !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+}
+
+/* Fix the inner content container */
+div[id^="crop-modal-"] > div {
+    background: white !important;
+    width: 100% !important;
+    max-width: 800px !important;
+    height: auto !important;
+    max-height: 90vh !important;
+    border-radius: 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+    margin: auto !important;
+}
+
+/* Controls container - should be at bottom */
+div[id^="crop-modal-"] > div > div:last-child {
+    padding: 20px 24px !important;
+    background: white !important;
+    border-top: 1px solid #e5e7eb !important;
+    flex-shrink: 0 !important;
+}
+
+/* Action buttons on mobile */
+@media (max-width: 768px) {
+    div[id^="crop-modal-"] {
+        padding: 10px !important;
+    }
+    
+    div[id^="crop-modal-"] > div {
+        max-height: 95vh !important;
+        border-radius: 16px !important;
+    }
+    
+    /* Make action buttons full width on mobile */
+    div[id^="crop-modal-"] > div > div:last-child > div:last-child {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    div[id^="crop-modal-"] > div > div:last-child > div:last-child button {
+        width: 100% !important;
+    }
+}
+
+/* ================= Button Styling ===================*/
+/* Green Circular Control Buttons */
+.crop-control-btn {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border: none !important;
+    color: white !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+}
+
+.crop-control-btn:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+}
+
+/* Aspect Ratio Buttons */
+.aspect-btn {
+    padding: 8px 16px !important;
+    background: #f5f5f5 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    color: #374151 !important;
+}
+
+.aspect-btn:hover {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border-color: #22c55e !important;
+    transform: translateY(-2px) !important;
 }
 
 /* Green Crop Box Outline */
@@ -5371,134 +5528,18 @@ unload: function() {
     opacity: 1 !important;
 }
 
-.cropper-point.point-se:hover {
-    transform: scale(1.2) !important;
-    background: #16a34a !important;
-}
-
-/* Mobile - larger touch targets */
+/* Mobile adjustments */
 @media (max-width: 768px) {
-    .cropper-point {
-        width: 28px !important;
-        height: 28px !important;
+    div[id^="crop-modal-"] {
+        padding: 10px !important;
     }
     
-    .cropper-point.point-se {
-        width: 36px !important;
-        height: 36px !important;
+    div[id^="crop-modal-"] > div {
+        width: 100% !important;
+        max-height: 95vh !important;
+        border-radius: 16px !important;
     }
-}
-
-/* GREEN CIRCULAR CONTROL BUTTONS */
-.crop-control-btn {
-    width: 56px !important;
-    height: 56px !important;
-    border-radius: 50% !important;
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    border: none !important;
-    color: white !important;
-    font-size: 24px !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
-    margin: 4px !important;
-}
-
-.crop-control-btn:hover {
-    transform: scale(1.1) !important;
-    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
-    background: linear-gradient(135deg, #16a34a, #15803d) !important;
-}
-
-.crop-control-btn:active {
-    transform: scale(0.95) !important;
-}
-
-/* Aspect Ratio Buttons */
-.aspect-btn {
-    padding: 8px 16px !important;
-    background: #f5f5f5 !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 20px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    color: #374151 !important;
-}
-
-.aspect-btn:hover {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-color: #22c55e !important;
-    transform: translateY(-2px) !important;
-}
-
-.aspect-btn.active {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    color: white !important;
-    border-color: transparent !important;
-}
-
-/* Cancel and Apply Buttons */
-#cancel-receipt-crop, 
-#apply-receipt-crop {
-    min-height: 48px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    padding: 12px 24px;
-}
-
-#cancel-receipt-crop {
-    background: #f5f5f5;
-    color: #666;
-    border: 1px solid #e5e7eb;
-}
-
-#cancel-receipt-crop:hover {
-    background: #fee2e2;
-    border-color: #ef4444;
-    color: #dc2626;
-    transform: translateY(-2px);
-}
-
-#apply-receipt-crop {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: white;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
-#apply-receipt-crop:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
-}
-
-#cancel-receipt-crop:active, 
-#apply-receipt-crop:active {
-    transform: scale(0.98);
-}
-
-/* Cropper container sizing */
-#cropper-container {
-    touch-action: none;
-    background: #1a1a2e;
-    min-height: 400px;
-    max-height: 55vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
+    
     .crop-control-btn {
         width: 48px !important;
         height: 48px !important;
@@ -5510,17 +5551,33 @@ unload: function() {
         font-size: 11px !important;
     }
     
-    #cropper-container {
-        min-height: 300px;
-        max-height: 45vh;
+    .cropper-point {
+        width: 28px !important;
+        height: 28px !important;
     }
     
-    .cropper-container {
-        max-height: 45vh !important;
+    .cropper-point.point-se {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    div[id^="crop-modal-"] > div > div:nth-child(2) {
+        max-height: 40vh !important;
+        min-height: 250px !important;
+    }
+    
+    /* Action buttons full width on mobile */
+    div[id^="crop-modal-"] > div > div:last-child > div:last-child {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    div[id^="crop-modal-"] > div > div:last-child > div:last-child button {
+        width: 100% !important;
     }
 }
 
-/* Small screens */
+/* Small mobile screens */
 @media (max-width: 480px) {
     .crop-control-btn {
         width: 44px !important;
@@ -5528,8 +5585,14 @@ unload: function() {
         font-size: 18px !important;
     }
     
-    .crop-control-buttons {
-        gap: 8px !important;
+    .aspect-btn {
+        padding: 4px 10px !important;
+        font-size: 10px !important;
+    }
+    
+    div[id^="crop-modal-"] > div > div:nth-child(2) {
+        max-height: 35vh !important;
+        min-height: 200px !important;
     }
 }
 
@@ -5548,7 +5611,6 @@ unload: function() {
 .cropper-modal-content {
     animation: fadeInUp 0.3s ease-out !important;
 }
-            </style>
 
             <div class="module-container">
                 <!-- Module Header -->
