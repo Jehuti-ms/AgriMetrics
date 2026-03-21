@@ -1278,115 +1278,69 @@ initializeCamera: function() {
         return;
     }
     
-    // CRITICAL: Stop any existing stream FIRST
+    // Stop any existing stream
     if (this.cameraStream) {
-        console.log('🛑 Stopping existing camera stream...');
-        this.cameraStream.getTracks().forEach(track => {
-            track.stop();
-            track.enabled = false;
-        });
+        this.cameraStream.getTracks().forEach(track => track.stop());
         this.cameraStream = null;
     }
-    
-    // Reset video element completely
-    video.pause();
-    video.srcObject = null;
-    video.load();
-    
-    // Clear video element
-    video.removeAttribute('src');
-    video.removeAttribute('srcObject');
     
     // Add required attributes for mobile
     video.setAttribute('playsinline', 'true');
     video.setAttribute('autoplay', 'true');
+    video.srcObject = null;
     
     if (status) status.textContent = 'Requesting camera...';
     
-    // Wait a moment for cleanup
-    setTimeout(() => {
-        // Try simpler constraints first
-        const constraints = {
-            video: {
-                facingMode: this.cameraFacingMode || 'environment',
-                width: { ideal: 720 },
-                height: { ideal: 720 }
-            },
-            audio: false
-        };
-        
-        console.log('📱 Requesting camera with constraints:', constraints);
-        
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                console.log('✅ Camera access granted');
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                
-                // Ensure video plays
-                return video.play();
-            })
-            .then(() => {
-                console.log('📹 Video playing successfully');
-                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                if (status) status.textContent = `${cameraType} Camera Ready`;
-                
-                // Update switch button
-                const switchBtn = document.getElementById('switch-camera');
-                if (switchBtn) {
-                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                    switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
-                }
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error);
-                
-                let message = 'Camera access failed';
-                if (error.name === 'NotAllowedError') {
-                    message = 'Camera permission denied. Please allow camera access.';
-                } else if (error.name === 'NotFoundError') {
-                    message = 'No camera found on this device.';
-                } else if (error.name === 'NotReadableError') {
-                    message = 'Camera is busy. Please close other apps using the camera and try again.';
-                } else if (error.name === 'OverconstrainedError') {
-                    message = 'Camera does not support required settings.';
-                }
-                
-                if (status) status.textContent = 'Camera unavailable';
-                this.showNotification(message, 'error');
-                
-                // Try with basic constraints as fallback
-                console.log('🔄 Trying fallback camera constraints...');
-                const fallbackConstraints = {
-                    video: true,
-                    audio: false
-                };
-                
-                navigator.mediaDevices.getUserMedia(fallbackConstraints)
-                    .then(fallbackStream => {
-                        console.log('✅ Fallback camera succeeded!');
-                        this.cameraStream = fallbackStream;
-                        video.srcObject = fallbackStream;
-                        return video.play();
-                    })
-                    .then(() => {
-                        console.log('📹 Fallback camera playing');
-                        if (status) status.textContent = 'Camera Ready (Fallback mode)';
-                        this.showNotification('Camera working in fallback mode', 'info');
-                    })
-                    .catch(fallbackError => {
-                        console.error('❌ Fallback also failed:', fallbackError);
-                        // Show upload option after delay
-                        setTimeout(() => {
-                            if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                                this.showUploadInterface();
-                            }
-                        }, 2000);
-                    });
-            });
-    }, 300); // Delay to ensure cleanup
-},
+    // Simple constraints for mobile
+    const constraints = {
+        video: {
+            facingMode: this.cameraFacingMode,
+            width: { ideal: 720 },
+            height: { ideal: 720 }
+        },
+        audio: false
+    };
     
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            console.log('✅ Camera access granted');
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            
+            return video.play();
+        })
+        .then(() => {
+            console.log('✅ Camera playing');
+            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+            if (status) status.textContent = `${cameraType} Camera Ready`;
+            
+            // Update switch button
+            const switchBtn = document.getElementById('switch-camera');
+            if (switchBtn) {
+                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                switchBtn.innerHTML = `<span class="btn-icon">🔄</span> Switch to ${nextMode}`;
+            }
+        })
+        .catch(error => {
+            console.error('❌ Camera error:', error);
+            
+            let message = 'Camera access failed';
+            if (error.name === 'NotAllowedError') message = 'Camera permission denied';
+            else if (error.name === 'NotFoundError') message = 'No camera found';
+            else if (error.name === 'NotReadableError') message = 'Camera is busy';
+            
+            if (status) status.textContent = 'Camera unavailable';
+            this.showNotification(message, 'error');
+            
+            // Show upload option after delay
+            setTimeout(() => {
+                if (confirm('Camera not available. Upload file instead?')) {
+                    this.showUploadInterface();
+                }
+            }, 2000);
+        });
+},
+
 stopCamera: function() {
     console.log('🛑 Stopping camera aggressively...');
     
@@ -1396,6 +1350,7 @@ stopCamera: function() {
             try {
                 track.stop();
                 track.enabled = false;
+                track.readyState = 'ended';
                 console.log(`✅ Stopped track: ${track.kind}`);
             } catch (e) {
                 console.warn('⚠️ Error stopping track:', e);
@@ -1460,7 +1415,6 @@ switchCamera: function() {
     setTimeout(() => this.initializeCamera(), 300);
 },
 
-// ==================== CAMERA CAPTURE METHOD ====================
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
@@ -1469,19 +1423,12 @@ capturePhoto: function() {
     const status = document.getElementById('camera-status');
     const captureBtn = document.getElementById('capture-photo');
     
-    // Check if camera is ready
     if (!video || !video.srcObject) {
-        this.showNotification('Camera not ready. Please wait or try again.', 'error');
+        this.showNotification('Camera not ready', 'error');
         return;
     }
     
-    // Check if video has dimensions
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-        this.showNotification('Camera not ready. Video stream not initialized.', 'error');
-        return;
-    }
-    
-    // Disable button during capture
+    // Disable button
     this.isCapturing = true;
     if (captureBtn) {
         captureBtn.disabled = true;
@@ -1490,83 +1437,103 @@ capturePhoto: function() {
     
     if (status) status.textContent = 'Capturing...';
     
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Set canvas size
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     
-    // Draw the video frame
+    // Draw video frame
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Flash effect
     video.style.opacity = '0.7';
-    setTimeout(() => {
-        if (video) video.style.opacity = '1';
-    }, 100);
+    setTimeout(() => video.style.opacity = '1', 100);
     
-    // Convert canvas to blob and create file
+    // Get image data
     canvas.toBlob((blob) => {
-        if (!blob) {
-            console.error('Failed to capture image');
-            if (status) status.textContent = 'Capture failed';
-            this.showNotification('Failed to capture image', 'error');
-            
-            if (captureBtn) {
-                captureBtn.disabled = false;
-                captureBtn.style.opacity = '1';
-            }
-            this.isCapturing = false;
-            return;
-        }
-        
-        // Create file from blob
-        const fileName = `receipt_${Date.now()}.jpg`;
-        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
         
         if (status) status.textContent = 'Photo captured!';
         this.showNotification('📸 Photo captured!', 'success');
         
-        // Re-enable capture button
+        // Re-enable button
         if (captureBtn) {
             captureBtn.disabled = false;
             captureBtn.style.opacity = '1';
         }
-        this.isCapturing = false;
         
-        // IMPORTANT: Stop camera BEFORE showing cropper
-        this.stopCamera();
+        // ===== AGGRESSIVE CAMERA CLEANUP =====
         
-        // Show the image with cropping options
+        // 1. Stop all tracks
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
+            this.cameraStream = null;
+        }
+        
+        // 2. Clear video element
+        if (video) {
+            video.srcObject = null;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+        
+        // 3. Remove camera section completely
+        const cameraSection = document.getElementById('camera-section');
+        if (cameraSection) {
+            cameraSection.remove();
+        }
+        
+        // 4. Also remove any camera elements from DOM
+        const anyVideo = document.querySelector('video');
+        if (anyVideo && anyVideo.id === 'camera-preview') {
+            anyVideo.remove();
+        }
+        
+        // 5. Hide import modal
+        const importModal = document.getElementById('import-receipts-modal');
+        if (importModal) {
+            importModal.style.display = 'none';
+            importModal.classList.add('hidden');
+        }
+        
+        // Small delay to ensure cleanup
         setTimeout(() => {
-            this.showCropperOrViewer(file);
-        }, 300);
+            // Check if cropper is available
+            if (typeof window.openCropper === 'function') {
+                console.log('📷 Opening cropper with captured image');
+                
+                // Convert blob to data URL for cropper
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Cropped file received:', croppedFile);
+                        
+                        // Create preview URL for cropped image
+                        const croppedImageUrl = URL.createObjectURL(croppedFile);
+                        
+                        // Show simple viewer with cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                };
+                reader.readAsDataURL(blob);
+            } else {
+                console.warn('⚠️ Cropper not available, using original image');
+                this.showSimpleImageViewer(file);
+            }
+            this.isCapturing = false;
+        }, 200);
         
     }, 'image/jpeg', 0.9);
 },
 
-// Helper method to show cropper or simple viewer
-showCropperOrViewer: function(file) {
-    console.log('📷 Showing cropper or viewer for:', file.name);
-    
-    // Check if we can load cropper
-    if (typeof this.loadCropperLibrary === 'function') {
-        this.loadCropperLibrary().then(() => {
-            if (typeof this.showStandardCropper === 'function') {
-                console.log('✂️ Opening cropper with captured image');
-                this.showStandardCropper(file);
-            } else {
-                console.warn('⚠️ showStandardCropper not available, using simple viewer');
-                this.showSimpleImageViewer(file);
-            }
-        }).catch((err) => {
-            console.error('❌ Failed to load cropper:', err);
-            this.showSimpleImageViewer(file);
-        });
-    } else {
-        this.showSimpleImageViewer(file);
-    }
-},
-    
   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
@@ -1613,77 +1580,13 @@ showSimpleImageViewer: function(file) {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="edit-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #2196F3, #1976D2);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        ✎ Edit Image
-                    </button>
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✓ Save to Receipt</button>
                     
-                    <button id="save-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #4CAF50, #2E7D32);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        ✓ Save
-                    </button>
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✎ Edit Crop</button>
                     
-                    <button id="retake-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #FF9800, #F57C00);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        ↺ Retake
-                    </button>
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">↺ Retake Photo</button>
                     
-                    <button id="delete-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #ef4444, #dc2626);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        🗑️ Delete
-                    </button>
+                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer;">✕ Cancel</button>
                 </div>
             </div>
         `;
@@ -1691,48 +1594,52 @@ showSimpleImageViewer: function(file) {
         document.body.appendChild(modal);
         
         // Get button references
-        const editBtn = document.getElementById('edit-image-btn');
         const saveBtn = document.getElementById('save-image-btn');
+        const editBtn = document.getElementById('edit-image-btn');
         const retakeBtn = document.getElementById('retake-image-btn');
-        const deleteBtn = document.getElementById('delete-image-btn');
+        const cancelBtn = document.getElementById('cancel-image-btn');
         
-        // Edit button - open cropper for editing
+        // Save button - save to receipt
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                console.log('💾 Saving image to receipt');
+                modal.remove();
+                
+                // Call the original save function
+                const imageUrl = URL.createObjectURL(file);
+                this.saveReceiptFromFile(file, imageUrl);
+            };
+        }
+        
+        // Edit button - go back to cropper
         if (editBtn) {
             editBtn.onclick = () => {
-                console.log('✎ Edit button clicked - opening cropper');
+                console.log('✎ Editing crop again');
                 modal.remove();
                 
                 // Re-open cropper with the same image
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    if (typeof this.showStandardCropper === 'function') {
-                        console.log('📷 Opening cropper for editing');
-                        this.showStandardCropper(file);
-                    } else {
-                        console.warn('Cropper not available');
-                        this.showSimpleImageViewer(file);
+                    if (typeof window.openCropper === 'function') {
+                        window.openCropper(e.target.result, (croppedFile) => {
+                            console.log('📷 Re-cropped file received');
+                            
+                            // Show viewer again with new cropped image
+                            setTimeout(() => {
+                                this.showSimpleImageViewer(croppedFile);
+                            }, 100);
+                            
+                        }, file.name);
                     }
                 };
                 reader.readAsDataURL(file);
             };
         }
         
-        // Save button - save to receipt
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                console.log('💾 Save button clicked');
-                modal.remove();
-                
-                // Save the image to receipt
-                const imageUrl = URL.createObjectURL(file);
-                this.saveReceiptFromFile(file, imageUrl);
-            };
-        }
-        
         // Retake button - go back to camera
         if (retakeBtn) {
             retakeBtn.onclick = () => {
-                console.log('↺ Retake button clicked - going back to camera');
+                console.log('↺ Retaking photo - going back to camera');
                 modal.remove();
                 
                 // Stop any existing camera first
@@ -1756,11 +1663,13 @@ showSimpleImageViewer: function(file) {
                     if (cameraSection) {
                         cameraSection.style.display = 'block';
                         
+                        // Small delay to ensure DOM is ready
                         setTimeout(() => {
                             this.initializeCamera();
                             console.log('📷 Camera re-initialized for retake');
                         }, 200);
                     } else {
+                        // Fallback: trigger camera option click
                         setTimeout(() => {
                             document.getElementById('camera-option')?.click();
                         }, 200);
@@ -1769,16 +1678,13 @@ showSimpleImageViewer: function(file) {
             };
         }
         
-        // Delete button - discard image
-        if (deleteBtn) {
-            deleteBtn.onclick = () => {
-                console.log('🗑️ Delete button clicked');
+        // Cancel button - go back to main menu
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                console.log('✕ Cancelled - going back to import methods');
                 modal.remove();
                 
-                // Show confirmation
-                this.showNotification('Image discarded', 'info');
-                
-                // Go back to import methods
+                // Show the import modal with quick actions
                 const importModal = document.getElementById('import-receipts-modal');
                 if (importModal) {
                     importModal.style.display = 'flex';
@@ -1795,25 +1701,23 @@ showSimpleImageViewer: function(file) {
                     const quickActions = document.getElementById('quick-actions-view');
                     if (quickActions) quickActions.style.display = 'block';
                     
+                    // Also show recent receipts
                     const recentSection = document.getElementById('recent-section');
                     if (recentSection) recentSection.style.display = 'block';
                 }
             };
         }
         
-        // Add hover effects to all buttons
-        const allButtons = [editBtn, saveBtn, retakeBtn, deleteBtn];
-        allButtons.forEach(btn => {
-            if (btn) {
-                btn.addEventListener('mouseenter', () => {
-                    btn.style.transform = 'translateY(-2px)';
-                    btn.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-                });
-                btn.addEventListener('mouseleave', () => {
-                    btn.style.transform = 'translateY(0)';
-                    btn.style.boxShadow = 'none';
-                });
-            }
+        // Add hover effects separately (doesn't interfere with click handlers)
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'translateY(-2px)';
+                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'translateY(0)';
+                btn.style.boxShadow = 'none';
+            });
         });
     };
     reader.readAsDataURL(file);
@@ -1872,12 +1776,15 @@ cropperLibraryLoaded: false,
 // Find this line in your file - it's near the end of all your functions
 // ==================== CROPPER METHOD ====================
 showStandardCropper: function(file) {
-    console.log('🔧 Opening FULL cropper for:', file.name);
+    console.log('🔧 Opening cropper for:', file.name);
     
     // Force remove ALL camera elements first
     const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) cameraSection.remove();
+    if (cameraSection) {
+        cameraSection.remove();
+    }
     
+    // Also remove any stray video elements
     const video = document.getElementById('camera-preview');
     if (video) {
         video.srcObject = null;
@@ -1897,6 +1804,7 @@ showStandardCropper: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
+        // Create modal
         const modalId = 'crop-modal-' + Date.now();
         const modal = document.createElement('div');
         modal.id = modalId;
@@ -1906,273 +1814,78 @@ showStandardCropper: function(file) {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
+            background: black;
             z-index: 9999999;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(8px);
         `;
         
         modal.innerHTML = `
             <div style="
                 background: white;
                 width: 95%;
-                max-width: 750px;
+                max-width: 600px;
                 height: 90vh;
-                border-radius: 24px;
+                border-radius: 16px;
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             ">
                 <!-- Header -->
                 <div style="
-                    background: linear-gradient(135deg, #22c55e, #16a34a);
+                    background: #22c55e;
                     color: white;
-                    padding: 20px 24px;
+                    padding: 16px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-radius: 24px 24px 0 0;
                 ">
-                    <h3 style="margin:0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                        <span>✂️</span> Crop & Edit Receipt
-                    </h3>
+                    <h3 style="margin:0;">✂️ Crop Receipt</h3>
                     <button id="close-${modalId}" style="
-                        background: rgba(255,255,255,0.2);
+                        background: none;
                         border: none;
                         color: white;
-                        font-size: 24px;
+                        font-size: 28px;
                         cursor: pointer;
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s;
+                        width: 44px;
+                        height: 44px;
                     ">&times;</button>
                 </div>
                 
-                <!-- Image Container -->
+                <!-- Image -->
                 <div style="
                     flex: 1;
-                    background: #1a1a2e;
+                    background: #f0f0f0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     overflow: hidden;
-                    position: relative;
-                    min-height: 300px;
                 ">
                     <img id="crop-image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
                 </div>
                 
-                <!-- Green Circular Controls -->
+                <!-- Controls -->
                 <div style="
-                    padding: 20px 24px;
+                    padding: 16px;
                     background: white;
-                    border-top: 1px solid #e5e7eb;
+                    border-top: 1px solid #ddd;
                 ">
-                    <!-- Row 1: Zoom and Rotation Controls -->
                     <div style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 16px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                        margin-bottom: 16px;
                     ">
-                        <button id="zoom-in-${modalId}" class="crop-control-btn" title="Zoom In" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔍+</button>
-                        
-                        <button id="zoom-out-${modalId}" class="crop-control-btn" title="Zoom Out" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔍-</button>
-                        
-                        <button id="rotate-left-${modalId}" class="crop-control-btn" title="Rotate Left" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↺</button>
-                        
-                        <button id="rotate-right-${modalId}" class="crop-control-btn" title="Rotate Right" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↻</button>
-                        
-                        <button id="flip-horizontal-${modalId}" class="crop-control-btn" title="Flip Horizontal" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔄</button>
-                        
-                        <button id="flip-vertical-${modalId}" class="crop-control-btn" title="Flip Vertical" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↕️</button>
-                        
-                        <button id="reset-${modalId}" class="crop-control-btn" title="Reset All" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">⟳</button>
+                        <button id="zoom-in-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍+ Zoom In</button>
+                        <button id="zoom-out-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍- Zoom Out</button>
+                        <button id="rotate-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↻ Rotate</button>
+                        <button id="reset-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔄 Reset</button>
                     </div>
                     
-                    <!-- Row 2: Aspect Ratio Presets -->
-                    <div style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 12px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
-                    ">
-                        <button id="aspect-free-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">Free</button>
-                        <button id="aspect-square-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">⬛ Square (1:1)</button>
-                        <button id="aspect-4-3-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">📱 4:3</button>
-                        <button id="aspect-16-9-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">🎬 16:9</button>
-                    </div>
-                    
-                    <!-- Action Buttons -->
                     <div style="display: flex; gap: 12px;">
-                        <button id="cancel-${modalId}" style="
-                            flex: 1;
-                            padding: 14px;
-                            background: #f5f5f5;
-                            color: #666;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 12px;
-                            font-weight: 600;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">Cancel</button>
-                        <button id="save-${modalId}" style="
-                            flex: 1;
-                            padding: 14px;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            color: white;
-                            border: none;
-                            border-radius: 12px;
-                            font-weight: 600;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">✓ Apply Crop</button>
+                        <button id="cancel-${modalId}" style="flex: 1; padding: 16px; background: #f44336; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancel</button>
+                        <button id="save-${modalId}" style="flex: 1; padding: 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Apply Crop</button>
                     </div>
                 </div>
             </div>
@@ -2198,47 +1911,12 @@ showStandardCropper: function(file) {
                     center: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
-                    background: false,
-                    modal: false,
-                    movable: true,
-                    rotatable: true,
-                    scalable: true,
-                    zoomable: true,
-                    zoomOnWheel: true,
-                    zoomOnTouch: true,
+                    background: false
                 });
-                
-                console.log('✅ Cropper initialized with green circular controls');
             }, 100);
         };
         
-        // Add hover effects to circular buttons
-        const circularBtns = document.querySelectorAll(`#${modalId} .crop-control-btn`);
-        circularBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'scale(1.1)';
-                btn.style.boxShadow = '0 8px 20px rgba(34, 197, 94, 0.4)';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'scale(1)';
-                btn.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.3)';
-            });
-        });
-        
-        // Aspect ratio buttons hover
-        const aspectBtns = document.querySelectorAll(`#${modalId} .aspect-btn`);
-        aspectBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.background = 'rgba(34, 197, 94, 0.1)';
-                btn.style.borderColor = '#22c55e';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.background = '#f5f5f5';
-                btn.style.borderColor = '#e5e7eb';
-            });
-        });
-        
-        // Control handlers
+        // Controls
         document.getElementById(`zoom-in-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.zoom(0.1);
         };
@@ -2247,49 +1925,12 @@ showStandardCropper: function(file) {
             if (this.cropperInstance) this.cropperInstance.zoom(-0.1);
         };
         
-        document.getElementById(`rotate-left-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.rotate(-90);
-        };
-        
-        document.getElementById(`rotate-right-${modalId}`).onclick = () => {
+        document.getElementById(`rotate-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.rotate(90);
         };
         
-        document.getElementById(`flip-horizontal-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                const scaleX = this.cropperInstance.getData().scaleX === -1 ? 1 : -1;
-                this.cropperInstance.scaleX(scaleX);
-            }
-        };
-        
-        document.getElementById(`flip-vertical-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                const scaleY = this.cropperInstance.getData().scaleY === -1 ? 1 : -1;
-                this.cropperInstance.scaleY(scaleY);
-            }
-        };
-        
         document.getElementById(`reset-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.reset();
-            }
-        };
-        
-        // Aspect ratio presets
-        document.getElementById(`aspect-free-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(NaN);
-        };
-        
-        document.getElementById(`aspect-square-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(1);
-        };
-        
-        document.getElementById(`aspect-4-3-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(4/3);
-        };
-        
-        document.getElementById(`aspect-16-9-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(16/9);
+            if (this.cropperInstance) this.cropperInstance.reset();
         };
         
         document.getElementById(`cancel-${modalId}`).onclick = () => {
@@ -2298,8 +1939,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            // Return to simple viewer
-            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`close-${modalId}`).onclick = () => {
@@ -2308,7 +1947,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`save-${modalId}`).onclick = () => {
@@ -2316,23 +1954,20 @@ showStandardCropper: function(file) {
             
             const croppedCanvas = this.cropperInstance.getCroppedCanvas({
                 maxWidth: 1200,
-                maxHeight: 1200,
-                fillColor: '#fff',
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+                maxHeight: 1200
             });
             
             croppedCanvas.toBlob((blob) => {
                 const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
+                const croppedUrl = URL.createObjectURL(blob);
+                
+                this.saveCroppedReceipt(croppedFile, croppedUrl);
                 
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
                 modal.remove();
                 
-                // Show the cropped image in the simple viewer
-                this.showSimpleImageViewer(croppedFile);
-                
-                this.showNotification('✅ Image cropped and ready to save!', 'success');
+                this.showNotification('✅ Image cropped and saved!', 'success');
             }, 'image/jpeg', 0.95);
         };
     };
@@ -3643,68 +3278,21 @@ showQuickActionsView: function() {
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
-    const video = document.getElementById('camera-preview');
-    const canvas = document.getElementById('camera-canvas');
-    const status = document.getElementById('camera-status');
-    const captureBtn = document.getElementById('capture-photo');
+    // ... existing capture code ...
     
-    if (!video || !video.srcObject) {
-        this.showNotification('Camera not ready', 'error');
-        return;
-    }
-    
-    // Disable button during capture
-    this.isCapturing = true;
-    if (captureBtn) {
-        captureBtn.disabled = true;
-        captureBtn.style.opacity = '0.5';
-    }
-    
-    if (status) status.textContent = 'Capturing...';
-    
-    // Set canvas size
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    
-    // Draw video frame
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Flash effect
-    video.style.opacity = '0.7';
-    setTimeout(() => video.style.opacity = '1', 100);
-    
-    // Get image data
     canvas.toBlob((blob) => {
-        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const imageUrl = URL.createObjectURL(blob);
+        // ... existing code ...
         
-        if (status) status.textContent = 'Photo captured!';
-        this.showNotification('📸 Photo captured!', 'success');
+        // ADD THIS LINE right before opening cropper
+        this.stopCamera(); // Stop camera before showing cropper
         
-        // Re-enable button
-        if (captureBtn) {
-            captureBtn.disabled = false;
-            captureBtn.style.opacity = '1';
-        }
-        
-        // ===== CRITICAL: Stop camera BEFORE showing cropper =====
-        this.stopCamera();
-        
-        // ===== FIX: Call showStandardCropper directly instead of window.openCropper =====
         setTimeout(() => {
             // Check if cropper is available
-            if (typeof this.showStandardCropper === 'function') {
+            if (typeof window.openCropper === 'function') {
                 console.log('📷 Opening cropper with captured image');
-                this.showStandardCropper(file);
-            } else {
-                console.warn('⚠️ showStandardCropper not available, using simple viewer');
-                // Fallback to simple viewer if cropper not available
-                this.showSimpleImageViewer(file);
+                // ... rest of cropper code ...
             }
-            this.isCapturing = false;
         }, 200);
-        
     }, 'image/jpeg', 0.9);
 },
 
@@ -3842,31 +3430,36 @@ unload: function() {
         }, 100);
     },
 
-  showCameraInterface: function() {
+   showCameraInterface: function() {
     console.log('📷 Showing camera interface...');
     
-    // Hide other sections
+    const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
-    const cameraSection = document.getElementById('camera-section');
     
     if (uploadSection) uploadSection.style.display = 'none';
     if (quickActionsSection) quickActionsSection.style.display = 'none';
-    
-    // Show camera section
     if (cameraSection) {
         cameraSection.style.display = 'block';
         
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
+        // Quick check if camera might be available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const status = document.getElementById('camera-status');
+            if (status) status.textContent = 'Camera not supported';
+            this.showNotification('Camera not supported in this browser', 'warning');
+            
+            // Show upload option after 3 seconds
+            setTimeout(() => {
+                if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                    this.showUploadInterface();
+                }
+            }, 3000);
+        } else {
             this.initializeCamera();
-        }, 100);
-    } else {
-        console.error('❌ Camera section not found');
-        this.showNotification('Camera section not found', 'error');
+        }
+        
     }
-    
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
@@ -6598,37 +6191,7 @@ unload() {
     
     console.log('✅ Income & Expenses module unloaded');
 }
-
 };
-
- // Add this AFTER the module registration, before the closing script tag
-// ==================== GLOBAL CROPPER HELPER ====================
-window.openCropper = function(imageData, onCropped, fileName) {
-    console.log('📷 Global cropper called');
-    
-    const module = window.IncomeExpensesModule;
-    if (module && module.showStandardCropper) {
-        // Convert dataURL to blob then to file
-        const blob = dataURLtoBlob(imageData);
-        const file = new File([blob], fileName || 'image.jpg', { type: 'image/jpeg' });
-        module.showStandardCropper(file);
-    } else {
-        console.error('❌ IncomeExpensesModule not available or showStandardCropper missing');
-    }
-};
-
-// Helper function to convert dataURL to Blob
-function dataURLtoBlob(dataURL) {
-    const arr = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], { type: mime });
-}
 
 // =============== Register with FarmModules framework ===================
 if (window.FarmModules) {
