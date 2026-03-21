@@ -4645,7 +4645,7 @@ unload: function() {
         }
     },
 
-    // ==================== UI RENDERING ====================
+       // ==================== UI RENDERING ====================
     renderModule() {
         if (!this.element) return;
 
@@ -4677,11 +4677,6 @@ unload: function() {
 
 .popout-modal.hidden {
     display: none !important;
-}
-
-/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal above */
-#import-receipts-modal {
-    /* All styles moved to .popout-modal above */
 }
 
 /* 2. MODAL CONTENT */
@@ -4811,18 +4806,13 @@ unload: function() {
 
 /* CANCEL BUTTON - USING YOUR VARIABLES */
 .popout-modal-footer .btn-outline {
-    /* Use your theme variables */
     background-color: var(--modal-footer-bg) !important;
     color: var(--modal-footer-text) !important;
     border: 1px solid var(--modal-input-border) !important;
-    
-    /* Consistent styling */
     border-radius: var(--radius-lg) !important;
     font-weight: 600 !important;
     padding: 12px 26px !important;
     transition: var(--transition-normal) !important;
-    
-    /* Remove any transform that might cause flickering */
     transform: none !important;
 }
 
@@ -4830,14 +4820,13 @@ unload: function() {
     background-color: var(--modal-btn-text-hover) !important;
     border-color: var(--text-secondary) !important;
     color: var(--modal-footer-text) !important;
-    /* Optional: subtle shadow instead of transform */
     box-shadow: var(--shadow-sm) !important;
 }
 
 /* Process Receipts button */
 #process-receipts-btn {
-    position: relative !important; /* For the badge positioning */
-    overflow: visible !important; /* Let badge show outside */
+    position: relative !important;
+    overflow: visible !important;
 }
 
 /* Process Receipts count badge */
@@ -4855,13 +4844,12 @@ unload: function() {
     box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
     min-width: 22px !important;
     height: 22px !important;
-    display: flex !important; /* ← Remove this inline display */
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     z-index: 10 !important;
 }
 
-/* Add this for hiding the badge */
 #process-receipts-count.hidden {
     display: none !important;
 }
@@ -4873,7 +4861,7 @@ unload: function() {
 /* ========== Responsive adjustments ========== */
 @media (max-width: 767px) {
     .popout-modal-footer .btn {
-        padding: 14px 16px !important; /* Slightly taller on mobile */
+        padding: 14px 16px !important;
         font-size: 15px !important;
     }
     
@@ -4931,371 +4919,367 @@ unload: function() {
     display: none !important;
 }
 
+/* ==================== BASE STYLES ==================== */
+.import-receipts-container { padding: 20px; }
+.section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+.card-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.card-icon { font-size: 32px; margin-bottom: 4px; }
+.card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.card-subtitle { font-size: 12px; color: var(--text-secondary); }
 
-                
-                
-                /* ==================== BASE STYLES ==================== */
-                .import-receipts-container { padding: 20px; }
-                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
-                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
-                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
-                .card-icon { font-size: 32px; margin-bottom: 4px; }
-                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
-                
-                .camera-section .glass-card { margin-bottom: 24px; }
-                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
-                .camera-controls { display: flex; gap: 12px; justify-content: center; }
-                
-                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
-                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
-                .upload-icon { font-size: 48px; margin-bottom: 16px; }
-                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
-                
-                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
-                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
-                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
-                
-                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
-                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
-                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-                .receipt-info { flex: 1; }
-                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-                .receipt-status { font-weight: 600; }
-                .status-pending { color: #f59e0b; }
-                .status-processed { color: #10b981; }
-                .status-error { color: #ef4444; }
-                
-                .empty-state { text-align: center; padding: 40px 20px; }
-                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-                .header-flex { display: flex; justify-content: space-between; align-items: center; }
-                
-                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
-                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
-                
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
-                
-                #upload-receipt-btn * { pointer-events: none; }
-                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
-                
-                #receipt-upload-area:hover {
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
-                }
-                
-                #receipt-preview-container {
-                    transition: all 0.3s ease;
-                }
-                
-                #receipt-preview-container.hidden {
-                    display: none !important;
-                }
-                
-                #image-preview.hidden {
-                    display: none !important;
-                }
-                
-                .popout-modal {
-                    z-index: 9999;
-                }
-                
-                .receipt-preview-item {
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-top: 8px;
-                    border: 1px solid var(--glass-border);
-                }
+.camera-section .glass-card { margin-bottom: 24px; }
+.camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+.camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+.camera-controls { display: flex; gap: 12px; justify-content: center; }
 
-                .camera-preview {
-                    width: 100%;
-                    height: 400px;
-                    background: #000;
-                    border-radius: 12px;
-                    overflow: hidden;
-                    margin-bottom: 20px;
-                    position: relative;
-                    display: block !important;
-                }
-                
-                .camera-preview video {
-                    width: 100% !important;
-                    height: 100% !important;
-                    object-fit: cover;
-                    display: block !important;
-                    background: #000 !important;
-                }
-                
-                #camera-section {
-                    display: none;
-                }
-                
-                #camera-section[style*="display: block"],
-                #camera-section[style*="display:block"] {
-                    display: block !important;
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                }
-                
-                #camera-option {
-                    border: 2px solid transparent;
-                    transition: all 0.2s;
-                }
-                
-                #camera-option:hover {
-                    border-color: var(--primary-color);
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
+.upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
+.upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
+.upload-icon { font-size: 48px; margin-bottom: 16px; }
+.upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+.upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
 
-                @keyframes pulse {
-                    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-                    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-                }
+.upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+.progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
+.progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
 
-                .new-receipt {
-                    animation: pulse 2s infinite;
-                }
+.receipts-grid { display: flex; flex-direction: column; gap: 12px; }
+.receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
+.receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+.receipt-info { flex: 1; }
+.receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.receipt-status { font-weight: 600; }
+.status-pending { color: #f59e0b; }
+.status-processed { color: #10b981; }
+.status-error { color: #ef4444; }
 
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translate(-50%, -40%); }
-                    to { opacity: 1; transform: translate(-50%, -50%); }
-                }
+.empty-state { text-align: center; padding: 40px 20px; }
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.header-flex { display: flex; justify-content: space-between; align-items: center; }
 
-                .delete-receipt-btn {
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .delete-receipt-btn:hover {
-                    background-color: #dc2626 !important;
-                    color: white !important;
-                }
-                .btn-danger {
-                    background: #fef2f2;
-                    color: #dc2626;
-                    border: 1px solid #fecaca;
-                }
-                .btn-danger:hover {
-                    background: #fee2e2;
-                    border-color: #fca5a5;
-                }
-                .btn-sm {
-                    padding: 6px 12px;
-                    font-size: 14px;
-                    border-radius: 6px;
-                }
+.receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
+.firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
 
-                .delete-receipt-btn.deleting {
-                    opacity: 0.7;
-                    cursor: not-allowed;
-                    background-color: #9ca3af !important;
-                }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
 
-                .receipt-modal-scrollable {
-                    max-height: 70vh !important;
-                    overflow-y: auto !important;
-                    padding: 20px !important;
-                }
+#upload-receipt-btn * { pointer-events: none; }
+.firebase-badge, .receipt-queue-badge { pointer-events: none; }
 
-                .receipt-content-wrapper {
-                    max-width: 800px !important;
-                    margin: 0 auto !important;
-                    white-space: pre-wrap !important;
-                    word-wrap: break-word !important;
-                    line-height: 1.5 !important;
-                    font-family: monospace !important;
-                    font-size: 14px !important;
-                }
+#receipt-upload-area:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color)10;
+}
 
-                .receipt-text-container {
-                    overflow-x: hidden !important;
-                    padding-right: 10px !important;
-                }
+#receipt-preview-container {
+    transition: all 0.3s ease;
+}
 
-                .receipt-modal-scrollable::-webkit-scrollbar {
-                    width: 8px !important;
-                }
+#receipt-preview-container.hidden {
+    display: none !important;
+}
 
-                .receipt-modal-scrollable::-webkit-scrollbar-track {
-                    background: rgba(0, 0, 0, 0.1) !important;
-                    border-radius: 4px !important;
-                }
+#image-preview.hidden {
+    display: none !important;
+}
 
-                .receipt-modal-scrollable::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.3) !important;
-                    border-radius: 4px !important;
-                }
+.popout-modal {
+    z-index: 9999;
+}
 
-                .receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.4) !important;
-                }
+.receipt-preview-item {
+    background: var(--glass-bg);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid var(--glass-border);
+}
 
-                @media (max-width: 768px) {
-                    .receipt-modal-scrollable {
-                        max-height: 80vh !important;
-                        padding: 15px !important;
-                    }
-                    
-                    .receipt-content-wrapper {
-                        font-size: 12px !important;
-                    }
-                }
+.camera-preview {
+    width: 100%;
+    height: 400px;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    position: relative;
+    display: block !important;
+}
 
-                @media (max-width: 480px) {
-                    .receipt-modal-scrollable {
-                        max-height: 85vh !important;
-                        padding: 10px !important;
-                    }
-                }
+.camera-preview video {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    display: block !important;
+    background: #000 !important;
+}
 
-                .process-receipt-btn,
-                .delete-receipt-btn {
-                    display: inline-flex !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                    position: relative !important;
-                    z-index: 10 !important;
-                }
+#camera-section {
+    display: none;
+}
 
-                @media (min-width: 769px) {
-                    .pending-receipt-item {
-                        position: relative;
-                        padding-right: 200px !important;
-                    }
-                    
-                    .receipt-actions {
-                        position: absolute !important;
-                        right: 16px !important;
-                        top: 50% !important;
-                        transform: translateY(-50%) !important;
-                        display: flex !important;
-                        gap: 8px !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        z-index: 100 !important;
-                    }
-                    
-                    .receipt-actions .btn {
-                        min-width: 80px !important;
-                        height: 36px !important;
-                        display: inline-flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        white-space: nowrap !important;
-                    }
-                }
+#camera-section[style*="display: block"],
+#camera-section[style*="display:block"] {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
 
-                @media (max-width: 768px) {
-                    .pending-receipt-item {
-                        flex-direction: column;
-                        align-items: stretch;
-                        gap: 12px;
-                    }
-                    
-                    .receipt-actions {
-                        display: flex !important;
-                        justify-content: flex-end;
-                        gap: 8px;
-                        margin-top: 12px;
-                    }
-                }
+#camera-option {
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
 
-                .receipt-card .receipt-actions,
-                .pending-receipt-item .receipt-actions {
-                    overflow: visible !important;
-                    clip: auto !important;
-                    clip-path: none !important;
-                    height: auto !important;
-                    width: auto !important;
-                }
+#camera-option:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
-                .upload-area {
-                    min-height: 200px !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    background: var(--glass-bg) !important;
-                    border: 2px dashed var(--glass-border) !important;
-                    border-radius: 12px !important;
-                    padding: 40px 20px !important;
-                    cursor: pointer !important;
-                    transition: all 0.3s ease !important;
-                }
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
 
-                .upload-area:hover {
-                    border-color: var(--primary-color) !important;
-                    background: var(--primary-color)10 !important;
-                }
+.new-receipt {
+    animation: pulse 2s infinite;
+}
 
-                .upload-icon {
-                    font-size: 64px !important;
-                    margin-bottom: 16px !important;
-                    color: var(--text-secondary) !important;
-                }
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
 
-                .upload-section, .camera-section, .recent-section {
-                    min-height: 100px !important;
-                    margin-bottom: 24px !important;
-                }
+.delete-receipt-btn {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.delete-receipt-btn:hover {
+    background-color: #dc2626 !important;
+    color: white !important;
+}
+.btn-danger {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+.btn-danger:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+}
 
-                .glass-card {
-                    min-height: 150px !important;
-                }
+.delete-receipt-btn.deleting {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: #9ca3af !important;
+}
 
-                .upload-system-container {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-                    max-width: 100%;
-                    background: #ffffff;
-                    border-radius: 12px;
-                    padding: 20px;
-                    border: 1px solid #e5e7eb;
-                }
+.receipt-modal-scrollable {
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+}
 
-                .upload-dropzone {
-                    border: 2px dashed #d1d5db;
-                    border-radius: 10px;
-                    padding: 40px 20px;
-                    text-align: center;
-                    background: #f9fafb;
-                    margin-bottom: 20px;
-                    cursor: pointer;
-                }
+.receipt-content-wrapper {
+    max-width: 800px !important;
+    margin: 0 auto !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    line-height: 1.5 !important;
+    font-family: monospace !important;
+    font-size: 14px !important;
+}
 
-                .upload-dropzone:hover {
-                    border-color: #4f46e5;
-                    background: #f0f1ff;
-                }
+.receipt-text-container {
+    overflow-x: hidden !important;
+    padding-right: 10px !important;
+}
 
-                .dropzone-icon {
-                    font-size: 48px;
-                    color: #9ca3af;
-                    margin-bottom: 16px;
-                }
+.receipt-modal-scrollable::-webkit-scrollbar {
+    width: 8px !important;
+}
 
-                .dropzone-title {
-                    font-size: 18px;
-                    font-weight: 600;
-                    margin-bottom: 8px;
-                    color: #374151;
-                }
+.receipt-modal-scrollable::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 4px !important;
+}
 
-                .dropzone-subtitle {
-                    color: #6b7280;
-                    margin-bottom: 20px;
-                }
+.receipt-modal-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+.receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+    .receipt-modal-scrollable {
+        max-height: 80vh !important;
+        padding: 15px !important;
+    }
+    
+    .receipt-content-wrapper {
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .receipt-modal-scrollable {
+        max-height: 85vh !important;
+        padding: 10px !important;
+    }
+}
+
+.process-receipt-btn,
+.delete-receipt-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+@media (min-width: 769px) {
+    .pending-receipt-item {
+        position: relative;
+        padding-right: 200px !important;
+    }
+    
+    .receipt-actions {
+        position: absolute !important;
+        right: 16px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        display: flex !important;
+        gap: 8px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 100 !important;
+    }
+    
+    .receipt-actions .btn {
+        min-width: 80px !important;
+        height: 36px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .pending-receipt-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .receipt-actions {
+        display: flex !important;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
+    }
+}
+
+.receipt-card .receipt-actions,
+.pending-receipt-item .receipt-actions {
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    height: auto !important;
+    width: auto !important;
+}
+
+.upload-area {
+    min-height: 200px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--glass-bg) !important;
+    border: 2px dashed var(--glass-border) !important;
+    border-radius: 12px !important;
+    padding: 40px 20px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.upload-area:hover {
+    border-color: var(--primary-color) !important;
+    background: var(--primary-color)10 !important;
+}
+
+.upload-icon {
+    font-size: 64px !important;
+    margin-bottom: 16px !important;
+    color: var(--text-secondary) !important;
+}
+
+.upload-section, .camera-section, .recent-section {
+    min-height: 100px !important;
+    margin-bottom: 24px !important;
+}
+
+.glass-card {
+    min-height: 150px !important;
+}
+
+.upload-system-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    max-width: 100%;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.upload-dropzone {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f9fafb;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.upload-dropzone:hover {
+    border-color: #4f46e5;
+    background: #f0f1ff;
+}
+
+.dropzone-icon {
+    font-size: 48px;
+    color: #9ca3af;
+    margin-bottom: 16px;
+}
+
+.dropzone-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #374151;
+}
+
+.dropzone-subtitle {
+    color: #6b7280;
+    margin-bottom: 20px;
+}
+
 /* ==================== CROPPER STYLES - GREEN THEME WITH CIRCULAR BUTTONS ==================== */
-
-/* Cropper touch interaction fixes */
 #receipt-cropper-modal {
     touch-action: none;
 }
@@ -5309,7 +5293,6 @@ unload: function() {
     height: auto;
 }
 
-/* Cropper Container */
 .cropper-container {
     touch-action: none !important;
     max-height: 55vh !important;
@@ -5317,35 +5300,29 @@ unload: function() {
     background: #1a1a2e !important;
 }
 
-/* Cropper Canvas */
 .cropper-canvas {
     background: #1a1a2e !important;
 }
 
-/* Green Crop Box Outline */
 .cropper-view-box {
     outline: 2px solid #22c55e !important;
     outline-color: rgba(34, 197, 94, 0.75) !important;
 }
 
-/* Green Crop Lines */
 .cropper-line {
     background-color: #22c55e !important;
 }
 
-/* Green Dotted Guide Lines */
 .cropper-dashed {
     border-color: #22c55e !important;
     opacity: 0.5 !important;
 }
 
-/* Green Center Crosshair */
 .cropper-center::before,
 .cropper-center::after {
     background-color: #22c55e !important;
 }
 
-/* GREEN CIRCULAR CROP HANDLES */
 .cropper-point {
     width: 16px !important;
     height: 16px !important;
@@ -5362,7 +5339,6 @@ unload: function() {
     background: #16a34a !important;
 }
 
-/* Large corner handle (bottom right) */
 .cropper-point.point-se {
     width: 24px !important;
     height: 24px !important;
@@ -5371,25 +5347,17 @@ unload: function() {
     opacity: 1 !important;
 }
 
-.cropper-point.point-se:hover {
-    transform: scale(1.2) !important;
-    background: #16a34a !important;
-}
-
-/* Mobile - larger touch targets */
 @media (max-width: 768px) {
     .cropper-point {
         width: 28px !important;
         height: 28px !important;
     }
-    
     .cropper-point.point-se {
         width: 36px !important;
         height: 36px !important;
     }
 }
 
-/* GREEN CIRCULAR CONTROL BUTTONS */
 .crop-control-btn {
     width: 56px !important;
     height: 56px !important;
@@ -5417,7 +5385,6 @@ unload: function() {
     transform: scale(0.95) !important;
 }
 
-/* Aspect Ratio Buttons */
 .aspect-btn {
     padding: 8px 16px !important;
     background: #f5f5f5 !important;
@@ -5442,7 +5409,6 @@ unload: function() {
     border-color: transparent !important;
 }
 
-/* Cancel and Apply Buttons */
 #cancel-receipt-crop, 
 #apply-receipt-crop {
     min-height: 48px;
@@ -5484,7 +5450,6 @@ unload: function() {
     transform: scale(0.98);
 }
 
-/* Cropper container sizing */
 #cropper-container {
     touch-action: none;
     background: #1a1a2e;
@@ -5497,43 +5462,36 @@ unload: function() {
     border-radius: 12px;
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
     .crop-control-btn {
         width: 48px !important;
         height: 48px !important;
         font-size: 20px !important;
     }
-    
     .aspect-btn {
         padding: 6px 12px !important;
         font-size: 11px !important;
     }
-    
     #cropper-container {
         min-height: 300px;
         max-height: 45vh;
     }
-    
     .cropper-container {
         max-height: 45vh !important;
     }
 }
 
-/* Small screens */
 @media (max-width: 480px) {
     .crop-control-btn {
         width: 44px !important;
         height: 44px !important;
         font-size: 18px !important;
     }
-    
     .crop-control-buttons {
         gap: 8px !important;
     }
 }
 
-/* Animation for modal appearance */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -5737,23 +5695,18 @@ unload: function() {
                                         
                                         <!-- Expense Categories -->
                                         <optgroup label="💸 Expenses">
-                                            <!-- Animal-specific feed -->
                                             <option value="feed-broilers">Feed - Broilers</option>
                                             <option value="feed-layers">Feed - Layers</option>
                                             <option value="feed-ducks">Feed - Ducks</option>
                                             <option value="feed-sheep">Feed - Sheep</option>
                                             <option value="feed-goats">Feed - Goats</option>
                                             <option value="feed-rabbits">Feed - Rabbits</option>
-                                            
-                                            <!-- Medical/Vet by animal -->
                                             <option value="medical-broilers">Medical - Broilers</option>
                                             <option value="medical-layers">Medical - Layers</option>
                                             <option value="medical-ducks">Medical - Ducks</option>
                                             <option value="medical-sheep">Medical - Sheep</option>
                                             <option value="medical-goats">Medical - Goats</option>
                                             <option value="medical-rabbits">Medical - Rabbits</option>
-                                            
-                                            <!-- General farm expenses -->
                                             <option value="bedding">Bedding/Litter</option>
                                             <option value="equipment">Equipment</option>
                                             <option value="labor">Labor</option>
@@ -5851,10 +5804,12 @@ unload: function() {
                         </form>
                     </div>
                     <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
-                    <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
-                    <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
-                    <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
+                        <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
+                        <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
+                    </div>
                 </div>
+            </div>
         `;
 
         this.setupEventListeners();
