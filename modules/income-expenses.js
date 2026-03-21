@@ -1489,8 +1489,8 @@ capturePhoto: function() {
     }, 'image/jpeg', 0.9);
 },
 
-    // ============ SIMPLE IMAGE VIEWER ==============
- showSimpleImageViewer: function(file) {
+   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
+showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
     // Force remove camera
@@ -1535,75 +1535,98 @@ capturePhoto: function() {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✎ Edit Image</button>
-                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✓ Save</button>
-                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">↺ Retake</button>
-                    <button id="delete-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">🗑️ Delete</button>
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✓ Save to Receipt</button>
+                    
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✎ Edit Crop</button>
+                    
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">↺ Retake Photo</button>
+                    
+                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✕ Cancel</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Get button references
-        const editBtn = document.getElementById('edit-image-btn');
-        const saveBtn = document.getElementById('save-image-btn');
-        const retakeBtn = document.getElementById('retake-image-btn');
-        const deleteBtn = document.getElementById('delete-image-btn');
-        
         // Add hover effects
-        const allButtons = [editBtn, saveBtn, retakeBtn, deleteBtn];
-        allButtons.forEach(btn => {
-            if (btn) {
-                btn.addEventListener('mouseenter', () => {
-                    btn.style.transform = 'translateY(-2px)';
-                    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
-                });
-                btn.addEventListener('mouseleave', () => {
-                    btn.style.transform = 'translateY(0)';
-                    btn.style.boxShadow = 'none';
-                });
-            }
+        const buttons = modal.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'translateY(-2px)';
+                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'translateY(0)';
+                btn.style.boxShadow = 'none';
+            });
         });
         
-        // Edit button - open cropper
-        if (editBtn) {
-            editBtn.onclick = () => {
-                console.log('✎ Edit button clicked - opening cropper');
-                modal.remove();
-                this.showStandardCropper(file);
-            };
-        }
-        
         // Save button - save to receipt
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                console.log('💾 Save button clicked');
-                modal.remove();
-                const imageUrl = URL.createObjectURL(file);
-                this.saveReceiptFromFile(file, imageUrl);
+        document.getElementById('save-image-btn').onclick = () => {
+            console.log('💾 Saving image to receipt');
+            modal.remove();
+            
+            // Call the original save function
+            const imageUrl = URL.createObjectURL(file);
+            this.saveReceiptFromFile(file, imageUrl);
+        };
+        
+        // Edit button - go back to cropper
+        document.getElementById('edit-image-btn').onclick = () => {
+            console.log('✎ Editing crop again');
+            modal.remove();
+            
+            // Re-open cropper with the same image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (typeof window.openCropper === 'function') {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Re-cropped file received');
+                        
+                        // Show viewer again with new cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                }
             };
-        }
+            reader.readAsDataURL(file);
+        };
         
         // Retake button - go back to camera
-        if (retakeBtn) {
-            retakeBtn.onclick = () => {
-                console.log('↺ Retake button clicked');
-                modal.remove();
-                this.stopCamera();
-                this.showCameraInterface();
-            };
-        }
+        document.getElementById('retake-image-btn').onclick = () => {
+            console.log('↺ Retaking photo');
+            modal.remove();
+            
+            // Reopen the import modal and show camera
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                // Trigger camera option click
+                setTimeout(() => {
+                    document.getElementById('camera-option')?.click();
+                }, 100);
+            }
+        };
         
-        // Delete button - discard image
-        if (deleteBtn) {
-            deleteBtn.onclick = () => {
-                console.log('🗑️ Delete button clicked');
-                modal.remove();
-                this.showNotification('Image discarded', 'info');
-                this.showImportReceiptsModal();
-            };
-        }
+        // Cancel button - go back to main menu
+        document.getElementById('cancel-image-btn').onclick = () => {
+            console.log('✕ Cancelled');
+            modal.remove();
+            
+            // Show the import modal with quick actions
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                const quickActions = document.getElementById('quick-actions-view');
+                if (quickActions) quickActions.style.display = 'block';
+            }
+        };
     };
     reader.readAsDataURL(file);
 },
@@ -1660,7 +1683,7 @@ cropperLibraryLoaded: false,
     
 // Find this line in your file - it's near the end of all your functions
 // ==================== CROPPER METHOD ====================
-/*showStandardCropper: function(file) {
+showStandardCropper: function(file) {
     console.log('🔧 Opening cropper for:', file.name);
     
     // Force remove ALL camera elements first
@@ -1857,162 +1880,6 @@ cropperLibraryLoaded: false,
         };
     };
     
-    reader.readAsDataURL(file);
-}, */
-
-    // ==================== FULL CROPPER METHOD ====================
-showStandardCropper: function(file) {
-    console.log('🔧 Opening FULL cropper for:', file.name);
-    
-    // Force remove ALL camera elements first
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) cameraSection.remove();
-    
-    const video = document.getElementById('camera-preview');
-    if (video) {
-        video.srcObject = null;
-        video.remove();
-    }
-    
-    const importModal = document.getElementById('import-receipts-modal');
-    if (importModal) {
-        importModal.style.display = 'none';
-        importModal.classList.add('hidden');
-    }
-    
-    this.stopCamera();
-    this.currentImageFile = file;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const imageUrl = e.target.result;
-        const modalId = 'crop-modal-' + Date.now();
-        const modal = document.createElement('div');
-        modal.id = modalId;
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 9999999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(8px);
-            overflow-y: auto;
-            padding: 20px;
-            box-sizing: border-box;
-        `;
-        
-        modal.innerHTML = `
-            <div style="background: white; width: 95%; max-width: 800px; max-height: 90vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); margin: auto;">
-                <div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 24px 24px 0 0;">
-                    <h3 style="margin:0; font-size: 20px;">✂️ Crop & Edit Receipt</h3>
-                    <button id="close-${modalId}" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; width: 40px; height: 40px; border-radius: 50%;">&times;</button>
-                </div>
-                <div style="flex: 1; background: #1a1a2e; display: flex; align-items: center; justify-content: center; overflow: auto; min-height: 300px; padding: 20px;">
-                    <img id="crop-image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
-                </div>
-                <div style="padding: 20px 24px; background: white; border-top: 1px solid #e5e7eb;">
-                    <div style="display: flex; justify-content: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <button id="zoom-in-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">🔍+</button>
-                        <button id="zoom-out-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">🔍-</button>
-                        <button id="rotate-left-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">↺</button>
-                        <button id="rotate-right-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">↻</button>
-                        <button id="flip-horizontal-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">🔄</button>
-                        <button id="flip-vertical-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">↕️</button>
-                        <button id="reset-${modalId}" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #22c55e, #16a34a); border: none; color: white; font-size: 24px; cursor: pointer;">⟳</button>
-                    </div>
-                    <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
-                        <button id="aspect-free-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">Free</button>
-                        <button id="aspect-square-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">Square (1:1)</button>
-                        <button id="aspect-4-3-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">4:3</button>
-                        <button id="aspect-16-9-${modalId}" style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #e5e7eb; border-radius: 20px; cursor: pointer;">16:9</button>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button id="cancel-${modalId}" style="flex: 1; padding: 14px; background: #f5f5f5; color: #666; border: 1px solid #e5e7eb; border-radius: 12px; cursor: pointer;">Cancel</button>
-                        <button id="save-${modalId}" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; border: none; border-radius: 12px; cursor: pointer;">✓ Apply Crop</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        const img = document.getElementById(`crop-image-${modalId}`);
-        
-        img.onload = () => {
-            setTimeout(() => {
-                if (this.cropperInstance) this.cropperInstance.destroy();
-                this.cropperInstance = new Cropper(img, {
-                    aspectRatio: NaN,
-                    viewMode: 1,
-                    dragMode: 'crop',
-                    autoCropArea: 0.8,
-                    guides: true,
-                    center: true,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    background: false,
-                    movable: true,
-                    rotatable: true,
-                    scalable: true,
-                    zoomable: true,
-                    zoomOnWheel: true,
-                    zoomOnTouch: true,
-                });
-            }, 100);
-        };
-        
-        // Control handlers
-        document.getElementById(`zoom-in-${modalId}`).onclick = () => this.cropperInstance?.zoom(0.1);
-        document.getElementById(`zoom-out-${modalId}`).onclick = () => this.cropperInstance?.zoom(-0.1);
-        document.getElementById(`rotate-left-${modalId}`).onclick = () => this.cropperInstance?.rotate(-90);
-        document.getElementById(`rotate-right-${modalId}`).onclick = () => this.cropperInstance?.rotate(90);
-        document.getElementById(`flip-horizontal-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                const scaleX = this.cropperInstance.getData().scaleX === -1 ? 1 : -1;
-                this.cropperInstance.scaleX(scaleX);
-            }
-        };
-        document.getElementById(`flip-vertical-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                const scaleY = this.cropperInstance.getData().scaleY === -1 ? 1 : -1;
-                this.cropperInstance.scaleY(scaleY);
-            }
-        };
-        document.getElementById(`reset-${modalId}`).onclick = () => this.cropperInstance?.reset();
-        document.getElementById(`aspect-free-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(NaN);
-        document.getElementById(`aspect-square-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(1);
-        document.getElementById(`aspect-4-3-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(4/3);
-        document.getElementById(`aspect-16-9-${modalId}`).onclick = () => this.cropperInstance?.setAspectRatio(16/9);
-        
-        document.getElementById(`cancel-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.destroy();
-            modal.remove();
-            this.showSimpleImageViewer(file);
-        };
-        
-        document.getElementById(`close-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.destroy();
-            modal.remove();
-            this.showSimpleImageViewer(file);
-        };
-        
-        document.getElementById(`save-${modalId}`).onclick = () => {
-            if (!this.cropperInstance) return;
-            const croppedCanvas = this.cropperInstance.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
-            croppedCanvas.toBlob((blob) => {
-                const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
-                this.cropperInstance.destroy();
-                modal.remove();
-                this.showSimpleImageViewer(croppedFile);
-                this.showNotification('✅ Image cropped and ready to save!', 'success');
-            }, 'image/jpeg', 0.95);
-        };
-    };
     reader.readAsDataURL(file);
 },
     
@@ -4388,7 +4255,6 @@ unload: function() {
     },
 
     // ==================== UI RENDERING ====================
-// ==================== UI RENDERING ====================
 renderModule() {
     if (!this.element) return;
 
@@ -4397,28 +4263,375 @@ renderModule() {
     const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
     this.element.innerHTML = `
+        <style>
+            /* ==================== MODAL STYLES ==================== */
+            .popout-modal {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: rgba(0, 0, 0, 0.85) !important;
+                backdrop-filter: blur(8px) !important;
+                z-index: 99999 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 20px !important;
+                box-sizing: border-box !important;
+                overflow: auto !important;
+            }
+            .popout-modal.hidden { display: none !important; }
+            
+            .popout-modal-content {
+                background: white !important;
+                border-radius: 20px !important;
+                max-width: 600px !important;
+                width: 100% !important;
+                max-height: 85vh !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+                margin: auto !important;
+            }
+            #transaction-modal .popout-modal-content { max-width: 650px !important; }
+            #import-receipts-modal .popout-modal-content { max-width: 800px !important; }
+            
+            .popout-modal-header {
+                background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+                padding: 20px 24px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                flex-shrink: 0 !important;
+                border-radius: 20px 20px 0 0 !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+            }
+            .popout-modal-title {
+                margin: 0 !important;
+                font-size: 1.25rem !important;
+                font-weight: 600 !important;
+                color: white !important;
+            }
+            .popout-modal-close {
+                background: rgba(255, 255, 255, 0.2) !important;
+                border: none !important;
+                color: white !important;
+                font-size: 24px !important;
+                cursor: pointer !important;
+                width: 36px !important;
+                height: 36px !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.2s !important;
+            }
+            .popout-modal-close:hover {
+                background: rgba(255, 255, 255, 0.3) !important;
+                transform: scale(1.05) !important;
+            }
+            
+            .popout-modal-body {
+                padding: 24px !important;
+                overflow-y: auto !important;
+                flex: 1 !important;
+                background: white !important;
+            }
+            
+            .popout-modal-footer {
+                padding: 16px 24px !important;
+                border-top: 1px solid #e5e7eb !important;
+                display: flex !important;
+                gap: 12px !important;
+                justify-content: flex-end !important;
+                align-items: center !important;
+                flex-shrink: 0 !important;
+                background: white !important;
+                border-radius: 0 0 20px 20px !important;
+            }
+            .popout-modal-footer .btn-outline { margin-right: auto !important; }
+            .popout-modal-footer .btn-primary { margin-left: auto !important; }
+            
+            /* ==================== IMPORT RECEIPTS MODAL STYLES ==================== */
+            .import-receipts-container { padding: 0 !important; background: white !important; }
+            .section-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .card-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+            .card-button {
+                background: #f8fafc;
+                border: 2px solid #e2e8f0;
+                border-radius: 16px;
+                padding: 24px 16px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+            .card-button:hover {
+                transform: translateY(-4px);
+                border-color: #22c55e;
+                background: rgba(34, 197, 94, 0.05);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            }
+            .card-icon { font-size: 48px; margin-bottom: 4px; }
+            .card-title { font-size: 16px; font-weight: 600; color: #1f2937; }
+            .card-subtitle { font-size: 12px; color: #6b7280; }
+            
+            /* Camera Section */
+            .camera-section { margin-bottom: 24px; }
+            .camera-preview {
+                width: 100%;
+                height: 400px;
+                background: #000;
+                border-radius: 16px;
+                overflow: hidden;
+                margin-bottom: 16px;
+                position: relative;
+            }
+            .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+            .camera-controls {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+                margin-top: 16px;
+            }
+            .camera-controls .btn { padding: 12px 24px; border-radius: 40px; font-weight: 600; }
+            .camera-status {
+                font-size: 12px;
+                color: #6b7280;
+                margin-bottom: 8px;
+                text-align: center;
+            }
+            
+            /* Upload Section */
+            .upload-system-container {
+                background: #ffffff;
+                border-radius: 16px;
+                padding: 20px;
+                border: 1px solid #e5e7eb;
+            }
+            .upload-dropzone {
+                border: 2px dashed #d1d5db;
+                border-radius: 16px;
+                padding: 48px 24px;
+                text-align: center;
+                background: #f9fafb;
+                margin-bottom: 24px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .upload-dropzone:hover {
+                border-color: #22c55e;
+                background: rgba(34, 197, 94, 0.05);
+                transform: translateY(-2px);
+            }
+            .upload-dropzone.drag-over {
+                border-color: #22c55e;
+                background: rgba(34, 197, 94, 0.1);
+                border-style: solid;
+            }
+            .dropzone-icon { font-size: 64px; color: #9ca3af; margin-bottom: 16px; }
+            .dropzone-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #374151; }
+            .dropzone-subtitle { color: #6b7280; margin-bottom: 20px; font-size: 14px; }
+            .file-types { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+            .file-type-badge {
+                background: #e5e7eb;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                color: #4b5563;
+            }
+            
+            /* Uploaded Files */
+            .uploaded-files-container { margin-top: 24px; }
+            .files-title {
+                font-size: 16px;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .badge {
+                background: #22c55e;
+                color: white;
+                padding: 2px 8px;
+                border-radius: 20px;
+                font-size: 12px;
+            }
+            .files-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                color: #9ca3af;
+            }
+            .empty-state p { margin-top: 8px; font-size: 14px; }
+            
+            /* Recent Receipts */
+            .recent-section { margin-top: 24px; }
+            .receipts-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                max-height: 300px;
+                overflow-y: auto;
+            }
+            .receipt-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: #f8fafc;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                transition: all 0.2s;
+            }
+            .receipt-card:hover {
+                border-color: #22c55e;
+                background: white;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+            .receipt-preview {
+                width: 60px;
+                height: 60px;
+                border-radius: 8px;
+                overflow: hidden;
+                background: #f1f5f9;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .receipt-preview img { width: 100%; height: 100%; object-fit: cover; }
+            .file-icon { font-size: 32px; }
+            .receipt-info { flex: 1; }
+            .receipt-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 4px;
+            }
+            .receipt-meta {
+                display: flex;
+                gap: 8px;
+                font-size: 12px;
+                color: #6b7280;
+            }
+            .receipt-status { font-weight: 600; }
+            .status-pending { color: #f59e0b; }
+            .status-processed { color: #10b981; }
+            
+            /* Pending Receipts */
+            #pending-receipts-section { margin-bottom: 24px; }
+            .pending-receipt-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 16px;
+                background: #fef3c7;
+                border: 1px solid #fde047;
+                border-radius: 12px;
+                margin-bottom: 12px;
+            }
+            .receipt-actions { display: flex; gap: 8px; }
+            .btn-sm { padding: 6px 12px; font-size: 14px; border-radius: 8px; }
+            
+            /* Back Button */
+            #back-to-main-view {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 16px;
+                background: #f1f5f9;
+                border: 1px solid #e2e8f0;
+                border-radius: 40px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            #back-to-main-view:hover {
+                background: #e2e8f0;
+                transform: translateX(-2px);
+            }
+            
+            /* Mobile Responsive */
+            @media (max-width: 768px) {
+                .popout-modal-footer { flex-direction: column !important; gap: 8px !important; }
+                .popout-modal-footer .btn-outline,
+                .popout-modal-footer .btn-primary { width: 100% !important; margin: 0 !important; }
+                .popout-modal-content { max-width: 95% !important; max-height: 90vh !important; }
+                .popout-modal-header { padding: 16px 20px !important; }
+                .popout-modal-body { padding: 20px !important; }
+                
+                .card-grid { grid-template-columns: 1fr; gap: 12px; }
+                .card-button { padding: 20px; }
+                .camera-preview { height: 300px; }
+                .upload-dropzone { padding: 32px 20px; }
+                .pending-receipt-item {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 12px;
+                }
+                .receipt-actions { justify-content: flex-end; }
+                .camera-controls { flex-direction: column; }
+                .camera-controls .btn { width: 100%; }
+            }
+        </style>
+
         <div class="module-container">
             <!-- Module Header -->
             <div class="module-header">
                 <h1 class="module-title">Income & Expenses</h1>
                 <p class="module-subtitle">Track farm finances and cash flow</p>
-                <div class="header-actions" style="display: flex; gap: 12px; margin-top: 12px;">
-                    <button class="btn-primary" id="add-transaction">➕ Add Transaction</button>
-                    <button class="btn-primary" id="upload-receipt-btn">
-                        📄 Import Receipts
-                        ${pendingReceipts.length > 0 ? `<span class="receipt-badge" style="background: #ef4444; color: white; border-radius: 12px; padding: 2px 8px; font-size: 12px; margin-left: 8px;">${pendingReceipts.length}</span>` : ''}
+                <div class="header-actions">
+                   <button class="btn btn-primary" id="add-transaction">
+                        ➕ Add Transaction
+                    </button>
+                    <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                         📄 Import Receipts
+                        ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
                     </button>
                 </div>
             </div>
 
             <!-- Pending Receipts Section -->
             ${pendingReceipts.length > 0 ? `
-                <div class="glass-card" style="padding: 20px; margin-bottom: 24px; background: #fef3c7; border-left: 4px solid #f59e0b;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h3 style="color: #92400e; font-size: 18px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
                         <div style="display: flex; gap: 12px;">
-                            <button class="btn-outline" id="refresh-receipts-btn">🔄 Refresh</button>
-                            <button class="btn-primary" id="process-all-receipts">⚡ Process All</button>
+                            <button class="btn btn-outline" id="refresh-receipts-btn">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Refresh</span>
+                            </button>
+                            <button class="btn btn-primary" id="process-all-receipts">
+                                ⚡ Process All
+                            </button>
                         </div>
                     </div>
                     <div id="pending-receipts-list">
@@ -4430,57 +4643,57 @@ renderModule() {
             <!-- Financial Overview -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div style="font-size: 24px;">💰</div>
-                    <div style="font-size: 24px; font-weight: bold;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
-                    <div>Total Income</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
                 </div>
                 <div class="stat-card">
-                    <div style="font-size: 24px;">📊</div>
-                    <div style="font-size: 24px; font-weight: bold;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
-                    <div>Total Expenses</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
                 </div>
                 <div class="stat-card">
-                    <div style="font-size: 24px;">📈</div>
-                    <div style="font-size: 24px; font-weight: bold;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
-                    <div>Net Income</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
                 </div>
                 <div class="stat-card">
-                    <div style="font-size: 24px;">💳</div>
-                    <div style="font-size: 24px; font-weight: bold;">${stats.transactionCount}</div>
-                    <div>Transactions</div>
+                    <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
             <div class="quick-action-grid">
                 <button class="quick-action-btn" id="add-income-btn">
-                    <div style="font-size: 28px;">💰</div>
-                    <span style="font-weight: 600;">Add Income</span>
-                    <span style="font-size: 12px;">Record farm income</span>
+                    <div style="font-size: 32px;">💰</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span>
                 </button>
                 <button class="quick-action-btn" id="add-expense-btn">
-                    <div style="font-size: 28px;">💸</div>
-                    <span style="font-weight: 600;">Add Expense</span>
-                    <span style="font-size: 12px;">Record farm expenses</span>
+                    <div style="font-size: 32px;">💸</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span>
                 </button>
                 <button class="quick-action-btn" id="financial-report-btn">
-                    <div style="font-size: 28px;">📊</div>
-                    <span style="font-weight: 600;">Financial Report</span>
-                    <span style="font-size: 12px;">View financial summary</span>
+                    <div style="font-size: 32px;">📊</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span>
                 </button>
                 <button class="quick-action-btn" id="category-analysis-btn">
-                    <div style="font-size: 28px;">📋</div>
-                    <span style="font-weight: 600;">Category Analysis</span>
-                    <span style="font-size: 12px;">Breakdown by category</span>
+                    <div style="font-size: 32px;">📋</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span>
                 </button>
             </div>
 
             <!-- Recent Transactions -->
-            <div class="glass-card" style="padding: 20px;">
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="font-size: 18px;">📋 Recent Transactions</h3>
+                    <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
                     <div style="display: flex; gap: 12px;">
-                        <select id="transaction-filter" class="form-input" style="width: auto; padding: 6px 12px;">
+                        <select id="transaction-filter" class="form-input" style="width: auto;">
                             <option value="all">All Transactions</option>
                             <option value="income">Income Only</option>
                             <option value="expense">Expenses Only</option>
@@ -4494,17 +4707,41 @@ renderModule() {
             </div>
 
             <!-- Category Breakdown -->
-            <div class="glass-card" style="padding: 20px; margin-top: 24px;">
-                <h3 style="margin-bottom: 20px; font-size: 18px;">📊 Category Breakdown</h3>
+            <div class="glass-card" style="padding: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
                 <div id="category-breakdown">
                     ${this.renderCategoryBreakdown()}
                 </div>
             </div>
         </div>
 
+        <!-- ==================== MODALS ==================== -->
+        <!-- Import Receipts Modal -->
+        <div id="import-receipts-modal" class="popout-modal hidden">
+            <div class="popout-modal-content">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title">📥 Import Receipts</h3>
+                    <button class="popout-modal-close" id="close-import-receipts">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div id="import-receipts-content">
+                        <!-- Content loaded dynamically -->
+                    </div>
+                </div>
+                <div class="popout-modal-footer">
+                    <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                    <button class="btn btn-primary hidden" id="process-receipts-btn">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">Process Receipts</span>
+                        <span id="process-receipts-count">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Transaction Modal -->
         <div id="transaction-modal" class="popout-modal hidden">
-            <div class="popout-modal-content" style="max-width: 550px;">
+            <div class="popout-modal-content" style="max-width: 600px;">
                 <div class="popout-modal-header">
                     <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
                     <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
@@ -4527,41 +4764,60 @@ renderModule() {
                             </div>
                         </div>
 
-                        <div style="margin-bottom: 16px;">
-                            <label class="form-label">Category *</label>
-                            <select id="transaction-category" class="form-input" required>
-                                <option value="">Select Category</option>
-                                <optgroup label="💰 Income">
-                                    <option value="broilers-income">Broilers</option>
-                                    <option value="layers-income">Layers</option>
-                                    <option value="eggs">Eggs</option>
-                                    <option value="milk">Milk/Dairy</option>
-                                    <option value="crops">Crops/Produce</option>
-                                    <option value="other-income">Other Income</option>
-                                </optgroup>
-                                <optgroup label="💸 Expenses">
-                                    <option value="feed">Feed</option>
-                                    <option value="medical">Medical/Vet</option>
-                                    <option value="equipment">Equipment</option>
-                                    <option value="labor">Labor</option>
-                                    <option value="utilities">Utilities</option>
-                                    <option value="other-expense">Other Expenses</option>
-                                </optgroup>
-                            </select>
-                        </div>
-
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Category *</label>
+                                <select id="transaction-category" class="form-input" required>
+                                    <option value="">Select Category</option>
+                                    <!-- Income Categories -->
+                                    <optgroup label="💰 Income">
+                                        <option value="broilers-income">Broilers</option>
+                                        <option value="layers-income">Layers</option>
+                                        <option value="ducks-income">Ducks</option>
+                                        <option value="sheep-income">Sheep</option>
+                                        <option value="goats-income">Goats</option>
+                                        <option value="rabbits-income">Rabbits</option>
+                                        <option value="crops">Crops/Produce</option>
+                                        <option value="eggs">Eggs</option>
+                                        <option value="milk">Milk/Dairy</option>
+                                        <option value="wool">Wool/Fiber</option>
+                                        <option value="breeding">Breeding Stock</option>
+                                        <option value="services">Services</option>
+                                        <option value="grants">Grants/Subsidies</option>
+                                        <option value="other-income">Other Income</option>
+                                    </optgroup>
+                                    <!-- Expense Categories -->
+                                    <optgroup label="💸 Expenses">
+                                        <option value="feed-broilers">Feed - Broilers</option>
+                                        <option value="feed-layers">Feed - Layers</option>
+                                        <option value="feed-ducks">Feed - Ducks</option>
+                                        <option value="feed-sheep">Feed - Sheep</option>
+                                        <option value="feed-goats">Feed - Goats</option>
+                                        <option value="feed-rabbits">Feed - Rabbits</option>
+                                        <option value="medical-broilers">Medical - Broilers</option>
+                                        <option value="medical-layers">Medical - Layers</option>
+                                        <option value="medical-ducks">Medical - Ducks</option>
+                                        <option value="medical-sheep">Medical - Sheep</option>
+                                        <option value="medical-goats">Medical - Goats</option>
+                                        <option value="medical-rabbits">Medical - Rabbits</option>
+                                        <option value="bedding">Bedding/Litter</option>
+                                        <option value="equipment">Equipment</option>
+                                        <option value="labor">Labor</option>
+                                        <option value="utilities">Utilities</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="transport">Transport</option>
+                                        <option value="marketing">Marketing</option>
+                                        <option value="fencing">Fencing</option>
+                                        <option value="buildings">Buildings/Shelter</option>
+                                        <option value="water">Water Systems</option>
+                                        <option value="electricity">Electricity</option>
+                                        <option value="other-expense">Other Expenses</option>
+                                    </optgroup>
+                                </select>
+                            </div>
                             <div>
                                 <label class="form-label">Amount ($) *</label>
                                 <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
-                            </div>
-                            <div>
-                                <label class="form-label">Payment Method</label>
-                                <select id="transaction-payment" class="form-input">
-                                    <option value="cash">Cash</option>
-                                    <option value="card">Card</option>
-                                    <option value="transfer">Bank Transfer</option>
-                                </select>
                             </div>
                         </div>
 
@@ -4570,40 +4826,80 @@ renderModule() {
                             <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
                         </div>
 
-                        <div style="margin-bottom: 16px;">
-                            <label class="form-label">Reference Number</label>
-                            <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Payment Method</label>
+                                <select id="transaction-payment" class="form-input">
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Card</option>
+                                    <option value="transfer">Bank Transfer</option>
+                                    <option value="check">Check</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Reference Number</label>
+                                <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
+                            </div>
                         </div>
 
                         <div style="margin-bottom: 16px;">
-                            <label class="form-label">Notes</label>
-                            <textarea id="transaction-notes" class="form-input" rows="2" placeholder="Additional notes..."></textarea>
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
+                        </div>
+
+                        <!-- Receipt Section -->
+                        <div style="margin-bottom: 16px;">
+                            <label class="form-label">Receipt (Optional)</label>
+                            <div id="receipt-upload-area" style="border: 2px dashed var(--glass-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px;">
+                                <div style="font-size: 48px; margin-bottom: 8px;">📄</div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Attach Receipt</div>
+                                <div style="color: var(--text-secondary); font-size: 14px;">Click to upload or drag & drop</div>
+                                <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Supports JPG, PNG, PDF (Max 10MB)</div>
+                                <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
+                            </div>
+                            
+                            <!-- Receipt Preview -->
+                            <div id="receipt-preview-container" class="hidden">
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="font-size: 24px;">📄</div>
+                                        <div>
+                                            <div style="font-weight: 600; color: var(--text-primary);" id="receipt-filename">receipt.jpg</div>
+                                            <div style="font-size: 12px; color: var(--text-secondary);" id="receipt-size">2.5 MB</div>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="remove-receipt" class="btn-icon" style="color: var(--text-secondary);">🗑️</button>
+                                </div>
+                                
+                                <!-- Image Preview -->
+                                <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                                    <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                </div>
+                                
+                                <!-- Process Button -->
+                                <button type="button" id="process-receipt-btn" class="btn-outline" style="width: 100%; margin-top: 8px;">
+                                    🔍 Extract Information from Receipt
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- OCR Results -->
+                        <div id="ocr-results" class="hidden" style="background: #f0f9ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h4 style="color: #1e40af; margin: 0;">📄 Extracted from Receipt</h4>
+                                <button type="button" id="use-ocr-data" class="btn-primary" style="font-size: 12px; padding: 4px 8px;">Apply</button>
+                            </div>
+                            <div id="ocr-details" style="font-size: 14px; color: #374151;">
+                                <!-- OCR extracted details will appear here -->
+                            </div>
                         </div>
                     </form>
                 </div>
                 <div class="popout-modal-footer">
-                    <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
-                    <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
-                    <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Import Receipts Modal -->
-        <div id="import-receipts-modal" class="popout-modal hidden">
-            <div class="popout-modal-content" style="max-width: 700px;">
-                <div class="popout-modal-header">
-                    <h3 class="popout-modal-title">📥 Import Receipts</h3>
-                    <button class="popout-modal-close" id="close-import-receipts">&times;</button>
-                </div>
-                <div class="popout-modal-body" style="padding: 0;">
-                    <div id="import-receipts-content" style="padding: 20px;">
-                        ${this.renderImportReceiptsModal()}
-                    </div>
-                </div>
-                <div class="popout-modal-footer">
-                    <button class="btn-outline" id="cancel-import-receipts">Cancel</button>
-                    <button class="btn-primary" id="process-receipts-btn" style="display: none;">Process Receipts</button>
+                    <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
+                    <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
                 </div>
             </div>
         </div>
@@ -4619,69 +4915,139 @@ renderModule() {
 
 renderImportReceiptsModal() {
     return `
-        <div style="padding: 0;">
-            <div class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                <button class="card-button" id="camera-option" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer;">
-                    <div style="font-size: 40px;">📷</div>
-                    <div style="font-weight: 600;">Take Photo</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Use camera</div>
-                </button>
-                <button class="card-button" id="upload-option" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer;">
-                    <div style="font-size: 40px;">📁</div>
-                    <div style="font-weight: 600;">Upload Files</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">From device</div>
-                </button>
+        <div class="import-receipts-container">
+            <!-- GREEN GRADIENT HEADER -->
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                border-radius: 20px 20px 0 0;
+                z-index: 1000 !important;
+            "></div>
+            
+            <div class="quick-actions-section" style="padding-top: 8px;">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                </div>
             </div>
-
-            <!-- Upload Section -->
+        
+            <!-- UPLOAD SECTION -->
             <div id="upload-section" style="display: none;">
-                <div style="border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer;" id="receipt-dropzone">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
-                    <div style="font-weight: 600; margin-bottom: 8px;">Drop receipt files here</div>
-                    <div style="color: var(--text-secondary); font-size: 14px;">or click to browse</div>
-                    <div style="display: flex; gap: 8px; justify-content: center; margin-top: 16px;">
-                        <span style="background: #e5e7eb; padding: 4px 12px; border-radius: 20px; font-size: 12px;">JPG</span>
-                        <span style="background: #e5e7eb; padding: 4px 12px; border-radius: 20px; font-size: 12px;">PNG</span>
-                        <span style="background: #e5e7eb; padding: 4px 12px; border-radius: 20px; font-size: 12px;">PDF</span>
+                <div class="upload-system-container" id="upload-system">
+                    <!-- BACK BUTTON HEADER -->
+                    <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+                        <button class="btn btn-outline" id="back-to-main-view" 
+                                style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
+                            <span>←</span>
+                            <span>Back</span>
+                        </button>
+                        <div>
+                            <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
+                                📤 Upload Files
+                            </h3>
+                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
+                                Drag & drop or select files from your device
+                            </p>
+                        </div>
                     </div>
-                    <input type="file" id="receipt-file-input" accept="image/*,.pdf" multiple style="display: none;">
-                </div>
-                
-                <div style="margin-top: 24px;">
-                    <h4 style="margin-bottom: 16px;">📎 Uploaded Receipts</h4>
-                    <div id="receipt-files-list" style="display: flex; flex-direction: column; gap: 12px;">
-                        <div style="text-align: center; color: var(--text-secondary); padding: 40px;">No receipts uploaded yet</div>
+                    
+                    <!-- Receipts Upload Section -->
+                    <div class="upload-section active" data-mode="receipts">
+                        <div class="upload-header" style="margin-bottom: 24px;">
+                            <h3 class="upload-title">
+                                📄 Upload Receipts
+                            </h3>
+                            <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
+                        </div>
+                        
+                        <div class="upload-dropzone" id="receipt-dropzone">
+                            <div class="dropzone-content">
+                                <div class="dropzone-icon">
+                                    📁
+                                </div>
+                                <h4 class="dropzone-title">Drop receipt files here</h4>
+                                <p class="dropzone-subtitle">or click to browse</p>
+                                <div class="file-types">
+                                    <span class="file-type-badge">JPG</span>
+                                    <span class="file-type-badge">PNG</span>
+                                    <span class="file-type-badge">PDF</span>
+                                    <span class="file-type-badge">HEIC</span>
+                                </div>
+                            </div>
+                            <input type="file" id="receipt-file-input" 
+                                   accept="image/*,.pdf,.heic,.heif" 
+                                   multiple 
+                                   class="dropzone-input" style="display: none;">
+                        </div>
+                        
+                        <div class="uploaded-files-container" style="margin-top: 24px;">
+                            <h5 class="files-title">
+                                📎 Uploaded Receipts
+                                <span class="badge" id="receipt-count">0</span>
+                            </h5>
+                            <div class="files-list" id="receipt-files-list">
+                                <div class="empty-state">
+                                    📭
+                                    <p>No receipts uploaded yet</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Camera Section -->
-            <div id="camera-section" style="display: none;">
-                <div class="glass-card" style="padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            
+            <!-- CAMERA SECTION -->
+            <div class="camera-section" id="camera-section" style="display: none;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
                         <h3>📷 Camera</h3>
-                        <div id="camera-status" style="font-size: 12px; color: var(--text-secondary);">Ready</div>
+                        <div class="camera-status" id="camera-status">Ready</div>
                     </div>
-                    <div class="camera-preview" style="width: 100%; height: 400px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 16px;">
-                        <video id="camera-preview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                    <div class="camera-preview">
+                        <video id="camera-preview" autoplay playsinline></video>
                         <canvas id="camera-canvas" style="display: none;"></canvas>
                     </div>
-                    <div style="display: flex; gap: 12px; justify-content: center;">
-                        <button class="btn-outline" id="switch-camera" style="padding: 10px 20px;">🔄 Switch Camera</button>
-                        <button class="btn-primary" id="capture-photo" style="padding: 10px 20px;">📸 Capture</button>
-                        <button class="btn-outline" id="cancel-camera" style="padding: 10px 20px;">✖️ Back</button>
+                    <div class="camera-controls">
+                        <button class="btn btn-outline" id="switch-camera">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Switch Camera</span>
+                        </button>
+                        <button class="btn btn-primary" id="capture-photo">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Capture</span>
+                        </button>
+                        <button class="btn btn-outline" id="cancel-camera">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Back to Upload</span>
+                        </button>
                     </div>
                 </div>
             </div>
-
-            <!-- Recent Receipts Section -->
-            <div id="recent-section" style="margin-top: 24px;">
-                <div class="glass-card" style="padding: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            
+            <!-- RECENT SECTION -->
+            <div class="recent-section" id="recent-section" style="display: block;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
                         <h3>📋 Recent Receipts</h3>
-                        <button class="btn-outline" id="refresh-receipts" style="padding: 6px 12px;">🔄 Refresh</button>
+                        <button class="btn btn-outline" id="refresh-receipts">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh</span>
+                        </button>
                     </div>
-                    <div id="recent-receipts-list">
+                    <div id="recent-receipts-list" class="receipts-list">
                         ${this.renderRecentReceiptsList()}
                     </div>
                 </div>
