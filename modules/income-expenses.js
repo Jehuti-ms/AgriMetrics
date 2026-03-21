@@ -1567,7 +1567,7 @@ showCropperOrViewer: function(file) {
     }
 },
     
-  // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
+  // SIMPLE VIEWER - After capturePhoto
 showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
@@ -1696,24 +1696,12 @@ showSimpleImageViewer: function(file) {
         const retakeBtn = document.getElementById('retake-image-btn');
         const deleteBtn = document.getElementById('delete-image-btn');
         
-        // Edit button - open cropper for editing
+        // Edit button - open cropper for editing (simplified)
         if (editBtn) {
             editBtn.onclick = () => {
                 console.log('✎ Edit button clicked - opening cropper');
                 modal.remove();
-                
-                // Re-open cropper with the same image
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (typeof this.showStandardCropper === 'function') {
-                        console.log('📷 Opening cropper for editing');
-                        this.showStandardCropper(file);
-                    } else {
-                        console.warn('Cropper not available');
-                        this.showSimpleImageViewer(file);
-                    }
-                };
-                reader.readAsDataURL(file);
+                this.showStandardCropper(file);
             };
         }
         
@@ -1722,8 +1710,6 @@ showSimpleImageViewer: function(file) {
             saveBtn.onclick = () => {
                 console.log('💾 Save button clicked');
                 modal.remove();
-                
-                // Save the image to receipt
                 const imageUrl = URL.createObjectURL(file);
                 this.saveReceiptFromFile(file, imageUrl);
             };
@@ -1734,38 +1720,8 @@ showSimpleImageViewer: function(file) {
             retakeBtn.onclick = () => {
                 console.log('↺ Retake button clicked - going back to camera');
                 modal.remove();
-                
-                // Stop any existing camera first
                 this.stopCamera();
-                
-                // Show the import modal
-                const importModal = document.getElementById('import-receipts-modal');
-                if (importModal) {
-                    importModal.style.display = 'flex';
-                    importModal.classList.remove('hidden');
-                    
-                    // Hide quick actions and upload sections
-                    const quickActions = document.getElementById('quick-actions-view');
-                    const uploadSection = document.getElementById('upload-section');
-                    
-                    if (quickActions) quickActions.style.display = 'none';
-                    if (uploadSection) uploadSection.style.display = 'none';
-                    
-                    // Show camera section
-                    const cameraSection = document.getElementById('camera-section');
-                    if (cameraSection) {
-                        cameraSection.style.display = 'block';
-                        
-                        setTimeout(() => {
-                            this.initializeCamera();
-                            console.log('📷 Camera re-initialized for retake');
-                        }, 200);
-                    } else {
-                        setTimeout(() => {
-                            document.getElementById('camera-option')?.click();
-                        }, 200);
-                    }
-                }
+                this.showCameraInterface();
             };
         }
         
@@ -1774,30 +1730,8 @@ showSimpleImageViewer: function(file) {
             deleteBtn.onclick = () => {
                 console.log('🗑️ Delete button clicked');
                 modal.remove();
-                
-                // Show confirmation
                 this.showNotification('Image discarded', 'info');
-                
-                // Go back to import methods
-                const importModal = document.getElementById('import-receipts-modal');
-                if (importModal) {
-                    importModal.style.display = 'flex';
-                    importModal.classList.remove('hidden');
-                    
-                    // Hide camera and upload sections
-                    const cameraSection = document.getElementById('camera-section');
-                    const uploadSection = document.getElementById('upload-section');
-                    
-                    if (cameraSection) cameraSection.style.display = 'none';
-                    if (uploadSection) uploadSection.style.display = 'none';
-                    
-                    // Show quick actions
-                    const quickActions = document.getElementById('quick-actions-view');
-                    if (quickActions) quickActions.style.display = 'block';
-                    
-                    const recentSection = document.getElementById('recent-section');
-                    if (recentSection) recentSection.style.display = 'block';
-                }
+                this.showQuickActionsView();
             };
         }
         
@@ -5359,114 +5293,261 @@ unload: function() {
                     color: #6b7280;
                     margin-bottom: 20px;
                 }
+/* ==================== CROPPER STYLES - GREEN THEME WITH CIRCULAR BUTTONS ==================== */
 
-                 /* ==================== ADD THIS CROPPER CSS ==================== */
-    /* Cropper touch interaction fixes */
-    #receipt-cropper-modal {
-        touch-action: none;
+/* Cropper touch interaction fixes */
+#receipt-cropper-modal {
+    touch-action: none;
+}
+
+#receipt-cropper-image {
+    touch-action: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Cropper Container */
+.cropper-container {
+    touch-action: none !important;
+    max-height: 55vh !important;
+    width: 100% !important;
+    background: #1a1a2e !important;
+}
+
+/* Cropper Canvas */
+.cropper-canvas {
+    background: #1a1a2e !important;
+}
+
+/* Green Crop Box Outline */
+.cropper-view-box {
+    outline: 2px solid #22c55e !important;
+    outline-color: rgba(34, 197, 94, 0.75) !important;
+}
+
+/* Green Crop Lines */
+.cropper-line {
+    background-color: #22c55e !important;
+}
+
+/* Green Dotted Guide Lines */
+.cropper-dashed {
+    border-color: #22c55e !important;
+    opacity: 0.5 !important;
+}
+
+/* Green Center Crosshair */
+.cropper-center::before,
+.cropper-center::after {
+    background-color: #22c55e !important;
+}
+
+/* GREEN CIRCULAR CROP HANDLES */
+.cropper-point {
+    width: 16px !important;
+    height: 16px !important;
+    background: #22c55e !important;
+    opacity: 1 !important;
+    border: 2px solid white !important;
+    border-radius: 50% !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.2s ease !important;
+}
+
+.cropper-point:hover {
+    transform: scale(1.3) !important;
+    background: #16a34a !important;
+}
+
+/* Large corner handle (bottom right) */
+.cropper-point.point-se {
+    width: 24px !important;
+    height: 24px !important;
+    background: #22c55e !important;
+    border-radius: 50% !important;
+    opacity: 1 !important;
+}
+
+.cropper-point.point-se:hover {
+    transform: scale(1.2) !important;
+    background: #16a34a !important;
+}
+
+/* Mobile - larger touch targets */
+@media (max-width: 768px) {
+    .cropper-point {
+        width: 28px !important;
+        height: 28px !important;
     }
     
-    #receipt-cropper-image {
-        touch-action: none !important;
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
-        max-width: 100%;
-        height: auto;
+    .cropper-point.point-se {
+        width: 36px !important;
+        height: 36px !important;
+    }
+}
+
+/* GREEN CIRCULAR CONTROL BUTTONS */
+.crop-control-btn {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border: none !important;
+    color: white !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+    margin: 4px !important;
+}
+
+.crop-control-btn:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+}
+
+.crop-control-btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* Aspect Ratio Buttons */
+.aspect-btn {
+    padding: 8px 16px !important;
+    background: #f5f5f5 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    color: #374151 !important;
+}
+
+.aspect-btn:hover {
+    background: rgba(34, 197, 94, 0.1) !important;
+    border-color: #22c55e !important;
+    transform: translateY(-2px) !important;
+}
+
+.aspect-btn.active {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+    border-color: transparent !important;
+}
+
+/* Cancel and Apply Buttons */
+#cancel-receipt-crop, 
+#apply-receipt-crop {
+    min-height: 48px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 12px 24px;
+}
+
+#cancel-receipt-crop {
+    background: #f5f5f5;
+    color: #666;
+    border: 1px solid #e5e7eb;
+}
+
+#cancel-receipt-crop:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #dc2626;
+    transform: translateY(-2px);
+}
+
+#apply-receipt-crop {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+#apply-receipt-crop:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+#cancel-receipt-crop:active, 
+#apply-receipt-crop:active {
+    transform: scale(0.98);
+}
+
+/* Cropper container sizing */
+#cropper-container {
+    touch-action: none;
+    background: #1a1a2e;
+    min-height: 400px;
+    max-height: 55vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .crop-control-btn {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 20px !important;
+    }
+    
+    .aspect-btn {
+        padding: 6px 12px !important;
+        font-size: 11px !important;
+    }
+    
+    #cropper-container {
+        min-height: 300px;
+        max-height: 45vh;
     }
     
     .cropper-container {
-        touch-action: none !important;
-        max-height: 50vh !important;
+        max-height: 45vh !important;
+    }
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+    .crop-control-btn {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 18px !important;
     }
     
-    .cropper-crop-box,
-    .cropper-drag-box,
-    .cropper-face,
-    .cropper-line,
-    .cropper-point {
-        touch-action: none !important;
+    .crop-control-buttons {
+        gap: 8px !important;
     }
-    
-    .cropper-point {
-        width: 30px !important;
-        height: 30px !important;
-        background: #4CAF50 !important;
-        opacity: 0.8 !important;
-        border: 2px solid white !important;
-        border-radius: 50% !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+/* Animation for modal appearance */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    
-    /* Mobile-friendly control buttons */
-    .cropper-control-btn {
-        min-width: 60px;
-        min-height: 44px;
-        font-size: 20px;
-        border-radius: 8px;
-        background: #f5f5f5;
-        border: 1px solid #ddd;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin: 4px;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-    
-    .cropper-control-btn:active {
-        background: #e0e0e0;
-        transform: scale(0.95);
-    }
-    
-    #cancel-receipt-crop, #apply-receipt-crop {
-        min-height: 48px;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-    
-    #cancel-receipt-crop {
-        background: #f44336;
-        color: white;
-    }
-    
-    #apply-receipt-crop {
-        background: #4CAF50;
-        color: white;
-    }
-    
-    #cancel-receipt-crop:active, #apply-receipt-crop:active {
-        transform: scale(0.98);
-        opacity: 0.9;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .cropper-point {
-            width: 40px !important;
-            height: 40px !important;
-        }
-        
-        .cropper-control-btn {
-            min-width: 70px;
-            min-height: 48px;
-            font-size: 22px;
-        }
-    }
-    
-    /* Cropper container sizing */
-    #cropper-container {
-        touch-action: none;
-        background: #f0f0f0;
-        min-height: 300px;
-        max-height: 50vh;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
+}
+
+.cropper-modal-content {
+    animation: fadeInUp 0.3s ease-out !important;
+}
             </style>
 
             <div class="module-container">
