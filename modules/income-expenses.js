@@ -3010,6 +3010,13 @@ saveReceiptFromFile: function(file, dataURL) {
         return;
     }
     
+    // Hide camera if it's showing
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection && cameraSection.style.display !== 'none') {
+        cameraSection.style.display = 'none';
+        this.stopCamera();
+    }
+    
     // Process each file
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -3027,6 +3034,62 @@ saveReceiptFromFile: function(file, dataURL) {
         } else {
             // For non-images (PDFs), process directly
             this.processReceiptFile(file);
+        }
+    }
+},
+
+    processReceiptFile: function(file) {
+    console.log('📄 Processing receipt file:', file.name);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const receipt = {
+            id: `receipt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            name: file.name,
+            dataURL: e.target.result,
+            size: file.size,
+            type: file.type,
+            status: 'pending',
+            uploadedAt: new Date().toISOString(),
+        };
+        
+        this.saveReceiptLocally(receipt);
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+        this.updateReceiptCount();
+        
+        this.showNotification(`✅ "${file.name}" uploaded successfully!`, 'success');
+    };
+    reader.readAsDataURL(file);
+},
+
+    updateReceiptCount: function() {
+    const pendingCount = this.receiptQueue.filter(r => r.status === 'pending').length;
+    const processBtn = document.getElementById('process-receipts-btn');
+    const processCount = document.getElementById('process-receipts-count');
+    const uploadBtn = document.getElementById('upload-receipt-btn');
+    
+    if (processBtn && processCount) {
+        if (pendingCount > 0) {
+            processBtn.classList.remove('hidden');
+            processCount.textContent = pendingCount;
+            processCount.classList.remove('hidden');
+        } else {
+            processBtn.classList.add('hidden');
+            processCount.classList.add('hidden');
+        }
+    }
+    
+    if (uploadBtn) {
+        const badge = uploadBtn.querySelector('.receipt-queue-badge');
+        if (pendingCount > 0) {
+            if (!badge) {
+                uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingCount}</span>`;
+            } else {
+                badge.textContent = pendingCount;
+            }
+        } else if (badge) {
+            badge.remove();
         }
     }
 },
@@ -5820,148 +5883,148 @@ unload: function() {
         }, 100);
     },
 
-    renderImportReceiptsModal() {
-        return `
-               <div class="import-receipts-container">
-                    <!-- GREEN GRADIENT HEADER -->
-                    <div style="
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        height: 4px;
-                        background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-                        border-radius: 20px 20px 0 0;
-                        z-index: 1000 !important;
-                    "></div>
-                    
-                    <div class="quick-actions-section" style="padding-top: 8px;">  <!-- ONLY KEEP THIS ONE -->
-                        <h2 class="section-title">Upload Method</h2>
-                        <div class="card-grid">
-                            <button class="card-button" id="camera-option">
-                                <div class="card-icon">📷</div>
-                                <span class="card-title">Take Photo</span>
-                                <span class="card-subtitle">Use camera</span>
-                            </button>
-                            <button class="card-button" id="upload-option">
-                                <div class="card-icon">📁</div>
-                                <span class="card-title">Upload Files</span>
-                                <span class="card-subtitle">From device</span>
-                            </button>
+renderImportReceiptsModal() {
+    return `
+        <div class="import-receipts-container">
+            <!-- GREEN GRADIENT HEADER -->
+            <div style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                border-radius: 20px 20px 0 0;
+                z-index: 1000 !important;
+            "></div>
+            
+            <div class="quick-actions-section" style="padding-top: 8px;">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                </div>
+            </div>
+        
+            <!-- UPLOAD SECTION -->
+            <div id="upload-section" style="display: none;">
+                <div class="upload-system-container" id="upload-system">
+                    <!-- BACK BUTTON HEADER -->
+                    <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+                        <button class="btn btn-outline" id="back-to-main-view" 
+                                style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
+                            <span>←</span>
+                            <span>Back</span>
+                        </button>
+                        <div>
+                            <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
+                                📤 Upload Files
+                            </h3>
+                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
+                                Drag & drop or select files from your device
+                            </p>
                         </div>
                     </div>
-                
-                <!-- UPLOAD SECTION -->
-                <div id="upload-section" style="display: none;">
-                    <div class="upload-system-container" id="upload-system">
-                        <!-- BACK BUTTON HEADER -->
-                        <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
-                            <button class="btn btn-outline" id="back-to-main-view" 
-                                    style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;">
-                                <span>←</span>
-                                <span>Back</span>
-                            </button>
-                            <div>
-                                <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">
-                                    📤 Upload Files
-                                </h3>
-                                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
-                                    Drag & drop or select files from your device
-                                </p>
-                            </div>
+                    
+                    <!-- Receipts Upload Section -->
+                    <div class="upload-section active" data-mode="receipts">
+                        <div class="upload-header" style="margin-bottom: 24px;">
+                            <h3 class="upload-title">
+                                📄 Upload Receipts
+                            </h3>
+                            <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
                         </div>
                         
-                        <!-- Receipts Upload Section -->
-                        <div class="upload-section active" data-mode="receipts">
-                            <div class="upload-header" style="margin-bottom: 24px;">
-                                <h3 class="upload-title">
-                                    📄 Upload Receipts
-                                </h3>
-                                <p class="upload-subtitle">Take photos or scan receipts to track expenses</p>
-                            </div>
-                            
-                            <div class="upload-dropzone" id="receipt-dropzone">
-                                <div class="dropzone-content">
-                                    <div class="dropzone-icon">
-                                        📁
-                                    </div>
-                                    <h4 class="dropzone-title">Drop receipt files here</h4>
-                                    <p class="dropzone-subtitle">or click to browse</p>
-                                    <div class="file-types">
-                                        <span class="file-type-badge">JPG</span>
-                                        <span class="file-type-badge">PNG</span>
-                                        <span class="file-type-badge">PDF</span>
-                                        <span class="file-type-badge">HEIC</span>
-                                    </div>
+                        <div class="upload-dropzone" id="receipt-dropzone">
+                            <div class="dropzone-content">
+                                <div class="dropzone-icon">
+                                    📁
                                 </div>
-                                <input type="file" id="receipt-file-input" 
-                                       accept="image/*,.pdf,.heic,.heif" 
-                                       multiple 
-                                       class="dropzone-input" style="display: none;">
-                            </div>
-                            
-                            <div class="uploaded-files-container" style="margin-top: 24px;">
-                                <h5 class="files-title">
-                                    📎 Uploaded Receipts
-                                    <span class="badge" id="receipt-count">0</span>
-                                </h5>
-                                <div class="files-list" id="receipt-files-list">
-                                    <div class="empty-state">
-                                        📭
-                                        <p>No receipts uploaded yet</p>
-                                    </div>
+                                <h4 class="dropzone-title">Drop receipt files here</h4>
+                                <p class="dropzone-subtitle">or click to browse</p>
+                                <div class="file-types">
+                                    <span class="file-type-badge">JPG</span>
+                                    <span class="file-type-badge">PNG</span>
+                                    <span class="file-type-badge">PDF</span>
+                                    <span class="file-type-badge">HEIC</span>
                                 </div>
                             </div>
+                            <input type="file" id="receipt-file-input" 
+                                   accept="image/*,.pdf,.heic,.heif" 
+                                   multiple 
+                                   class="dropzone-input" style="display: none;">
                         </div>
-                    </div>
-                </div>
-                
-                <!-- CAMERA SECTION -->
-                <div class="camera-section" id="camera-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📷 Camera</h3>
-                            <div class="camera-status" id="camera-status">Ready</div>
-                        </div>
-                        <div class="camera-preview">
-                            <video id="camera-preview" autoplay playsinline></video>
-                            <canvas id="camera-canvas" style="display: none;"></canvas>
-                        </div>
-                        <div class="camera-controls">
-                            <button class="btn btn-outline" id="switch-camera">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Switch Camera</span>
-                            </button>
-                            <button class="btn btn-primary" id="capture-photo">
-                                <span class="btn-icon">📸</span>
-                                <span class="btn-text">Capture</span>
-                            </button>
-                            <button class="btn btn-outline" id="cancel-camera">
-                                <span class="btn-icon">✖️</span>
-                                <span class="btn-text">Back to Upload</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- RECENT SECTION -->
-                <div class="recent-section" id="recent-section" style="display: block;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex">
-                            <h3>📋 Recent Receipts</h3>
-                            <button class="btn btn-outline" id="refresh-receipts">
-                                <span class="btn-icon">🔄</span>
-                                <span class="btn-text">Refresh</span>
-                            </button>
-                        </div>
-                        <div id="recent-receipts-list" class="receipts-list">
-                            ${this.renderRecentReceiptsList()}
+                        
+                        <div class="uploaded-files-container" style="margin-top: 24px;">
+                            <h5 class="files-title">
+                                📎 Uploaded Receipts
+                                <span class="badge" id="receipt-count">0</span>
+                            </h5>
+                            <div class="files-list" id="receipt-files-list">
+                                <div class="empty-state">
+                                    📭
+                                    <p>No receipts uploaded yet</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        `;
-    },
+            
+            <!-- CAMERA SECTION -->
+            <div class="camera-section" id="camera-section" style="display: none;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📷 Camera</h3>
+                        <div class="camera-status" id="camera-status">Ready</div>
+                    </div>
+                    <div class="camera-preview">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn btn-outline" id="switch-camera">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Switch Camera</span>
+                        </button>
+                        <button class="btn btn-primary" id="capture-photo">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Capture</span>
+                        </button>
+                        <button class="btn btn-outline" id="cancel-camera">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Back to Upload</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- RECENT SECTION -->
+            <div class="recent-section" id="recent-section" style="display: block;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📋 Recent Receipts</h3>
+                        <button class="btn btn-outline" id="refresh-receipts">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh</span>
+                        </button>
+                    </div>
+                    <div id="recent-receipts-list" class="receipts-list">
+                        ${this.renderRecentReceiptsList()}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+},
 
     renderPendingReceiptsList(receipts) {
         if (receipts.length === 0) {
