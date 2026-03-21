@@ -1278,172 +1278,82 @@ initializeCamera: function() {
         return;
     }
     
-    // CRITICAL: Stop any existing stream FIRST
+    // Stop any existing stream
     if (this.cameraStream) {
-        console.log('🛑 Stopping existing camera stream...');
-        this.cameraStream.getTracks().forEach(track => {
-            track.stop();
-            track.enabled = false;
-        });
+        this.cameraStream.getTracks().forEach(track => track.stop());
         this.cameraStream = null;
     }
-    
-    // Reset video element completely
-    video.pause();
-    video.srcObject = null;
-    video.load();
-    
-    // Clear video element
-    video.removeAttribute('src');
-    video.removeAttribute('srcObject');
     
     // Add required attributes for mobile
     video.setAttribute('playsinline', 'true');
     video.setAttribute('autoplay', 'true');
+    video.srcObject = null;
     
     if (status) status.textContent = 'Requesting camera...';
     
-    // Wait a moment for cleanup
-    setTimeout(() => {
-        // Try simpler constraints first
-        const constraints = {
-            video: {
-                facingMode: this.cameraFacingMode || 'environment',
-                width: { ideal: 720 },
-                height: { ideal: 720 }
-            },
-            audio: false
-        };
-        
-        console.log('📱 Requesting camera with constraints:', constraints);
-        
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                console.log('✅ Camera access granted');
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                
-                // Ensure video plays
-                return video.play();
-            })
-            .then(() => {
-                console.log('📹 Video playing successfully');
-                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                if (status) status.textContent = `${cameraType} Camera Ready`;
-                
-                // Update switch button
-                const switchBtn = document.getElementById('switch-camera');
-                if (switchBtn) {
-                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                    switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
-                }
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error);
-                
-                let message = 'Camera access failed';
-                if (error.name === 'NotAllowedError') {
-                    message = 'Camera permission denied. Please allow camera access.';
-                } else if (error.name === 'NotFoundError') {
-                    message = 'No camera found on this device.';
-                } else if (error.name === 'NotReadableError') {
-                    message = 'Camera is busy. Please close other apps using the camera and try again.';
-                } else if (error.name === 'OverconstrainedError') {
-                    message = 'Camera does not support required settings.';
-                }
-                
-                if (status) status.textContent = 'Camera unavailable';
-                this.showNotification(message, 'error');
-                
-                // Try with basic constraints as fallback
-                console.log('🔄 Trying fallback camera constraints...');
-                const fallbackConstraints = {
-                    video: true,
-                    audio: false
-                };
-                
-                navigator.mediaDevices.getUserMedia(fallbackConstraints)
-                    .then(fallbackStream => {
-                        console.log('✅ Fallback camera succeeded!');
-                        this.cameraStream = fallbackStream;
-                        video.srcObject = fallbackStream;
-                        return video.play();
-                    })
-                    .then(() => {
-                        console.log('📹 Fallback camera playing');
-                        if (status) status.textContent = 'Camera Ready (Fallback mode)';
-                        this.showNotification('Camera working in fallback mode', 'info');
-                    })
-                    .catch(fallbackError => {
-                        console.error('❌ Fallback also failed:', fallbackError);
-                        // Show upload option after delay
-                        setTimeout(() => {
-                            if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                                this.showUploadInterface();
-                            }
-                        }, 2000);
-                    });
-            });
-    }, 300); // Delay to ensure cleanup
-},
+    // Simple constraints for mobile
+    const constraints = {
+        video: {
+            facingMode: this.cameraFacingMode,
+            width: { ideal: 720 },
+            height: { ideal: 720 }
+        },
+        audio: false
+    };
     
-stopCamera: function() {
-    console.log('🛑 Stopping camera aggressively...');
-    
-    // 1. Stop all tracks in the stream
-    if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => {
-            try {
-                track.stop();
-                track.enabled = false;
-                console.log(`✅ Stopped track: ${track.kind}`);
-            } catch (e) {
-                console.warn('⚠️ Error stopping track:', e);
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            console.log('✅ Camera access granted');
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            
+            return video.play();
+        })
+        .then(() => {
+            console.log('✅ Camera playing');
+            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+            if (status) status.textContent = `${cameraType} Camera Ready`;
+            
+            // Update switch button
+            const switchBtn = document.getElementById('switch-camera');
+            if (switchBtn) {
+                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                switchBtn.innerHTML = `<span class="btn-icon">🔄</span> Switch to ${nextMode}`;
             }
+        })
+        .catch(error => {
+            console.error('❌ Camera error:', error);
+            
+            let message = 'Camera access failed';
+            if (error.name === 'NotAllowedError') message = 'Camera permission denied';
+            else if (error.name === 'NotFoundError') message = 'No camera found';
+            else if (error.name === 'NotReadableError') message = 'Camera is busy';
+            
+            if (status) status.textContent = 'Camera unavailable';
+            this.showNotification(message, 'error');
+            
+            // Show upload option after delay
+            setTimeout(() => {
+                if (confirm('Camera not available. Upload file instead?')) {
+                    this.showUploadInterface();
+                }
+            }, 2000);
         });
+},
+
+// Stop camera
+stopCamera: function() {
+    console.log('🛑 Stopping camera');
+    if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => track.stop());
         this.cameraStream = null;
     }
-    
-    // 2. Clear all video elements
-    const videoElements = document.querySelectorAll('video');
-    videoElements.forEach(video => {
-        try {
-            if (video.srcObject) {
-                video.srcObject.getTracks?.().forEach(track => {
-                    try { track.stop(); } catch (e) {}
-                });
-            }
-            video.srcObject = null;
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-            console.log(`✅ Cleared video: ${video.id || 'unnamed'}`);
-        } catch (e) {
-            console.warn('⚠️ Error clearing video:', e);
-        }
-    });
-    
-    // 3. Specifically target the camera preview
-    const preview = document.getElementById('camera-preview');
-    if (preview) {
-        preview.srcObject = null;
-        preview.pause();
-        preview.removeAttribute('src');
-        preview.load();
+    const video = document.getElementById('camera-preview');
+    if (video) {
+        video.srcObject = null;
     }
-    
-    // 4. Remove any camera sections from DOM
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
-    // 5. Force garbage collection hint
-    this.cameraStream = null;
-    
-    console.log('✅ Camera fully stopped and cleaned up');
 },
-    
+
 // Switch camera
 switchCamera: function() {
     console.log('🔄 Switching camera');
@@ -1460,7 +1370,6 @@ switchCamera: function() {
     setTimeout(() => this.initializeCamera(), 300);
 },
 
-// ==================== CAMERA CAPTURE METHOD ====================
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
@@ -1469,19 +1378,12 @@ capturePhoto: function() {
     const status = document.getElementById('camera-status');
     const captureBtn = document.getElementById('capture-photo');
     
-    // Check if camera is ready
     if (!video || !video.srcObject) {
-        this.showNotification('Camera not ready. Please wait or try again.', 'error');
+        this.showNotification('Camera not ready', 'error');
         return;
     }
     
-    // Check if video has dimensions
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-        this.showNotification('Camera not ready. Video stream not initialized.', 'error');
-        return;
-    }
-    
-    // Disable button during capture
+    // Disable button
     this.isCapturing = true;
     if (captureBtn) {
         captureBtn.disabled = true;
@@ -1490,84 +1392,104 @@ capturePhoto: function() {
     
     if (status) status.textContent = 'Capturing...';
     
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Set canvas size
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
     
-    // Draw the video frame
+    // Draw video frame
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Flash effect
     video.style.opacity = '0.7';
-    setTimeout(() => {
-        if (video) video.style.opacity = '1';
-    }, 100);
+    setTimeout(() => video.style.opacity = '1', 100);
     
-    // Convert canvas to blob and create file
+    // Get image data
     canvas.toBlob((blob) => {
-        if (!blob) {
-            console.error('Failed to capture image');
-            if (status) status.textContent = 'Capture failed';
-            this.showNotification('Failed to capture image', 'error');
-            
-            if (captureBtn) {
-                captureBtn.disabled = false;
-                captureBtn.style.opacity = '1';
-            }
-            this.isCapturing = false;
-            return;
-        }
-        
-        // Create file from blob
-        const fileName = `receipt_${Date.now()}.jpg`;
-        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
         
         if (status) status.textContent = 'Photo captured!';
         this.showNotification('📸 Photo captured!', 'success');
         
-        // Re-enable capture button
+        // Re-enable button
         if (captureBtn) {
             captureBtn.disabled = false;
             captureBtn.style.opacity = '1';
         }
-        this.isCapturing = false;
         
-        // IMPORTANT: Stop camera BEFORE showing cropper
-        this.stopCamera();
+        // ===== AGGRESSIVE CAMERA CLEANUP =====
         
-        // Show the image with cropping options
+        // 1. Stop all tracks
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
+            this.cameraStream = null;
+        }
+        
+        // 2. Clear video element
+        if (video) {
+            video.srcObject = null;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+        
+        // 3. Remove camera section completely
+        const cameraSection = document.getElementById('camera-section');
+        if (cameraSection) {
+            cameraSection.remove();
+        }
+        
+        // 4. Also remove any camera elements from DOM
+        const anyVideo = document.querySelector('video');
+        if (anyVideo && anyVideo.id === 'camera-preview') {
+            anyVideo.remove();
+        }
+        
+        // 5. Hide import modal
+        const importModal = document.getElementById('import-receipts-modal');
+        if (importModal) {
+            importModal.style.display = 'none';
+            importModal.classList.add('hidden');
+        }
+        
+        // Small delay to ensure cleanup
         setTimeout(() => {
-            this.showCropperOrViewer(file);
-        }, 300);
+            // Check if cropper is available
+            if (typeof window.openCropper === 'function') {
+                console.log('📷 Opening cropper with captured image');
+                
+                // Convert blob to data URL for cropper
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Cropped file received:', croppedFile);
+                        
+                        // Create preview URL for cropped image
+                        const croppedImageUrl = URL.createObjectURL(croppedFile);
+                        
+                        // Show simple viewer with cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                };
+                reader.readAsDataURL(blob);
+            } else {
+                console.warn('⚠️ Cropper not available, using original image');
+                this.showSimpleImageViewer(file);
+            }
+            this.isCapturing = false;
+        }, 200);
         
     }, 'image/jpeg', 0.9);
 },
 
-// Helper method to show cropper or simple viewer
-showCropperOrViewer: function(file) {
-    console.log('📷 Showing cropper or viewer for:', file.name);
-    
-    // Check if we can load cropper
-    if (typeof this.loadCropperLibrary === 'function') {
-        this.loadCropperLibrary().then(() => {
-            if (typeof this.showStandardCropper === 'function') {
-                console.log('✂️ Opening cropper with captured image');
-                this.showStandardCropper(file);
-            } else {
-                console.warn('⚠️ showStandardCropper not available, using simple viewer');
-                this.showSimpleImageViewer(file);
-            }
-        }).catch((err) => {
-            console.error('❌ Failed to load cropper:', err);
-            this.showSimpleImageViewer(file);
-        });
-    } else {
-        this.showSimpleImageViewer(file);
-    }
-},
-    
-  // SIMPLE VIEWER - After capturePhoto
+   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
@@ -1613,142 +1535,98 @@ showSimpleImageViewer: function(file) {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="edit-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #2196F3, #1976D2);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        ✎ Edit Image
-                    </button>
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✓ Save to Receipt</button>
                     
-                    <button id="save-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #4CAF50, #2E7D32);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        ✓ Save
-                    </button>
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✎ Edit Crop</button>
                     
-                    <button id="retake-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #FF9800, #F57C00);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        ↺ Retake
-                    </button>
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">↺ Retake Photo</button>
                     
-                    <button id="delete-image-btn" style="
-                        flex: 1;
-                        min-width: 100px;
-                        padding: 12px 20px;
-                        background: linear-gradient(135deg, #ef4444, #dc2626);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        🗑️ Delete
-                    </button>
+                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✕ Cancel</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Get button references
-        const editBtn = document.getElementById('edit-image-btn');
-        const saveBtn = document.getElementById('save-image-btn');
-        const retakeBtn = document.getElementById('retake-image-btn');
-        const deleteBtn = document.getElementById('delete-image-btn');
-        
-        // Edit button - open cropper for editing (simplified)
-        if (editBtn) {
-            editBtn.onclick = () => {
-                console.log('✎ Edit button clicked - opening cropper');
-                modal.remove();
-                this.showStandardCropper(file);
-            };
-        }
+        // Add hover effects
+        const buttons = modal.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.transform = 'translateY(-2px)';
+                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'translateY(0)';
+                btn.style.boxShadow = 'none';
+            });
+        });
         
         // Save button - save to receipt
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                console.log('💾 Save button clicked');
-                modal.remove();
-                const imageUrl = URL.createObjectURL(file);
-                this.saveReceiptFromFile(file, imageUrl);
+        document.getElementById('save-image-btn').onclick = () => {
+            console.log('💾 Saving image to receipt');
+            modal.remove();
+            
+            // Call the original save function
+            const imageUrl = URL.createObjectURL(file);
+            this.saveReceiptFromFile(file, imageUrl);
+        };
+        
+        // Edit button - go back to cropper
+        document.getElementById('edit-image-btn').onclick = () => {
+            console.log('✎ Editing crop again');
+            modal.remove();
+            
+            // Re-open cropper with the same image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (typeof window.openCropper === 'function') {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Re-cropped file received');
+                        
+                        // Show viewer again with new cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                }
             };
-        }
+            reader.readAsDataURL(file);
+        };
         
         // Retake button - go back to camera
-        if (retakeBtn) {
-            retakeBtn.onclick = () => {
-                console.log('↺ Retake button clicked - going back to camera');
-                modal.remove();
-                this.stopCamera();
-                this.showCameraInterface();
-            };
-        }
-        
-        // Delete button - discard image
-        if (deleteBtn) {
-            deleteBtn.onclick = () => {
-                console.log('🗑️ Delete button clicked');
-                modal.remove();
-                this.showNotification('Image discarded', 'info');
-                this.showQuickActionsView();
-            };
-        }
-        
-        // Add hover effects to all buttons
-        const allButtons = [editBtn, saveBtn, retakeBtn, deleteBtn];
-        allButtons.forEach(btn => {
-            if (btn) {
-                btn.addEventListener('mouseenter', () => {
-                    btn.style.transform = 'translateY(-2px)';
-                    btn.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
-                });
-                btn.addEventListener('mouseleave', () => {
-                    btn.style.transform = 'translateY(0)';
-                    btn.style.boxShadow = 'none';
-                });
+        document.getElementById('retake-image-btn').onclick = () => {
+            console.log('↺ Retaking photo');
+            modal.remove();
+            
+            // Reopen the import modal and show camera
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                // Trigger camera option click
+                setTimeout(() => {
+                    document.getElementById('camera-option')?.click();
+                }, 100);
             }
-        });
+        };
+        
+        // Cancel button - go back to main menu
+        document.getElementById('cancel-image-btn').onclick = () => {
+            console.log('✕ Cancelled');
+            modal.remove();
+            
+            // Show the import modal with quick actions
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                const quickActions = document.getElementById('quick-actions-view');
+                if (quickActions) quickActions.style.display = 'block';
+            }
+        };
     };
     reader.readAsDataURL(file);
 },
@@ -1806,12 +1684,15 @@ cropperLibraryLoaded: false,
 // Find this line in your file - it's near the end of all your functions
 // ==================== CROPPER METHOD ====================
 showStandardCropper: function(file) {
-    console.log('🔧 Opening FULL cropper for:', file.name);
+    console.log('🔧 Opening cropper for:', file.name);
     
     // Force remove ALL camera elements first
     const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) cameraSection.remove();
+    if (cameraSection) {
+        cameraSection.remove();
+    }
     
+    // Also remove any stray video elements
     const video = document.getElementById('camera-preview');
     if (video) {
         video.srcObject = null;
@@ -1831,6 +1712,7 @@ showStandardCropper: function(file) {
     reader.onload = (e) => {
         const imageUrl = e.target.result;
         
+        // Create modal
         const modalId = 'crop-modal-' + Date.now();
         const modal = document.createElement('div');
         modal.id = modalId;
@@ -1840,273 +1722,78 @@ showStandardCropper: function(file) {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
+            background: black;
             z-index: 9999999;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(8px);
         `;
         
         modal.innerHTML = `
             <div style="
                 background: white;
                 width: 95%;
-                max-width: 750px;
+                max-width: 600px;
                 height: 90vh;
-                border-radius: 24px;
+                border-radius: 16px;
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
-                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
             ">
                 <!-- Header -->
                 <div style="
-                    background: linear-gradient(135deg, #22c55e, #16a34a);
+                    background: #22c55e;
                     color: white;
-                    padding: 20px 24px;
+                    padding: 16px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-radius: 24px 24px 0 0;
                 ">
-                    <h3 style="margin:0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                        <span>✂️</span> Crop & Edit Receipt
-                    </h3>
+                    <h3 style="margin:0;">✂️ Crop Receipt</h3>
                     <button id="close-${modalId}" style="
-                        background: rgba(255,255,255,0.2);
+                        background: none;
                         border: none;
                         color: white;
-                        font-size: 24px;
+                        font-size: 28px;
                         cursor: pointer;
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s;
+                        width: 44px;
+                        height: 44px;
                     ">&times;</button>
                 </div>
                 
-                <!-- Image Container -->
+                <!-- Image -->
                 <div style="
                     flex: 1;
-                    background: #1a1a2e;
+                    background: #f0f0f0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     overflow: hidden;
-                    position: relative;
-                    min-height: 300px;
                 ">
                     <img id="crop-image-${modalId}" src="${imageUrl}" style="max-width: 100%; max-height: 100%; display: block;">
                 </div>
                 
-                <!-- Green Circular Controls -->
+                <!-- Controls -->
                 <div style="
-                    padding: 20px 24px;
+                    padding: 16px;
                     background: white;
-                    border-top: 1px solid #e5e7eb;
+                    border-top: 1px solid #ddd;
                 ">
-                    <!-- Row 1: Zoom and Rotation Controls -->
                     <div style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 16px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 8px;
+                        margin-bottom: 16px;
                     ">
-                        <button id="zoom-in-${modalId}" class="crop-control-btn" title="Zoom In" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔍+</button>
-                        
-                        <button id="zoom-out-${modalId}" class="crop-control-btn" title="Zoom Out" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔍-</button>
-                        
-                        <button id="rotate-left-${modalId}" class="crop-control-btn" title="Rotate Left" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↺</button>
-                        
-                        <button id="rotate-right-${modalId}" class="crop-control-btn" title="Rotate Right" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↻</button>
-                        
-                        <button id="flip-horizontal-${modalId}" class="crop-control-btn" title="Flip Horizontal" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">🔄</button>
-                        
-                        <button id="flip-vertical-${modalId}" class="crop-control-btn" title="Flip Vertical" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">↕️</button>
-                        
-                        <button id="reset-${modalId}" class="crop-control-btn" title="Reset All" style="
-                            width: 56px;
-                            height: 56px;
-                            border-radius: 50%;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            border: none;
-                            color: white;
-                            font-size: 24px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">⟳</button>
+                        <button id="zoom-in-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍+ Zoom In</button>
+                        <button id="zoom-out-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔍- Zoom Out</button>
+                        <button id="rotate-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">↻ Rotate</button>
+                        <button id="reset-${modalId}" style="padding: 14px; background: #22c55e; color: white; border: none; border-radius: 8px; cursor: pointer;">🔄 Reset</button>
                     </div>
                     
-                    <!-- Row 2: Aspect Ratio Presets -->
-                    <div style="
-                        display: flex;
-                        justify-content: center;
-                        gap: 12px;
-                        margin-bottom: 20px;
-                        flex-wrap: wrap;
-                    ">
-                        <button id="aspect-free-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">Free</button>
-                        <button id="aspect-square-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">⬛ Square (1:1)</button>
-                        <button id="aspect-4-3-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">📱 4:3</button>
-                        <button id="aspect-16-9-${modalId}" class="aspect-btn" style="
-                            padding: 8px 16px;
-                            background: #f5f5f5;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 20px;
-                            font-size: 12px;
-                            font-weight: 500;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">🎬 16:9</button>
-                    </div>
-                    
-                    <!-- Action Buttons -->
                     <div style="display: flex; gap: 12px;">
-                        <button id="cancel-${modalId}" style="
-                            flex: 1;
-                            padding: 14px;
-                            background: #f5f5f5;
-                            color: #666;
-                            border: 1px solid #e5e7eb;
-                            border-radius: 12px;
-                            font-weight: 600;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                        ">Cancel</button>
-                        <button id="save-${modalId}" style="
-                            flex: 1;
-                            padding: 14px;
-                            background: linear-gradient(135deg, #22c55e, #16a34a);
-                            color: white;
-                            border: none;
-                            border-radius: 12px;
-                            font-weight: 600;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: all 0.2s;
-                            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-                        ">✓ Apply Crop</button>
+                        <button id="cancel-${modalId}" style="flex: 1; padding: 16px; background: #f44336; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancel</button>
+                        <button id="save-${modalId}" style="flex: 1; padding: 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Apply Crop</button>
                     </div>
                 </div>
             </div>
@@ -2132,47 +1819,12 @@ showStandardCropper: function(file) {
                     center: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
-                    background: false,
-                    modal: false,
-                    movable: true,
-                    rotatable: true,
-                    scalable: true,
-                    zoomable: true,
-                    zoomOnWheel: true,
-                    zoomOnTouch: true,
+                    background: false
                 });
-                
-                console.log('✅ Cropper initialized with green circular controls');
             }, 100);
         };
         
-        // Add hover effects to circular buttons
-        const circularBtns = document.querySelectorAll(`#${modalId} .crop-control-btn`);
-        circularBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.transform = 'scale(1.1)';
-                btn.style.boxShadow = '0 8px 20px rgba(34, 197, 94, 0.4)';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = 'scale(1)';
-                btn.style.boxShadow = '0 4px 12px rgba(34, 197, 94, 0.3)';
-            });
-        });
-        
-        // Aspect ratio buttons hover
-        const aspectBtns = document.querySelectorAll(`#${modalId} .aspect-btn`);
-        aspectBtns.forEach(btn => {
-            btn.addEventListener('mouseenter', () => {
-                btn.style.background = 'rgba(34, 197, 94, 0.1)';
-                btn.style.borderColor = '#22c55e';
-            });
-            btn.addEventListener('mouseleave', () => {
-                btn.style.background = '#f5f5f5';
-                btn.style.borderColor = '#e5e7eb';
-            });
-        });
-        
-        // Control handlers
+        // Controls
         document.getElementById(`zoom-in-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.zoom(0.1);
         };
@@ -2181,49 +1833,12 @@ showStandardCropper: function(file) {
             if (this.cropperInstance) this.cropperInstance.zoom(-0.1);
         };
         
-        document.getElementById(`rotate-left-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.rotate(-90);
-        };
-        
-        document.getElementById(`rotate-right-${modalId}`).onclick = () => {
+        document.getElementById(`rotate-${modalId}`).onclick = () => {
             if (this.cropperInstance) this.cropperInstance.rotate(90);
         };
         
-        document.getElementById(`flip-horizontal-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                const scaleX = this.cropperInstance.getData().scaleX === -1 ? 1 : -1;
-                this.cropperInstance.scaleX(scaleX);
-            }
-        };
-        
-        document.getElementById(`flip-vertical-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                const scaleY = this.cropperInstance.getData().scaleY === -1 ? 1 : -1;
-                this.cropperInstance.scaleY(scaleY);
-            }
-        };
-        
         document.getElementById(`reset-${modalId}`).onclick = () => {
-            if (this.cropperInstance) {
-                this.cropperInstance.reset();
-            }
-        };
-        
-        // Aspect ratio presets
-        document.getElementById(`aspect-free-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(NaN);
-        };
-        
-        document.getElementById(`aspect-square-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(1);
-        };
-        
-        document.getElementById(`aspect-4-3-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(4/3);
-        };
-        
-        document.getElementById(`aspect-16-9-${modalId}`).onclick = () => {
-            if (this.cropperInstance) this.cropperInstance.setAspectRatio(16/9);
+            if (this.cropperInstance) this.cropperInstance.reset();
         };
         
         document.getElementById(`cancel-${modalId}`).onclick = () => {
@@ -2232,8 +1847,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            // Return to simple viewer
-            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`close-${modalId}`).onclick = () => {
@@ -2242,7 +1855,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`save-${modalId}`).onclick = () => {
@@ -2250,23 +1862,20 @@ showStandardCropper: function(file) {
             
             const croppedCanvas = this.cropperInstance.getCroppedCanvas({
                 maxWidth: 1200,
-                maxHeight: 1200,
-                fillColor: '#fff',
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+                maxHeight: 1200
             });
             
             croppedCanvas.toBlob((blob) => {
                 const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
+                const croppedUrl = URL.createObjectURL(blob);
+                
+                this.saveCroppedReceipt(croppedFile, croppedUrl);
                 
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
                 modal.remove();
                 
-                // Show the cropped image in the simple viewer
-                this.showSimpleImageViewer(croppedFile);
-                
-                this.showNotification('✅ Image cropped and ready to save!', 'success');
+                this.showNotification('✅ Image cropped and saved!', 'success');
             }, 'image/jpeg', 0.95);
         };
     };
@@ -4654,902 +4263,6 @@ unload: function() {
         const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
         this.element.innerHTML = `
-            <style>
-         /* ==================== CRITICAL MODAL FIXES ==================== */
-
-/* 1. MODAL CONTAINER */
-.popout-modal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(0, 0, 0, 0.85) !important;
-    backdrop-filter: blur(10px) !important;
-    z-index: 99999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
-    overflow: auto !important;
-}
-
-.popout-modal.hidden {
-    display: none !important;
-}
-
-/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal above */
-#import-receipts-modal {
-    /* All styles moved to .popout-modal above */
-}
-
-/* 2. MODAL CONTENT */
-.popout-modal-content {
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    max-width: 800px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    width: 90%;
-    margin: auto !important;
-}
-
-/* Specific modal sizes */
-#import-receipts-modal .popout-modal-content {
-    max-width: 850px;
-    max-height: 90vh;
-}
-
-#transaction-modal .popout-modal-content {
-    max-width: 600px;
-    max-height: 85vh;
-}
-
-/* 3. GREEN GRADIENT HEADER */
-.popout-modal-header {
-    padding: 16px 24px !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-    min-height: 60px !important;
-    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
-    color: white !important;
-    position: relative !important;
-    border-radius: 16px 16px 0 0 !important;
-    overflow: hidden !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
-}
-
-.popout-modal-title {
-    margin: 0 !important;
-    font-size: 18px !important;
-    font-weight: 600 !important;
-    color: white !important;
-}
-
-.popout-modal-close {
-    background: none !important;
-    border: none !important;
-    font-size: 24px !important;
-    cursor: pointer !important;
-    color: white !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-}
-
-.popout-modal-close:hover {
-    background: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* 4. FOOTER WITH EVEN BUTTONS */
-.popout-modal-footer {
-    padding: 16px 24px !important;
-    border-top: 1px solid #e5e7eb !important;
-    display: flex !important;
-    gap: 12px !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-    background: white !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    min-height: 72px !important;
-    border-bottom-left-radius: 16px !important;
-    border-bottom-right-radius: 16px !important;
-}
-
-/* Specific modal footers */
-#import-receipts-modal .popout-modal-footer {
-    justify-content: space-between !important;
-}
-
-#transaction-modal .popout-modal-footer {
-    justify-content: space-between !important;
-}
-
-/* 5. EQUAL BUTTON WIDTHS */
-.popout-modal-footer .btn {
-    flex: 1 !important;
-    min-width: 0 !important;
-    padding: 12px 16px !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    border-radius: 10px !important;
-    border: 2px solid transparent !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    text-align: center !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 8px !important;
-    height: auto !important;
-    line-height: normal !important;
-}
-
-/* 6. GREEN BUTTONS (Match header) */
-.popout-modal-footer .btn-primary {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    color: white !important;
-    border-color: transparent !important;
-}
-
-.popout-modal-footer .btn-primary:hover {
-    background: linear-gradient(135deg, #16a34a, #15803d) !important;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
-}
-
-/* CANCEL BUTTON - USING YOUR VARIABLES */
-.popout-modal-footer .btn-outline {
-    /* Use your theme variables */
-    background-color: var(--modal-footer-bg) !important;
-    color: var(--modal-footer-text) !important;
-    border: 1px solid var(--modal-input-border) !important;
-    
-    /* Consistent styling */
-    border-radius: var(--radius-lg) !important;
-    font-weight: 600 !important;
-    padding: 12px 26px !important;
-    transition: var(--transition-normal) !important;
-    
-    /* Remove any transform that might cause flickering */
-    transform: none !important;
-}
-
-.popout-modal-footer .btn-outline:hover {
-    background-color: var(--modal-btn-text-hover) !important;
-    border-color: var(--text-secondary) !important;
-    color: var(--modal-footer-text) !important;
-    /* Optional: subtle shadow instead of transform */
-    box-shadow: var(--shadow-sm) !important;
-}
-
-/* Process Receipts button */
-#process-receipts-btn {
-    position: relative !important; /* For the badge positioning */
-    overflow: visible !important; /* Let badge show outside */
-}
-
-/* Process Receipts count badge */
-#process-receipts-count {
-    position: absolute !important;
-    top: -8px !important;
-    right: -8px !important;
-    background: #ef4444 !important;
-    color: white !important;
-    border-radius: 12px !important;
-    padding: 3px 8px !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    border: 2px solid white !important;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
-    min-width: 22px !important;
-    height: 22px !important;
-    display: flex !important; /* ← Remove this inline display */
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 10 !important;
-}
-
-/* Add this for hiding the badge */
-#process-receipts-count.hidden {
-    display: none !important;
-}
-
-#process-receipts-btn:hover {
-    background: linear-gradient(135deg, #16a34a, #15803d) !important;
-}
-
-/* ========== Responsive adjustments ========== */
-@media (max-width: 767px) {
-    .popout-modal-footer .btn {
-        padding: 14px 16px !important; /* Slightly taller on mobile */
-        font-size: 15px !important;
-    }
-    
-    .popout-modal-content {
-        max-height: calc(90vh - 80px) !important;
-        margin-top: 0 !important;
-        width: 95% !important;
-    }
-    
-    .popout-modal-footer {
-        flex-direction: column;
-    }
-    
-    .popout-modal-footer .btn {
-        width: 100% !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .popout-modal {
-        padding-top: 50px !important;
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-    }
-    
-    .popout-modal-content {
-        max-height: calc(95vh - 60px) !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-    }
-    
-    .popout-modal-header {
-        padding: 12px 16px !important;
-        min-height: 56px !important;
-    }
-    
-    .popout-modal-title {
-        font-size: 16px !important;
-    }
-}
-
-/* =========== Drag & drop styles =========== */
-#receipt-upload-area.drag-over {
-    border-color: #3b82f6 !important;
-    background: rgba(59, 130, 246, 0.1) !important;
-    border-style: solid !important;
-}
-
-#drop-area.drag-over {
-    border-color: #3b82f6 !important;
-    background: rgba(59, 130, 246, 0.1) !important;
-}
-
-.hidden {
-    display: none !important;
-}
-
-
-                
-                
-                /* ==================== BASE STYLES ==================== */
-                .import-receipts-container { padding: 20px; }
-                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
-                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
-                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
-                .card-icon { font-size: 32px; margin-bottom: 4px; }
-                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
-                
-                .camera-section .glass-card { margin-bottom: 24px; }
-                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
-                .camera-controls { display: flex; gap: 12px; justify-content: center; }
-                
-                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
-                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
-                .upload-icon { font-size: 48px; margin-bottom: 16px; }
-                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
-                
-                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
-                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
-                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
-                
-                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
-                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
-                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
-                .receipt-info { flex: 1; }
-                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-                .receipt-status { font-weight: 600; }
-                .status-pending { color: #f59e0b; }
-                .status-processed { color: #10b981; }
-                .status-error { color: #ef4444; }
-                
-                .empty-state { text-align: center; padding: 40px 20px; }
-                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-                .header-flex { display: flex; justify-content: space-between; align-items: center; }
-                
-                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
-                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
-                
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
-                
-                #upload-receipt-btn * { pointer-events: none; }
-                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
-                
-                #receipt-upload-area:hover {
-                    border-color: var(--primary-color);
-                    background: var(--primary-color)10;
-                }
-                
-                #receipt-preview-container {
-                    transition: all 0.3s ease;
-                }
-                
-                #receipt-preview-container.hidden {
-                    display: none !important;
-                }
-                
-                #image-preview.hidden {
-                    display: none !important;
-                }
-                
-                .popout-modal {
-                    z-index: 9999;
-                }
-                
-                .receipt-preview-item {
-                    background: var(--glass-bg);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin-top: 8px;
-                    border: 1px solid var(--glass-border);
-                }
-
-                .camera-preview {
-                    width: 100%;
-                    height: 400px;
-                    background: #000;
-                    border-radius: 12px;
-                    overflow: hidden;
-                    margin-bottom: 20px;
-                    position: relative;
-                    display: block !important;
-                }
-                
-                .camera-preview video {
-                    width: 100% !important;
-                    height: 100% !important;
-                    object-fit: cover;
-                    display: block !important;
-                    background: #000 !important;
-                }
-                
-                #camera-section {
-                    display: none;
-                }
-                
-                #camera-section[style*="display: block"],
-                #camera-section[style*="display:block"] {
-                    display: block !important;
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                }
-                
-                #camera-option {
-                    border: 2px solid transparent;
-                    transition: all 0.2s;
-                }
-                
-                #camera-option:hover {
-                    border-color: var(--primary-color);
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-
-                @keyframes pulse {
-                    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-                    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-                }
-
-                .new-receipt {
-                    animation: pulse 2s infinite;
-                }
-
-                @keyframes slideUp {
-                    from { opacity: 0; transform: translate(-50%, -40%); }
-                    to { opacity: 1; transform: translate(-50%, -50%); }
-                }
-
-                .delete-receipt-btn {
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .delete-receipt-btn:hover {
-                    background-color: #dc2626 !important;
-                    color: white !important;
-                }
-                .btn-danger {
-                    background: #fef2f2;
-                    color: #dc2626;
-                    border: 1px solid #fecaca;
-                }
-                .btn-danger:hover {
-                    background: #fee2e2;
-                    border-color: #fca5a5;
-                }
-                .btn-sm {
-                    padding: 6px 12px;
-                    font-size: 14px;
-                    border-radius: 6px;
-                }
-
-                .delete-receipt-btn.deleting {
-                    opacity: 0.7;
-                    cursor: not-allowed;
-                    background-color: #9ca3af !important;
-                }
-
-                .receipt-modal-scrollable {
-                    max-height: 70vh !important;
-                    overflow-y: auto !important;
-                    padding: 20px !important;
-                }
-
-                .receipt-content-wrapper {
-                    max-width: 800px !important;
-                    margin: 0 auto !important;
-                    white-space: pre-wrap !important;
-                    word-wrap: break-word !important;
-                    line-height: 1.5 !important;
-                    font-family: monospace !important;
-                    font-size: 14px !important;
-                }
-
-                .receipt-text-container {
-                    overflow-x: hidden !important;
-                    padding-right: 10px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar {
-                    width: 8px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar-track {
-                    background: rgba(0, 0, 0, 0.1) !important;
-                    border-radius: 4px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar-thumb {
-                    background: rgba(0, 0, 0, 0.3) !important;
-                    border-radius: 4px !important;
-                }
-
-                .receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
-                    background: rgba(0, 0, 0, 0.4) !important;
-                }
-
-                @media (max-width: 768px) {
-                    .receipt-modal-scrollable {
-                        max-height: 80vh !important;
-                        padding: 15px !important;
-                    }
-                    
-                    .receipt-content-wrapper {
-                        font-size: 12px !important;
-                    }
-                }
-
-                @media (max-width: 480px) {
-                    .receipt-modal-scrollable {
-                        max-height: 85vh !important;
-                        padding: 10px !important;
-                    }
-                }
-
-                .process-receipt-btn,
-                .delete-receipt-btn {
-                    display: inline-flex !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                    position: relative !important;
-                    z-index: 10 !important;
-                }
-
-                @media (min-width: 769px) {
-                    .pending-receipt-item {
-                        position: relative;
-                        padding-right: 200px !important;
-                    }
-                    
-                    .receipt-actions {
-                        position: absolute !important;
-                        right: 16px !important;
-                        top: 50% !important;
-                        transform: translateY(-50%) !important;
-                        display: flex !important;
-                        gap: 8px !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                        z-index: 100 !important;
-                    }
-                    
-                    .receipt-actions .btn {
-                        min-width: 80px !important;
-                        height: 36px !important;
-                        display: inline-flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        white-space: nowrap !important;
-                    }
-                }
-
-                @media (max-width: 768px) {
-                    .pending-receipt-item {
-                        flex-direction: column;
-                        align-items: stretch;
-                        gap: 12px;
-                    }
-                    
-                    .receipt-actions {
-                        display: flex !important;
-                        justify-content: flex-end;
-                        gap: 8px;
-                        margin-top: 12px;
-                    }
-                }
-
-                .receipt-card .receipt-actions,
-                .pending-receipt-item .receipt-actions {
-                    overflow: visible !important;
-                    clip: auto !important;
-                    clip-path: none !important;
-                    height: auto !important;
-                    width: auto !important;
-                }
-
-                .upload-area {
-                    min-height: 200px !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    background: var(--glass-bg) !important;
-                    border: 2px dashed var(--glass-border) !important;
-                    border-radius: 12px !important;
-                    padding: 40px 20px !important;
-                    cursor: pointer !important;
-                    transition: all 0.3s ease !important;
-                }
-
-                .upload-area:hover {
-                    border-color: var(--primary-color) !important;
-                    background: var(--primary-color)10 !important;
-                }
-
-                .upload-icon {
-                    font-size: 64px !important;
-                    margin-bottom: 16px !important;
-                    color: var(--text-secondary) !important;
-                }
-
-                .upload-section, .camera-section, .recent-section {
-                    min-height: 100px !important;
-                    margin-bottom: 24px !important;
-                }
-
-                .glass-card {
-                    min-height: 150px !important;
-                }
-
-                .upload-system-container {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-                    max-width: 100%;
-                    background: #ffffff;
-                    border-radius: 12px;
-                    padding: 20px;
-                    border: 1px solid #e5e7eb;
-                }
-
-                .upload-dropzone {
-                    border: 2px dashed #d1d5db;
-                    border-radius: 10px;
-                    padding: 40px 20px;
-                    text-align: center;
-                    background: #f9fafb;
-                    margin-bottom: 20px;
-                    cursor: pointer;
-                }
-
-                .upload-dropzone:hover {
-                    border-color: #4f46e5;
-                    background: #f0f1ff;
-                }
-
-                .dropzone-icon {
-                    font-size: 48px;
-                    color: #9ca3af;
-                    margin-bottom: 16px;
-                }
-
-                .dropzone-title {
-                    font-size: 18px;
-                    font-weight: 600;
-                    margin-bottom: 8px;
-                    color: #374151;
-                }
-
-                .dropzone-subtitle {
-                    color: #6b7280;
-                    margin-bottom: 20px;
-                }
-/* ==================== CROPPER STYLES - GREEN THEME WITH CIRCULAR BUTTONS ==================== */
-
-/* Cropper touch interaction fixes */
-#receipt-cropper-modal {
-    touch-action: none;
-}
-
-#receipt-cropper-image {
-    touch-action: none !important;
-    -webkit-touch-callout: none !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
-    max-width: 100%;
-    height: auto;
-}
-
-/* Cropper Container */
-.cropper-container {
-    touch-action: none !important;
-    max-height: 55vh !important;
-    width: 100% !important;
-    background: #1a1a2e !important;
-}
-
-/* Cropper Canvas */
-.cropper-canvas {
-    background: #1a1a2e !important;
-}
-
-/* Green Crop Box Outline */
-.cropper-view-box {
-    outline: 2px solid #22c55e !important;
-    outline-color: rgba(34, 197, 94, 0.75) !important;
-}
-
-/* Green Crop Lines */
-.cropper-line {
-    background-color: #22c55e !important;
-}
-
-/* Green Dotted Guide Lines */
-.cropper-dashed {
-    border-color: #22c55e !important;
-    opacity: 0.5 !important;
-}
-
-/* Green Center Crosshair */
-.cropper-center::before,
-.cropper-center::after {
-    background-color: #22c55e !important;
-}
-
-/* GREEN CIRCULAR CROP HANDLES */
-.cropper-point {
-    width: 16px !important;
-    height: 16px !important;
-    background: #22c55e !important;
-    opacity: 1 !important;
-    border: 2px solid white !important;
-    border-radius: 50% !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-    transition: all 0.2s ease !important;
-}
-
-.cropper-point:hover {
-    transform: scale(1.3) !important;
-    background: #16a34a !important;
-}
-
-/* Large corner handle (bottom right) */
-.cropper-point.point-se {
-    width: 24px !important;
-    height: 24px !important;
-    background: #22c55e !important;
-    border-radius: 50% !important;
-    opacity: 1 !important;
-}
-
-.cropper-point.point-se:hover {
-    transform: scale(1.2) !important;
-    background: #16a34a !important;
-}
-
-/* Mobile - larger touch targets */
-@media (max-width: 768px) {
-    .cropper-point {
-        width: 28px !important;
-        height: 28px !important;
-    }
-    
-    .cropper-point.point-se {
-        width: 36px !important;
-        height: 36px !important;
-    }
-}
-
-/* GREEN CIRCULAR CONTROL BUTTONS */
-.crop-control-btn {
-    width: 56px !important;
-    height: 56px !important;
-    border-radius: 50% !important;
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    border: none !important;
-    color: white !important;
-    font-size: 24px !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
-    margin: 4px !important;
-}
-
-.crop-control-btn:hover {
-    transform: scale(1.1) !important;
-    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4) !important;
-    background: linear-gradient(135deg, #16a34a, #15803d) !important;
-}
-
-.crop-control-btn:active {
-    transform: scale(0.95) !important;
-}
-
-/* Aspect Ratio Buttons */
-.aspect-btn {
-    padding: 8px 16px !important;
-    background: #f5f5f5 !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 20px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    color: #374151 !important;
-}
-
-.aspect-btn:hover {
-    background: rgba(34, 197, 94, 0.1) !important;
-    border-color: #22c55e !important;
-    transform: translateY(-2px) !important;
-}
-
-.aspect-btn.active {
-    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-    color: white !important;
-    border-color: transparent !important;
-}
-
-/* Cancel and Apply Buttons */
-#cancel-receipt-crop, 
-#apply-receipt-crop {
-    min-height: 48px;
-    font-size: 16px;
-    font-weight: bold;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    padding: 12px 24px;
-}
-
-#cancel-receipt-crop {
-    background: #f5f5f5;
-    color: #666;
-    border: 1px solid #e5e7eb;
-}
-
-#cancel-receipt-crop:hover {
-    background: #fee2e2;
-    border-color: #ef4444;
-    color: #dc2626;
-    transform: translateY(-2px);
-}
-
-#apply-receipt-crop {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: white;
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
-#apply-receipt-crop:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
-}
-
-#cancel-receipt-crop:active, 
-#apply-receipt-crop:active {
-    transform: scale(0.98);
-}
-
-/* Cropper container sizing */
-#cropper-container {
-    touch-action: none;
-    background: #1a1a2e;
-    min-height: 400px;
-    max-height: 55vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .crop-control-btn {
-        width: 48px !important;
-        height: 48px !important;
-        font-size: 20px !important;
-    }
-    
-    .aspect-btn {
-        padding: 6px 12px !important;
-        font-size: 11px !important;
-    }
-    
-    #cropper-container {
-        min-height: 300px;
-        max-height: 45vh;
-    }
-    
-    .cropper-container {
-        max-height: 45vh !important;
-    }
-}
-
-/* Small screens */
-@media (max-width: 480px) {
-    .crop-control-btn {
-        width: 44px !important;
-        height: 44px !important;
-        font-size: 18px !important;
-    }
-    
-    .crop-control-buttons {
-        gap: 8px !important;
-    }
-}
-
-/* Animation for modal appearance */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.cropper-modal-content {
-    animation: fadeInUp 0.3s ease-out !important;
-}
-            </style>
-
             <div class="module-container">
                 <!-- Module Header -->
                 <div class="module-header">
@@ -6679,37 +5392,7 @@ unload() {
     
     console.log('✅ Income & Expenses module unloaded');
 }
-
 };
-
- // Add this AFTER the module registration, before the closing script tag
-// ==================== GLOBAL CROPPER HELPER ====================
-window.openCropper = function(imageData, onCropped, fileName) {
-    console.log('📷 Global cropper called');
-    
-    const module = window.IncomeExpensesModule;
-    if (module && module.showStandardCropper) {
-        // Convert dataURL to blob then to file
-        const blob = dataURLtoBlob(imageData);
-        const file = new File([blob], fileName || 'image.jpg', { type: 'image/jpeg' });
-        module.showStandardCropper(file);
-    } else {
-        console.error('❌ IncomeExpensesModule not available or showStandardCropper missing');
-    }
-};
-
-// Helper function to convert dataURL to Blob
-function dataURLtoBlob(dataURL) {
-    const arr = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new Blob([u8arr], { type: mime });
-}
 
 // =============== Register with FarmModules framework ===================
 if (window.FarmModules) {
