@@ -1278,126 +1278,116 @@ initializeCamera: function() {
         return;
     }
     
-    // Stop any existing stream
+    // CRITICAL: Stop any existing stream FIRST
     if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => track.stop());
+        console.log('🛑 Stopping existing camera stream...');
+        this.cameraStream.getTracks().forEach(track => {
+            track.stop();
+            track.enabled = false;
+        });
         this.cameraStream = null;
     }
+    
+    // Reset video element completely
+    video.pause();
+    video.srcObject = null;
+    video.load();
+    
+    // Clear video element
+    video.removeAttribute('src');
+    video.removeAttribute('srcObject');
     
     // Add required attributes for mobile
     video.setAttribute('playsinline', 'true');
     video.setAttribute('autoplay', 'true');
-    video.srcObject = null;
     
     if (status) status.textContent = 'Requesting camera...';
     
-    // Simple constraints for mobile
-    const constraints = {
-        video: {
-            facingMode: this.cameraFacingMode,
-            width: { ideal: 720 },
-            height: { ideal: 720 }
-        },
-        audio: false
-    };
-    
-    navigator.mediaDevices.getUserMedia(constraints)
-        .then(stream => {
-            console.log('✅ Camera access granted');
-            this.cameraStream = stream;
-            video.srcObject = stream;
-            
-            return video.play();
-        })
-        .then(() => {
-            console.log('✅ Camera playing');
-            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-            if (status) status.textContent = `${cameraType} Camera Ready`;
-            
-            // Update switch button
-            const switchBtn = document.getElementById('switch-camera');
-            if (switchBtn) {
-                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                switchBtn.innerHTML = `<span class="btn-icon">🔄</span> Switch to ${nextMode}`;
-            }
-        })
-        .catch(error => {
-            console.error('❌ Camera error:', error);
-            
-            let message = 'Camera access failed';
-            if (error.name === 'NotAllowedError') message = 'Camera permission denied';
-            else if (error.name === 'NotFoundError') message = 'No camera found';
-            else if (error.name === 'NotReadableError') message = 'Camera is busy';
-            
-            if (status) status.textContent = 'Camera unavailable';
-            this.showNotification(message, 'error');
-            
-            // Show upload option after delay
-            setTimeout(() => {
-                if (confirm('Camera not available. Upload file instead?')) {
-                    this.showUploadInterface();
+    // Wait a moment for cleanup
+    setTimeout(() => {
+        // Try simpler constraints first
+        const constraints = {
+            video: {
+                facingMode: this.cameraFacingMode || 'environment',
+                width: { ideal: 720 },
+                height: { ideal: 720 }
+            },
+            audio: false
+        };
+        
+        console.log('📱 Requesting camera with constraints:', constraints);
+        
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(stream => {
+                console.log('✅ Camera access granted');
+                this.cameraStream = stream;
+                video.srcObject = stream;
+                
+                // Ensure video plays
+                return video.play();
+            })
+            .then(() => {
+                console.log('📹 Video playing successfully');
+                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+                if (status) status.textContent = `${cameraType} Camera Ready`;
+                
+                // Update switch button
+                const switchBtn = document.getElementById('switch-camera');
+                if (switchBtn) {
+                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                    switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
                 }
-            }, 2000);
-        });
+            })
+            .catch(error => {
+                console.error('❌ Camera error:', error);
+                
+                let message = 'Camera access failed';
+                if (error.name === 'NotAllowedError') {
+                    message = 'Camera permission denied. Please allow camera access.';
+                } else if (error.name === 'NotFoundError') {
+                    message = 'No camera found on this device.';
+                } else if (error.name === 'NotReadableError') {
+                    message = 'Camera is busy. Please close other apps using the camera and try again.';
+                } else if (error.name === 'OverconstrainedError') {
+                    message = 'Camera does not support required settings.';
+                }
+                
+                if (status) status.textContent = 'Camera unavailable';
+                this.showNotification(message, 'error');
+                
+                // Try with basic constraints as fallback
+                console.log('🔄 Trying fallback camera constraints...');
+                const fallbackConstraints = {
+                    video: true,
+                    audio: false
+                };
+                
+                navigator.mediaDevices.getUserMedia(fallbackConstraints)
+                    .then(fallbackStream => {
+                        console.log('✅ Fallback camera succeeded!');
+                        this.cameraStream = fallbackStream;
+                        video.srcObject = fallbackStream;
+                        return video.play();
+                    })
+                    .then(() => {
+                        console.log('📹 Fallback camera playing');
+                        if (status) status.textContent = 'Camera Ready (Fallback mode)';
+                        this.showNotification('Camera working in fallback mode', 'info');
+                    })
+                    .catch(fallbackError => {
+                        console.error('❌ Fallback also failed:', fallbackError);
+                        // Show upload option after delay
+                        setTimeout(() => {
+                            if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                                this.showUploadInterface();
+                            }
+                        }, 2000);
+                    });
+            });
+    }, 300); // Delay to ensure cleanup
 },
-
+    
 stopCamera: function() {
-    console.log('🛑 Stopping camera aggressively...');
-    
-    // 1. Stop all tracks in the stream
-    if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => {
-            try {
-                track.stop();
-                track.enabled = false;
-                track.readyState = 'ended';
-                console.log(`✅ Stopped track: ${track.kind}`);
-            } catch (e) {
-                console.warn('⚠️ Error stopping track:', e);
-            }
-        });
-        this.cameraStream = null;
-    }
-    
-    // 2. Clear all video elements
-    const videoElements = document.querySelectorAll('video');
-    videoElements.forEach(video => {
-        try {
-            if (video.srcObject) {
-                video.srcObject.getTracks?.().forEach(track => {
-                    try { track.stop(); } catch (e) {}
-                });
-            }
-            video.srcObject = null;
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-            console.log(`✅ Cleared video: ${video.id || 'unnamed'}`);
-        } catch (e) {
-            console.warn('⚠️ Error clearing video:', e);
-        }
-    });
-    
-    // 3. Specifically target the camera preview
-    const preview = document.getElementById('camera-preview');
-    if (preview) {
-        preview.srcObject = null;
-        preview.pause();
-        preview.removeAttribute('src');
-        preview.load();
-    }
-    
-    // 4. Remove any camera sections from DOM
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
-    // 5. Force garbage collection hint
-    this.cameraStream = null;
-    
-    console.log('✅ Camera fully stopped and cleaned up');
-},
     
 // Switch camera
 switchCamera: function() {
@@ -3430,41 +3420,39 @@ unload: function() {
         }, 100);
     },
 
-   showCameraInterface: function() {
+  showCameraInterface: function() {
     console.log('📷 Showing camera interface...');
     
-    const cameraSection = document.getElementById('camera-section');
+    // Force stop any existing camera first
+    this.stopCamera();
+    
+    // Hide other sections
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
+    const cameraSection = document.getElementById('camera-section');
     
     if (uploadSection) uploadSection.style.display = 'none';
     if (quickActionsSection) quickActionsSection.style.display = 'none';
+    
+    // Show camera section
     if (cameraSection) {
         cameraSection.style.display = 'block';
         
-        // Quick check if camera might be available
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            const status = document.getElementById('camera-status');
-            if (status) status.textContent = 'Camera not supported';
-            this.showNotification('Camera not supported in this browser', 'warning');
-            
-            // Show upload option after 3 seconds
-            setTimeout(() => {
-                if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                    this.showUploadInterface();
-                }
-            }, 3000);
-        } else {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
             this.initializeCamera();
-        }
-        
+        }, 300);
+    } else {
+        console.error('❌ Camera section not found');
+        this.showNotification('Camera section not found', 'error');
     }
+    
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
 },
-
+    
     checkCameraAvailability() {
         return new Promise((resolve) => {
             if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
