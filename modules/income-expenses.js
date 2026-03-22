@@ -1,4 +1,3 @@
-compare these two:
 // modules/income-expenses.js - COMPLETE FIXED VERSION
 console.log('💰 Loading Income & Expenses module...');
 
