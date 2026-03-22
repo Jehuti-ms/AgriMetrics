@@ -1,3 +1,4 @@
+compare these two:
 // modules/income-expenses.js - COMPLETE FIXED VERSION
 console.log('💰 Loading Income & Expenses module...');
 
@@ -1278,117 +1279,82 @@ initializeCamera: function() {
         return;
     }
     
-    // CRITICAL: Stop any existing stream FIRST
+    // Stop any existing stream
     if (this.cameraStream) {
-        console.log('🛑 Stopping existing camera stream...');
-        this.cameraStream.getTracks().forEach(track => {
-            track.stop();
-            track.enabled = false;
-        });
+        this.cameraStream.getTracks().forEach(track => track.stop());
         this.cameraStream = null;
     }
-    
-    // Reset video element completely
-    video.pause();
-    video.srcObject = null;
-    video.load();
-    
-    // Clear video element
-    video.removeAttribute('src');
-    video.removeAttribute('srcObject');
     
     // Add required attributes for mobile
     video.setAttribute('playsinline', 'true');
     video.setAttribute('autoplay', 'true');
+    video.srcObject = null;
     
     if (status) status.textContent = 'Requesting camera...';
     
-    // Wait a moment for cleanup
-    setTimeout(() => {
-        // Try simpler constraints first
-        const constraints = {
-            video: {
-                facingMode: this.cameraFacingMode || 'environment',
-                width: { ideal: 720 },
-                height: { ideal: 720 }
-            },
-            audio: false
-        };
-        
-        console.log('📱 Requesting camera with constraints:', constraints);
-        
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(stream => {
-                console.log('✅ Camera access granted');
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                
-                // Ensure video plays
-                return video.play();
-            })
-            .then(() => {
-                console.log('📹 Video playing successfully');
-                const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
-                if (status) status.textContent = `${cameraType} Camera Ready`;
-                
-                // Update switch button
-                const switchBtn = document.getElementById('switch-camera');
-                if (switchBtn) {
-                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                    switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
+    // Simple constraints for mobile
+    const constraints = {
+        video: {
+            facingMode: this.cameraFacingMode,
+            width: { ideal: 720 },
+            height: { ideal: 720 }
+        },
+        audio: false
+    };
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+            console.log('✅ Camera access granted');
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            
+            return video.play();
+        })
+        .then(() => {
+            console.log('✅ Camera playing');
+            const cameraType = this.cameraFacingMode === 'user' ? 'Front' : 'Rear';
+            if (status) status.textContent = `${cameraType} Camera Ready`;
+            
+            // Update switch button
+            const switchBtn = document.getElementById('switch-camera');
+            if (switchBtn) {
+                const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                switchBtn.innerHTML = `<span class="btn-icon">🔄</span> Switch to ${nextMode}`;
+            }
+        })
+        .catch(error => {
+            console.error('❌ Camera error:', error);
+            
+            let message = 'Camera access failed';
+            if (error.name === 'NotAllowedError') message = 'Camera permission denied';
+            else if (error.name === 'NotFoundError') message = 'No camera found';
+            else if (error.name === 'NotReadableError') message = 'Camera is busy';
+            
+            if (status) status.textContent = 'Camera unavailable';
+            this.showNotification(message, 'error');
+            
+            // Show upload option after delay
+            setTimeout(() => {
+                if (confirm('Camera not available. Upload file instead?')) {
+                    this.showUploadInterface();
                 }
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error);
-                
-                let message = 'Camera access failed';
-                if (error.name === 'NotAllowedError') {
-                    message = 'Camera permission denied. Please allow camera access.';
-                } else if (error.name === 'NotFoundError') {
-                    message = 'No camera found on this device.';
-                } else if (error.name === 'NotReadableError') {
-                    message = 'Camera is busy. Please close other apps using the camera and try again.';
-                } else if (error.name === 'OverconstrainedError') {
-                    message = 'Camera does not support required settings.';
-                }
-                
-                if (status) status.textContent = 'Camera unavailable';
-                this.showNotification(message, 'error');
-                
-                // Try with basic constraints as fallback
-                console.log('🔄 Trying fallback camera constraints...');
-                const fallbackConstraints = {
-                    video: true,
-                    audio: false
-                };
-                
-                navigator.mediaDevices.getUserMedia(fallbackConstraints)
-                    .then(fallbackStream => {
-                        console.log('✅ Fallback camera succeeded!');
-                        this.cameraStream = fallbackStream;
-                        video.srcObject = fallbackStream;
-                        return video.play();
-                    })
-                    .then(() => {
-                        console.log('📹 Fallback camera playing');
-                        if (status) status.textContent = 'Camera Ready (Fallback mode)';
-                        this.showNotification('Camera working in fallback mode', 'info');
-                    })
-                    .catch(fallbackError => {
-                        console.error('❌ Fallback also failed:', fallbackError);
-                        // Show upload option after delay
-                        setTimeout(() => {
-                            if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                                this.showUploadInterface();
-                            }
-                        }, 2000);
-                    });
-            });
-    }, 300); // Delay to ensure cleanup
+            }, 2000);
+        });
 },
-    
+
+// Stop camera
 stopCamera: function() {
-    
+    console.log('🛑 Stopping camera');
+    if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => track.stop());
+        this.cameraStream = null;
+    }
+    const video = document.getElementById('camera-preview');
+    if (video) {
+        video.srcObject = null;
+    }
+},
+
 // Switch camera
 switchCamera: function() {
     console.log('🔄 Switching camera');
@@ -1524,7 +1490,7 @@ capturePhoto: function() {
     }, 'image/jpeg', 0.9);
 },
 
-  // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
+   // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
@@ -1570,135 +1536,21 @@ showSimpleImageViewer: function(file) {
                 </div>
                 
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✓ Save to Receipt</button>
+                    <button id="save-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✓ Save to Receipt</button>
                     
-                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">✎ Edit Crop</button>
+                    <button id="edit-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #2196F3, #1976D2); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✎ Edit Crop</button>
                     
-                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">↺ Retake Photo</button>
+                    <button id="retake-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">↺ Retake Photo</button>
                     
-                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer;">✕ Cancel</button>
+                    <button id="cancel-image-btn" style="flex: 1; min-width: 120px; padding: 12px 20px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">✕ Cancel</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        // Get button references
-        const saveBtn = document.getElementById('save-image-btn');
-        const editBtn = document.getElementById('edit-image-btn');
-        const retakeBtn = document.getElementById('retake-image-btn');
-        const cancelBtn = document.getElementById('cancel-image-btn');
-        
-        // Save button - save to receipt
-        if (saveBtn) {
-            saveBtn.onclick = () => {
-                console.log('💾 Saving image to receipt');
-                modal.remove();
-                
-                // Call the original save function
-                const imageUrl = URL.createObjectURL(file);
-                this.saveReceiptFromFile(file, imageUrl);
-            };
-        }
-        
-        // Edit button - go back to cropper
-        if (editBtn) {
-            editBtn.onclick = () => {
-                console.log('✎ Editing crop again');
-                modal.remove();
-                
-                // Re-open cropper with the same image
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (typeof window.openCropper === 'function') {
-                        window.openCropper(e.target.result, (croppedFile) => {
-                            console.log('📷 Re-cropped file received');
-                            
-                            // Show viewer again with new cropped image
-                            setTimeout(() => {
-                                this.showSimpleImageViewer(croppedFile);
-                            }, 100);
-                            
-                        }, file.name);
-                    }
-                };
-                reader.readAsDataURL(file);
-            };
-        }
-        
-        // Retake button - go back to camera
-        if (retakeBtn) {
-            retakeBtn.onclick = () => {
-                console.log('↺ Retaking photo - going back to camera');
-                modal.remove();
-                
-                // Stop any existing camera first
-                this.stopCamera();
-                
-                // Show the import modal
-                const importModal = document.getElementById('import-receipts-modal');
-                if (importModal) {
-                    importModal.style.display = 'flex';
-                    importModal.classList.remove('hidden');
-                    
-                    // Hide quick actions and upload sections
-                    const quickActions = document.getElementById('quick-actions-view');
-                    const uploadSection = document.getElementById('upload-section');
-                    
-                    if (quickActions) quickActions.style.display = 'none';
-                    if (uploadSection) uploadSection.style.display = 'none';
-                    
-                    // Show camera section
-                    const cameraSection = document.getElementById('camera-section');
-                    if (cameraSection) {
-                        cameraSection.style.display = 'block';
-                        
-                        // Small delay to ensure DOM is ready
-                        setTimeout(() => {
-                            this.initializeCamera();
-                            console.log('📷 Camera re-initialized for retake');
-                        }, 200);
-                    } else {
-                        // Fallback: trigger camera option click
-                        setTimeout(() => {
-                            document.getElementById('camera-option')?.click();
-                        }, 200);
-                    }
-                }
-            };
-        }
-        
-        // Cancel button - go back to main menu
-        if (cancelBtn) {
-            cancelBtn.onclick = () => {
-                console.log('✕ Cancelled - going back to import methods');
-                modal.remove();
-                
-                // Show the import modal with quick actions
-                const importModal = document.getElementById('import-receipts-modal');
-                if (importModal) {
-                    importModal.style.display = 'flex';
-                    importModal.classList.remove('hidden');
-                    
-                    // Hide camera and upload sections
-                    const cameraSection = document.getElementById('camera-section');
-                    const uploadSection = document.getElementById('upload-section');
-                    
-                    if (cameraSection) cameraSection.style.display = 'none';
-                    if (uploadSection) uploadSection.style.display = 'none';
-                    
-                    // Show quick actions
-                    const quickActions = document.getElementById('quick-actions-view');
-                    if (quickActions) quickActions.style.display = 'block';
-                    
-                    // Also show recent receipts
-                    const recentSection = document.getElementById('recent-section');
-                    if (recentSection) recentSection.style.display = 'block';
-                }
-            };
-        }
-        
-        // Add hover effects separately (doesn't interfere with click handlers)
+        // Add hover effects
+        const buttons = modal.querySelectorAll('button');
         buttons.forEach(btn => {
             btn.addEventListener('mouseenter', () => {
                 btn.style.transform = 'translateY(-2px)';
@@ -1709,6 +1561,73 @@ showSimpleImageViewer: function(file) {
                 btn.style.boxShadow = 'none';
             });
         });
+        
+        // Save button - save to receipt
+        document.getElementById('save-image-btn').onclick = () => {
+            console.log('💾 Saving image to receipt');
+            modal.remove();
+            
+            // Call the original save function
+            const imageUrl = URL.createObjectURL(file);
+            this.saveReceiptFromFile(file, imageUrl);
+        };
+        
+        // Edit button - go back to cropper
+        document.getElementById('edit-image-btn').onclick = () => {
+            console.log('✎ Editing crop again');
+            modal.remove();
+            
+            // Re-open cropper with the same image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (typeof window.openCropper === 'function') {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Re-cropped file received');
+                        
+                        // Show viewer again with new cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        // Retake button - go back to camera
+        document.getElementById('retake-image-btn').onclick = () => {
+            console.log('↺ Retaking photo');
+            modal.remove();
+            
+            // Reopen the import modal and show camera
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                // Trigger camera option click
+                setTimeout(() => {
+                    document.getElementById('camera-option')?.click();
+                }, 100);
+            }
+        };
+        
+        // Cancel button - go back to main menu
+        document.getElementById('cancel-image-btn').onclick = () => {
+            console.log('✕ Cancelled');
+            modal.remove();
+            
+            // Show the import modal with quick actions
+            const importModal = document.getElementById('import-receipts-modal');
+            if (importModal) {
+                importModal.style.display = 'flex';
+                importModal.classList.remove('hidden');
+                
+                const quickActions = document.getElementById('quick-actions-view');
+                if (quickActions) quickActions.style.display = 'block';
+            }
+        };
     };
     reader.readAsDataURL(file);
 },
@@ -3207,120 +3126,23 @@ showReceiptCropperModal: function(file) {
         }, 100);
     },
 
-    // Add this function to your IncomeExpensesModule
-hideImportReceiptsModal: function() {
-    console.log('❌ Closing import receipts modal');
-    
-    this.stopCamera();
-    
-    const modal = document.getElementById('import-receipts-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
-        console.log('✅ Modal hidden');
-    }
-    
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput) {
-        fileInput.value = '';
-    }
-},
-
-   // When switching to upload interface
-showUploadInterface: function() {
-    console.log('📁 Showing upload interface...');
-    
-    this.stopCamera(); // ADD THIS
-    
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    if (cameraSection) cameraSection.style.display = 'none';
-    if (quickActionsSection) quickActionsSection.style.display = 'none';
-    if (uploadSection) uploadSection.style.display = 'block';
-    if (recentSection) recentSection.style.display = 'block';
-    
-    setTimeout(() => {
-        this.setupDragAndDrop();
-    }, 100);
-},
-
-// When showing quick actions (back button)
-showQuickActionsView: function() {
-    console.log('🏠 Showing quick actions view...');
-    
-    this.stopCamera(); // ADD THIS
-    
-    const cameraSection = document.getElementById('camera-section');
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    
-    if (cameraSection) cameraSection.style.display = 'none';
-    if (uploadSection) uploadSection.style.display = 'none';
-    if (quickActionsSection) quickActionsSection.style.display = 'block';
-    if (recentSection) recentSection.style.display = 'block';
-},
-
-// In capturePhoto, right before opening cropper
-capturePhoto: function() {
-    console.log('📸 Capture photo');
-    
-    // ... existing capture code ...
-    
-    canvas.toBlob((blob) => {
-        // ... existing code ...
+    hideImportReceiptsModal() {
+        console.log('❌ Closing import receipts modal');
         
-        // ADD THIS LINE right before opening cropper
-        this.stopCamera(); // Stop camera before showing cropper
+        this.stopCamera();
         
-        setTimeout(() => {
-            // Check if cropper is available
-            if (typeof window.openCropper === 'function') {
-                console.log('📷 Opening cropper with captured image');
-                // ... rest of cropper code ...
-            }
-        }, 200);
-    }, 'image/jpeg', 0.9);
-},
-
-// In the module unload function (at the very end of your module)
-unload: function() {
-    console.log('📦 Unloading Income & Expenses module...');
-    
-    this.stopCamera(); // ADD THIS
-    
-    // Remove event listeners
-    if (this._globalClickHandler) {
-        document.removeEventListener('click', this._globalClickHandler);
-        this._globalClickHandler = null;
-    }
-    if (this._globalChangeHandler) {
-        document.removeEventListener('change', this._globalChangeHandler);
-        this._globalChangeHandler = null;
-    }
-    
-    // Hide any open modals
-    this.hideAllModals();
-    
-    // Clean up file input if created
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
-        fileInput.remove();
-    }
-    
-    // Reset state
-    this.initialized = false;
-    this.element = null;
-    this.currentEditingId = null;
-    this.receiptQueue = [];
-    this.cameraStream = null;
-    this.receiptPreview = null;
-    
-    console.log('✅ Income & Expenses module unloaded');
-},
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+            console.log('✅ Modal hidden');
+        }
+        
+        const fileInput = document.getElementById('receipt-upload-input');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    },
 
     showTransactionModal(transactionId = null) {
         this.hideAllModals();
@@ -3420,39 +3242,41 @@ unload: function() {
         }, 100);
     },
 
-  showCameraInterface: function() {
+   showCameraInterface: function() {
     console.log('📷 Showing camera interface...');
     
-    // Force stop any existing camera first
-    this.stopCamera();
-    
-    // Hide other sections
+    const cameraSection = document.getElementById('camera-section');
     const uploadSection = document.getElementById('upload-section');
     const recentSection = document.getElementById('recent-section');
     const quickActionsSection = document.querySelector('.quick-actions-section');
-    const cameraSection = document.getElementById('camera-section');
     
     if (uploadSection) uploadSection.style.display = 'none';
     if (quickActionsSection) quickActionsSection.style.display = 'none';
-    
-    // Show camera section
     if (cameraSection) {
         cameraSection.style.display = 'block';
         
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
+        // Quick check if camera might be available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const status = document.getElementById('camera-status');
+            if (status) status.textContent = 'Camera not supported';
+            this.showNotification('Camera not supported in this browser', 'warning');
+            
+            // Show upload option after 3 seconds
+            setTimeout(() => {
+                if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                    this.showUploadInterface();
+                }
+            }, 3000);
+        } else {
             this.initializeCamera();
-        }, 300);
-    } else {
-        console.error('❌ Camera section not found');
-        this.showNotification('Camera section not found', 'error');
+        }
+        
     }
-    
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
 },
-    
+
     checkCameraAvailability() {
         return new Promise((resolve) => {
             if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
@@ -3651,85 +3475,81 @@ unload: function() {
             document.removeEventListener('change', this._globalChangeHandler);
         }
         
-                  
-       this._globalClickHandler = (e) => {
-    // ===== NEW: Handle transaction item clicks for editing =====
-    const transactionItem = e.target.closest('.transaction-item');
-    if (transactionItem) {
-        const transactionId = transactionItem.dataset.id;
-        if (transactionId) {
+        this._globalClickHandler = (e) => {
+            // ===== NEW: Handle transaction item clicks for editing =====
+            const transactionItem = e.target.closest('.transaction-item');
+            if (transactionItem) {
+                const transactionId = transactionItem.dataset.id;
+                if (transactionId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📝 Transaction item clicked for editing:', transactionId);
+                    this.editTransaction(transactionId);
+                    return; // Important: stop here so button clicks inside don't trigger twice
+                }
+            }
+            
+            // Handle button clicks
+            const button = e.target.closest('button');
+            if (!button) return;
+            
+            const buttonId = button.id;
+            if (!buttonId) return;
+            
             e.preventDefault();
             e.stopPropagation();
-            console.log('📝 Transaction item clicked for editing:', transactionId);
-            this.editTransaction(transactionId);
-            return;
-        }
-    }
-    
-    // Handle button clicks
-    const button = e.target.closest('button');
-    if (!button) return;
-    
-    const buttonId = button.id;
-    if (!buttonId) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    console.log(`Button clicked: ${buttonId}`);
-    
-    switch(buttonId) {
-        case 'add-transaction':
-            this.showTransactionModal();
-            break;
-        case 'upload-receipt-btn':
-            this.showImportReceiptsModal();
-            break;
-        case 'add-income-btn':
-            this.showAddIncome();
-            break;
-        case 'add-expense-btn':
-            this.showAddExpense();
-            break;
-        case 'financial-report-btn':
-            this.generateFinancialReport();
-            break;
-        case 'category-analysis-btn':
-            this.generateCategoryAnalysis();
-            break;
-        case 'save-transaction':
-            this.saveTransaction();
-            break;
-        case 'delete-transaction':
-            this.deleteTransaction();
-            break;
-        case 'cancel-transaction':
-            this.hideTransactionModal();
-            break;
-        case 'close-transaction-modal':
-            this.hideTransactionModal();
-            break;
-        case 'close-import-receipts':
-            this.hideImportReceiptsModal();
-            break;
-        case 'cancel-import-receipts':
-            console.log('❌ Cancel import receipts clicked');
-            this.hideImportReceiptsModal();
-            break;
-        case 'refresh-receipts-btn':
-            this.loadReceiptsFromFirebase();
-            this.showNotification('Receipts refreshed', 'success');
-            break;
-        case 'process-all-receipts':
-            this.processPendingReceipts();
-            break;
-        case 'export-transactions':
-            this.exportTransactions();
-            break;
-        default:
-            console.log('Unhandled button:', buttonId);
-    }
-};
+            
+            console.log(`Button clicked: ${buttonId}`);
+            
+            switch(buttonId) {
+                case 'add-transaction':
+                    this.showTransactionModal();
+                    break;
+                case 'upload-receipt-btn':
+                    this.showImportReceiptsModal();
+                    break;
+                case 'add-income-btn':
+                    this.showAddIncome();
+                    break;
+                case 'add-expense-btn':
+                    this.showAddExpense();
+                    break;
+                case 'financial-report-btn':
+                    this.generateFinancialReport();
+                    break;
+                case 'category-analysis-btn':
+                    this.generateCategoryAnalysis();
+                    break;
+                case 'save-transaction':
+                    this.saveTransaction();
+                    break;
+                case 'delete-transaction':
+                    this.deleteTransaction();
+                    break;
+                case 'cancel-transaction':
+                    this.hideTransactionModal();
+                    break;
+                case 'close-transaction-modal':
+                    this.hideTransactionModal();
+                    break;
+                case 'close-import-receipts':
+                    this.hideImportReceiptsModal();
+                    break;
+                case 'cancel-import-receipts':
+                    this.hideImportReceiptsModal();
+                    break;
+                case 'refresh-receipts-btn':
+                    this.loadReceiptsFromFirebase();
+                    this.showNotification('Receipts refreshed', 'success');
+                    break;
+                case 'process-all-receipts':
+                    this.processPendingReceipts();
+                    break;
+                case 'export-transactions':
+                    this.exportTransactions();
+                    break;
+            }
+        };
         
         this._globalChangeHandler = (e) => {
             if (e.target.id === 'transaction-filter') {
@@ -6201,3 +6021,6 @@ window.IncomeExpensesModule = IncomeExpensesModule;
         console.error('❌ FarmModules framework not found');
     }
 })();
+
+
+
