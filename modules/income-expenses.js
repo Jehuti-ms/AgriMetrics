@@ -3769,8 +3769,21 @@ showReceiptCropperModal: function(file) {
     console.log('✅ Camera interface shown');
 }, */
 
-    showCameraInterface: function() {
+    showCameraInterface: async function() {
     console.log('📷 Showing camera interface...');
+    
+    // Check if camera is available
+    const hasCamera = await this.checkCameraAvailability();
+    if (!hasCamera) {
+        console.log('⚠️ No camera detected');
+        this.showNotification('No camera detected on this device', 'warning');
+        setTimeout(() => {
+            if (confirm('No camera found. Would you like to upload a file instead?')) {
+                this.showUploadInterface();
+            }
+        }, 1000);
+        return;
+    }
     
     // First, fully stop any existing camera
     this.stopCamera();
