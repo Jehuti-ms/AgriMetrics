@@ -1266,7 +1266,7 @@ estimateMedicalQuantity: function(expenseData) {
     // ==================== SIMPLIFIED CAMERA METHODS ====================
 
 // Initialize camera
-initializeCamera: function() {
+/*initializeCamera: function() {
     console.log('📷 Initializing camera...');
     
     const video = document.getElementById('camera-preview');
@@ -1339,10 +1339,169 @@ initializeCamera: function() {
                 }
             }, 2000);
         });
+}, */
+
+    initializeCamera: function() {
+    console.log('📷 Initializing camera...');
+    
+    // First, ensure any existing stream is stopped
+    this.stopCamera();
+    
+    const video = document.getElementById('camera-preview');
+    const status = document.getElementById('camera-status');
+    
+    if (!video) {
+        console.error('Video element not found');
+        this.showNotification('Camera error', 'error');
+        return;
+    }
+    
+    // Reset video element completely
+    video.pause();
+    video.srcObject = null;
+    video.load();
+    video.removeAttribute('src');
+    video.removeAttribute('srcObject');
+    
+    // Add required attributes
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('autoplay', 'true');
+    
+    if (status) status.textContent = 'Requesting camera...';
+    
+    // Check if camera is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ Camera API not supported');
+        if (status) status.textContent = 'Camera not supported';
+        this.showNotification('Camera not supported in this browser', 'error');
+        return;
+    }
+    
+    // Small delay to ensure cleanup
+    setTimeout(() => {
+        // Try with basic constraints first (more compatible)
+        const basicConstraints = {
+            video: true,
+            audio: false
+        };
+        
+        console.log('📱 Requesting camera with basic constraints');
+        
+        navigator.mediaDevices.getUserMedia(basicConstraints)
+            .then(stream => {
+                console.log('✅ Camera access granted with basic constraints');
+                this.cameraStream = stream;
+                video.srcObject = stream;
+                
+                return video.play();
+            })
+            .then(() => {
+                console.log('📹 Video playing successfully');
+                if (status) status.textContent = 'Camera Ready';
+                
+                // Update switch button
+                const switchBtn = document.getElementById('switch-camera');
+                if (switchBtn) {
+                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
+                    switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
+                }
+            })
+            .catch(error => {
+                console.error('❌ Camera error:', error);
+                
+                let errorMessage = 'Camera access failed. ';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Camera permission denied. Please check browser settings and refresh.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = 'No camera found on this device.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Camera is busy. Please close other apps using the camera and refresh the page.';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage = 'Camera constraints too strict. Trying fallback...';
+                    // Try with even simpler constraints
+                    this.initializeCameraFallback();
+                    return;
+                }
+                
+                if (status) status.textContent = 'Camera unavailable';
+                this.showNotification(errorMessage, 'error');
+                
+                // Show upload interface after delay
+                setTimeout(() => {
+                    if (confirm('Camera not available. Would you like to upload a file instead?')) {
+                        this.showUploadInterface();
+                    } else {
+                        this.showQuickActionsView();
+                    }
+                }, 2000);
+            });
+    }, 300);
+},
+
+    checkCameraAvailability: function() {
+    return new Promise((resolve) => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            resolve(false);
+            return;
+        }
+        
+        navigator.mediaDevices.enumerateDevices()
+            .then(devices => {
+                const hasCamera = devices.some(device => device.kind === 'videoinput');
+                console.log('📹 Camera available:', hasCamera);
+                resolve(hasCamera);
+            })
+            .catch(() => {
+                resolve(false);
+            });
+    });
+},
+    
+// Fallback camera initialization with minimal constraints
+initializeCameraFallback: function() {
+    console.log('📷 Trying fallback camera initialization...');
+    
+    const video = document.getElementById('camera-preview');
+    const status = document.getElementById('camera-status');
+    
+    if (!video) return;
+    
+    if (status) status.textContent = 'Trying fallback...';
+    
+    const fallbackConstraints = {
+        video: {
+            width: { min: 320, ideal: 640 },
+            height: { min: 240, ideal: 480 }
+        },
+        audio: false
+    };
+    
+    navigator.mediaDevices.getUserMedia(fallbackConstraints)
+        .then(stream => {
+            console.log('✅ Fallback camera succeeded!');
+            this.cameraStream = stream;
+            video.srcObject = stream;
+            return video.play();
+        })
+        .then(() => {
+            console.log('📹 Fallback camera playing');
+            if (status) status.textContent = 'Camera Ready (Fallback mode)';
+            this.showNotification('Camera working in fallback mode', 'info');
+        })
+        .catch(fallbackError => {
+            console.error('❌ Fallback also failed:', fallbackError);
+            if (status) status.textContent = 'Camera unavailable';
+            this.showNotification('Camera not available. Please upload a file instead.', 'error');
+            
+            setTimeout(() => {
+                this.showUploadInterface();
+            }, 2000);
+        });
 },
 
 // Stop camera
-stopCamera: function() {
+/*stopCamera: function() {
     console.log('🛑 Stopping camera');
     if (this.cameraStream) {
         this.cameraStream.getTracks().forEach(track => track.stop());
@@ -1368,6 +1527,66 @@ switchCamera: function() {
     this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
     this.stopCamera();
     setTimeout(() => this.initializeCamera(), 300);
+}, */
+
+    stopCamera: function() {
+    console.log('🛑 Stopping camera aggressively...');
+    
+    // 1. Stop all tracks in the stream
+    if (this.cameraStream) {
+        this.cameraStream.getTracks().forEach(track => {
+            try {
+                track.stop();
+                track.enabled = false;
+                console.log(`✅ Stopped track: ${track.kind}`);
+            } catch (e) {
+                console.warn('⚠️ Error stopping track:', e);
+            }
+        });
+        this.cameraStream = null;
+    }
+    
+    // 2. Clear all video elements
+    const videoElements = document.querySelectorAll('video');
+    videoElements.forEach(video => {
+        try {
+            if (video.srcObject) {
+                const stream = video.srcObject;
+                if (stream.getTracks) {
+                    stream.getTracks().forEach(track => {
+                        try { track.stop(); } catch (e) {}
+                    });
+                }
+            }
+            video.srcObject = null;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            console.log(`✅ Cleared video: ${video.id || 'unnamed'}`);
+        } catch (e) {
+            console.warn('⚠️ Error clearing video:', e);
+        }
+    });
+    
+    // 3. Specifically target the camera preview
+    const preview = document.getElementById('camera-preview');
+    if (preview) {
+        preview.srcObject = null;
+        preview.pause();
+        preview.removeAttribute('src');
+        preview.load();
+    }
+    
+    // 4. Remove any camera sections from DOM
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+    }
+    
+    // 5. Force garbage collection hint
+    this.cameraStream = null;
+    
+    console.log('✅ Camera fully stopped and cleaned up');
 },
 
 capturePhoto: function() {
@@ -3550,6 +3769,43 @@ showReceiptCropperModal: function(file) {
     console.log('✅ Camera interface shown');
 }, */
 
+    showCameraInterface: function() {
+    console.log('📷 Showing camera interface...');
+    
+    // First, fully stop any existing camera
+    this.stopCamera();
+    
+    // Wait a moment for cleanup
+    setTimeout(() => {
+        // Hide other sections
+        const uploadSection = document.getElementById('upload-section');
+        const recentSection = document.getElementById('recent-section');
+        const quickActionsSection = document.querySelector('.quick-actions-section');
+        const cameraSection = document.getElementById('camera-section');
+        
+        if (uploadSection) uploadSection.style.display = 'none';
+        if (quickActionsSection) quickActionsSection.style.display = 'none';
+        
+        // Show camera section
+        if (cameraSection) {
+            cameraSection.style.display = 'block';
+            
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                this.initializeCamera();
+                console.log('📷 Camera initialized after cleanup');
+            }, 300);
+        } else {
+            console.error('❌ Camera section not found');
+            this.showNotification('Camera section not found', 'error');
+        }
+        
+        if (recentSection) recentSection.style.display = 'block';
+    }, 500); // Wait 500ms for cleanup
+    
+    console.log('✅ Camera interface shown');
+},
+    
     showUploadInterface: function() {
     console.log('📁 Showing upload interface...');
     
