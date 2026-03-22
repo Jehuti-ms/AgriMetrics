@@ -1490,7 +1490,7 @@ capturePhoto: function() {
 },
 
    // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
-showSimpleImageViewer: function(file) {
+/*showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
     // Force remove camera
@@ -1627,6 +1627,255 @@ showSimpleImageViewer: function(file) {
                 if (quickActions) quickActions.style.display = 'block';
             }
         };
+    };
+    reader.readAsDataURL(file);
+}, */
+
+    showSimpleImageViewer: function(file) {
+    console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
+    
+    // Force remove camera
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) cameraSection.remove();
+    
+    const importModal = document.getElementById('import-receipts-modal');
+    if (importModal) {
+        importModal.style.display = 'none';
+        importModal.classList.add('hidden');
+    }
+    
+    this.stopCamera();
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        // Remove any existing viewer
+        const existingViewer = document.getElementById('image-review-modal');
+        if (existingViewer) existingViewer.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'image-review-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        modal.innerHTML = `
+            <div style="background: white; padding: 25px; border-radius: 16px; text-align: center; max-width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <h3 style="margin-bottom: 20px; color: #2E7D32; font-weight: 600;">Review Image</h3>
+                
+                <div style="max-width: 100%; max-height: 50vh; overflow: hidden; margin-bottom: 20px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                    <img src="${e.target.result}" style="width: 100%; height: auto; display: block;">
+                </div>
+                
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                    <button id="edit-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #2196F3, #1976D2);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        ✎ Edit Image
+                    </button>
+                    
+                    <button id="save-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #4CAF50, #2E7D32);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        ✓ Save
+                    </button>
+                    
+                    <button id="retake-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #FF9800, #F57C00);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        ↺ Retake
+                    </button>
+                    
+                    <button id="delete-image-btn" style="
+                        flex: 1;
+                        min-width: 100px;
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #ef4444, #dc2626);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                    ">
+                        🗑️ Delete
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Get button references
+        const editBtn = document.getElementById('edit-image-btn');
+        const saveBtn = document.getElementById('save-image-btn');
+        const retakeBtn = document.getElementById('retake-image-btn');
+        const deleteBtn = document.getElementById('delete-image-btn');
+        
+        // Edit button - open cropper for editing
+        if (editBtn) {
+            editBtn.onclick = () => {
+                console.log('✎ Edit button clicked - opening cropper');
+                modal.remove();
+                this.showStandardCropper(file);
+            };
+        }
+        
+        // Save button - save to receipt
+        if (saveBtn) {
+            saveBtn.onclick = () => {
+                console.log('💾 Save button clicked');
+                modal.remove();
+                const imageUrl = URL.createObjectURL(file);
+                this.saveReceiptFromFile(file, imageUrl);
+            };
+        }
+        
+        // Retake button - go back to camera
+        if (retakeBtn) {
+            retakeBtn.onclick = () => {
+                console.log('↺ Retake button clicked - going back to camera');
+                modal.remove();
+                
+                // Force stop any existing camera
+                this.stopCamera();
+                
+                // Show the import modal
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'flex';
+                    importModal.classList.remove('hidden');
+                    
+                    // Hide the image review modal
+                    const imageReviewModal = document.getElementById('image-review-modal');
+                    if (imageReviewModal) {
+                        imageReviewModal.remove();
+                    }
+                    
+                    // Hide upload and recent sections
+                    const uploadSection = document.getElementById('upload-section');
+                    const recentSection = document.getElementById('recent-section');
+                    const quickActions = document.getElementById('quick-actions-view');
+                    
+                    if (quickActions) quickActions.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    if (recentSection) recentSection.style.display = 'none';
+                    
+                    // Show and trigger camera section
+                    const cameraSection = document.getElementById('camera-section');
+                    if (cameraSection) {
+                        cameraSection.style.display = 'block';
+                        
+                        // Small delay to ensure DOM is ready
+                        setTimeout(() => {
+                            this.initializeCamera();
+                            console.log('📷 Camera re-initialized for retake');
+                        }, 200);
+                    } else {
+                        // Fallback: trigger camera option click
+                        setTimeout(() => {
+                            const cameraOption = document.getElementById('camera-option');
+                            if (cameraOption) {
+                                cameraOption.click();
+                            }
+                        }, 100);
+                    }
+                }
+            };
+        }
+        
+        // Delete button - discard image
+        if (deleteBtn) {
+            deleteBtn.onclick = () => {
+                console.log('🗑️ Delete button clicked');
+                modal.remove();
+                this.showNotification('Image discarded', 'info');
+                
+                // Show the import modal with quick actions
+                const importModal = document.getElementById('import-receipts-modal');
+                if (importModal) {
+                    importModal.style.display = 'flex';
+                    importModal.classList.remove('hidden');
+                    
+                    // Hide camera and upload sections
+                    const cameraSection = document.getElementById('camera-section');
+                    const uploadSection = document.getElementById('upload-section');
+                    
+                    if (cameraSection) cameraSection.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    
+                    // Show quick actions
+                    const quickActions = document.getElementById('quick-actions-view');
+                    if (quickActions) quickActions.style.display = 'block';
+                    
+                    // Also show recent receipts
+                    const recentSection = document.getElementById('recent-section');
+                    if (recentSection) recentSection.style.display = 'block';
+                }
+            };
+        }
+        
+        // Add hover effects to all buttons
+        const allButtons = [editBtn, saveBtn, retakeBtn, deleteBtn];
+        allButtons.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-2px)';
+                    btn.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = 'none';
+                });
+            }
+        });
     };
     reader.readAsDataURL(file);
 },
@@ -3203,7 +3452,7 @@ showReceiptCropperModal: function(file) {
     },
 
     // ==================== VIEW MANAGEMENT ====================
-    showQuickActionsView() {
+  /*  showQuickActionsView() {
         console.log('🏠 Showing quick actions view...');
         
         this.stopCamera();
@@ -3217,9 +3466,34 @@ showReceiptCropperModal: function(file) {
         if (uploadSection) uploadSection.style.display = 'none';
         if (quickActionsSection) quickActionsSection.style.display = 'block';
         if (recentSection) recentSection.style.display = 'block';
-    },
+    }, */
 
-    showUploadInterface() {
+    showQuickActionsView: function() {
+    console.log('🏠 Showing quick actions view...');
+    
+    // Stop camera
+    this.stopCamera();
+    
+    // Hide camera section
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) cameraSection.style.display = 'none';
+    
+    // Hide upload section
+    const uploadSection = document.getElementById('upload-section');
+    if (uploadSection) uploadSection.style.display = 'none';
+    
+    // Show quick actions
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    if (quickActionsSection) quickActionsSection.style.display = 'block';
+    
+    // Show recent section
+    const recentSection = document.getElementById('recent-section');
+    if (recentSection) recentSection.style.display = 'block';
+    
+    console.log('✅ Quick actions view shown');
+},
+
+    /*showUploadInterface() {
         console.log('📁 Showing upload interface...');
         
         this.stopCamera();
@@ -3274,6 +3548,35 @@ showReceiptCropperModal: function(file) {
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
+}, */
+
+    showUploadInterface: function() {
+    console.log('📁 Showing upload interface...');
+    
+    // Stop camera first
+    this.stopCamera();
+    
+    // Hide camera section
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) cameraSection.style.display = 'none';
+    
+    // Show upload section
+    const uploadSection = document.getElementById('upload-section');
+    if (uploadSection) uploadSection.style.display = 'block';
+    
+    // Show recent section
+    const recentSection = document.getElementById('recent-section');
+    if (recentSection) recentSection.style.display = 'block';
+    
+    // Hide quick actions
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    if (quickActionsSection) quickActionsSection.style.display = 'none';
+    
+    // IMPORTANT: Re-setup drag and drop listeners
+    setTimeout(() => {
+        this.setupDragAndDrop();
+        console.log('✅ Drag and drop re-initialized for upload section');
+    }, 100);
 },
 
     checkCameraAvailability() {
@@ -3381,7 +3684,7 @@ showReceiptCropperModal: function(file) {
         }, 500);
     },
 
-    setupDragAndDrop() {
+   /* setupDragAndDrop() {
         console.log('🔧 Setting up drag and drop...');
         
         const dropArea = document.getElementById('receipt-upload-area');
@@ -3431,9 +3734,69 @@ showReceiptCropperModal: function(file) {
         };
         
         console.log('✅ Drag and drop setup complete');
-    },
+    }, */
 
-    setupFileInput() {
+    setupDragAndDrop: function() {
+    console.log('🔧 Setting up drag and drop...');
+    
+    const dropArea = document.getElementById('receipt-dropzone');
+    if (!dropArea) {
+        console.log('ℹ️ No receipt-dropzone found');
+        return;
+    }
+    
+    // Remove existing listeners first to prevent duplicates
+    dropArea.removeEventListener('click', this._dropAreaClickHandler);
+    dropArea.removeEventListener('dragover', this._dropAreaDragOverHandler);
+    dropArea.removeEventListener('dragleave', this._dropAreaDragLeaveHandler);
+    dropArea.removeEventListener('drop', this._dropAreaDropHandler);
+    
+    // Create bound handlers
+    this._dropAreaClickHandler = () => {
+        console.log('📁 Drop area clicked');
+        const fileInput = document.getElementById('receipt-file-input');
+        if (fileInput) {
+            fileInput.click();
+        }
+    };
+    
+    this._dropAreaDragOverHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.add('drag-over');
+        console.log('📁 Drag over drop area');
+    };
+    
+    this._dropAreaDragLeaveHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.remove('drag-over');
+        console.log('📁 Drag left drop area');
+    };
+    
+    this._dropAreaDropHandler = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.remove('drag-over');
+        
+        console.log('📁 Files dropped on receipt-dropzone');
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            console.log(`📤 Processing ${e.dataTransfer.files.length} dropped file(s)`);
+            this.handleFileUpload(e.dataTransfer.files);
+        }
+    };
+    
+    // Add new listeners
+    dropArea.addEventListener('click', this._dropAreaClickHandler);
+    dropArea.addEventListener('dragover', this._dropAreaDragOverHandler);
+    dropArea.addEventListener('dragleave', this._dropAreaDragLeaveHandler);
+    dropArea.addEventListener('drop', this._dropAreaDropHandler);
+    
+    console.log('✅ Drag and drop setup complete');
+},
+
+  /*  setupFileInput() {
         console.log('📁 Setting up file input...');
         
         let fileInput = document.getElementById('receipt-upload-input');
@@ -3464,7 +3827,40 @@ showReceiptCropperModal: function(file) {
         
         fileInput.addEventListener('change', fileInputHandler.bind(this));
         console.log('✅ File input setup complete');
-    },
+    }, */
+
+    setupFileInput: function() {
+    console.log('📁 Setting up file input...');
+    
+    let fileInput = document.getElementById('receipt-file-input');
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'receipt-file-input';
+        fileInput.accept = 'image/*,.pdf,.jpg,.jpeg,.png,.heic,.heif';
+        fileInput.multiple = true;
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
+        console.log('✅ Created new file input');
+    }
+    
+    // Remove existing listener to avoid duplicates
+    if (this._fileInputHandler) {
+        fileInput.removeEventListener('change', this._fileInputHandler);
+    }
+    
+    this._fileInputHandler = (e) => {
+        console.log('📁 File input changed!');
+        if (e.target.files && e.target.files.length > 0) {
+            console.log(`Processing ${e.target.files.length} file(s)`);
+            this.handleFileUpload(e.target.files);
+            e.target.value = ''; // Reset so same file can be uploaded again
+        }
+    };
+    
+    fileInput.addEventListener('change', this._fileInputHandler);
+    console.log('✅ File input setup complete');
+},
 
     setupEventListeners() {
         console.log('Setting up event listeners (event delegation)...');
@@ -3560,7 +3956,9 @@ showReceiptCropperModal: function(file) {
         document.addEventListener('change', this._globalChangeHandler);
         
         console.log('✅ Event delegation setup complete with transaction item editing');
-    },
+    }, 
+
+    
 
     setupReceiptFormHandlers() {
         const uploadArea = document.getElementById('receipt-upload-area');
