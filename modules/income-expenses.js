@@ -3416,35 +3416,56 @@ showReceiptCropperModal: function(file) {
     },
 
     // ==================== DELETE FUNCTIONALITY ====================
-    setupReceiptActionListeners() {
-        console.log('🔧 Setting up receipt action listeners...');
-        
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.delete-receipt-btn')) {
-                const btn = e.target.closest('.delete-receipt-btn');
-                const receiptId = btn.dataset.receiptId;
-                
-                if (receiptId) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🗑️ Delete button clicked:', receiptId);
-                    this.confirmAndDeleteReceipt(receiptId);
-                }
-            }
+   setupReceiptActionListeners() {
+    console.log('🔧 Setting up receipt action listeners...');
+    
+    document.addEventListener('click', (e) => {
+        // Handle delete button
+        if (e.target.closest('.delete-receipt-btn')) {
+            const btn = e.target.closest('.delete-receipt-btn');
+            const receiptId = btn.dataset.receiptId;
             
-            if (e.target.closest('.process-receipt-btn, .process-btn')) {
-                const btn = e.target.closest('.process-receipt-btn, .process-btn');
-                const receiptId = btn.dataset.receiptId;
-                
-                if (receiptId) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🔍 Process button clicked:', receiptId);
-                    this.processSingleReceipt(receiptId);
-                }
+            if (receiptId) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🗑️ Delete button clicked:', receiptId);
+                this.confirmAndDeleteReceipt(receiptId);
             }
-        });
-    },
+        }
+        
+        // Handle process button
+        if (e.target.closest('.process-receipt-btn')) {
+            const btn = e.target.closest('.process-receipt-btn');
+            const receiptId = btn.dataset.receiptId;
+            
+            if (receiptId) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔍 Process button clicked:', receiptId);
+                this.processSingleReceipt(receiptId);
+            }
+        }
+        
+        // Handle view button (NEW)
+        if (e.target.closest('.view-receipt-btn')) {
+            const btn = e.target.closest('.view-receipt-btn');
+            const receiptId = btn.dataset.receiptId;
+            const imageUrl = btn.dataset.receiptUrl;
+            const receiptName = btn.dataset.receiptName;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (imageUrl) {
+                console.log('👁️ View button clicked for:', receiptName);
+                this.showReceiptViewer(imageUrl, receiptName);
+            } else {
+                console.warn('No image URL for receipt:', receiptId);
+                this.showNotification('Receipt preview not available', 'warning');
+            }
+        }
+    });
+},
 
     confirmAndDeleteReceipt(receiptId) {
         console.log(`🗑️ Confirming deletion for receipt: ${receiptId}`);
@@ -6040,62 +6061,253 @@ showCameraInterface: function() {
     },
 
     renderPendingReceiptsList(receipts) {
-        if (receipts.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
-                </div>
-            `;
-        }
-
+    if (receipts.length === 0) {
         return `
-            <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
-                ${receipts.map(receipt => `
-                    <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
-                            <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
-                            <div class="receipt-details">
-                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
-                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
-                                    <span>${this.formatFileSize(receipt.size || 0)}</span>
-                                    <span>•</span>
-                                    <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
-                                    <span>•</span>
-                                    <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="receipt-actions" style="display: flex; gap: 8px;">
-                            ${receipt.downloadURL ? `
-                                <a href="${receipt.downloadURL.startsWith('http') ? receipt.downloadURL : '#'}" 
-                                           target="_blank" 
-                                           class="btn btn-sm btn-outline" 
-                                           title="View receipt" 
-                                           style="padding: 6px 12px;"
-                                           onclick="${!receipt.downloadURL.startsWith('http') ? 'event.preventDefault(); alert(\'Receipt unavailable\');' : ''}"> 
-                                    <span class="btn-icon">👁️</span>
-                                </a>
-                            ` : ''}
-                            <button class="btn btn-sm btn-primary process-receipt-btn" 
-                                    data-receipt-id="${receipt.id}" 
-                                    style="padding: 6px 12px;">
-                                <span class="btn-icon">🔍</span>
-                                <span class="btn-text">Process</span>
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-receipt-btn" 
-                                    data-receipt-id="${receipt.id}" 
-                                    style="padding: 6px 12px;" 
-                                    title="Delete receipt">
-                                <span class="btn-icon">🗑️</span>
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
             </div>
         `;
-    },
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
+            ${receipts.map(receipt => `
+                <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
+                        <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                        <div class="receipt-details">
+                            <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
+                            <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
+                                <span>${this.formatFileSize(receipt.size || 0)}</span>
+                                <span>•</span>
+                                <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
+                                <span>•</span>
+                                <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="receipt-actions" style="display: flex; gap: 8px;">
+                        ${this.renderReceiptViewButton(receipt)}
+                        <button class="btn btn-sm btn-primary process-receipt-btn" 
+                                data-receipt-id="${receipt.id}" 
+                                style="padding: 6px 12px;">
+                            <span class="btn-icon">🔍</span>
+                            <span class="btn-text">Process</span>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                data-receipt-id="${receipt.id}" 
+                                style="padding: 6px 12px;" 
+                                title="Delete receipt">
+                            <span class="btn-icon">🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+},
+
+    renderReceiptViewButton(receipt) {
+    // Check if we have a viewable image
+    const imageUrl = this.getReceiptImageUrl(receipt);
+    
+    if (imageUrl) {
+        // For images, create a button that opens a modal viewer
+        return `
+            <button class="btn btn-sm btn-outline view-receipt-btn" 
+                    data-receipt-id="${receipt.id}"
+                    data-receipt-url="${this.escapeHtml(imageUrl)}"
+                    data-receipt-name="${this.escapeHtml(receipt.name)}"
+                    style="padding: 6px 12px;" 
+                    title="View receipt">
+                <span class="btn-icon">👁️</span>
+                <span class="btn-text">View</span>
+            </button>
+        `;
+    } else {
+        // Fallback for PDFs or unavailable images
+        return `
+            <button class="btn btn-sm btn-outline" 
+                    onclick="event.preventDefault(); alert('Receipt preview not available for ${this.escapeHtml(receipt.name)}');" 
+                    style="padding: 6px 12px;" 
+                    title="View receipt">
+                <span class="btn-icon">👁️</span>
+                <span class="btn-text">View</span>
+            </button>
+        `;
+    }
+},
+
+getReceiptImageUrl(receipt) {
+    // Try different possible URL sources
+    if (receipt.dataURL && receipt.dataURL.startsWith('data:')) {
+        return receipt.dataURL;
+    }
+    if (receipt.downloadURL && receipt.downloadURL.startsWith('http')) {
+        return receipt.downloadURL;
+    }
+    if (receipt.base64Data && receipt.type) {
+        return `data:${receipt.type};base64,${receipt.base64Data}`;
+    }
+    return null;
+},
+
+escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+},
+
+    showReceiptViewer(imageUrl, receiptName) {
+    console.log('🖼️ Showing receipt viewer for:', receiptName);
+    
+    // Remove any existing viewer
+    const existingViewer = document.getElementById('receipt-viewer-modal');
+    if (existingViewer) {
+        existingViewer.remove();
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'receipt-viewer-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        z-index: 1000000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            cursor: default;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        ">
+            <div style="
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                padding: 12px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: white;
+            ">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 20px;">👁️</span>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 600;">${this.escapeHtml(receiptName)}</h3>
+                </div>
+                <button id="close-viewer-btn" style="
+                    background: rgba(255,255,255,0.2);
+                    border: none;
+                    color: white;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    font-size: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">×</button>
+            </div>
+            <div style="
+                padding: 20px;
+                max-height: 70vh;
+                overflow: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #f5f5f5;
+            ">
+                <img src="${imageUrl}" 
+                     alt="${this.escapeHtml(receiptName)}" 
+                     style="max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px;">
+            </div>
+            <div style="
+                padding: 16px 20px;
+                border-top: 1px solid #e5e7eb;
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+                background: white;
+            ">
+                <button id="download-receipt-btn" style="
+                    padding: 8px 20px;
+                    background: #22c55e;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                ">
+                    📥 Download
+                </button>
+                <button id="close-viewer-footer-btn" style="
+                    padding: 8px 20px;
+                    background: #f3f4f6;
+                    color: #374151;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Close button handlers
+    const closeBtn = document.getElementById('close-viewer-btn');
+    const closeFooterBtn = document.getElementById('close-viewer-footer-btn');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => modal.remove());
+    }
+    if (closeFooterBtn) {
+        closeFooterBtn.addEventListener('click', () => modal.remove());
+    }
+    
+    // Download button handler
+    const downloadBtn = document.getElementById('download-receipt-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            const a = document.createElement('a');
+            a.href = imageUrl;
+            a.download = receiptName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            this.showNotification('Downloading receipt...', 'success');
+        });
+    }
+},
 
     renderRecentReceiptsList() {
         if (this.receiptQueue.length === 0) {
