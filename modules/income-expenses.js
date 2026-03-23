@@ -1623,42 +1623,33 @@ capturePhoto: function() {
     video.style.opacity = '0.7';
     setTimeout(() => video.style.opacity = '1', 100);
     
-    // Get image data as base64 directly (no blob URL!)
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
-    console.log('📸 Photo captured as base64, length:', imageData.length);
-    
-    if (status) status.textContent = 'Photo captured!';
-    this.showNotification('📸 Photo captured!', 'success');
-    
-    // Create file from base64
-    const fileName = `receipt_${Date.now()}.jpg`;
-    const file = this.dataURLtoFile(imageData, fileName);
-    
-    // Stop camera
-    this.stopCamera();
-    
-    // Hide camera section
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
-    // Hide import modal
-    const importModal = document.getElementById('import-receipts-modal');
-    if (importModal) {
-        importModal.style.display = 'none';
-        importModal.classList.add('hidden');
-    }
-    
-    // Save the receipt directly with base64 data
-    this.saveReceiptFromFile(file, imageData);
-    
-    // Re-enable button
-    if (captureBtn) {
-        captureBtn.disabled = false;
-        captureBtn.style.opacity = '1';
-    }
-    this.isCapturing = false;
+    // Get image data as blob
+    canvas.toBlob((blob) => {
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        if (status) status.textContent = 'Photo captured!';
+        this.showNotification('📸 Photo captured!', 'success');
+        
+        // Stop camera
+        this.stopCamera();
+        
+        // Hide camera section
+        const cameraSection = document.getElementById('camera-section');
+        if (cameraSection) {
+            cameraSection.style.display = 'none';
+        }
+        
+        // Show the image viewer with options (Edit, Save, Retake, Delete)
+        this.showSimpleImageViewer(file);
+        
+        // Re-enable button
+        if (captureBtn) {
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '1';
+        }
+        this.isCapturing = false;
+        
+    }, 'image/jpeg', 0.9);
 },
 
 // Helper: Convert dataURL to File object
@@ -1817,7 +1808,7 @@ dataURLtoFile: function(dataurl, filename) {
     reader.readAsDataURL(file);
 }, */
 
-    showSimpleImageViewer: function(file) {
+   showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
     // Force remove camera
@@ -1854,10 +1845,26 @@ dataURLtoFile: function(dataurl, filename) {
         `;
         
         modal.innerHTML = `
-            <div style="background: white; padding: 25px; border-radius: 16px; text-align: center; max-width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div style="
+                background: white; 
+                padding: 25px; 
+                border-radius: 16px; 
+                text-align: center; 
+                max-width: 90%; 
+                max-height: 90%; 
+                overflow-y: auto; 
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            ">
                 <h3 style="margin-bottom: 20px; color: #2E7D32; font-weight: 600;">Review Image</h3>
                 
-                <div style="max-width: 100%; max-height: 50vh; overflow: hidden; margin-bottom: 20px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                <div style="
+                    max-width: 100%; 
+                    max-height: 50vh; 
+                    overflow: hidden; 
+                    margin-bottom: 20px; 
+                    border-radius: 8px; 
+                    border: 2px solid #e0e0e0;
+                ">
                     <img src="${e.target.result}" style="width: 100%; height: auto; display: block;">
                 </div>
                 
@@ -1959,12 +1966,17 @@ dataURLtoFile: function(dataurl, filename) {
             saveBtn.onclick = () => {
                 console.log('💾 Save button clicked');
                 modal.remove();
-                const imageUrl = URL.createObjectURL(file);
-                this.saveReceiptFromFile(file, imageUrl);
+                // Convert to base64 directly for storage
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64Data = e.target.result;
+                    this.saveReceiptFromFile(file, base64Data);
+                };
+                reader.readAsDataURL(file);
             };
         }
         
-       // Retake button - go back to camera
+        // Retake button - go back to camera
         if (retakeBtn) {
             retakeBtn.onclick = () => {
                 console.log('↺ Retake button clicked - going back to camera');
@@ -2275,6 +2287,8 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
+            // Show the image viewer again
+            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`close-${modalId}`).onclick = () => {
@@ -2283,6 +2297,8 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
+            // Show the image viewer again
+            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`save-${modalId}`).onclick = () => {
@@ -2295,15 +2311,15 @@ showStandardCropper: function(file) {
             
             croppedCanvas.toBlob((blob) => {
                 const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
-                const croppedUrl = URL.createObjectURL(blob);
                 
-                this.saveCroppedReceipt(croppedFile, croppedUrl);
+                // Show the viewer with the cropped image
+                this.showSimpleImageViewer(croppedFile);
                 
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
                 modal.remove();
                 
-                this.showNotification('✅ Image cropped and saved!', 'success');
+                this.showNotification('✅ Image cropped! Review and save.', 'success');
             }, 'image/jpeg', 0.95);
         };
     };
@@ -2449,6 +2465,37 @@ injectCropperStyles: function() {
     console.log('✅ Injected inline cropper styles');
 },
 
+  saveCroppedReceipt: function(file, imageUrl) {
+    console.log('💾 Saving cropped receipt:', file.name);
+    
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        const base64Data = e.target.result;
+        const receiptId = `camera_${Date.now()}`;
+        
+        const receipt = {
+            id: receiptId,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataURL: base64Data,
+            downloadURL: base64Data,
+            status: 'pending',
+            uploadedAt: new Date().toISOString(),
+            source: 'camera',
+            cropped: true
+        };
+        
+        this.saveReceiptToStorage(receipt);
+        this.showNotification('✅ Cropped receipt saved!', 'success');
+        this.updateModalReceiptsList();
+        this.updateReceiptQueueUI();
+        this.showCaptureSuccess(receipt);
+    };
+    
+    reader.readAsDataURL(file);
+},
     
 // Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
