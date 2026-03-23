@@ -1623,91 +1623,58 @@ capturePhoto: function() {
     video.style.opacity = '0.7';
     setTimeout(() => video.style.opacity = '1', 100);
     
-    // Get image data
-    canvas.toBlob((blob) => {
-        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const imageUrl = URL.createObjectURL(blob);
-        
-        if (status) status.textContent = 'Photo captured!';
-        this.showNotification('📸 Photo captured!', 'success');
-        
-        // Re-enable button
-        if (captureBtn) {
-            captureBtn.disabled = false;
-            captureBtn.style.opacity = '1';
-        }
-        
-        // ===== AGGRESSIVE CAMERA CLEANUP =====
-        
-        // 1. Stop all tracks
-        if (this.cameraStream) {
-            this.cameraStream.getTracks().forEach(track => {
-                track.stop();
-                track.enabled = false;
-            });
-            this.cameraStream = null;
-        }
-        
-        // 2. Clear video element
-        if (video) {
-            video.srcObject = null;
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-        }
-        
-        // 3. Remove camera section completely
-        const cameraSection = document.getElementById('camera-section');
-        if (cameraSection) {
-            cameraSection.remove();
-        }
-        
-        // 4. Also remove any camera elements from DOM
-        const anyVideo = document.querySelector('video');
-        if (anyVideo && anyVideo.id === 'camera-preview') {
-            anyVideo.remove();
-        }
-        
-        // 5. Hide import modal
-        const importModal = document.getElementById('import-receipts-modal');
-        if (importModal) {
-            importModal.style.display = 'none';
-            importModal.classList.add('hidden');
-        }
-        
-        // Small delay to ensure cleanup
-        setTimeout(() => {
-            // Check if cropper is available
-            if (typeof window.openCropper === 'function') {
-                console.log('📷 Opening cropper with captured image');
-                
-                // Convert blob to data URL for cropper
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    window.openCropper(e.target.result, (croppedFile) => {
-                        console.log('📷 Cropped file received:', croppedFile);
-                        
-                        // Create preview URL for cropped image
-                        const croppedImageUrl = URL.createObjectURL(croppedFile);
-                        
-                        // Show simple viewer with cropped image
-                        setTimeout(() => {
-                            this.showSimpleImageViewer(croppedFile);
-                        }, 100);
-                        
-                    }, file.name);
-                };
-                reader.readAsDataURL(blob);
-            } else {
-                console.warn('⚠️ Cropper not available, using original image');
-                this.showSimpleImageViewer(file);
-            }
-            this.isCapturing = false;
-        }, 200);
-        
-    }, 'image/jpeg', 0.9);
+    // Get image data as base64 directly (no blob URL!)
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    console.log('📸 Photo captured as base64, length:', imageData.length);
+    
+    if (status) status.textContent = 'Photo captured!';
+    this.showNotification('📸 Photo captured!', 'success');
+    
+    // Create file from base64
+    const fileName = `receipt_${Date.now()}.jpg`;
+    const file = this.dataURLtoFile(imageData, fileName);
+    
+    // Stop camera
+    this.stopCamera();
+    
+    // Hide camera section
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) {
+        cameraSection.style.display = 'none';
+    }
+    
+    // Hide import modal
+    const importModal = document.getElementById('import-receipts-modal');
+    if (importModal) {
+        importModal.style.display = 'none';
+        importModal.classList.add('hidden');
+    }
+    
+    // Save the receipt directly with base64 data
+    this.saveReceiptFromFile(file, imageData);
+    
+    // Re-enable button
+    if (captureBtn) {
+        captureBtn.disabled = false;
+        captureBtn.style.opacity = '1';
+    }
+    this.isCapturing = false;
 },
 
+// Helper: Convert dataURL to File object
+dataURLtoFile: function(dataurl, filename) {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+},
+
+    
    // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 /*showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
@@ -2100,26 +2067,40 @@ handleFileUpload: async function(files) {
         const file = files[i];
         console.log(`📄 Processing file ${i+1}:`, file.name);
         
+        // Convert file to base64 directly (no blob URL!)
+        const base64Data = await this.fileToBase64(file);
+        console.log(`✅ Converted to base64, length: ${base64Data.length}`);
+        
         // For images, offer cropping
         if (file.type.startsWith('image/')) {
             setTimeout(async () => {
                 if (confirm(`Crop "${file.name}"?`)) {
                     try {
                         await this.loadCropperLibrary();
-                        this.showStandardCropper(file);
+                        this.showStandardCropperWithBase64(file, base64Data);
                     } catch (error) {
                         console.error('Failed to load cropper:', error);
-                        this.processReceiptFile(file);
+                        this.saveReceiptFromFile(file, base64Data);
                     }
                 } else {
-                    this.processReceiptFile(file);
+                    this.saveReceiptFromFile(file, base64Data);
                 }
-            }, i * 500); // Delay for multiple files
+            }, i * 500);
         } else {
             // For non-images (PDFs), process directly
-            this.processReceiptFile(file);
+            this.saveReceiptFromFile(file, base64Data);
         }
     }
+},
+
+// Helper: Convert file to base64
+fileToBase64: function(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 },
 
 // ==================== CROPPER WITH DEBUGGING ====================
@@ -2470,25 +2451,107 @@ injectCropperStyles: function() {
 
     
 // Save receipt from file (keep your existing method)
-// Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
     console.log('💾 Saving receipt:', file.name);
     
+    // If dataURL is a blob URL, we need to convert it to base64
+    if (dataURL && dataURL.startsWith('blob:')) {
+        console.log('📸 Converting blob URL to base64...');
+        
+        // Fetch the blob data and convert to base64
+        fetch(dataURL)
+            .then(response => response.blob())
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64Data = e.target.result;
+                    console.log('✅ Converted to base64, length:', base64Data.length);
+                    this.saveReceiptWithBase64(file, base64Data);
+                };
+                reader.onerror = (error) => {
+                    console.error('❌ Failed to convert blob to base64:', error);
+                    this.saveReceiptWithBase64(file, dataURL); // Fallback
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(error => {
+                console.error('❌ Failed to fetch blob:', error);
+                this.saveReceiptWithBase64(file, dataURL);
+            });
+    } else {
+        // Already a data URL or base64
+        this.saveReceiptWithBase64(file, dataURL);
+    }
+},
+
+saveReceiptWithBase64: function(file, base64Data) {
     const receiptId = `receipt_${Date.now()}`;
+    
+    // Extract base64 data without the prefix if needed
+    let imageData = base64Data;
+    let mimeType = file.type;
+    
+    // If it's already a data URL with prefix, keep it
+    if (base64Data.startsWith('data:')) {
+        // Extract just the base64 part for storage efficiency
+        const matches = base64Data.match(/^data:([^;]+);base64,(.+)$/);
+        if (matches) {
+            mimeType = matches[1];
+            const base64Only = matches[2];
+            
+            const receipt = {
+                id: receiptId,
+                name: file.name,
+                type: mimeType,
+                size: file.size,
+                dataURL: base64Data, // Store full data URL for easy display
+                downloadURL: base64Data, // Also store in downloadURL for compatibility
+                base64Data: base64Only, // Store just the base64 part
+                status: 'pending',
+                uploadedAt: new Date().toISOString(),
+                source: file.source || 'camera',
+                cropped: false,
+                storageType: 'base64'
+            };
+            
+            this.saveReceiptToStorage(receipt);
+            return;
+        }
+    }
+    
+    // Fallback: store as is
     const receipt = {
         id: receiptId,
         name: file.name,
         type: file.type,
         size: file.size,
-        dataURL: dataURL,
+        dataURL: base64Data,
+        downloadURL: base64Data,
         status: 'pending',
         uploadedAt: new Date().toISOString(),
-        source: 'camera',
-        cropped: false
+        source: file.source || 'camera',
+        cropped: false,
+        storageType: 'base64'
     };
     
-    // Always save locally first
-    this.saveReceiptLocally(receipt);
+    this.saveReceiptToStorage(receipt);
+},
+
+saveReceiptToStorage: function(receipt) {
+    console.log('💾 Saving receipt to storage:', receipt.name);
+    
+    // Save locally
+    this.receiptQueue.unshift(receipt);
+    
+    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+    const existingIndex = localReceipts.findIndex(r => r.id === receipt.id);
+    if (existingIndex !== -1) {
+        localReceipts.splice(existingIndex, 1);
+    }
+    localReceipts.unshift(receipt);
+    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+    
+    console.log('✅ Saved to localStorage, receipt data length:', receipt.dataURL?.length);
     
     // Try Firebase save
     if (this.isFirebaseAvailable) {
@@ -2503,8 +2566,6 @@ saveReceiptFromFile: function(file, dataURL) {
             .catch(err => {
                 console.log('⚠️ Firebase save failed, keeping local only:', err);
             });
-    } else {
-        console.log('📱 Firebase not available, saved locally only');
     }
     
     // Update UI
@@ -3469,25 +3530,28 @@ showReceiptCropperModal: function(file) {
     });
 },
 
-    getReceiptImageUrl(receipt) {
+getReceiptImageUrl(receipt) {
     if (!receipt) return null;
     
-    // Try different possible URL sources in order
+    // Try dataURL first (should be full data URL now)
     if (receipt.dataURL && receipt.dataURL.startsWith('data:')) {
+        console.log('✅ Found dataURL (base64)');
         return receipt.dataURL;
     }
-    if (receipt.downloadURL && receipt.downloadURL.startsWith('http')) {
+    
+    // Try downloadURL
+    if (receipt.downloadURL && receipt.downloadURL.startsWith('data:')) {
+        console.log('✅ Found downloadURL (base64)');
         return receipt.downloadURL;
     }
+    
+    // Reconstruct from base64Data
     if (receipt.base64Data && receipt.type) {
+        console.log('✅ Reconstructing from base64Data');
         return `data:${receipt.type};base64,${receipt.base64Data}`;
     }
     
-    // For Firebase receipts with downloadURL
-    if (receipt.downloadURL && receipt.downloadURL.includes('firebase')) {
-        return receipt.downloadURL;
-    }
-    
+    console.log('❌ No valid image data found');
     return null;
 },
 
@@ -3500,6 +3564,7 @@ showReceiptCropperModal: function(file) {
 
     showReceiptViewer(imageUrl, receiptName) {
     console.log('🖼️ Showing receipt viewer for:', receiptName);
+    console.log('Image URL type:', imageUrl.substring(0, 50));
     
     // Remove any existing viewer
     const existingViewer = document.getElementById('receipt-viewer-modal');
@@ -3569,10 +3634,12 @@ showReceiptCropperModal: function(file) {
                 align-items: center;
                 justify-content: center;
                 background: #f5f5f5;
+                min-height: 200px;
             ">
                 <img src="${imageUrl}" 
                      alt="${this.escapeHtml(receiptName)}" 
-                     style="max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px;">
+                     style="max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px;"
+                     onerror="this.parentElement.innerHTML='<div style=\'text-align:center;color:#666;padding:40px;\'>⚠️ Image failed to load</div>'">
             </div>
             <div style="
                 padding: 16px 20px;
