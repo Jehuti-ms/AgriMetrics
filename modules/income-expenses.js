@@ -1199,11 +1199,9 @@ async loadData() {
     console.log(`✅ Load complete: ${this.transactions.length} transactions ready`);
 },
 
-// Add these methods to your IncomeExpensesModule
-
 // ==================== COMPLETE SYNC FIX ====================
-
-// Enhanced loadFromFirebase that gets ALL transactions, not just recent ones
+// ==================== FIXED: NO DUPLICATION SYNC SYSTEM ====================
+// Fixed loadFromFirebase - NO DUPLICATION
 async loadFromFirebase() {
     try {
         const user = window.firebase.auth().currentUser;
@@ -1212,9 +1210,8 @@ async loadFromFirebase() {
             return false;
         }
         
-        console.log('☁️ Loading ALL transactions from Firebase...');
+        console.log('☁️ Loading transactions from Firebase...');
         
-        // Get ALL transactions from Firebase (no limit)
         const snapshot = await window.db.collection('users')
             .doc(user.uid)
             .collection('transactions')
@@ -1223,62 +1220,74 @@ async loadFromFirebase() {
         
         if (snapshot.empty) {
             console.log('No transactions found in Firebase');
-            
-            // Check if data is in old structure
             await this.loadFromLegacyPaths(user.uid);
             return;
         }
         
-        const firebaseTransactions = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            firebaseTransactions.push({
-                id: doc.id,
-                date: data.date,
-                type: data.type,
-                category: data.category,
-                amount: parseFloat(data.amount) || 0,
-                description: data.description || '',
-                paymentMethod: data.paymentMethod || 'cash',
-                reference: data.reference || '',
-                notes: data.notes || '',
-                receipt: data.receipt || null,
-                userId: data.userId || user.uid,
-                createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
-                updatedAt: data.updatedAt || data.timestamp || new Date().toISOString(),
-                syncedAt: data.syncedAt,
-                deviceId: data.deviceId,
-                syncStatus: 'synced',
-                source: 'firebase'
-            });
-        });
+        // Create a map of existing transactions by ID
+        const existingTransactionMap = new Map();
         
-        console.log(`☁️ Loaded ${firebaseTransactions.length} transactions from Firebase`);
-        
-        // MERGE with local transactions - keep both sets
-        const allTransactionsMap = new Map();
-        
-        // Add existing local transactions first
+        // First, add all existing local transactions to the map
         if (this.transactions && this.transactions.length > 0) {
             this.transactions.forEach(t => {
-                allTransactionsMap.set(t.id.toString(), t);
+                existingTransactionMap.set(t.id.toString(), t);
             });
-            console.log(`📁 Local transactions: ${this.transactions.length}`);
+            console.log(`📁 Local transactions: ${this.transactions.length} unique`);
         }
         
-        // Add/override with Firebase transactions
-        firebaseTransactions.forEach(t => {
-            const existing = allTransactionsMap.get(t.id.toString());
-            if (!existing || new Date(t.updatedAt) > new Date(existing.updatedAt)) {
-                allTransactionsMap.set(t.id.toString(), t);
-            } else if (existing && existing.source !== 'firebase') {
-                // Keep local if it's newer, but mark for sync
-                console.log(`Local transaction ${t.id} is newer, will sync to Firebase`);
-                this.addToSyncQueue(existing);
+        let addedCount = 0;
+        let updatedCount = 0;
+        
+        // Process Firebase transactions
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const firebaseId = doc.id.toString();
+            const existing = existingTransactionMap.get(firebaseId);
+            
+            if (!existing) {
+                // NEW transaction - add it
+                const newTransaction = {
+                    id: firebaseId,
+                    date: data.date,
+                    type: data.type,
+                    category: data.category,
+                    amount: parseFloat(data.amount) || 0,
+                    description: data.description || '',
+                    paymentMethod: data.paymentMethod || 'cash',
+                    reference: data.reference || '',
+                    notes: data.notes || '',
+                    receipt: data.receipt || null,
+                    userId: data.userId || user.uid,
+                    createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
+                    updatedAt: data.updatedAt || data.timestamp || new Date().toISOString(),
+                    source: 'firebase',
+                    syncStatus: 'synced'
+                };
+                existingTransactionMap.set(firebaseId, newTransaction);
+                addedCount++;
+            } else {
+                // EXISTING transaction - check if Firebase version is newer
+                const localTime = new Date(existing.updatedAt || existing.createdAt);
+                const firebaseTime = new Date(data.updatedAt || data.createdAt);
+                
+                if (firebaseTime > localTime) {
+                    // Update local with Firebase version
+                    const updatedTransaction = {
+                        ...existing,
+                        ...data,
+                        id: firebaseId,
+                        source: 'firebase',
+                        syncStatus: 'synced',
+                        updatedAt: data.updatedAt || new Date().toISOString()
+                    };
+                    existingTransactionMap.set(firebaseId, updatedTransaction);
+                    updatedCount++;
+                }
             }
         });
         
-        this.transactions = Array.from(allTransactionsMap.values());
+        // Convert map back to array
+        this.transactions = Array.from(existingTransactionMap.values());
         
         // Sort by date (newest first)
         this.transactions.sort((a, b) => {
@@ -1287,22 +1296,14 @@ async loadFromFirebase() {
             return dateB - dateA;
         });
         
-        console.log(`✅ Merged total: ${this.transactions.length} transactions`);
+        console.log(`✅ Sync complete: ${addedCount} added, ${updatedCount} updated, Total: ${this.transactions.length}`);
         
-        // Save merged data to localStorage
+        // Save to localStorage
         this.saveToLocalStorage();
         
-        // If there are local transactions that weren't in Firebase, sync them up
-        const unsyncedLocal = this.transactions.filter(t => 
-            t.source !== 'firebase' && t.syncStatus !== 'synced'
-        );
-        
-        if (unsyncedLocal.length > 0) {
-            console.log(`📤 Syncing ${unsyncedLocal.length} local transactions to Firebase...`);
-            for (const transaction of unsyncedLocal) {
-                await this.saveTransactionToFirebase(transaction);
-            }
-        }
+        // Update UI
+        this.updateStats();
+        this.updateTransactionsList();
         
         return true;
         
@@ -1312,6 +1313,364 @@ async loadFromFirebase() {
     }
 },
 
+// Fixed saveTransactionToFirebase - NO DUPLICATION
+async saveTransactionToFirebase(transactionData) {
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('Firebase not available, adding to sync queue');
+        this.addToSyncQueue(transactionData);
+        return false;
+    }
+    
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) {
+            console.log('No user logged in');
+            return false;
+        }
+        
+        // Generate a consistent ID - use existing ID if present, otherwise create new
+        const transactionId = transactionData.id?.toString() || `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Check if this transaction already exists in Firebase
+        const docRef = window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .doc(transactionId);
+        
+        const existingDoc = await docRef.get();
+        
+        let finalTransaction;
+        
+        if (existingDoc.exists && transactionData.id) {
+            // Transaction exists - merge, don't create duplicate
+            const existingData = existingDoc.data();
+            finalTransaction = {
+                ...existingData,
+                ...transactionData,
+                id: transactionId,
+                userId: user.uid,
+                updatedAt: new Date().toISOString(),
+                syncStatus: 'synced',
+                deviceId: this.getDeviceId()
+            };
+            
+            console.log(`🔄 Updating existing transaction: ${transactionId}`);
+        } else {
+            // New transaction
+            finalTransaction = {
+                ...transactionData,
+                id: transactionId,
+                userId: user.uid,
+                createdAt: transactionData.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                syncStatus: 'synced',
+                deviceId: this.getDeviceId()
+            };
+            
+            console.log(`➕ Creating new transaction: ${transactionId}`);
+        }
+        
+        // Save to Firebase
+        await docRef.set(finalTransaction, { merge: true });
+        
+        // Update local array - REPLACE, don't add duplicate
+        const existingIndex = this.transactions.findIndex(t => t.id?.toString() === transactionId);
+        if (existingIndex !== -1) {
+            // Replace existing
+            this.transactions[existingIndex] = finalTransaction;
+        } else {
+            // Add new
+            this.transactions.unshift(finalTransaction);
+        }
+        
+        // Sort and save
+        this.transactions.sort((a, b) => {
+            const dateA = new Date(a.date || a.createdAt);
+            const dateB = new Date(b.date || b.createdAt);
+            return dateB - dateA;
+        });
+        
+        this.saveToLocalStorage();
+        
+        console.log(`✅ Saved to Firebase: ${transactionId}`);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Firebase save error:', error);
+        this.addToSyncQueue(transactionData);
+        return false;
+    }
+},
+
+// Fixed mergeRemoteTransaction - NO DUPLICATION
+mergeRemoteTransaction(remoteTransaction) {
+    if (!this.transactions) this.transactions = [];
+    
+    const remoteId = remoteTransaction.id?.toString();
+    if (!remoteId) return;
+    
+    const existingIndex = this.transactions.findIndex(t => t.id?.toString() === remoteId);
+    
+    if (existingIndex === -1) {
+        // New transaction - add it
+        this.transactions.unshift(remoteTransaction);
+        console.log(`➕ Added new remote transaction: ${remoteId}`);
+        this.showNotification(`📱 New transaction: ${remoteTransaction.description || remoteTransaction.category}`, 'info');
+    } else {
+        // Existing transaction - only update if remote is newer
+        const existing = this.transactions[existingIndex];
+        const existingTime = new Date(existing.updatedAt || existing.createdAt);
+        const remoteTime = new Date(remoteTransaction.updatedAt || remoteTransaction.createdAt);
+        
+        if (remoteTime > existingTime) {
+            // Remote is newer - update
+            this.transactions[existingIndex] = remoteTransaction;
+            console.log(`🔄 Updated transaction from remote: ${remoteId}`);
+            this.showNotification(`📱 Transaction updated from another device`, 'info');
+        } else {
+            console.log(`✓ Keeping local version of ${remoteId} (newer)`);
+        }
+    }
+    
+    // Re-sort and save
+    this.transactions.sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt);
+        const dateB = new Date(b.date || b.createdAt);
+        return dateB - dateA;
+    });
+    
+    this.saveToLocalStorage();
+    this.updateStats();
+    this.updateTransactionsList();
+},
+
+// Fixed loadData - NO DUPLICATION
+async loadData() {
+    console.log('🔄 Loading transactions...');
+    
+    // Load from localStorage
+    const saved = localStorage.getItem('farm-transactions');
+    let localTransactions = [];
+    
+    if (saved) {
+        try {
+            localTransactions = JSON.parse(saved);
+            console.log(`📁 Loaded ${localTransactions.length} transactions from localStorage`);
+        } catch (e) {
+            console.error('Failed to parse localStorage data:', e);
+            localTransactions = [];
+        }
+    }
+    
+    // Use a Map to ensure uniqueness by ID
+    const transactionMap = new Map();
+    
+    // Add local transactions first
+    localTransactions.forEach(t => {
+        const id = t.id?.toString();
+        if (id) {
+            transactionMap.set(id, t);
+        }
+    });
+    
+    this.transactions = Array.from(transactionMap.values());
+    console.log(`📊 Local unique transactions: ${this.transactions.length}`);
+    
+    // Load from Firebase and merge
+    if (this.isFirebaseAvailable && window.db) {
+        await this.loadFromFirebase();
+    } else {
+        // No Firebase, just use local data
+        this.transactions.sort((a, b) => {
+            const dateA = new Date(a.date || a.createdAt);
+            const dateB = new Date(b.date || b.createdAt);
+            return dateB - dateA;
+        });
+        this.saveToLocalStorage();
+    }
+    
+    console.log(`✅ Final unique transactions: ${this.transactions.length}`);
+},
+
+// Fixed addToSyncQueue - track by ID to prevent duplicates in queue
+addToSyncQueue(transaction) {
+    const transactionId = transaction.id?.toString();
+    if (!transactionId) return;
+    
+    // Check if this transaction is already in the queue
+    const existingInQueue = this.syncQueue.some(item => 
+        item.data?.id?.toString() === transactionId
+    );
+    
+    if (existingInQueue) {
+        console.log(`Transaction ${transactionId} already in sync queue, skipping`);
+        return;
+    }
+    
+    const syncItem = {
+        id: transactionId,
+        type: 'transaction',
+        action: 'save',
+        data: transaction,
+        timestamp: Date.now(),
+        retries: 0
+    };
+    
+    this.syncQueue.push(syncItem);
+    this.saveSyncQueue();
+    console.log(`📋 Added to sync queue: ${transactionId}`);
+    
+    // Try to sync immediately if online
+    if (navigator.onLine) {
+        setTimeout(() => this.processSyncQueue(), 100);
+    }
+},
+
+// Fixed processSyncQueue - handle duplicates properly
+async processSyncQueue() {
+    if (this.syncInProgress) {
+        console.log('Sync already in progress');
+        return;
+    }
+    
+    if (!navigator.onLine) {
+        console.log('Offline - skipping sync');
+        return;
+    }
+    
+    if (this.syncQueue.length === 0) {
+        return;
+    }
+    
+    this.syncInProgress = true;
+    console.log(`🔄 Processing sync queue (${this.syncQueue.length} items)...`);
+    
+    // Use a map to deduplicate queue items by ID
+    const uniqueQueue = new Map();
+    this.syncQueue.forEach(item => {
+        const itemId = item.id;
+        if (!uniqueQueue.has(itemId) || uniqueQueue.get(itemId).timestamp < item.timestamp) {
+            uniqueQueue.set(itemId, item);
+        }
+    });
+    
+    const dedupedQueue = Array.from(uniqueQueue.values());
+    console.log(`📋 Deduped queue: ${dedupedQueue.length} unique items`);
+    
+    const failedItems = [];
+    
+    for (const item of dedupedQueue) {
+        try {
+            if (item.type === 'transaction') {
+                // Check if this transaction already exists in Firebase
+                const user = window.firebase.auth().currentUser;
+                if (user) {
+                    const docRef = window.db.collection('users')
+                        .doc(user.uid)
+                        .collection('transactions')
+                        .doc(item.id);
+                    
+                    const existingDoc = await docRef.get();
+                    
+                    if (existingDoc.exists) {
+                        // Already exists, just update local status
+                        const existingData = existingDoc.data();
+                        const localIndex = this.transactions.findIndex(t => t.id?.toString() === item.id);
+                        if (localIndex !== -1) {
+                            this.transactions[localIndex].syncStatus = 'synced';
+                            this.saveToLocalStorage();
+                        }
+                        console.log(`✓ Transaction ${item.id} already exists in Firebase, skipping`);
+                        continue;
+                    }
+                }
+                
+                const success = await this.saveTransactionToFirebase(item.data);
+                if (!success) {
+                    item.retries = (item.retries || 0) + 1;
+                    if (item.retries < 3) {
+                        failedItems.push(item);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to sync item ${item.id}:`, error);
+            item.retries = (item.retries || 0) + 1;
+            if (item.retries < 3) {
+                failedItems.push(item);
+            }
+        }
+    }
+    
+    this.syncQueue = failedItems;
+    this.saveSyncQueue();
+    this.syncInProgress = false;
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    
+    console.log(`✅ Sync processed: ${dedupedQueue.length - failedItems.length} succeeded, ${failedItems.length} remaining`);
+},
+
+// Fixed saveToLocalStorage - ensure no duplicates
+saveToLocalStorage() {
+    try {
+        // Deduplicate before saving
+        const uniqueMap = new Map();
+        this.transactions.forEach(t => {
+            const id = t.id?.toString();
+            if (id) {
+                uniqueMap.set(id, t);
+            }
+        });
+        
+        const dedupedTransactions = Array.from(uniqueMap.values());
+        
+        if (dedupedTransactions.length !== this.transactions.length) {
+            console.log(`🧹 Deduplicated: ${this.transactions.length} -> ${dedupedTransactions.length}`);
+            this.transactions = dedupedTransactions;
+        }
+        
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        console.log(`💾 Saved ${this.transactions.length} unique transactions to localStorage`);
+    } catch (error) {
+        console.error('Failed to save to localStorage:', error);
+    }
+},
+
+// Add this helper method to clear all data and resync (for emergency fix)
+async forceResyncAndCleanDuplicates() {
+    console.log('🔄 FORCE RESYNC - Cleaning duplicates and resyncing...');
+    
+    if (!confirm('This will clean duplicate transactions and resync from Firebase. Continue?')) {
+        return;
+    }
+    
+    this.showNotification('Cleaning duplicates...', 'info');
+    
+    // 1. Clear local transactions
+    this.transactions = [];
+    localStorage.removeItem('farm-transactions');
+    
+    // 2. Clear sync queue
+    this.syncQueue = [];
+    this.saveSyncQueue();
+    
+    // 3. Reload fresh from Firebase
+    if (this.isFirebaseAvailable && window.db) {
+        await this.loadFromFirebase();
+    }
+    
+    // 4. Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    console.log(`✅ Clean complete. Final transactions: ${this.transactions.length}`);
+    this.showNotification(`Clean complete! ${this.transactions.length} unique transactions loaded`, 'success');
+},
+    
 // Load from legacy paths to recover old data
 async loadFromLegacyPaths(userId) {
     console.log('🔍 Checking legacy paths for transactions...');
