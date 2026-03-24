@@ -94,6 +94,11 @@ async initialize() {  // ← ADD async
         return false;
     }
 
+    // Initialize sync queue and properties
+    this.syncQueue = this.syncQueue || [];
+    this.syncInProgress = false;
+    this.realtimeUnsubscribe = null;
+
     // Check if Firebase services are available
     this.isFirebaseAvailable = !!(window.firebase && window.db);
     console.log('Firebase available:', this.isFirebaseAvailable, {
@@ -108,19 +113,25 @@ async initialize() {  // ← ADD async
     // Setup network detection
     this.setupNetworkDetection();
     
-    // Load transactions - WAIT for this to complete
-    await this.loadData();  // ← ADD await
+    // Initialize sync system FIRST
+    await this.initializeSync();
     
-    // Load receipts from Firebase - WAIT for this too
-    await this.loadReceiptsFromFirebase();  // ← ADD await
+    // Load transactions with sync
+    await this.loadData();  // ← Now uses enhanced loadData with sync
+    
+    // Load receipts from Firebase
+    await this.loadReceiptsFromFirebase();
 
     // Setup global click handler for receipts
     this.setupReceiptActionListeners();
     
-    // Process any pending syncs (don't need to await this)
-    if (this.isFirebaseAvailable) {
+    // Process any pending syncs immediately if online
+    if (this.isFirebaseAvailable && navigator.onLine) {
+        await this.processSyncQueue();
+    } else if (this.isFirebaseAvailable) {
+        // Schedule sync for when online
         setTimeout(() => {
-            this.syncLocalTransactionsToFirebase();
+            this.processSyncQueue();
         }, 3000);
     }
 
@@ -138,6 +149,251 @@ async initialize() {  // ← ADD async
     
     console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
     return true;
+},
+
+// Add the initializeSync method
+async initializeSync() {
+    console.log('🔧 Initializing sync system...');
+    
+    // Load sync queue from localStorage
+    this.loadSyncQueue();
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+        console.log('🌐 Back online - processing sync queue');
+        this.showNotification('Back online! Syncing data...', 'success');
+        this.processSyncQueue();
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('📴 Offline mode - changes will be queued');
+        this.showNotification('Offline mode. Changes saved locally.', 'info');
+    });
+    
+    // Start periodic sync
+    this.startPeriodicSync();
+    
+    console.log('✅ Sync system initialized');
+},
+
+// Add the loadSyncQueue method
+loadSyncQueue() {
+    try {
+        const saved = localStorage.getItem('income-sync-queue');
+        if (saved) {
+            this.syncQueue = JSON.parse(saved);
+            console.log(`📋 Loaded ${this.syncQueue.length} pending sync items`);
+        } else {
+            this.syncQueue = [];
+        }
+    } catch (error) {
+        console.error('Failed to load sync queue:', error);
+        this.syncQueue = [];
+    }
+},
+
+// Add the saveSyncQueue method
+saveSyncQueue() {
+    try {
+        localStorage.setItem('income-sync-queue', JSON.stringify(this.syncQueue));
+    } catch (error) {
+        console.error('Failed to save sync queue:', error);
+    }
+},
+
+// Add the startPeriodicSync method
+startPeriodicSync() {
+    // Clear existing interval if any
+    if (this.syncInterval) {
+        clearInterval(this.syncInterval);
+    }
+    
+    // Sync every 30 seconds
+    this.syncInterval = setInterval(() => {
+        if (navigator.onLine && this.syncQueue.length > 0) {
+            console.log('🔄 Periodic sync triggered');
+            this.processSyncQueue();
+        }
+        
+        // Also push any unsynced local transactions to Firebase
+        if (navigator.onLine && this.isFirebaseAvailable && this.transactions) {
+            const unsyncedTransactions = this.transactions.filter(t => 
+                t.syncStatus !== 'synced' && t.source !== 'firebase'
+            );
+            
+            if (unsyncedTransactions.length > 0) {
+                console.log(`🔄 Syncing ${unsyncedTransactions.length} unsynced transactions...`);
+                unsyncedTransactions.forEach(t => this.saveTransactionToFirebase(t));
+            }
+        }
+    }, 30000); // Every 30 seconds
+},
+
+// Enhanced processSyncQueue method
+async processSyncQueue() {
+    if (this.syncInProgress) {
+        console.log('Sync already in progress');
+        return;
+    }
+    
+    if (!navigator.onLine) {
+        console.log('Offline - skipping sync');
+        return;
+    }
+    
+    if (this.syncQueue.length === 0) {
+        return;
+    }
+    
+    this.syncInProgress = true;
+    console.log(`🔄 Processing sync queue (${this.syncQueue.length} items)...`);
+    
+    this.showNotification(`Syncing ${this.syncQueue.length} items...`, 'info');
+    
+    const failedItems = [];
+    
+    for (const item of this.syncQueue) {
+        try {
+            if (item.type === 'transaction') {
+                const success = await this.saveTransactionToFirebase(item.data);
+                if (!success) {
+                    item.retries = (item.retries || 0) + 1;
+                    if (item.retries < 3) {
+                        failedItems.push(item);
+                    } else {
+                        console.warn(`Failed to sync transaction ${item.id} after 3 attempts`);
+                    }
+                } else {
+                    console.log(`✅ Synced transaction: ${item.id}`);
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to sync item ${item.id}:`, error);
+            item.retries = (item.retries || 0) + 1;
+            if (item.retries < 3) {
+                failedItems.push(item);
+            }
+        }
+        
+        // Small delay between items to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    this.syncQueue = failedItems;
+    this.saveSyncQueue();
+    this.syncInProgress = false;
+    
+    if (failedItems.length === 0) {
+        console.log('✅ Sync queue processed successfully');
+        this.showNotification('All data synced!', 'success');
+    } else {
+        console.log(`⚠️ ${failedItems.length} items remaining in sync queue`);
+        this.showNotification(`${failedItems.length} items waiting to sync`, 'info');
+    }
+},
+
+// Add the setupRealtimeSync method
+setupRealtimeSync() {
+    if (!this.isFirebaseAvailable || !window.db) return;
+    
+    const user = window.firebase.auth().currentUser;
+    if (!user) return;
+    
+    // Clean up existing listener
+    if (this.realtimeUnsubscribe) {
+        this.realtimeUnsubscribe();
+    }
+    
+    console.log('📡 Setting up real-time sync listener...');
+    
+    // Listen for changes from other devices
+    this.realtimeUnsubscribe = window.db.collection('users')
+        .doc(user.uid)
+        .collection('transactions')
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'modified' || change.type === 'added') {
+                    const remoteTransaction = change.doc.data();
+                    
+                    // Check if this is from another device
+                    if (remoteTransaction.deviceId !== this.getDeviceId()) {
+                        console.log(`🔄 Received update from other device: ${remoteTransaction.id}`);
+                        this.mergeRemoteTransaction(remoteTransaction);
+                    }
+                }
+            });
+        }, (error) => {
+            console.error('Realtime sync error:', error);
+        });
+    
+    console.log('✅ Realtime sync active');
+},
+
+// Add the mergeRemoteTransaction method
+mergeRemoteTransaction(remoteTransaction) {
+    if (!this.transactions) this.transactions = [];
+    
+    const localIndex = this.transactions.findIndex(t => t.id == remoteTransaction.id);
+    
+    if (localIndex === -1) {
+        // New transaction from other device
+        this.transactions.unshift(remoteTransaction);
+        this.saveToLocalStorage();
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        this.showNotification(`📱 New transaction synced: ${remoteTransaction.description || remoteTransaction.category}`, 'info');
+    } else {
+        // Existing transaction - check if remote is newer
+        const localTransaction = this.transactions[localIndex];
+        const localTime = new Date(localTransaction.updatedAt || localTransaction.createdAt);
+        const remoteTime = new Date(remoteTransaction.updatedAt || remoteTransaction.createdAt);
+        
+        if (remoteTime > localTime) {
+            // Remote is newer, update local
+            this.transactions[localIndex] = remoteTransaction;
+            this.saveToLocalStorage();
+            this.updateStats();
+            this.updateTransactionsList();
+            this.updateCategoryBreakdown();
+            console.log(`🔄 Updated transaction from other device: ${remoteTransaction.id}`);
+            this.showNotification(`📱 Transaction updated from another device`, 'info');
+        }
+    }
+},
+
+// Add the getDeviceId method
+getDeviceId() {
+    let deviceId = localStorage.getItem('device-id');
+    if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('device-id', deviceId);
+    }
+    return deviceId;
+},
+
+// Add the cleanup method for when module is unloaded
+cleanupSync() {
+    console.log('🧹 Cleaning up sync system...');
+    
+    // Clear sync interval
+    if (this.syncInterval) {
+        clearInterval(this.syncInterval);
+        this.syncInterval = null;
+    }
+    
+    // Unsubscribe from real-time listener
+    if (this.realtimeUnsubscribe) {
+        this.realtimeUnsubscribe();
+        this.realtimeUnsubscribe = null;
+    }
+    
+    // Process any pending sync before cleanup
+    if (this.syncQueue && this.syncQueue.length > 0 && navigator.onLine) {
+        this.processSyncQueue().catch(console.error);
+    }
+    
+    console.log('✅ Sync system cleaned up');
 },
     
     // ✅ FIXED: Moved inside the module
@@ -376,155 +632,84 @@ async initialize() {  // ← ADD async
     },
 
     // ==================== DATA MANAGEMENT ====================
-    async loadData() {
-    console.log('Loading transactions...');
+   async loadData() {
+    console.log('🔄 Loading transactions with sync...');
     
-    try {
-        let loadedFromFirebase = false;
-        
-        // Try to load from Firebase first
-        if (this.isFirebaseAvailable && window.db) {
-            try {
-                const user = window.firebase.auth().currentUser;
-                if (user) {
-                    console.log('👤 User authenticated:', user.uid);
-                    
-                    const today = new Date();
-                    const month = today.getMonth();
-                    const year = today.getFullYear();
-                    const period = `${month}-${year}`;
-                    
-                    // TRY MULTIPLE PATHS WHERE DATA MIGHT BE
-                    
-                    // Path 1: income collection (this is where your phone likely saves)
-                    try {
-                        const incomeRef = window.db.collection('income').doc(user.uid).collection('transactions').doc(period);
-                        const incomeDoc = await incomeRef.get();
-                        
-                        if (incomeDoc.exists) {
-                            const data = incomeDoc.data();
-                            if (data.entries && data.entries.length > 0) {
-                                this.transactions = data.entries;
-                                console.log('✅ Loaded from income collection:', this.transactions.length);
-                                loadedFromFirebase = true;
-                                
-                                // Save to localStorage
-                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                                return;
-                            }
-                        }
-                    } catch (e) {
-                        console.log('No data in income collection');
-                    }
-                    
-                    // Path 2: income-expenses collection
-                    if (!loadedFromFirebase) {
-                        try {
-                            const ieRef = window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period);
-                            const ieDoc = await ieRef.get();
-                            
-                            if (ieDoc.exists) {
-                                const data = ieDoc.data();
-                                if (data.entries && data.entries.length > 0) {
-                                    this.transactions = data.entries;
-                                    console.log('✅ Loaded from income-expenses collection:', this.transactions.length);
-                                    loadedFromFirebase = true;
-                                    
-                                    // Save to localStorage
-                                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                                    return;
-                                }
-                            }
-                        } catch (e) {
-                            console.log('No data in income-expenses collection');
-                        }
-                    }
-                    
-                    // Path 3: your original transactions collection (for backward compatibility)
-                    if (!loadedFromFirebase) {
-                        try {
-                            const snapshot = await window.db.collection('transactions')
-                                .where('userId', '==', user.uid)
-                                .limit(100)
-                                .get();
-                            
-                            if (!snapshot.empty) {
-                                this.transactions = snapshot.docs.map(doc => {
-                                    const data = doc.data();
-                                    return {
-                                        id: data.id || parseInt(doc.id),
-                                        date: data.date,
-                                        type: data.type,
-                                        category: data.category,
-                                        amount: parseFloat(data.amount) || 0,
-                                        description: data.description || '',
-                                        paymentMethod: data.paymentMethod || 'cash',
-                                        reference: data.reference || '',
-                                        notes: data.notes || '',
-                                        receipt: data.receipt || null,
-                                        userId: data.userId || user.uid,
-                                        createdAt: data.createdAt || new Date().toISOString(),
-                                        updatedAt: data.updatedAt || new Date().toISOString(),
-                                        syncedAt: data.syncedAt,
-                                        source: 'firebase'
-                                    };
-                                });
-                                
-                                // Sort locally after loading
-                                this.transactions.sort((a, b) => {
-                                    const dateA = new Date(a.createdAt || a.date);
-                                    const dateB = new Date(b.createdAt || b.date);
-                                    return dateB - dateA;
-                                });
-                                
-                                console.log('✅ Loaded transactions from Firebase (transactions collection):', this.transactions.length);
-                                
-                                // Save to localStorage for offline use
-                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                                localStorage.setItem('last-firebase-sync', new Date().toISOString());
-                                
-                                loadedFromFirebase = true;
-                            }
-                        } catch (firebaseError) {
-                            console.error('❌ Firebase load error:', firebaseError);
-                            
-                            if (firebaseError.code === 'permission-denied') {
-                                this.showNotification(
-                                    'Firebase permission denied. Using local data for now.',
-                                    'warning'
-                                );
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error in Firebase loading:', error);
-            }
+    // Load from localStorage first
+    const saved = localStorage.getItem('farm-transactions');
+    if (saved) {
+        try {
+            const localTransactions = JSON.parse(saved);
+            this.transactions = localTransactions;
+            console.log(`📁 Loaded ${this.transactions.length} transactions from localStorage`);
+        } catch (e) {
+            console.error('Failed to parse localStorage data:', e);
+            this.transactions = [];
         }
-        
-        // Fallback to localStorage if Firebase failed or no data
-        if (!loadedFromFirebase) {
-            console.log('🔄 Falling back to localStorage');
-            const saved = localStorage.getItem('farm-transactions');
-            this.transactions = saved ? JSON.parse(saved) : [];
-            //this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
-            
-            // Add source marker for local transactions
-            this.transactions.forEach(t => {
-                if (!t.source) {
-                    t.source = 'local';
-                    t.updatedAt = t.updatedAt || new Date().toISOString();
-                }
-            });
-            
-            console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
-        }
-        
-    } catch (error) {
-        console.error('❌ Error loading transactions:', error);
-       // this.transactions = this.getDemoData();
-        console.log('📝 Loaded demo transactions:', this.transactions.length);
+    } else {
+        this.transactions = [];
     }
+    
+    // Load from Firebase (will merge)
+    if (this.isFirebaseAvailable && window.db) {
+        await this.loadFromFirebase();
+    }
+    
+    // Setup real-time sync after loading
+    this.setupRealtimeSync();
+    
+    // Sort transactions by date (newest first)
+    if (this.transactions && this.transactions.length > 0) {
+        this.transactions.sort((a, b) => {
+            const dateA = new Date(a.date || a.createdAt);
+            const dateB = new Date(b.date || b.createdAt);
+            return dateB - dateA;
+        });
+    }
+    
+    this.saveToLocalStorage();
+    console.log(`✅ Load complete: ${this.transactions?.length || 0} transactions ready`);
+},
+
+    // Add this method to your module
+unload() {
+    console.log('📦 Unloading Income & Expenses module...');
+    
+    // Clean up sync system
+    this.cleanupSync();
+    
+    // Stop camera if active
+    this.stopCamera();
+    
+    // Remove event listeners
+    if (this._globalClickHandler) {
+        document.removeEventListener('click', this._globalClickHandler);
+        this._globalClickHandler = null;
+    }
+    if (this._globalChangeHandler) {
+        document.removeEventListener('change', this._globalChangeHandler);
+        this._globalChangeHandler = null;
+    }
+    
+    // Hide any open modals
+    this.hideAllModals();
+    
+    // Clean up file input if created
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
+        fileInput.remove();
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    this.currentEditingId = null;
+    this.receiptQueue = [];
+    this.cameraStream = null;
+    this.receiptPreview = null;
+    this.syncQueue = [];
+    
+    console.log('✅ Income & Expenses module unloaded');
 },
 
   async saveToFirebase() {
@@ -653,6 +838,483 @@ async saveTransaction(transactionData) {
     this.broadcastToDashboard(transactionData);
     
     return true;
+},
+
+    // modules/income-expenses.js - FIXED SYNC SYSTEM
+
+// Add these methods to your IncomeExpensesModule
+
+// ==================== FIXED SYNC SYSTEM ====================
+
+// Single source of truth - use ONE collection
+async saveTransaction(transactionData) {
+    console.log('💰 Saving transaction with sync system...');
+    
+    if (!this.transactions) this.transactions = [];
+    
+    const isNewTransaction = !this.transactions.find(t => t.id === transactionData.id);
+    const transactionId = transactionData.id || Date.now();
+    
+    const finalTransaction = {
+        ...transactionData,
+        id: transactionId,
+        updatedAt: new Date().toISOString(),
+        syncStatus: navigator.onLine ? 'synced' : 'pending',
+        deviceId: this.getDeviceId(),
+        lastModified: firebase.firestore.FieldValue.serverTimestamp?.() || new Date().toISOString()
+    };
+    
+    if (!finalTransaction.createdAt) {
+        finalTransaction.createdAt = new Date().toISOString();
+    }
+    
+    // Save to local array
+    const existingIndex = this.transactions.findIndex(t => t.id === transactionId);
+    if (existingIndex >= 0) {
+        this.transactions[existingIndex] = finalTransaction;
+    } else {
+        this.transactions.unshift(finalTransaction);
+    }
+    
+    // Save to localStorage (offline backup)
+    this.saveToLocalStorage();
+    
+    // Save to Firebase (single source of truth)
+    if (this.isFirebaseAvailable && window.db) {
+        const saveResult = await this.saveTransactionToFirebase(finalTransaction);
+        
+        if (!saveResult && !navigator.onLine) {
+            // Add to sync queue for later
+            this.addToSyncQueue(finalTransaction);
+            this.showNotification('Saved locally. Will sync when online.', 'info');
+        } else if (saveResult) {
+            this.showNotification('Transaction saved and synced!', 'success');
+        }
+    } else {
+        // Offline - add to sync queue
+        this.addToSyncQueue(finalTransaction);
+        this.showNotification('Saved offline. Will sync when online.', 'info');
+    }
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    // Broadcast to other modules
+    this.broadcastToOtherModules(finalTransaction, isNewTransaction);
+    
+    return finalTransaction;
+},
+
+async saveTransactionToFirebase(transactionData) {
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('Firebase not available');
+        return false;
+    }
+    
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) {
+            console.log('No user logged in');
+            return false;
+        }
+        
+        // SINGLE PATH - Use 'transactions' collection for all
+        const docRef = window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .doc(transactionData.id.toString());
+        
+        await docRef.set({
+            ...transactionData,
+            userId: user.uid,
+            serverTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        
+        console.log('✅ Saved to Firebase:', transactionData.id);
+        
+        // Also update the period summary for faster queries
+        await this.updatePeriodSummary(transactionData);
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Firebase save error:', error);
+        return false;
+    }
+},
+
+async updatePeriodSummary(transactionData) {
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        
+        const date = new Date(transactionData.date);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const period = `${year}-${month}`;
+        
+        const summaryRef = window.db.collection('users')
+            .doc(user.uid)
+            .collection('periods')
+            .doc(period);
+        
+        // Get current summary
+        const summaryDoc = await summaryRef.get();
+        let summary = summaryDoc.exists ? summaryDoc.data() : {
+            totalIncome: 0,
+            totalExpenses: 0,
+            transactionCount: 0,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        // Update summary
+        if (transactionData.type === 'income') {
+            summary.totalIncome += transactionData.amount;
+        } else {
+            summary.totalExpenses += transactionData.amount;
+        }
+        summary.transactionCount++;
+        summary.lastUpdated = new Date().toISOString();
+        
+        await summaryRef.set(summary, { merge: true });
+        
+    } catch (error) {
+        console.warn('Failed to update period summary:', error);
+    }
+},
+
+// Sync queue for offline changes
+syncQueue: [],
+syncInProgress: false,
+
+addToSyncQueue(transaction) {
+    const syncItem = {
+        id: transaction.id,
+        type: 'transaction',
+        action: 'save',
+        data: transaction,
+        timestamp: Date.now(),
+        retries: 0
+    };
+    
+    this.syncQueue.push(syncItem);
+    this.saveSyncQueue();
+    
+    // Try to sync immediately if online
+    if (navigator.onLine) {
+        this.processSyncQueue();
+    }
+},
+
+saveSyncQueue() {
+    localStorage.setItem('income-sync-queue', JSON.stringify(this.syncQueue));
+},
+
+loadSyncQueue() {
+    try {
+        const saved = localStorage.getItem('income-sync-queue');
+        if (saved) {
+            this.syncQueue = JSON.parse(saved);
+            console.log(`📋 Loaded ${this.syncQueue.length} pending sync items`);
+            
+            // Process any pending items
+            if (this.syncQueue.length > 0 && navigator.onLine) {
+                this.processSyncQueue();
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load sync queue:', error);
+        this.syncQueue = [];
+    }
+},
+
+async processSyncQueue() {
+    if (this.syncInProgress) {
+        console.log('Sync already in progress');
+        return;
+    }
+    
+    if (!navigator.onLine) {
+        console.log('Offline - skipping sync');
+        return;
+    }
+    
+    if (this.syncQueue.length === 0) {
+        return;
+    }
+    
+    this.syncInProgress = true;
+    console.log(`🔄 Processing sync queue (${this.syncQueue.length} items)...`);
+    
+    const failedItems = [];
+    
+    for (const item of this.syncQueue) {
+        try {
+            if (item.type === 'transaction') {
+                const success = await this.saveTransactionToFirebase(item.data);
+                if (!success) {
+                    item.retries++;
+                    if (item.retries < 3) {
+                        failedItems.push(item);
+                    } else {
+                        console.warn(`Failed to sync transaction ${item.id} after 3 attempts`);
+                    }
+                } else {
+                    console.log(`✅ Synced transaction: ${item.id}`);
+                }
+            }
+        } catch (error) {
+            console.error(`Failed to sync item ${item.id}:`, error);
+            item.retries++;
+            if (item.retries < 3) {
+                failedItems.push(item);
+            }
+        }
+    }
+    
+    this.syncQueue = failedItems;
+    this.saveSyncQueue();
+    this.syncInProgress = false;
+    
+    if (failedItems.length === 0) {
+        console.log('✅ Sync queue processed successfully');
+    } else {
+        console.log(`⚠️ ${failedItems.length} items remaining in sync queue`);
+    }
+},
+
+// Real-time listener for cross-device sync
+setupRealtimeSync() {
+    if (!this.isFirebaseAvailable || !window.db) return;
+    
+    const user = window.firebase.auth().currentUser;
+    if (!user) return;
+    
+    console.log('📡 Setting up real-time sync listener...');
+    
+    // Listen for changes from other devices
+    this.realtimeUnsubscribe = window.db.collection('users')
+        .doc(user.uid)
+        .collection('transactions')
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'modified' || change.type === 'added') {
+                    const remoteTransaction = change.doc.data();
+                    
+                    // Check if this is from another device
+                    if (remoteTransaction.deviceId !== this.getDeviceId()) {
+                        console.log(`🔄 Received update from other device: ${remoteTransaction.id}`);
+                        this.mergeRemoteTransaction(remoteTransaction);
+                    }
+                }
+            });
+        }, (error) => {
+            console.error('Realtime sync error:', error);
+        });
+    
+    console.log('✅ Realtime sync active');
+},
+
+mergeRemoteTransaction(remoteTransaction) {
+    const localIndex = this.transactions.findIndex(t => t.id === remoteTransaction.id);
+    
+    if (localIndex === -1) {
+        // New transaction from other device
+        this.transactions.unshift(remoteTransaction);
+        this.saveToLocalStorage();
+        this.updateStats();
+        this.updateTransactionsList();
+        this.showNotification(`New transaction synced from other device: ${remoteTransaction.description}`, 'info');
+    } else {
+        // Existing transaction - check if remote is newer
+        const localTransaction = this.transactions[localIndex];
+        const localTime = new Date(localTransaction.updatedAt || localTransaction.createdAt);
+        const remoteTime = new Date(remoteTransaction.updatedAt || remoteTransaction.createdAt);
+        
+        if (remoteTime > localTime) {
+            // Remote is newer, update local
+            this.transactions[localIndex] = remoteTransaction;
+            this.saveToLocalStorage();
+            this.updateStats();
+            this.updateTransactionsList();
+            console.log(`Updated transaction from other device: ${remoteTransaction.id}`);
+        }
+    }
+},
+
+// Device ID for tracking
+getDeviceId() {
+    let deviceId = localStorage.getItem('device-id');
+    if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('device-id', deviceId);
+    }
+    return deviceId;
+},
+
+// Enhanced loadData with proper sync
+async loadData() {
+    console.log('🔄 Loading transactions with sync...');
+    
+    // Load sync queue first
+    this.loadSyncQueue();
+    
+    // Load from localStorage
+    const saved = localStorage.getItem('farm-transactions');
+    if (saved) {
+        try {
+            const localTransactions = JSON.parse(saved);
+            this.transactions = localTransactions;
+            console.log(`📁 Loaded ${this.transactions.length} transactions from localStorage`);
+        } catch (e) {
+            console.error('Failed to parse localStorage data:', e);
+            this.transactions = [];
+        }
+    } else {
+        this.transactions = [];
+    }
+    
+    // Load from Firebase (will merge)
+    if (this.isFirebaseAvailable && window.db) {
+        await this.loadFromFirebase();
+    }
+    
+    // Setup real-time sync after loading
+    this.setupRealtimeSync();
+    
+    // Process any pending sync items
+    if (this.syncQueue.length > 0 && navigator.onLine) {
+        this.processSyncQueue();
+    }
+    
+    // Sort transactions by date (newest first)
+    this.transactions.sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt);
+        const dateB = new Date(b.date || b.createdAt);
+        return dateB - dateA;
+    });
+    
+    this.saveToLocalStorage();
+    console.log(`✅ Load complete: ${this.transactions.length} transactions ready`);
+},
+
+async loadFromFirebase() {
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) {
+            console.log('No user logged in');
+            return;
+        }
+        
+        console.log('☁️ Loading from Firebase...');
+        
+        const snapshot = await window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .orderBy('date', 'desc')
+            .limit(1000) // Limit to last 1000 transactions for performance
+            .get();
+        
+        if (snapshot.empty) {
+            console.log('No transactions in Firebase');
+            return;
+        }
+        
+        const firebaseTransactions = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            firebaseTransactions.push({
+                ...data,
+                id: doc.id,
+                source: 'firebase'
+            });
+        });
+        
+        console.log(`☁️ Loaded ${firebaseTransactions.length} transactions from Firebase`);
+        
+        // Merge with local transactions (keep newer versions)
+        const transactionMap = new Map();
+        
+        // Add local transactions
+        this.transactions.forEach(t => {
+            transactionMap.set(t.id.toString(), t);
+        });
+        
+        // Add/override with Firebase transactions
+        firebaseTransactions.forEach(t => {
+            const existing = transactionMap.get(t.id.toString());
+            if (!existing || new Date(t.updatedAt) > new Date(existing.updatedAt)) {
+                transactionMap.set(t.id.toString(), t);
+            }
+        });
+        
+        this.transactions = Array.from(transactionMap.values());
+        this.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Save merged data
+        this.saveToLocalStorage();
+        
+    } catch (error) {
+        console.error('Error loading from Firebase:', error);
+    }
+},
+
+saveToLocalStorage() {
+    try {
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        localStorage.setItem('last-sync-time', new Date().toISOString());
+        console.log('💾 Saved to localStorage');
+    } catch (error) {
+        console.error('Failed to save to localStorage:', error);
+    }
+},
+
+// Periodically sync
+startPeriodicSync() {
+    setInterval(() => {
+        if (navigator.onLine && this.syncQueue.length > 0) {
+            this.processSyncQueue();
+        }
+        
+        // Also push any unsynced local transactions to Firebase
+        if (navigator.onLine && this.isFirebaseAvailable) {
+            const unsyncedTransactions = this.transactions.filter(t => 
+                t.syncStatus !== 'synced' && t.source !== 'firebase'
+            );
+            
+            if (unsyncedTransactions.length > 0) {
+                console.log(`🔄 Syncing ${unsyncedTransactions.length} unsynced transactions...`);
+                unsyncedTransactions.forEach(t => this.saveTransactionToFirebase(t));
+            }
+        }
+    }, 30000); // Every 30 seconds
+},
+
+// Initialize sync on module load
+async initializeSync() {
+    console.log('🔧 Initializing sync system...');
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+        console.log('🌐 Back online - processing sync queue');
+        this.processSyncQueue();
+        this.showNotification('Back online! Syncing data...', 'success');
+    });
+    
+    window.addEventListener('offline', () => {
+        console.log('📴 Offline mode - changes will be queued');
+        this.showNotification('Offline mode. Changes saved locally.', 'info');
+    });
+    
+    // Start periodic sync
+    this.startPeriodicSync();
+    
+    // Load sync queue
+    this.loadSyncQueue();
+    
+    console.log('✅ Sync system initialized');
 },
 
 // ==================== INTEGRATION METHODS ====================
