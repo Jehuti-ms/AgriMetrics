@@ -85,7 +85,7 @@ debugCameraCapture: function() {
 },
     
    // ==================== INITIALIZATION ====================
-async initialize() {  // ← ADD async
+async initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     this.element = document.getElementById('content-area');
@@ -94,17 +94,14 @@ async initialize() {  // ← ADD async
         return false;
     }
 
-    // Initialize sync queue and properties
+    // Initialize sync properties
     this.syncQueue = this.syncQueue || [];
     this.syncInProgress = false;
     this.realtimeUnsubscribe = null;
 
     // Check if Firebase services are available
     this.isFirebaseAvailable = !!(window.firebase && window.db);
-    console.log('Firebase available:', this.isFirebaseAvailable, {
-        firebase: !!window.firebase,
-        db: !!window.db
-    });
+    console.log('Firebase available:', this.isFirebaseAvailable);
 
     if (window.StyleManager) {
         StyleManager.registerModule(this.name, this.element, this);
@@ -113,44 +110,43 @@ async initialize() {  // ← ADD async
     // Setup network detection
     this.setupNetworkDetection();
     
-    // Initialize sync system FIRST
+    // Initialize sync system
     await this.initializeSync();
     
-    // Load transactions with sync
-    await this.loadData();  // ← Now uses enhanced loadData with sync
+    // Load ALL transactions from all sources
+    await this.loadData();
     
-    // Load receipts from Firebase
+    // Force sync to ensure all local data is in Firebase
+    if (this.isFirebaseAvailable && navigator.onLine) {
+        await this.forceFullSync();
+    }
+    
+    // Load receipts
     await this.loadReceiptsFromFirebase();
 
-    // Setup global click handler for receipts
+    // Setup UI handlers
     this.setupReceiptActionListeners();
-    
-    // Process any pending syncs immediately if online
-    if (this.isFirebaseAvailable && navigator.onLine) {
-        await this.processSyncQueue();
-    } else if (this.isFirebaseAvailable) {
-        // Schedule sync for when online
-        setTimeout(() => {
-            this.processSyncQueue();
-        }, 3000);
-    }
-
-    // Make sure receiptQueue is initialized
-    this.receiptQueue = this.receiptQueue || [];
-    
-    // Listen for sales from Orders module
     this.setupSalesListeners();  
-            
-    this.renderModule();  // ← Now this happens AFTER data is loaded
-    this.initialized = true;
     
-    // Connect to Data Broadcaster
+    // Render module
+    this.renderModule();
+    
+    // Add manual sync button
+    this.addManualSyncButton();
+    
+    // Start sync status indicator updates
+    setInterval(() => this.updateSyncStatusIndicator(), 5000);
+    
+    this.initialized = true;
     this.connectToDataBroadcaster();
     
     console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
+    console.log('💰 Total Income:', this.calculateStats().totalIncome);
+    console.log('💸 Total Expenses:', this.calculateStats().totalExpenses);
+    
     return true;
 },
-
+    
 // Add the initializeSync method
 async initializeSync() {
     console.log('🔧 Initializing sync system...');
@@ -630,6 +626,9 @@ cleanupSync() {
             this.showNotification('You are offline. Changes saved locally.', 'info');
         });
     },
+
+    
+    
 
     // ==================== DATA MANAGEMENT ====================
    async loadData() {
@@ -1200,25 +1199,33 @@ async loadData() {
     console.log(`✅ Load complete: ${this.transactions.length} transactions ready`);
 },
 
+// Add these methods to your IncomeExpensesModule
+
+// ==================== COMPLETE SYNC FIX ====================
+
+// Enhanced loadFromFirebase that gets ALL transactions, not just recent ones
 async loadFromFirebase() {
     try {
         const user = window.firebase.auth().currentUser;
         if (!user) {
             console.log('No user logged in');
-            return;
+            return false;
         }
         
-        console.log('☁️ Loading from Firebase...');
+        console.log('☁️ Loading ALL transactions from Firebase...');
         
+        // Get ALL transactions from Firebase (no limit)
         const snapshot = await window.db.collection('users')
             .doc(user.uid)
             .collection('transactions')
             .orderBy('date', 'desc')
-            .limit(1000) // Limit to last 1000 transactions for performance
             .get();
         
         if (snapshot.empty) {
-            console.log('No transactions in Firebase');
+            console.log('No transactions found in Firebase');
+            
+            // Check if data is in old structure
+            await this.loadFromLegacyPaths(user.uid);
             return;
         }
         
@@ -1226,39 +1233,424 @@ async loadFromFirebase() {
         snapshot.forEach(doc => {
             const data = doc.data();
             firebaseTransactions.push({
-                ...data,
                 id: doc.id,
+                date: data.date,
+                type: data.type,
+                category: data.category,
+                amount: parseFloat(data.amount) || 0,
+                description: data.description || '',
+                paymentMethod: data.paymentMethod || 'cash',
+                reference: data.reference || '',
+                notes: data.notes || '',
+                receipt: data.receipt || null,
+                userId: data.userId || user.uid,
+                createdAt: data.createdAt || data.timestamp || new Date().toISOString(),
+                updatedAt: data.updatedAt || data.timestamp || new Date().toISOString(),
+                syncedAt: data.syncedAt,
+                deviceId: data.deviceId,
+                syncStatus: 'synced',
                 source: 'firebase'
             });
         });
         
         console.log(`☁️ Loaded ${firebaseTransactions.length} transactions from Firebase`);
         
-        // Merge with local transactions (keep newer versions)
-        const transactionMap = new Map();
+        // MERGE with local transactions - keep both sets
+        const allTransactionsMap = new Map();
         
-        // Add local transactions
-        this.transactions.forEach(t => {
-            transactionMap.set(t.id.toString(), t);
-        });
+        // Add existing local transactions first
+        if (this.transactions && this.transactions.length > 0) {
+            this.transactions.forEach(t => {
+                allTransactionsMap.set(t.id.toString(), t);
+            });
+            console.log(`📁 Local transactions: ${this.transactions.length}`);
+        }
         
         // Add/override with Firebase transactions
         firebaseTransactions.forEach(t => {
-            const existing = transactionMap.get(t.id.toString());
+            const existing = allTransactionsMap.get(t.id.toString());
             if (!existing || new Date(t.updatedAt) > new Date(existing.updatedAt)) {
-                transactionMap.set(t.id.toString(), t);
+                allTransactionsMap.set(t.id.toString(), t);
+            } else if (existing && existing.source !== 'firebase') {
+                // Keep local if it's newer, but mark for sync
+                console.log(`Local transaction ${t.id} is newer, will sync to Firebase`);
+                this.addToSyncQueue(existing);
             }
         });
         
-        this.transactions = Array.from(transactionMap.values());
-        this.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        this.transactions = Array.from(allTransactionsMap.values());
         
-        // Save merged data
+        // Sort by date (newest first)
+        this.transactions.sort((a, b) => {
+            const dateA = new Date(a.date || a.createdAt);
+            const dateB = new Date(b.date || b.createdAt);
+            return dateB - dateA;
+        });
+        
+        console.log(`✅ Merged total: ${this.transactions.length} transactions`);
+        
+        // Save merged data to localStorage
         this.saveToLocalStorage();
+        
+        // If there are local transactions that weren't in Firebase, sync them up
+        const unsyncedLocal = this.transactions.filter(t => 
+            t.source !== 'firebase' && t.syncStatus !== 'synced'
+        );
+        
+        if (unsyncedLocal.length > 0) {
+            console.log(`📤 Syncing ${unsyncedLocal.length} local transactions to Firebase...`);
+            for (const transaction of unsyncedLocal) {
+                await this.saveTransactionToFirebase(transaction);
+            }
+        }
+        
+        return true;
         
     } catch (error) {
         console.error('Error loading from Firebase:', error);
+        return false;
     }
+},
+
+// Load from legacy paths to recover old data
+async loadFromLegacyPaths(userId) {
+    console.log('🔍 Checking legacy paths for transactions...');
+    
+    const legacyPaths = [
+        { coll: 'income', sub: 'transactions' },
+        { coll: 'income-expenses', sub: 'transactions' },
+        { coll: 'transactions' }
+    ];
+    
+    let foundTransactions = [];
+    
+    for (const path of legacyPaths) {
+        try {
+            let snapshot;
+            if (path.sub) {
+                snapshot = await window.db.collection(path.coll)
+                    .doc(userId)
+                    .collection(path.sub)
+                    .get();
+            } else {
+                snapshot = await window.db.collection(path.coll)
+                    .where('userId', '==', userId)
+                    .get();
+            }
+            
+            if (!snapshot.empty) {
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.entries && Array.isArray(data.entries)) {
+                        foundTransactions.push(...data.entries);
+                    } else if (data.transactions && Array.isArray(data.transactions)) {
+                        foundTransactions.push(...data.transactions);
+                    } else if (data.type === 'income' || data.type === 'expense') {
+                        foundTransactions.push({ id: doc.id, ...data });
+                    }
+                });
+                console.log(`✅ Found ${foundTransactions.length} transactions in ${path.coll}`);
+                break;
+            }
+        } catch (e) {
+            console.log(`No data in ${path.coll}`);
+        }
+    }
+    
+    if (foundTransactions.length > 0) {
+        console.log(`🔄 Migrating ${foundTransactions.length} transactions from legacy paths...`);
+        
+        // Migrate each transaction to new structure
+        for (const transaction of foundTransactions) {
+            const migratedTransaction = {
+                id: transaction.id || Date.now() + Math.random(),
+                date: transaction.date || new Date().toISOString().split('T')[0],
+                type: transaction.type,
+                category: transaction.category,
+                amount: parseFloat(transaction.amount) || 0,
+                description: transaction.description || '',
+                paymentMethod: transaction.paymentMethod || 'cash',
+                reference: transaction.reference || '',
+                notes: transaction.notes || '',
+                receipt: transaction.receipt || null,
+                userId: userId,
+                createdAt: transaction.createdAt || transaction.timestamp || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                source: 'migrated',
+                syncStatus: 'pending'
+            };
+            
+            // Save to new structure
+            await this.saveTransactionToFirebase(migratedTransaction);
+            
+            // Also add to local array
+            if (!this.transactions) this.transactions = [];
+            this.transactions.push(migratedTransaction);
+        }
+        
+        // Save merged data
+        this.saveToLocalStorage();
+        console.log(`✅ Migrated ${foundTransactions.length} transactions to new structure`);
+    }
+},
+
+// Enhanced saveTransactionToFirebase with better error handling
+async saveTransactionToFirebase(transactionData) {
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('Firebase not available, saving to queue');
+        this.addToSyncQueue(transactionData);
+        return false;
+    }
+    
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) {
+            console.log('No user logged in, saving to queue');
+            this.addToSyncQueue(transactionData);
+            return false;
+        }
+        
+        // Ensure transaction has required fields
+        const enrichedTransaction = {
+            ...transactionData,
+            id: transactionData.id.toString(),
+            userId: user.uid,
+            updatedAt: new Date().toISOString(),
+            syncStatus: 'synced',
+            deviceId: this.getDeviceId(),
+            lastModified: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        if (!enrichedTransaction.createdAt) {
+            enrichedTransaction.createdAt = enrichedTransaction.updatedAt;
+        }
+        
+        // Save to users/{userId}/transactions/{transactionId}
+        const docRef = window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .doc(enrichedTransaction.id);
+        
+        await docRef.set(enrichedTransaction, { merge: true });
+        
+        console.log(`✅ Saved to Firebase: ${enrichedTransaction.id}`);
+        
+        // Also update period summary for faster queries
+        await this.updatePeriodSummary(enrichedTransaction);
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Firebase save error:', error);
+        
+        // Add to queue for retry
+        this.addToSyncQueue(transactionData);
+        return false;
+    }
+},
+
+// Update period summary for quick stats
+async updatePeriodSummary(transactionData) {
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        
+        const date = new Date(transactionData.date);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const period = `${year}-${month}`;
+        
+        const summaryRef = window.db.collection('users')
+            .doc(user.uid)
+            .collection('periods')
+            .doc(period);
+        
+        // Get current summary or create new
+        const summaryDoc = await summaryRef.get();
+        let summary = summaryDoc.exists ? summaryDoc.data() : {
+            totalIncome: 0,
+            totalExpenses: 0,
+            transactionCount: 0,
+            lastUpdated: new Date().toISOString(),
+            period: period
+        };
+        
+        // Update summary
+        if (transactionData.type === 'income') {
+            summary.totalIncome = (summary.totalIncome || 0) + transactionData.amount;
+        } else {
+            summary.totalExpenses = (summary.totalExpenses || 0) + transactionData.amount;
+        }
+        summary.transactionCount = (summary.transactionCount || 0) + 1;
+        summary.lastUpdated = new Date().toISOString();
+        
+        await summaryRef.set(summary, { merge: true });
+        
+    } catch (error) {
+        console.warn('Failed to update period summary:', error);
+    }
+},
+
+// Force sync all local transactions to Firebase
+async forceFullSync() {
+    console.log('🔄 FORCE FULL SYNC - Pushing all local transactions to Firebase...');
+    
+    if (!this.isFirebaseAvailable || !window.db) {
+        this.showNotification('Firebase not available', 'error');
+        return false;
+    }
+    
+    const user = window.firebase.auth().currentUser;
+    if (!user) {
+        this.showNotification('Please log in to sync', 'error');
+        return false;
+    }
+    
+    this.showNotification('Starting full sync...', 'info');
+    
+    let syncedCount = 0;
+    let failedCount = 0;
+    
+    // Sync all local transactions
+    for (const transaction of this.transactions) {
+        try {
+            const success = await this.saveTransactionToFirebase(transaction);
+            if (success) {
+                syncedCount++;
+                console.log(`✅ Synced: ${transaction.id} - ${transaction.description}`);
+            } else {
+                failedCount++;
+                console.log(`❌ Failed: ${transaction.id}`);
+            }
+        } catch (error) {
+            failedCount++;
+            console.error(`Error syncing ${transaction.id}:`, error);
+        }
+    }
+    
+    // Also sync any pending queue items
+    if (this.syncQueue.length > 0) {
+        await this.processSyncQueue();
+    }
+    
+    console.log(`✅ Full sync complete: ${syncedCount} synced, ${failedCount} failed`);
+    this.showNotification(`Sync complete: ${syncedCount} transactions synced`, 'success');
+    
+    // Reload data to get any updates from other devices
+    await this.loadFromFirebase();
+    this.updateStats();
+    this.updateTransactionsList();
+    
+    return true;
+},
+
+// Add a manual sync button to UI
+addManualSyncButton() {
+    const headerActions = document.querySelector('.module-header .header-actions');
+    if (headerActions && !document.getElementById('manual-sync-btn')) {
+        const syncBtn = document.createElement('button');
+        syncBtn.id = 'manual-sync-btn';
+        syncBtn.className = 'btn btn-outline';
+        syncBtn.innerHTML = '🔄 Sync Now';
+        syncBtn.style.marginLeft = '8px';
+        syncBtn.onclick = async () => {
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = '⏳ Syncing...';
+            await this.forceFullSync();
+            syncBtn.disabled = false;
+            syncBtn.innerHTML = '🔄 Sync Now';
+        };
+        headerActions.appendChild(syncBtn);
+        console.log('✅ Manual sync button added');
+    }
+},
+
+// Update the renderModule to include sync status indicator
+updateSyncStatusIndicator() {
+    let indicator = document.getElementById('sync-status-indicator');
+    if (!indicator && this.element) {
+        indicator = document.createElement('div');
+        indicator.id = 'sync-status-indicator';
+        indicator.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    if (indicator) {
+        const isOnline = navigator.onLine;
+        const pendingSync = this.syncQueue?.length || 0;
+        
+        if (!isOnline) {
+            indicator.innerHTML = `📡 Offline | ${pendingSync} pending`;
+            indicator.style.background = '#ff9800';
+            indicator.style.color = '#fff';
+        } else if (pendingSync > 0) {
+            indicator.innerHTML = `🔄 Syncing... ${pendingSync} pending`;
+            indicator.style.background = '#2196f3';
+            indicator.style.color = '#fff';
+        } else {
+            indicator.innerHTML = `✅ Synced | ${this.transactions?.length || 0} transactions`;
+            indicator.style.background = '#4caf50';
+            indicator.style.color = '#fff';
+        }
+        
+        // Auto-hide after 3 seconds if synced
+        if (pendingSync === 0 && isOnline) {
+            setTimeout(() => {
+                if (indicator && indicator.parentNode) {
+                    indicator.style.opacity = '0.5';
+                    setTimeout(() => {
+                        if (indicator && indicator.parentNode && indicator.style.opacity === '0.5') {
+                            indicator.remove();
+                        }
+                    }, 3000);
+                }
+            }, 3000);
+        }
+    }
+},
+
+// Override updateStats to ensure accurate totals
+updateStats() {
+    if (!this.transactions) {
+        console.warn('No transactions array');
+        return;
+    }
+    
+    const income = this.transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    
+    const expenses = this.transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    
+    const net = income - expenses;
+    
+    const totalIncome = document.getElementById('total-income');
+    const totalExpenses = document.getElementById('total-expenses');
+    const netIncome = document.getElementById('net-income');
+    
+    if (totalIncome) totalIncome.textContent = this.formatCurrency(income);
+    if (totalExpenses) totalExpenses.textContent = this.formatCurrency(expenses);
+    if (netIncome) {
+        netIncome.textContent = this.formatCurrency(net);
+        netIncome.style.color = net >= 0 ? '#10b981' : '#ef4444';
+    }
+    
+    console.log(`📊 Stats updated: Income: ${income}, Expenses: ${expenses}, Net: ${net}`);
 },
 
 saveToLocalStorage() {
