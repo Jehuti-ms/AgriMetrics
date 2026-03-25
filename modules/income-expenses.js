@@ -110,6 +110,11 @@ async initialize() {  // ← ADD async
     
     // Load transactions - WAIT for this to complete
     await this.loadData();  // ← ADD await
+
+    // Setup real-time sync
+    if (this.isFirebaseAvailable) {
+        this.setupRealtimeSync();
+    }
     
     // Load receipts from Firebase - WAIT for this too
     await this.loadReceiptsFromFirebase();  // ← ADD await
@@ -376,207 +381,209 @@ async initialize() {  // ← ADD async
     },
 
     // ==================== DATA MANAGEMENT ====================
-    async loadData() {
+   async loadData() {
     console.log('Loading transactions...');
     
     try {
-        let loadedFromFirebase = false;
+        // Your existing loadData code here...
+        const saved = localStorage.getItem('farm-transactions');
+        if (saved) {
+            this.transactions = JSON.parse(saved);
+            console.log('📁 Loaded from localStorage:', this.transactions.length);
+        } else {
+            this.transactions = [];
+        }
         
-        // Try to load from Firebase first
+        // ========== ADD THIS ==========
+        // Load from Firebase and merge
         if (this.isFirebaseAvailable && window.db) {
-            try {
-                const user = window.firebase.auth().currentUser;
-                if (user) {
-                    console.log('👤 User authenticated:', user.uid);
-                    
-                    const today = new Date();
-                    const month = today.getMonth();
-                    const year = today.getFullYear();
-                    const period = `${month}-${year}`;
-                    
-                    // TRY MULTIPLE PATHS WHERE DATA MIGHT BE
-                    
-                    // Path 1: income collection (this is where your phone likely saves)
-                    try {
-                        const incomeRef = window.db.collection('income').doc(user.uid).collection('transactions').doc(period);
-                        const incomeDoc = await incomeRef.get();
-                        
-                        if (incomeDoc.exists) {
-                            const data = incomeDoc.data();
-                            if (data.entries && data.entries.length > 0) {
-                                this.transactions = data.entries;
-                                console.log('✅ Loaded from income collection:', this.transactions.length);
-                                loadedFromFirebase = true;
-                                
-                                // Save to localStorage
-                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                                return;
-                            }
-                        }
-                    } catch (e) {
-                        console.log('No data in income collection');
-                    }
-                    
-                    // Path 2: income-expenses collection
-                    if (!loadedFromFirebase) {
-                        try {
-                            const ieRef = window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period);
-                            const ieDoc = await ieRef.get();
-                            
-                            if (ieDoc.exists) {
-                                const data = ieDoc.data();
-                                if (data.entries && data.entries.length > 0) {
-                                    this.transactions = data.entries;
-                                    console.log('✅ Loaded from income-expenses collection:', this.transactions.length);
-                                    loadedFromFirebase = true;
-                                    
-                                    // Save to localStorage
-                                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                                    return;
-                                }
-                            }
-                        } catch (e) {
-                            console.log('No data in income-expenses collection');
-                        }
-                    }
-                    
-                    // Path 3: your original transactions collection (for backward compatibility)
-                    if (!loadedFromFirebase) {
-                        try {
-                            const snapshot = await window.db.collection('transactions')
-                                .where('userId', '==', user.uid)
-                                .limit(100)
-                                .get();
-                            
-                            if (!snapshot.empty) {
-                                this.transactions = snapshot.docs.map(doc => {
-                                    const data = doc.data();
-                                    return {
-                                        id: data.id || parseInt(doc.id),
-                                        date: data.date,
-                                        type: data.type,
-                                        category: data.category,
-                                        amount: parseFloat(data.amount) || 0,
-                                        description: data.description || '',
-                                        paymentMethod: data.paymentMethod || 'cash',
-                                        reference: data.reference || '',
-                                        notes: data.notes || '',
-                                        receipt: data.receipt || null,
-                                        userId: data.userId || user.uid,
-                                        createdAt: data.createdAt || new Date().toISOString(),
-                                        updatedAt: data.updatedAt || new Date().toISOString(),
-                                        syncedAt: data.syncedAt,
-                                        source: 'firebase'
-                                    };
-                                });
-                                
-                                // Sort locally after loading
-                                this.transactions.sort((a, b) => {
-                                    const dateA = new Date(a.createdAt || a.date);
-                                    const dateB = new Date(b.createdAt || b.date);
-                                    return dateB - dateA;
-                                });
-                                
-                                console.log('✅ Loaded transactions from Firebase (transactions collection):', this.transactions.length);
-                                
-                                // Save to localStorage for offline use
-                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                                localStorage.setItem('last-firebase-sync', new Date().toISOString());
-                                
-                                loadedFromFirebase = true;
-                            }
-                        } catch (firebaseError) {
-                            console.error('❌ Firebase load error:', firebaseError);
-                            
-                            if (firebaseError.code === 'permission-denied') {
-                                this.showNotification(
-                                    'Firebase permission denied. Using local data for now.',
-                                    'warning'
-                                );
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error in Firebase loading:', error);
-            }
+            await this.loadFromFirebase();
         }
+        // ==============================
         
-        // Fallback to localStorage if Firebase failed or no data
-        if (!loadedFromFirebase) {
-            console.log('🔄 Falling back to localStorage');
-            const saved = localStorage.getItem('farm-transactions');
-            this.transactions = saved ? JSON.parse(saved) : [];
-            //this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
-            
-            // Add source marker for local transactions
-            this.transactions.forEach(t => {
-                if (!t.source) {
-                    t.source = 'local';
-                    t.updatedAt = t.updatedAt || new Date().toISOString();
-                }
-            });
-            
-            console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
-        }
+        // Sort and save
+        this.transactions.sort((a, b) => {
+            const dateA = new Date(a.date || a.createdAt);
+            const dateB = new Date(b.date || b.createdAt);
+            return dateB - dateA;
+        });
+        
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
         
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
-       // this.transactions = this.getDemoData();
-        console.log('📝 Loaded demo transactions:', this.transactions.length);
     }
 },
 
-  async saveToFirebase() {
-    console.log('💾 Saving to Firebase...');
-    
-    if (!this.isFirebaseAvailable || !window.db) {
-        console.log('Firebase not available, skipping cloud save');
-        return false;
+ // ==================== SYNC METHODS (ADD THESE) ====================
+
+// Get device ID
+getDeviceId() {
+    let deviceId = localStorage.getItem('device-id');
+    if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('device-id', deviceId);
     }
+    return deviceId;
+},
+
+// Load from Firebase (no duplication)
+async loadFromFirebase() {
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        
+        console.log('☁️ Loading from Firebase...');
+        
+        const snapshot = await window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .orderBy('date', 'desc')
+            .get();
+        
+        if (snapshot.empty) return;
+        
+        // Create map of existing transactions
+        const existingMap = new Map();
+        this.transactions.forEach(t => {
+            if (t.id) existingMap.set(t.id.toString(), t);
+        });
+        
+        let newCount = 0;
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const firebaseId = doc.id.toString();
+            
+            if (!existingMap.has(firebaseId)) {
+                existingMap.set(firebaseId, {
+                    id: firebaseId,
+                    date: data.date,
+                    type: data.type,
+                    category: data.category,
+                    amount: parseFloat(data.amount) || 0,
+                    description: data.description || '',
+                    paymentMethod: data.paymentMethod || 'cash',
+                    reference: data.reference || '',
+                    notes: data.notes || '',
+                    receipt: data.receipt || null,
+                    userId: data.userId || user.uid,
+                    createdAt: data.createdAt || new Date().toISOString(),
+                    updatedAt: data.updatedAt || new Date().toISOString(),
+                    source: 'firebase'
+                });
+                newCount++;
+            }
+        });
+        
+        this.transactions = Array.from(existingMap.values());
+        console.log(`✅ Firebase sync: +${newCount} new, total: ${this.transactions.length}`);
+        
+        // Save merged data
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        
+    } catch (error) {
+        console.error('Error loading from Firebase:', error);
+    }
+},
+
+// Save to Firebase (single path)
+async saveToFirebase() {
+    if (!this.isFirebaseAvailable || !window.db) return false;
     
     try {
         const user = window.firebase.auth().currentUser;
-        if (!user) {
-            console.log('No user logged in, skipping cloud save');
-            return false;
+        if (!user) return false;
+        
+        console.log('💾 Saving to Firebase...');
+        
+        for (const transaction of this.transactions) {
+            await window.db.collection('users')
+                .doc(user.uid)
+                .collection('transactions')
+                .doc(transaction.id.toString())
+                .set({
+                    ...transaction,
+                    userId: user.uid,
+                    deviceId: this.getDeviceId(),
+                    updatedAt: new Date().toISOString()
+                }, { merge: true });
         }
         
-        const today = new Date();
-        const month = today.getMonth();
-        const year = today.getFullYear();
-        const period = `${month}-${year}`;
-        
-        // Save to income collection (primary)
-        await window.db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
-            entries: this.transactions,
-            totalAmount: this.calculateStats().totalIncome,
-            lastUpdated: new Date().toISOString(),
-            userId: user.uid,
-            period: period
-        }, { merge: true });
-        
-        // Also save to income-expenses as backup
-        await window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period).set({
-            entries: this.transactions,
-            lastUpdated: new Date().toISOString()
-        }, { merge: true });
-        
-        console.log('✅ Saved to Firebase:', this.transactions.length, 'transactions');
+        console.log('✅ Saved to Firebase');
         return true;
         
     } catch (error) {
-        console.error('❌ Error saving to Firebase:', error);
+        console.error('Error saving to Firebase:', error);
         return false;
     }
+},
+
+// Setup real-time sync
+setupRealtimeSync() {
+    if (!this.isFirebaseAvailable || !window.db) return;
+    
+    const user = window.firebase.auth().currentUser;
+    if (!user) return;
+    
+    if (this.realtimeUnsubscribe) {
+        this.realtimeUnsubscribe();
+    }
+    
+    console.log('📡 Setting up real-time sync...');
+    
+    this.realtimeUnsubscribe = window.db.collection('users')
+        .doc(user.uid)
+        .collection('transactions')
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added' || change.type === 'modified') {
+                    const remote = change.doc.data();
+                    const myDeviceId = this.getDeviceId();
+                    
+                    // Skip if this change came from this device
+                    if (remote.deviceId === myDeviceId) return;
+                    
+                    console.log(`🔄 Received from other device: ${remote.id}`);
+                    
+                    const existingIndex = this.transactions.findIndex(t => t.id === remote.id);
+                    
+                    if (existingIndex === -1) {
+                        this.transactions.unshift(remote);
+                    } else {
+                        this.transactions[existingIndex] = remote;
+                    }
+                    
+                    // Sort and save
+                    this.transactions.sort((a, b) => {
+                        const dateA = new Date(a.date || a.createdAt);
+                        const dateB = new Date(b.date || b.createdAt);
+                        return dateB - dateA;
+                    });
+                    
+                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                    this.updateStats();
+                    this.updateTransactionsList();
+                    this.updateCategoryBreakdown();
+                    
+                    this.showNotification(`📱 New transaction from another device`, 'info');
+                }
+            });
+        });
+    
+    console.log('✅ Real-time sync active');
 },
 
     saveData() {
     console.log('💾 Saving transactions to localStorage');
     localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
     
+    // ========== ADD THIS ==========
     // Also save to Firebase
-    this.saveToFirebase();
+    if (this.isFirebaseAvailable) {
+        this.saveToFirebase();
+    }
+    // ==============================
 },
 
     setupExpenseBroadcast() {
@@ -7440,6 +7447,12 @@ unload() {
     const fileInput = document.getElementById('receipt-upload-input');
     if (fileInput && fileInput.hasAttribute('data-dynamic')) {
         fileInput.remove();
+    }
+
+    // Clean up real-time listener
+    if (this.realtimeUnsubscribe) {
+        this.realtimeUnsubscribe();
+        this.realtimeUnsubscribe = null;
     }
     
     // Reset state
