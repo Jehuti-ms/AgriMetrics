@@ -955,9 +955,11 @@ addToSyncQueue(transaction) {
 },
    
     // ==================== INTEGRATION BROADCASTS ====================
-    
+    // Add this at the top of your saveTransaction method
+    console.trace('SaveTransaction called from:', new Error().stack);
+
     // 1. Broadcast general transaction update
-    this.broadcastTransactionUpdate(transactionData, isNewTransaction, oldTransaction);
+  /*  this.broadcastTransactionUpdate(transactionData, isNewTransaction, oldTransaction);
     
     // 2. If this is an INCOME transaction, create sale (FIXED: removed optional chaining)
     if (transactionData.type === 'income' && isNewTransaction && 
@@ -989,7 +991,7 @@ addToSyncQueue(transaction) {
     this.broadcastToDashboard(transactionData);
     
     return true;
-},
+}, */
 
     // modules/income-expenses.js - FIXED SYNC SYSTEM
 
