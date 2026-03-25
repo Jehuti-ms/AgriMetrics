@@ -8355,43 +8355,6 @@ showCameraInterface: function() {
             }).join('')}
         </div>
     `;
-
-       // Add this to your renderModule to see debug info in UI
-addDebugInfo() {
-    const debugInfo = document.createElement('div');
-    debugInfo.id = 'debug-info';
-    debugInfo.style.cssText = `
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        background: rgba(0,0,0,0.8);
-        color: #0f0;
-        font-family: monospace;
-        font-size: 10px;
-        padding: 5px;
-        border-radius: 4px;
-        z-index: 9999;
-        pointer-events: none;
-    `;
-    
-    const updateDebug = () => {
-        const count = this.transactions?.length || 0;
-        const uniqueCount = new Set(this.transactions?.map(t => t.id?.toString())).size;
-        debugInfo.innerHTML = `📊 ${count} total | ${uniqueCount} unique | ${count - uniqueCount} dupes`;
-        
-        if (count !== uniqueCount) {
-            debugInfo.style.color = '#ff0';
-            debugInfo.style.background = 'rgba(255,0,0,0.8)';
-        } else {
-            debugInfo.style.color = '#0f0';
-            debugInfo.style.background = 'rgba(0,0,0,0.8)';
-        }
-    };
-    
-    setInterval(updateDebug, 2000);
-    document.body.appendChild(debugInfo);
-    updateDebug();
-
 },
 
     renderReceiptViewButton(receipt) {
