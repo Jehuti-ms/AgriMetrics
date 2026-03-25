@@ -2622,76 +2622,7 @@ updateProductionItemsDisplay: function() {
     }
 },
     
-  updateMeatLabels() {
-    console.log('🏷️ updateMeatLabels() called');
-    
-    // Get elements directly
-    const weightUnit = document.getElementById('meat-weight-unit');
-    const priceLabel = document.querySelector('label[for="meat-price"]');
-    const weightLabel = document.querySelector('label[for="meat-weight"]');
-    const priceUnitLabel = document.getElementById('meat-price-unit-label');
-    const weightHint = document.querySelector('#meat-weight-unit')?.closest('div')?.nextElementSibling;
-    
-    if (!weightUnit) {
-        console.error('❌ Weight unit element not found');
-        return;
-    }
-    
-    const unit = weightUnit.value;
-    console.log('Current unit selected:', unit);
-    
-    // Update price label
-    if (priceLabel) {
-        if (unit === 'bird') {
-            priceLabel.textContent = 'Price per Bird *';
-            console.log('✅ Set price label to: Price per Bird *');
-        } else if (unit === 'kg') {
-            priceLabel.textContent = 'Price per kg *';
-            console.log('✅ Set price label to: Price per kg *');
-        } else if (unit === 'lbs') {
-            priceLabel.textContent = 'Price per lb *';
-            console.log('✅ Set price label to: Price per lb *');
-        }
-    }
-    
-    // Update weight label
-    if (weightLabel) {
-        if (unit === 'bird') {
-            weightLabel.textContent = 'Number of Birds *';
-        } else if (unit === 'kg') {
-            weightLabel.textContent = 'Total Weight (kg) *';
-        } else if (unit === 'lbs') {
-            weightLabel.textContent = 'Total Weight (lbs) *';
-        }
-    }
-    
-    // Update price unit label
-    if (priceUnitLabel) {
-        if (unit === 'bird') {
-            priceUnitLabel.textContent = 'per bird';
-        } else if (unit === 'kg') {
-            priceUnitLabel.textContent = 'per kg';
-        } else if (unit === 'lbs') {
-            priceUnitLabel.textContent = 'per lb';
-        }
-    }
-    
-    // Update weight hint
-    if (weightHint && weightHint.classList.contains('form-hint')) {
-        if (unit === 'bird') {
-            weightHint.textContent = 'Number of birds being sold';
-        } else if (unit === 'kg') {
-            weightHint.textContent = 'Total weight in kilograms';
-        } else if (unit === 'lbs') {
-            weightHint.textContent = 'Total weight in pounds';
-        }
-    }
-    
-    // Force update the calculation
-    this.calculateSaleTotal();
-    
-    console.log('✅ Labels updated. Price label is now:', priceLabel ? priceLabel.textContent : 'N/A');
-},
+
     
     handleQuickProductChange() {
         const productSelect = document.getElementById('quick-product');
@@ -3031,6 +2962,8 @@ updateProductionItemsDisplay: function() {
     },
 
    calculateSaleTotal() {
+    console.log('💰 calculateSaleTotal() called');
+    
     const productSelect = document.getElementById('sale-product');
     if (!productSelect) return;
     
@@ -3040,69 +2973,45 @@ updateProductionItemsDisplay: function() {
     let total = 0;
     
     if (meatProducts.includes(product)) {
-        const animalCountInput = document.getElementById('meat-animal-count');
         const weightInput = document.getElementById('meat-weight');
         const weightUnitSelect = document.getElementById('meat-weight-unit');
         const priceInput = document.getElementById('meat-price');
         
-        const animalCount = animalCountInput ? parseFloat(animalCountInput.value) || 0 : 0;
         const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
-        const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
-        const pricePerUnit = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        const unit = weightUnitSelect ? weightUnitSelect.value : 'kg';
+        const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
         
-        console.log('Calculating total - Unit:', weightUnit, 'Weight:', weight, 'AnimalCount:', animalCount, 'Price:', pricePerUnit);
+        console.log('Meat calculation - Unit:', unit, 'Weight:', weight, 'Price:', price);
         
-        // Calculate total based on unit
-        if (weightUnit === 'bird') {
-            // When selling by bird, use the weight field as number of birds
-            total = weight * pricePerUnit;
-            
-            // Sync animal count with weight for bird units
-            if (animalCountInput && weight > 0) {
-                animalCountInput.value = weight;
-            }
+        if (unit === 'bird') {
+            total = weight * price;
+            console.log('Bird calculation:', weight, 'birds ×', price, '= $' + total);
         } else {
-            // For kg/lbs, calculate normally
-            total = weight * pricePerUnit;
+            total = weight * price;
+            console.log('Weight calculation:', weight, unit, '×', price, '= $' + total);
         }
         
         // Update summary
         const meatSummary = document.getElementById('meat-summary-info');
-        const avgWeightElement = document.getElementById('meat-avg-weight');
-        const avgValueElement = document.getElementById('meat-avg-value');
-        
-        if (meatSummary && avgWeightElement && avgValueElement) {
-            if (weightUnit === 'bird') {
-                const birdCount = weight;
-                meatSummary.textContent = `${birdCount} bird${birdCount !== 1 ? 's' : ''} • ${this.formatCurrency(pricePerUnit)} per bird • ${this.formatCurrency(total)} total`;
-                avgWeightElement.textContent = `${birdCount} bird${birdCount !== 1 ? 's' : ''}/sale`;
-                avgValueElement.textContent = `${this.formatCurrency(pricePerUnit)}/bird`;
+        if (meatSummary) {
+            if (unit === 'bird') {
+                meatSummary.textContent = `${weight} bird${weight !== 1 ? 's' : ''} • $${price} per bird • $${total.toFixed(2)} total`;
             } else {
-                const effectiveAnimalCount = animalCount > 0 ? animalCount : 1;
-                const avgWeight = effectiveAnimalCount > 0 ? weight / effectiveAnimalCount : 0;
-                const avgValue = effectiveAnimalCount > 0 ? total / effectiveAnimalCount : 0;
-                const weightUnitText = weightUnit === 'lbs' ? 'lbs' : 'kg';
-                
-                meatSummary.textContent = `${effectiveAnimalCount} animal${effectiveAnimalCount !== 1 ? 's' : ''} • ${weight.toFixed(2)} ${weightUnitText} total • ${this.formatCurrency(avgValue)} per animal`;
-                avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${weightUnitText}/animal`;
-                avgValueElement.textContent = `${this.formatCurrency(avgValue)}/animal`;
+                meatSummary.textContent = `${weight.toFixed(2)} ${unit} • $${price} per ${unit} • $${total.toFixed(2)} total`;
             }
         }
     } else {
         const quantityInput = document.getElementById('standard-quantity');
         const priceInput = document.getElementById('standard-price');
-        const unitSelect = document.getElementById('sale-unit');
         
         const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
         const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
-        const unit = unitSelect ? unitSelect.value || 'unit' : 'unit';
         
         total = quantity * price;
         
         const standardSummary = document.getElementById('standard-summary-info');
         if (standardSummary) {
-            const unitLabel = this.getUnitDisplayName(unit, product);
-            standardSummary.textContent = `${quantity} ${unitLabel} at ${this.formatCurrency(price)} ${this.getPriceUnitLabel(unit, product)}`;
+            standardSummary.textContent = `${quantity} units at $${price}/unit = $${total.toFixed(2)}`;
         }
     }
     
@@ -3113,7 +3022,76 @@ updateProductionItemsDisplay: function() {
     
     console.log('Total calculated:', total);
 },
-
+    
+    updateMeatLabels() {
+    console.log('🏷️ updateMeatLabels() called');
+    
+    // Get elements
+    const weightUnit = document.getElementById('meat-weight-unit');
+    const priceLabel = document.querySelector('label[for="meat-price"]');
+    const weightLabel = document.querySelector('label[for="meat-weight"]');
+    const priceUnitLabel = document.getElementById('meat-price-unit-label');
+    
+    if (!weightUnit) {
+        console.error('❌ Weight unit element not found');
+        return;
+    }
+    
+    const unit = weightUnit.value;
+    console.log('Current unit selected:', unit);
+    
+    // Update price label
+    if (priceLabel) {
+        if (unit === 'bird') {
+            priceLabel.textContent = 'Price per Bird *';
+        } else if (unit === 'kg') {
+            priceLabel.textContent = 'Price per kg *';
+        } else if (unit === 'lbs') {
+            priceLabel.textContent = 'Price per lb *';
+        }
+        console.log('✅ Price label set to:', priceLabel.textContent);
+    }
+    
+    // Update weight label
+    if (weightLabel) {
+        if (unit === 'bird') {
+            weightLabel.textContent = 'Number of Birds *';
+        } else if (unit === 'kg') {
+            weightLabel.textContent = 'Total Weight (kg) *';
+        } else if (unit === 'lbs') {
+            weightLabel.textContent = 'Total Weight (lbs) *';
+        }
+    }
+    
+    // Update price unit label
+    if (priceUnitLabel) {
+        if (unit === 'bird') {
+            priceUnitLabel.textContent = 'per bird';
+        } else if (unit === 'kg') {
+            priceUnitLabel.textContent = 'per kg';
+        } else if (unit === 'lbs') {
+            priceUnitLabel.textContent = 'per lb';
+        }
+    }
+    
+    // Update weight hint
+    const weightHint = document.querySelector('#meat-weight-unit')?.closest('div')?.parentElement?.querySelector('.form-hint');
+    if (weightHint) {
+        if (unit === 'bird') {
+            weightHint.textContent = 'Number of birds being sold';
+        } else if (unit === 'kg') {
+            weightHint.textContent = 'Total weight in kilograms';
+        } else if (unit === 'lbs') {
+            weightHint.textContent = 'Total weight in pounds';
+        }
+    }
+    
+    // Force calculation update
+    if (typeof this.calculateSaleTotal === 'function') {
+        this.calculateSaleTotal();
+    }
+},
+    
     getUnitDisplayName(unit, product) {
         const unitDisplayMap = {
             'kg': 'kg',
