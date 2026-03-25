@@ -953,63 +953,7 @@ addToSyncQueue(transaction) {
         setTimeout(() => this.processSyncQueue(), 100);
     }
 },
-
-// Add this console debug function to check for duplicates
-debugCheckDuplicates() {
-    console.log('🔍 ========== DUPLICATE CHECK ==========');
-    
-    const transactions = this.transactions || [];
-    console.log(`Total transactions: ${transactions.length}`);
-    
-    // Check by ID
-    const idMap = new Map();
-    const idDuplicates = [];
-    
-    transactions.forEach(t => {
-        const id = t.id?.toString();
-        if (idMap.has(id)) {
-            idDuplicates.push(t);
-            console.log(`⚠️ Duplicate ID: ${id} - ${t.description} - $${t.amount} - ${t.date}`);
-        } else {
-            idMap.set(id, t);
-        }
-    });
-    
-    // Check by content
-    const contentMap = new Map();
-    const contentDuplicates = [];
-    
-    transactions.forEach(t => {
-        const key = `${t.date}_${t.amount}_${t.description?.toLowerCase().trim()}_${t.type}`;
-        if (contentMap.has(key)) {
-            contentDuplicates.push(t);
-            console.log(`⚠️ Duplicate Content: ${t.date} - $${t.amount} - ${t.description}`);
-        } else {
-            contentMap.set(key, t);
-        }
-    });
-    
-    console.log(`📊 ID Duplicates: ${idDuplicates.length}`);
-    console.log(`📊 Content Duplicates: ${contentDuplicates.length}`);
-    
-    if (idDuplicates.length === 0 && contentDuplicates.length === 0) {
-        console.log('✅ No duplicates found!');
-    } else {
-        console.log(`❌ Found ${idDuplicates.length} ID duplicates and ${contentDuplicates.length} content duplicates`);
-    }
-    
-    console.log('=========================================');
-    
-    return {
-        idDuplicates,
-        contentDuplicates,
-        total: transactions.length,
-        unique: idMap.size
-    };
-},
-
-
-    
+   
     // ==================== INTEGRATION BROADCASTS ====================
     
     // 1. Broadcast general transaction update
