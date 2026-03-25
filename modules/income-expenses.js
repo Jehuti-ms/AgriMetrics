@@ -131,10 +131,7 @@ async initialize() {
     // Render module
     this.renderModule();
     
-    // Add manual sync button
-    this.addManualSyncButton();
-    
-    // Start sync status indicator updates
+    // Start sync status indicator updates (optional, can keep or remove)
     setInterval(() => this.updateSyncStatusIndicator(), 5000);
     
     this.initialized = true;
@@ -1852,20 +1849,18 @@ async updatePeriodSummary(transactionData) {
 
 // Force sync all local transactions to Firebase
 async forceFullSync() {
-    console.log('🔄 FORCE FULL SYNC - Pushing all local transactions to Firebase...');
+    console.log('🔄 Force full sync - pushing all local transactions to Firebase...');
     
     if (!this.isFirebaseAvailable || !window.db) {
-        this.showNotification('Firebase not available', 'error');
+        console.log('Firebase not available');
         return false;
     }
     
     const user = window.firebase.auth().currentUser;
     if (!user) {
-        this.showNotification('Please log in to sync', 'error');
+        console.log('Please log in to sync');
         return false;
     }
-    
-    this.showNotification('Starting full sync...', 'info');
     
     let syncedCount = 0;
     let failedCount = 0;
@@ -1876,10 +1871,8 @@ async forceFullSync() {
             const success = await this.saveTransactionToFirebase(transaction);
             if (success) {
                 syncedCount++;
-                console.log(`✅ Synced: ${transaction.id} - ${transaction.description}`);
             } else {
                 failedCount++;
-                console.log(`❌ Failed: ${transaction.id}`);
             }
         } catch (error) {
             failedCount++;
@@ -1893,7 +1886,6 @@ async forceFullSync() {
     }
     
     console.log(`✅ Full sync complete: ${syncedCount} synced, ${failedCount} failed`);
-    this.showNotification(`Sync complete: ${syncedCount} transactions synced`, 'success');
     
     // Reload data to get any updates from other devices
     await this.loadFromFirebase();
@@ -1926,6 +1918,8 @@ addManualSyncButton() {
 
 // Update the renderModule to include sync status indicator
 updateSyncStatusIndicator() {
+    // Optional: keep minimal sync status or remove entirely
+    // If you want to keep it, make it less intrusive:
     let indicator = document.getElementById('sync-status-indicator');
     if (!indicator && this.element) {
         indicator = document.createElement('div');
@@ -1934,15 +1928,12 @@ updateSyncStatusIndicator() {
             position: fixed;
             bottom: 20px;
             left: 20px;
-            padding: 8px 12px;
+            padding: 4px 8px;
             background: var(--glass-bg);
-            border-radius: 20px;
-            font-size: 12px;
+            border-radius: 12px;
+            font-size: 10px;
             z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            opacity: 0.6;
         `;
         document.body.appendChild(indicator);
     }
@@ -1952,31 +1943,13 @@ updateSyncStatusIndicator() {
         const pendingSync = this.syncQueue?.length || 0;
         
         if (!isOnline) {
-            indicator.innerHTML = `📡 Offline | ${pendingSync} pending`;
-            indicator.style.background = '#ff9800';
-            indicator.style.color = '#fff';
+            indicator.innerHTML = `📡 Offline`;
+            indicator.style.display = 'block';
         } else if (pendingSync > 0) {
-            indicator.innerHTML = `🔄 Syncing... ${pendingSync} pending`;
-            indicator.style.background = '#2196f3';
-            indicator.style.color = '#fff';
+            indicator.innerHTML = `🔄 Syncing...`;
+            indicator.style.display = 'block';
         } else {
-            indicator.innerHTML = `✅ Synced | ${this.transactions?.length || 0} transactions`;
-            indicator.style.background = '#4caf50';
-            indicator.style.color = '#fff';
-        }
-        
-        // Auto-hide after 3 seconds if synced
-        if (pendingSync === 0 && isOnline) {
-            setTimeout(() => {
-                if (indicator && indicator.parentNode) {
-                    indicator.style.opacity = '0.5';
-                    setTimeout(() => {
-                        if (indicator && indicator.parentNode && indicator.style.opacity === '0.5') {
-                            indicator.remove();
-                        }
-                    }, 3000);
-                }
-            }, 3000);
+            indicator.style.display = 'none';
         }
     }
 },
