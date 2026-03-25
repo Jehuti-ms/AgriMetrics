@@ -117,8 +117,337 @@ const SalesRecordModule = {
     console.log('✅ Sales module broadcaster listeners setup complete');
 },
 
-// ===== NEW HANDLER METHODS =====
+    // ==================== SALE TYPE HANDLING ====================
 
+// Check if product is sold by unit (per bird) or by weight
+isProductSoldByWeight(productType) {
+    const weightProducts = [
+        'broiler-dressed', 'broiler-live', 'layer', 'duck', 
+        'turkey', 'goose', 'quail', 'chicken'
+    ];
+    
+    // If product type includes 'dressed' or 'live', it's by weight
+    if (productType.includes('dressed') || productType.includes('live')) {
+        return true;
+    }
+    
+    return weightProducts.includes(productType);
+},
+
+// Get unit for product
+getProductUnit(productType, unitType) {
+    const weightProducts = this.isProductSoldByWeight(productType);
+    
+    if (weightProducts) {
+        // Weight-based products use kg or lbs
+        return unitType === 'kg' ? 'kg' : 'lbs';
+    } else {
+        // Unit-based products use 'bird', 'dozen', etc.
+        const unitMap = {
+            'eggs': 'dozen',
+            'broiler-dressed': 'bird',
+            'broiler-live': 'bird',
+            'layer': 'bird',
+            'duck': 'bird',
+            'turkey': 'bird',
+            'goose': 'bird',
+            'quail': 'bird',
+            'milk': 'liters',
+            'eggs-dozen': 'dozen',
+            'eggs-tray': 'tray'
+        };
+        return unitMap[productType] || 'unit';
+    }
+},
+
+// Update the sale form rendering
+renderSaleForm() {
+    return `
+        <div class="sale-form-container">
+            <h3>Record New Sale</h3>
+            
+            <div class="form-group">
+                <label>Product Type *</label>
+                <select id="sale-product-type" class="form-input" required>
+                    <option value="">Select Product</option>
+                    <optgroup label="Poultry - Dressed (by weight)">
+                        <option value="broiler-dressed">Broiler (Dressed) - by weight</option>
+                        <option value="layer-dressed">Layer (Dressed) - by weight</option>
+                        <option value="duck-dressed">Duck (Dressed) - by weight</option>
+                        <option value="turkey-dressed">Turkey (Dressed) - by weight</option>
+                    </optgroup>
+                    <optgroup label="Poultry - Live (by weight)">
+                        <option value="broiler-live">Broiler (Live) - by weight</option>
+                        <option value="layer-live">Layer (Live) - by weight</option>
+                        <option value="duck-live">Duck (Live) - by weight</option>
+                    </optgroup>
+                    <optgroup label="Poultry - Per Bird">
+                        <option value="broiler-per-bird">Broiler - Per Bird</option>
+                        <option value="layer-per-bird">Layer - Per Bird</option>
+                        <option value="duck-per-bird">Duck - Per Bird</option>
+                    </optgroup>
+                    <optgroup label="Eggs">
+                        <option value="eggs-dozen">Eggs (per dozen)</option>
+                        <option value="eggs-tray">Eggs (per tray)</option>
+                    </optgroup>
+                    <optgroup label="Other Products">
+                        <option value="milk">Milk (liters)</option>
+                        <option value="crops">Crops/Produce</option>
+                        <option value="other">Other</option>
+                    </optgroup>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Unit Type *</label>
+                <select id="sale-unit-type" class="form-input">
+                    <option value="kg">Kilograms (kg)</option>
+                    <option value="lbs">Pounds (lbs)</option>
+                </select>
+                <small class="unit-hint" style="color: #666; font-size: 12px;">For weight-based products only</small>
+            </div>
+            
+            <div class="form-group">
+                <label id="quantity-label">Quantity/Weight *</label>
+                <input type="number" id="sale-quantity" class="form-input" step="0.01" placeholder="Enter number of birds or weight">
+                <small id="quantity-hint" class="form-hint">Enter the number of birds sold</small>
+            </div>
+            
+            <div class="form-group" id="price-per-unit-group">
+                <label id="price-label">Price per Bird *</label>
+                <input type="number" id="sale-price-per-unit" class="form-input" step="0.01" placeholder="Enter price per bird">
+                <small id="price-hint" class="form-hint">Enter the price for each bird</small>
+            </div>
+            
+            <div class="form-group" id="weight-group" style="display: none;">
+                <label>Weight per Bird (Optional)</label>
+                <input type="number" id="sale-weight" class="form-input" step="0.01" placeholder="Average weight per bird">
+                <small>Enter average weight if known</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Total Amount *</label>
+                <input type="number" id="sale-total-amount" class="form-input" step="0.01" readonly placeholder="Auto-calculated">
+            </div>
+            
+            <div class="form-group">
+                <label>Customer Name (Optional)</label>
+                <input type="text" id="sale-customer" class="form-input" placeholder="Customer name">
+            </div>
+            
+            <div class="form-group">
+                <label>Payment Method</label>
+                <select id="sale-payment-method" class="form-input">
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="transfer">Bank Transfer</option>
+                    <option value="mobile">Mobile Money</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="sale-date" class="form-input" value="${this.getLocalDate()}">
+            </div>
+            
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="sale-notes" class="form-input" rows="3" placeholder="Additional notes"></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn btn-primary" id="save-sale-btn">Save Sale</button>
+                <button class="btn btn-outline" id="cancel-sale-btn">Cancel</button>
+            </div>
+        </div>
+    `;
+},
+
+// Set up sale form event listeners
+setupSaleFormListeners() {
+    const productType = document.getElementById('sale-product-type');
+    const unitType = document.getElementById('sale-unit-type');
+    const quantity = document.getElementById('sale-quantity');
+    const pricePerUnit = document.getElementById('sale-price-per-unit');
+    const weightField = document.getElementById('sale-weight');
+    const totalAmount = document.getElementById('sale-total-amount');
+    const quantityLabel = document.getElementById('quantity-label');
+    const quantityHint = document.getElementById('quantity-hint');
+    const priceLabel = document.getElementById('price-label');
+    const priceHint = document.getElementById('price-hint');
+    const weightGroup = document.getElementById('weight-group');
+    
+    // Function to update form based on product selection
+    const updateFormForProduct = () => {
+        const selectedProduct = productType.value;
+        const selectedUnit = unitType.value;
+        
+        if (!selectedProduct) return;
+        
+        // Check if product is sold by weight
+        const isByWeight = this.isProductSoldByWeight(selectedProduct);
+        
+        if (isByWeight) {
+            // Weight-based sale
+            quantityLabel.textContent = 'Weight *';
+            quantityHint.textContent = 'Enter the weight in ' + selectedUnit;
+            quantity.placeholder = `Enter weight in ${selectedUnit}`;
+            quantity.step = "0.01";
+            
+            priceLabel.textContent = `Price per ${selectedUnit} *`;
+            priceHint.textContent = `Enter price per ${selectedUnit}`;
+            
+            weightGroup.style.display = 'none';
+            
+        } else {
+            // Unit-based sale (per bird)
+            const unitName = this.getProductUnit(selectedProduct, selectedUnit);
+            quantityLabel.textContent = `Number of ${unitName}s *`;
+            quantityHint.textContent = `Enter the number of ${unitName}s sold`;
+            quantity.placeholder = `Enter number of ${unitName}s`;
+            quantity.step = "1";
+            
+            priceLabel.textContent = `Price per ${unitName} *`;
+            priceHint.textContent = `Enter price per ${unitName}`;
+            
+            // Show weight field for per-bird sales (optional)
+            weightGroup.style.display = 'block';
+        }
+        
+        // Recalculate total
+        calculateTotal();
+    };
+    
+    // Function to calculate total amount
+    const calculateTotal = () => {
+        const selectedProduct = productType.value;
+        const qty = parseFloat(quantity.value) || 0;
+        const price = parseFloat(pricePerUnit.value) || 0;
+        
+        if (selectedProduct) {
+            const total = qty * price;
+            totalAmount.value = total.toFixed(2);
+        }
+    };
+    
+    // Add event listeners
+    productType.addEventListener('change', updateFormForProduct);
+    unitType.addEventListener('change', updateFormForProduct);
+    quantity.addEventListener('input', calculateTotal);
+    pricePerUnit.addEventListener('input', calculateTotal);
+    
+    // Initial form setup
+    updateFormForProduct();
+},
+
+// Save sale with validation
+async saveSale() {
+    const productType = document.getElementById('sale-product-type').value;
+    const unitType = document.getElementById('sale-unit-type').value;
+    const quantity = parseFloat(document.getElementById('sale-quantity').value);
+    const pricePerUnit = parseFloat(document.getElementById('sale-price-per-unit').value);
+    const weight = parseFloat(document.getElementById('sale-weight').value) || null;
+    const totalAmount = parseFloat(document.getElementById('sale-total-amount').value);
+    const customer = document.getElementById('sale-customer').value;
+    const paymentMethod = document.getElementById('sale-payment-method').value;
+    const date = document.getElementById('sale-date').value;
+    const notes = document.getElementById('sale-notes').value;
+    
+    // Validate inputs
+    if (!productType) {
+        this.showNotification('Please select a product', 'error');
+        return;
+    }
+    
+    if (!quantity || quantity <= 0) {
+        const isByWeight = this.isProductSoldByWeight(productType);
+        const message = isByWeight ? 'Please enter a valid weight' : 'Please enter a valid quantity';
+        this.showNotification(message, 'error');
+        return;
+    }
+    
+    if (!pricePerUnit || pricePerUnit <= 0) {
+        const isByWeight = this.isProductSoldByWeight(productType);
+        const unit = isByWeight ? unitType : this.getProductUnit(productType, unitType);
+        this.showNotification(`Please enter a valid price per ${unit}`, 'error');
+        return;
+    }
+    
+    // Special validation for per-bird sales - weight is optional
+    const isByWeight = this.isProductSoldByWeight(productType);
+    
+    const saleData = {
+        id: Date.now(),
+        date: date,
+        productType: productType,
+        unitType: isByWeight ? unitType : 'unit',
+        quantity: quantity,
+        pricePerUnit: pricePerUnit,
+        weightPerBird: weight, // Only for per-bird sales
+        totalAmount: totalAmount,
+        customer: customer || 'Walk-in',
+        paymentMethod: paymentMethod,
+        notes: notes,
+        createdAt: new Date().toISOString()
+    };
+    
+    // Add to sales array
+    if (!this.sales) this.sales = [];
+    this.sales.unshift(saleData);
+    
+    // Save to localStorage
+    localStorage.setItem('farm-sales', JSON.stringify(this.sales));
+    
+    // Save to Firebase
+    if (this.isFirebaseAvailable) {
+        await this.saveSaleToFirebase(saleData);
+    }
+    
+    // Broadcast to other modules (Income module)
+    if (window.DataBroadcaster) {
+        window.DataBroadcaster.emit('sale-completed', {
+            orderId: saleData.id,
+            amount: saleData.totalAmount,
+            description: `Sale: ${saleData.quantity} ${isByWeight ? saleData.unitType : this.getProductUnit(productType, unitType)} of ${productType}`,
+            date: saleData.date,
+            paymentMethod: saleData.paymentMethod,
+            customerName: saleData.customer,
+            sourceDeviceId: this.getDeviceId()
+        });
+    }
+    
+    // Update UI
+    this.renderSalesList();
+    this.updateSalesStats();
+    
+    // Close modal
+    this.hideSaleModal();
+    
+    this.showNotification('Sale recorded successfully!', 'success');
+    
+    return saleData;
+},
+
+// Helper to get local date
+getLocalDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+},
+
+// Helper to get device ID
+getDeviceId() {
+    let deviceId = localStorage.getItem('device-id');
+    if (!deviceId) {
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('device-id', deviceId);
+    }
+    return deviceId;
+},
+    
+// ===== NEW HANDLER METHODS =====
 handleIncomeSale: function(data) {
     console.log('💰 Handling income-created sale:', data);
     
