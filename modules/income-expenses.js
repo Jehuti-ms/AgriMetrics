@@ -288,74 +288,81 @@ async initialize() {  // ← ADD async
         console.log('✅ Fallback sales listeners setup complete');
     },
 
-    addIncomeFromSale(saleData) {
-        console.log('➕ Adding income from sale:', saleData);
-        
-        // Check if this order was already added
-        const existingTransaction = this.transactions.find(t => 
-            t.reference === `ORDER-${saleData.orderId}` || 
-            (t.source === 'orders-module' && t.orderId === saleData.orderId)
-        );
-        
-        if (existingTransaction) {
-            console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
-            return;
-        }
-        
-        // Create transaction data
-        const transactionData = {
-            id: Date.now() + Math.floor(Math.random() * 1000), // Ensure unique ID
-            date: saleData.date || new Date().toISOString().split('T')[0],
-            type: 'income',
-            category: 'sales',
-            amount: saleData.amount,
-            description: saleData.description || `Sale from order`,
-            paymentMethod: saleData.paymentMethod || 'cash',
-            reference: saleData.reference || `ORDER-${saleData.orderId}`,
-            notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
-            receipt: null,
-            userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            source: 'orders-module',
-            orderId: saleData.orderId,
-            customerName: saleData.customerName
-        };
-        
-        // Add to transactions array
-        if (!this.transactions) this.transactions = [];
-        this.transactions.unshift(transactionData);
-        
-        // Save to localStorage
-        try {
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-            console.log('💾 Saved sale to localStorage:', transactionData.id);
-        } catch (storageError) {
-            console.warn('⚠️ Failed to save to localStorage:', storageError);
-        }
-        
-        // Save to Firebase if available
-        if (this.isFirebaseAvailable && window.db) {
-            this.saveTransactionToFirebase(transactionData)
-                .then(() => {
-                    console.log('✅ Sale saved to Firebase');
-                })
-                .catch(error => {
-                    console.warn('⚠️ Failed to save sale to Firebase:', error.message);
-                });
-        }
-        
-        // Update UI
-        this.updateStats();
-        this.updateTransactionsList();
-        this.updateCategoryBreakdown();
-        
-        // Show notification
-        this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
-        
-        console.log('✅ Income added successfully:', transactionData);
-    },
-
+   addIncomeFromSale(saleData) {
+    console.log('➕ Adding income from sale:', saleData);
+    
+    // Skip if this sale came from this device and was auto-created
+    if (saleData.sourceDeviceId === this.getDeviceId() && saleData.source === 'income-module') {
+        console.log('⚠️ Skipping - this sale was auto-created from this device');
+        return;
+    }
+    
+    // Check if this order was already added
+    const existingTransaction = this.transactions.find(t => 
+        t.reference === `ORDER-${saleData.orderId}` || 
+        (t.source === 'orders-module' && t.orderId === saleData.orderId) ||
+        t.id === saleData.transactionId
+    );
+    
+    if (existingTransaction) {
+        console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
+        return;
+    }
+    
+    // Create transaction data
+    const transactionData = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        date: saleData.date || new Date().toISOString().split('T')[0],
+        type: 'income',
+        category: 'sales',
+        amount: saleData.amount,
+        description: saleData.description || `Sale from order`,
+        paymentMethod: saleData.paymentMethod || 'cash',
+        reference: saleData.reference || `ORDER-${saleData.orderId}`,
+        notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
+        receipt: null,
+        userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        source: 'orders-module',
+        orderId: saleData.orderId,
+        customerName: saleData.customerName,
+        sourceDeviceId: saleData.sourceDeviceId || 'external'  // ← ADD THIS
+    };
+    
+    // Add to transactions array
+    if (!this.transactions) this.transactions = [];
+    this.transactions.unshift(transactionData);
+    
+    // Save to localStorage
+    try {
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        console.log('💾 Saved sale to localStorage:', transactionData.id);
+    } catch (storageError) {
+        console.warn('⚠️ Failed to save to localStorage:', storageError);
+    }
+    
+    // Save to Firebase if available
+    if (this.isFirebaseAvailable && window.db) {
+        this.saveTransactionToFirebase(transactionData)
+            .then(() => {
+                console.log('✅ Sale saved to Firebase');
+            })
+            .catch(error => {
+                console.warn('⚠️ Failed to save sale to Firebase:', error.message);
+            });
+    }
+    
+    // Update UI
+    this.updateStats();
+    this.updateTransactionsList();
+    this.updateCategoryBreakdown();
+    
+    // Show notification
+    this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
+    
+    console.log('✅ Income added successfully:', transactionData);
+},
     
     // ==================== NETWORK DETECTION ====================
     setupNetworkDetection() {
@@ -601,63 +608,85 @@ async saveTransaction(transactionData) {
     // Add to transactions array
     if (!this.transactions) this.transactions = [];
     
-    // Check if exists
     const existingIndex = this.transactions.findIndex(t => t.id === transactionData.id);
     const isNewTransaction = existingIndex < 0;
     const oldTransaction = existingIndex >= 0 ? this.transactions[existingIndex] : null;
     
-    if (existingIndex >= 0) {
-        // Update
-        this.transactions[existingIndex] = transactionData;
-    } else {
-        // Add new
-        this.transactions.unshift(transactionData);
+    // Generate ID if needed
+    const transactionId = transactionData.id || Date.now();
+    const myDeviceId = this.getDeviceId();
+    
+    const finalTransaction = {
+        ...transactionData,
+        id: transactionId,
+        sourceDeviceId: myDeviceId,  // ← ADD THIS - marks where it came from
+        updatedAt: new Date().toISOString(),
+        deviceId: myDeviceId
+    };
+    
+    if (!finalTransaction.createdAt) {
+        finalTransaction.createdAt = finalTransaction.updatedAt;
     }
+    
+    if (existingIndex >= 0) {
+        this.transactions[existingIndex] = finalTransaction;
+    } else {
+        this.transactions.unshift(finalTransaction);
+    }
+    
+    // Sort
+    this.transactions.sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt);
+        const dateB = new Date(b.date || b.createdAt);
+        return dateB - dateA;
+    });
     
     // Save to localStorage
     this.saveData();
     
-    // Save to Firebase
-    await this.saveToFirebase();
+    // Save to Firebase (for sync)
+    if (this.isFirebaseAvailable) {
+        await this.saveToFirebase();
+    }
     
     // Update UI
     this.updateStats();
     this.updateTransactionsList();
     this.updateCategoryBreakdown();
     
-    // ==================== INTEGRATION BROADCASTS ====================
+    // ==================== KEEP BROADCASTS WITH SOURCE CHECK ====================
     
-    // 1. Broadcast general transaction update
-    this.broadcastTransactionUpdate(transactionData, isNewTransaction, oldTransaction);
+    // 1. Broadcast general transaction update (with source info)
+    this.broadcastTransactionUpdate(finalTransaction, isNewTransaction, oldTransaction);
     
-    // 2. If this is an INCOME transaction, create sale (FIXED: removed optional chaining)
-    if (transactionData.type === 'income' && isNewTransaction && 
-        (!transactionData.source || !transactionData.source.includes('sales'))) {
-        await this.createSaleFromIncome(transactionData);
+    // 2. If this is an INCOME transaction, create sale (skip if from sales module)
+    if (finalTransaction.type === 'income' && isNewTransaction && 
+        (!finalTransaction.source || !finalTransaction.source.includes('sales'))) {
+        await this.createSaleFromIncome(finalTransaction);
     }
     
     // 3. If this is an EXPENSE transaction, handle inventory updates
-    if (transactionData.type === 'expense') {
-        await this.handleExpenseIntegration(transactionData, isNewTransaction, oldTransaction);
+    if (finalTransaction.type === 'expense') {
+        await this.handleExpenseIntegration(finalTransaction, isNewTransaction, oldTransaction);
     }
     
     // 4. If this is a FEED expense, handle feed-specific logic
-    if (transactionData.type === 'expense' && this.isFeedRelated(transactionData)) {
-        await this.handleFeedExpense(transactionData);
+    if (finalTransaction.type === 'expense' && this.isFeedRelated(finalTransaction)) {
+        await this.handleFeedExpense(finalTransaction);
     }
     
     // 5. If this is a MEDICAL expense, handle medical inventory
-    if (transactionData.type === 'expense' && this.isMedicalRelated(transactionData)) {
-        await this.handleMedicalExpense(transactionData);
+    if (finalTransaction.type === 'expense' && this.isMedicalRelated(finalTransaction)) {
+        await this.handleMedicalExpense(finalTransaction);
     }
     
     // 6. If this is an EQUIPMENT expense, handle equipment inventory
-    if (transactionData.type === 'expense' && this.isEquipmentRelated(transactionData)) {
-        await this.handleEquipmentExpense(transactionData);
+    if (finalTransaction.type === 'expense' && this.isEquipmentRelated(finalTransaction)) {
+        await this.handleEquipmentExpense(finalTransaction);
     }
     
-    // 7. Broadcast to dashboard for real-time updates
-    this.broadcastToDashboard(transactionData);
+    // 7. Broadcast to dashboard
+    this.broadcastToDashboard(finalTransaction);
     
     return true;
 },
@@ -676,7 +705,8 @@ broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
         description: transactionData.description,
         isNew: isNew,
         timestamp: new Date().toISOString(),
-        oldData: oldTransaction || null
+        oldData: oldTransaction || null,
+        sourceDeviceId: transactionData.sourceDeviceId || this.getDeviceId()  // ← ADD THIS
     };
     
     // Broadcast via Data Broadcaster
@@ -691,6 +721,12 @@ broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
 
 createSaleFromIncome: async function(transactionData) {
     console.log('💰 Creating sale from income transaction:', transactionData);
+    
+    // Check if this sale was already created from this transaction
+    if (transactionData.saleCreated) {
+        console.log('⚠️ Sale already created for this transaction, skipping');
+        return;
+    }
     
     // Determine product from description or category
     let product = 'other';
@@ -725,8 +761,12 @@ createSaleFromIncome: async function(transactionData) {
         paymentStatus: 'paid',
         notes: `Auto-generated from income: ${transactionData.description}`,
         source: 'income-module',
-        transactionId: transactionData.id
+        transactionId: transactionData.id,
+        sourceDeviceId: transactionData.sourceDeviceId || this.getDeviceId()  // ← ADD THIS
     };
+    
+    // Mark original transaction to prevent loop
+    transactionData.saleCreated = true;
     
     // Broadcast to Sales module
     if (window.DataBroadcaster) {
