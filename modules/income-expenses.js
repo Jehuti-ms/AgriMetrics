@@ -616,10 +616,15 @@ async saveTransaction(transactionData) {
     const transactionId = transactionData.id || Date.now();
     const myDeviceId = this.getDeviceId();
     
+    // ========== FIX DATES ==========
+    // Ensure date is stored correctly in YYYY-MM-DD format
+    const formattedDate = this.formatDateForStorage(transactionData.date);
+    
     const finalTransaction = {
         ...transactionData,
         id: transactionId,
-        sourceDeviceId: myDeviceId,  // ← ADD THIS - marks where it came from
+        date: formattedDate,  // ← Always stored as YYYY-MM-DD
+        sourceDeviceId: myDeviceId,
         updatedAt: new Date().toISOString(),
         deviceId: myDeviceId
     };
@@ -634,11 +639,9 @@ async saveTransaction(transactionData) {
         this.transactions.unshift(finalTransaction);
     }
     
-    // Sort
+    // Sort by date (newest first)
     this.transactions.sort((a, b) => {
-        const dateA = new Date(a.date || a.createdAt);
-        const dateB = new Date(b.date || b.createdAt);
-        return dateB - dateA;
+        return this.compareDates(a.date, b.date);
     });
     
     // Save to localStorage
@@ -654,9 +657,9 @@ async saveTransaction(transactionData) {
     this.updateTransactionsList();
     this.updateCategoryBreakdown();
     
-    // ==================== KEEP BROADCASTS WITH SOURCE CHECK ====================
+    // ==================== BROADCASTS WITH DATE FIX ====================
     
-    // 1. Broadcast general transaction update (with source info)
+    // 1. Broadcast general transaction update
     this.broadcastTransactionUpdate(finalTransaction, isNewTransaction, oldTransaction);
     
     // 2. If this is an INCOME transaction, create sale (skip if from sales module)
@@ -690,7 +693,7 @@ async saveTransaction(transactionData) {
     
     return true;
 },
-
+    
 // ==================== INTEGRATION METHODS ====================
 
 broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
@@ -4914,60 +4917,64 @@ showCameraInterface: function() {
 
     // ==================== TRANSACTION METHODS ====================
     editTransaction(transactionId) {
-        console.log('Editing transaction:', transactionId);
-        const transaction = this.transactions.find(t => t.id == transactionId);
-        if (!transaction) {
-            this.showNotification('Transaction not found', 'error');
-            return;
-        }
-        
-        const idInput = document.getElementById('transaction-id');
-        if (idInput) idInput.value = transaction.id;
-        
-        const dateInput = document.getElementById('transaction-date');
-        if (dateInput) dateInput.value = transaction.date;
-        
-        const typeSelect = document.getElementById('transaction-type');
-        if (typeSelect) typeSelect.value = transaction.type;
-        
-        const categorySelect = document.getElementById('transaction-category');
-        if (categorySelect) categorySelect.value = transaction.category;
-        
-        const amountInput = document.getElementById('transaction-amount');
-        if (amountInput) amountInput.value = transaction.amount;
-        
-        const descriptionInput = document.getElementById('transaction-description');
-        if (descriptionInput) descriptionInput.value = transaction.description;
-        
-        const paymentSelect = document.getElementById('transaction-payment');
-        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
-        
-        const referenceInput = document.getElementById('transaction-reference');
-        if (referenceInput) referenceInput.value = transaction.reference || '';
-        
-        const notesInput = document.getElementById('transaction-notes');
-        if (notesInput) notesInput.value = transaction.notes || '';
-        
-        const deleteBtn = document.getElementById('delete-transaction');
-        if (deleteBtn) deleteBtn.style.display = 'block';
-        
-        const title = document.getElementById('transaction-modal-title');
-        if (title) title.textContent = 'Edit Transaction';
-        
-        if (transaction.receipt) {
-            this.receiptPreview = transaction.receipt;
-            this.showReceiptPreviewInTransactionModal(transaction.receipt);
-        } else {
-            this.receiptPreview = null;
-            this.clearReceiptPreview();
-        }
-        
-        const modal = document.getElementById('transaction-modal');
-        if (modal && modal.classList.contains('hidden')) {
-            modal.classList.remove('hidden');
-        }
-    },
-
+    console.log('Editing transaction:', transactionId);
+    const transaction = this.transactions.find(t => t.id == transactionId);
+    if (!transaction) {
+        this.showNotification('Transaction not found', 'error');
+        return;
+    }
+    
+    const idInput = document.getElementById('transaction-id');
+    if (idInput) idInput.value = transaction.id;
+    
+    // ========== FIX DATE DISPLAY ==========
+    const dateInput = document.getElementById('transaction-date');
+    if (dateInput) {
+        // Transaction date is already in YYYY-MM-DD format, use directly
+        dateInput.value = transaction.date || this.getLocalDate();
+    }
+    
+    const typeSelect = document.getElementById('transaction-type');
+    if (typeSelect) typeSelect.value = transaction.type;
+    
+    const categorySelect = document.getElementById('transaction-category');
+    if (categorySelect) categorySelect.value = transaction.category;
+    
+    const amountInput = document.getElementById('transaction-amount');
+    if (amountInput) amountInput.value = transaction.amount;
+    
+    const descriptionInput = document.getElementById('transaction-description');
+    if (descriptionInput) descriptionInput.value = transaction.description;
+    
+    const paymentSelect = document.getElementById('transaction-payment');
+    if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+    
+    const referenceInput = document.getElementById('transaction-reference');
+    if (referenceInput) referenceInput.value = transaction.reference || '';
+    
+    const notesInput = document.getElementById('transaction-notes');
+    if (notesInput) notesInput.value = transaction.notes || '';
+    
+    const deleteBtn = document.getElementById('delete-transaction');
+    if (deleteBtn) deleteBtn.style.display = 'block';
+    
+    const title = document.getElementById('transaction-modal-title');
+    if (title) title.textContent = 'Edit Transaction';
+    
+    if (transaction.receipt) {
+        this.receiptPreview = transaction.receipt;
+        this.showReceiptPreviewInTransactionModal(transaction.receipt);
+    } else {
+        this.receiptPreview = null;
+        this.clearReceiptPreview();
+    }
+    
+    const modal = document.getElementById('transaction-modal');
+    if (modal && modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden');
+    }
+},
+    
     async saveTransaction() {
         console.log('Saving transaction...');
         
@@ -6308,7 +6315,7 @@ showCameraInterface: function() {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Date *</label>
-                                    <input type="date" id="transaction-date" class="form-input" required>
+                                    <<input type="date" id="transaction-date" class="form-input" value="${this.getLocalDate()}" required>
                                 </div>
                                 <div>
                                     <label class="form-label">Type *</label>
@@ -6943,60 +6950,62 @@ escapeHtml(text) {
     },
 
     renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
-                </div>
-            `;
-        }
-
+    if (transactions.length === 0) {
         return `
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const amountClass = isIncome ? 'amount-income' : 'amount-expense';
-                    const icon = isIncome ? '💰' : '💸';
-                    
-                    return `
-                        <div class="transaction-item" data-id="${transaction.id}" 
-                             style="display: flex; justify-content: space-between; align-items: center; 
-                                    padding: 16px; background: var(--glass-bg); border-radius: 8px; 
-                                    border: 1px solid var(--glass-border); cursor: pointer;"
-                             onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 24px;">${icon}</span>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
-                                        ${transaction.description || 'No description'}
-                                    </div>
-                                    <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
-                                        <span>${this.formatDate(transaction.date) || 'No date'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.category || 'Uncategorized'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.paymentMethod || 'Cash'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
-                                    ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
-                                </div>
-                                ${transaction.reference ? `
-                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
-                                        Ref: ${transaction.reference}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
             </div>
         `;
-    },
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${transactions.map(transaction => {
+                const isIncome = transaction.type === 'income';
+                const icon = isIncome ? '💰' : '💸';
+                
+                // ========== FIX DATE DISPLAY ==========
+                const displayDate = this.formatDateForDisplay(transaction.date);
+                
+                return `
+                    <div class="transaction-item" data-id="${transaction.id}" 
+                         style="display: flex; justify-content: space-between; align-items: center; 
+                                padding: 16px; background: var(--glass-bg); border-radius: 8px; 
+                                border: 1px solid var(--glass-border); cursor: pointer;"
+                         onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">${icon}</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                    ${transaction.description || 'No description'}
+                                </div>
+                                <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                    <span>${displayDate}</span>
+                                    <span>•</span>
+                                    <span>${transaction.category || 'Uncategorized'}</span>
+                                    <span>•</span>
+                                    <span>${transaction.paymentMethod || 'Cash'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
+                                ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                            </div>
+                            ${transaction.reference ? `
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Ref: ${transaction.reference}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
 
     renderCategoryBreakdown() {
         const incomeByCategory = {};
@@ -7290,6 +7299,73 @@ escapeHtml(text) {
         }
     },
 
+    // ==================== DATE HANDLING FIXES ====================
+
+// Get current date in local timezone (YYYY-MM-DD)
+getLocalDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+},
+
+// Format date for storage (always YYYY-MM-DD)
+formatDateForStorage(dateInput) {
+    if (!dateInput) return this.getLocalDate();
+    
+    // If it's already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        return dateInput;
+    }
+    
+    // Try to parse the date
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) {
+        return this.getLocalDate();
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+},
+
+// Format date for display
+formatDateForDisplay(dateString) {
+    if (!dateString) return 'No date';
+    
+    // If it's in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-');
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+    
+    // Try to parse other formats
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+        return dateString;
+    }
+    
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+},
+
+// Compare dates (for sorting)
+compareDates(dateA, dateB) {
+    const dA = new Date(dateA);
+    const dB = new Date(dateB);
+    return dB - dA; // Newest first
+},
+    
     // ==================== EXPORT & REPORT ====================
     exportTransactions() {
         console.log('Exporting transactions...');
