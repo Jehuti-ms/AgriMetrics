@@ -2682,7 +2682,7 @@ updateProductionItemsDisplay: function() {
         }
     },
 
-   handleProductChange() {
+  handleProductChange() {
     console.log('🔵 handleProductChange() executing...');
    
     const productSelect = document.getElementById('sale-product');
@@ -2708,57 +2708,56 @@ updateProductionItemsDisplay: function() {
         const animalCountContainer = document.getElementById('meat-animal-count-container');
         
         if (weightUnit) {
+            // Store the current value to preserve selection if possible
+            const currentValue = weightUnit.value;
+            
             // Clear and rebuild options based on product
-            const currentUnit = weightUnit.value;
             weightUnit.innerHTML = '';
             
             if (selectedValue === 'broilers-dressed') {
-                // Dressed birds: bird, kg, lbs (bird should be default)
+                // Dressed birds: bird, kg, lbs (kg as default)
                 weightUnit.innerHTML = `
-                    <option value="bird" ${currentUnit === 'bird' ? 'selected' : ''}>bird</option>
-                    <option value="kg" ${currentUnit === 'kg' ? 'selected' : ''}>kg</option>
-                    <option value="lbs" ${currentUnit === 'lbs' ? 'selected' : ''}>lbs</option>
+                    <option value="bird">bird</option>
+                    <option value="kg" selected>kg</option>
+                    <option value="lbs">lbs</option>
                 `;
-                // Default to 'bird' if no selection
-                if (!currentUnit) {
-                    weightUnit.value = 'bird';
-                }
-                
-                // For dressed broilers, show animal count field
+                // Show animal count field (for bird unit)
                 if (animalCountContainer) {
                     animalCountContainer.classList.remove('hidden');
                 }
             } else {
-                // Other meat: kg, lbs only
+                // Other meat: kg, lbs only (kg as default)
                 weightUnit.innerHTML = `
-                    <option value="kg" ${currentUnit === 'kg' ? 'selected' : ''}>kg</option>
-                    <option value="lbs" ${currentUnit === 'lbs' ? 'selected' : ''}>lbs</option>
+                    <option value="kg" selected>kg</option>
+                    <option value="lbs">lbs</option>
                 `;
-                // Default to kg if no selection
-                if (!currentUnit || currentUnit === 'bird') {
-                    weightUnit.value = 'kg';
-                }
-                
-                // Hide animal count for other meats (they'll use weight only)
+                // Hide animal count for other meats
                 if (animalCountContainer) {
                     animalCountContainer.classList.add('hidden');
                 }
             }
             
-            // Trigger label update
-            this.updateMeatLabels();
+            // If there was a previous valid selection, use it (overrides default)
+            if (currentValue && (currentValue === 'bird' || currentValue === 'kg' || currentValue === 'lbs')) {
+                // Check if this value exists in the current options
+                const optionExists = Array.from(weightUnit.options).some(opt => opt.value === currentValue);
+                if (optionExists) {
+                    weightUnit.value = currentValue;
+                }
+            }
+            
+            // Force trigger the change event to update labels
+            const changeEvent = new Event('change', { bubbles: true });
+            weightUnit.dispatchEvent(changeEvent);
+            
+            console.log('Weight unit dropdown rebuilt, default: kg, selected:', weightUnit.value);
         }
         
         // Set default price
         if (selectedValue === 'broilers-dressed') {
             const priceInput = document.getElementById('meat-price');
             if (priceInput && !priceInput.value) {
-                const weightUnit = document.getElementById('meat-weight-unit');
-                if (weightUnit && weightUnit.value === 'bird') {
-                    priceInput.value = 5.50; // Default price per bird
-                } else {
-                    priceInput.value = 5.50; // Default price per kg
-                }
+                priceInput.value = 5.50; // Default price per kg
             }
         }
     } else {
