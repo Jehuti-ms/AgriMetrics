@@ -4743,3 +4743,8 @@ updateProductionItemsDisplay: function() {
         console.log(`⚠️ Created FarmModules and registered ${MODULE_NAME}`);
     }
 })();
+
+// Make globally available for debugging and direct access
+window.SalesRecordModule = SalesRecordModule;
+window.SalesModule = SalesRecordModule;
+console.log('✅ SalesRecordModule exposed globally for direct access');
