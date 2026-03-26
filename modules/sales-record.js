@@ -2816,47 +2816,57 @@ updateProductionItemsDisplay: function() {
     const unit = weightUnit.value;
     console.log('Current unit selected:', unit);
     
-    // Update price label by ID (already exists in your HTML)
+    // Update price label - using direct getElementById
     const priceLabel = document.getElementById('meat-price-label');
     if (priceLabel) {
+        let newText = '';
         if (unit === 'bird') {
-            priceLabel.textContent = 'Price per Bird *';
+            newText = 'Price per Bird *';
         } else if (unit === 'kg') {
-            priceLabel.textContent = 'Price per kg *';
+            newText = 'Price per kg *';
         } else if (unit === 'lbs') {
-            priceLabel.textContent = 'Price per lb *';
+            newText = 'Price per lb *';
         }
-        console.log('✅ Price label set to:', priceLabel.textContent);
+        console.log('Setting price label to:', newText);
+        priceLabel.textContent = newText;
+        console.log('Price label now:', priceLabel.textContent);
     } else {
-        console.error('❌ meat-price-label not found');
+        console.error('❌ meat-price-label element not found in DOM');
+        // Try to find it by other means
+        const foundLabel = document.querySelector('#meat-section label.form-label');
+        console.log('Found by query:', foundLabel ? foundLabel.textContent : 'NOT FOUND');
     }
     
-    // Update weight label (find it by its position or add an ID)
-    // Since there's no ID for weight label, let's find it in the meat section
+    // Update weight label (find by position in meat section)
     const meatSection = document.getElementById('meat-section');
     if (meatSection) {
         const labels = meatSection.querySelectorAll('label');
+        console.log('Found', labels.length, 'labels in meat section');
         
-        // The weight label is the second label in the meat section (index 1)
-        if (labels[1] && labels[1].textContent.includes('Total Weight')) {
+        // The weight label is usually the second label (index 1)
+        if (labels[1]) {
+            let weightText = '';
             if (unit === 'bird') {
-                labels[1].textContent = 'Number of Birds *';
+                weightText = 'Number of Birds *';
             } else if (unit === 'kg') {
-                labels[1].textContent = 'Total Weight (kg) *';
+                weightText = 'Total Weight (kg) *';
             } else if (unit === 'lbs') {
-                labels[1].textContent = 'Total Weight (lbs) *';
+                weightText = 'Total Weight (lbs) *';
             }
-            console.log('✅ Weight label set to:', labels[1].textContent);
+            console.log('Setting weight label to:', weightText);
+            labels[1].textContent = weightText;
         }
         
         // Update animal count label (first label, index 0)
-        if (labels[0] && labels[0].textContent.includes('Number of Animals')) {
+        if (labels[0]) {
+            let animalText = '';
             if (unit === 'bird') {
-                labels[0].textContent = 'Number of Birds *';
+                animalText = 'Number of Birds *';
             } else {
-                labels[0].textContent = 'Number of Animals *';
+                animalText = 'Number of Animals *';
             }
-            console.log('✅ Animal count label set to:', labels[0].textContent);
+            console.log('Setting animal label to:', animalText);
+            labels[0].textContent = animalText;
         }
     }
     
