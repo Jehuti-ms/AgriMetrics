@@ -2804,62 +2804,94 @@ updateProductionItemsDisplay: function() {
     },
     
     // Update updateMeatLabels() to handle all three units properly
-    updateMeatLabels() {
-        const productSelect = document.getElementById('sale-product');
-        if (!productSelect) return;
+   updateMeatLabels() {
+    console.log('🏷️ updateMeatLabels() called');
+    
+    const weightUnit = document.getElementById('meat-weight-unit');
+    if (!weightUnit) {
+        console.error('❌ Weight unit element not found');
+        return;
+    }
+    
+    const unit = weightUnit.value;
+    console.log('Current unit selected:', unit);
+    
+    // Update price label by ID (already exists in your HTML)
+    const priceLabel = document.getElementById('meat-price-label');
+    if (priceLabel) {
+        if (unit === 'bird') {
+            priceLabel.textContent = 'Price per Bird *';
+        } else if (unit === 'kg') {
+            priceLabel.textContent = 'Price per kg *';
+        } else if (unit === 'lbs') {
+            priceLabel.textContent = 'Price per lb *';
+        }
+        console.log('✅ Price label set to:', priceLabel.textContent);
+    } else {
+        console.error('❌ meat-price-label not found');
+    }
+    
+    // Update weight label (find it by its position or add an ID)
+    // Since there's no ID for weight label, let's find it in the meat section
+    const meatSection = document.getElementById('meat-section');
+    if (meatSection) {
+        const labels = meatSection.querySelectorAll('label');
         
-        const selectedValue = productSelect.value;
-        const weightUnit = document.getElementById('meat-weight-unit');
-        const unit = weightUnit ? weightUnit.value : 'kg';
-        
-        // Update weight label based on selected unit
-        const weightLabelElement = document.querySelector('label[for="meat-weight"]');
-        if (weightLabelElement) {
+        // The weight label is the second label in the meat section (index 1)
+        if (labels[1] && labels[1].textContent.includes('Total Weight')) {
             if (unit === 'bird') {
-                weightLabelElement.textContent = 'Number of Birds *';
+                labels[1].textContent = 'Number of Birds *';
             } else if (unit === 'kg') {
-                weightLabelElement.textContent = selectedValue === 'chicken-parts' ? 'Package Weight (kg) *' : 'Weight (kg) *';
+                labels[1].textContent = 'Total Weight (kg) *';
             } else if (unit === 'lbs') {
-                weightLabelElement.textContent = selectedValue === 'chicken-parts' ? 'Package Weight (lbs) *' : 'Weight (lbs) *';
+                labels[1].textContent = 'Total Weight (lbs) *';
             }
+            console.log('✅ Weight label set to:', labels[1].textContent);
         }
         
-        // Update price label
-        const priceLabelElement = document.querySelector('label[for="meat-price"]');
-        if (priceLabelElement) {
+        // Update animal count label (first label, index 0)
+        if (labels[0] && labels[0].textContent.includes('Number of Animals')) {
             if (unit === 'bird') {
-                priceLabelElement.textContent = 'Price per Bird *';
-            } else if (unit === 'kg') {
-                priceLabelElement.textContent = 'Price per kg *';
-            } else if (unit === 'lbs') {
-                priceLabelElement.textContent = 'Price per lb *';
+                labels[0].textContent = 'Number of Birds *';
+            } else {
+                labels[0].textContent = 'Number of Animals *';
             }
+            console.log('✅ Animal count label set to:', labels[0].textContent);
         }
-        
-        // Update the inline price unit label if it exists
-        const priceUnitLabel = document.getElementById('meat-price-unit-label');
-        if (priceUnitLabel) {
-            if (unit === 'bird') {
-                priceUnitLabel.textContent = 'per bird';
-            } else if (unit === 'kg') {
-                priceUnitLabel.textContent = 'per kg';
-            } else if (unit === 'lbs') {
-                priceUnitLabel.textContent = 'per lb';
-            }
+    }
+    
+    // Update the price unit label (the small text next to price input)
+    const priceUnitLabel = document.getElementById('meat-price-unit-label');
+    if (priceUnitLabel) {
+        if (unit === 'bird') {
+            priceUnitLabel.textContent = 'per bird';
+        } else if (unit === 'kg') {
+            priceUnitLabel.textContent = 'per kg';
+        } else if (unit === 'lbs') {
+            priceUnitLabel.textContent = 'per lb';
         }
-        
-        // Update average weight label if it exists
-        const avgWeightElement = document.getElementById('meat-avg-weight');
-        if (avgWeightElement && avgWeightElement.previousElementSibling) {
-            const avgLabel = avgWeightElement.previousElementSibling;
-            if (unit === 'bird') {
-                avgLabel.textContent = 'Average per Bird';
-            } else if (unit === 'kg' || unit === 'lbs') {
-                avgLabel.textContent = 'Average per Animal';
-            }
+        console.log('✅ Price unit label set to:', priceUnitLabel.textContent);
+    }
+    
+    // Update weight hint
+    const weightHint = document.querySelector('#meat-weight')?.closest('div')?.parentElement?.querySelector('.form-hint');
+    if (weightHint) {
+        if (unit === 'bird') {
+            weightHint.textContent = 'Number of birds being sold';
+        } else if (unit === 'kg') {
+            weightHint.textContent = 'Total weight in kilograms';
+        } else if (unit === 'lbs') {
+            weightHint.textContent = 'Total weight in pounds';
         }
-    },
-
+        console.log('✅ Weight hint set to:', weightHint.textContent);
+    }
+    
+    // Force calculation update
+    if (typeof this.calculateSaleTotal === 'function') {
+        this.calculateSaleTotal();
+    }
+},
+    
     // Update setupFormFieldListeners() to handle weight unit changes
   setupFormFieldListeners() {
     console.log('🔧 Setting up form field listeners for meat UI...');
