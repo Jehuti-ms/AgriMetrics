@@ -2807,7 +2807,12 @@ updateProductionItemsDisplay: function() {
   updateMeatLabels() {
     console.log('🏷️ updateMeatLabels() called');
     
+    // Get elements
     const weightUnit = document.getElementById('meat-weight-unit');
+    const priceLabel = document.getElementById('meat-price-label');  // FIXED: Use ID instead of for attribute
+    const weightLabel = document.getElementById('meat-weight-label'); // FIXED: Use ID
+    const priceUnitLabel = document.getElementById('meat-price-unit-label');
+    
     if (!weightUnit) {
         console.error('❌ Weight unit element not found');
         return;
@@ -2816,67 +2821,50 @@ updateProductionItemsDisplay: function() {
     const unit = weightUnit.value;
     console.log('Current unit selected:', unit);
     
-    // Update price label - using the correct ID that exists in your HTML
-    const priceLabel = document.getElementById('meat-price-label');
+    // Update price label
     if (priceLabel) {
-        let newText = '';
         if (unit === 'bird') {
-            newText = 'Price per Bird *';
+            priceLabel.textContent = 'Price per Bird *';
         } else if (unit === 'kg') {
-            newText = 'Price per kg *';
+            priceLabel.textContent = 'Price per kg *';
         } else if (unit === 'lbs') {
-            newText = 'Price per lb *';
+            priceLabel.textContent = 'Price per lb *';
         }
-        console.log('Setting price label to:', newText);
-        priceLabel.textContent = newText;
+        console.log('✅ Price label set to:', priceLabel.textContent);
     } else {
-        console.error('❌ meat-price-label element not found');
+        console.error('❌ priceLabel not found - check if element has id="meat-price-label"');
     }
     
-    // Update weight label - find by ID or position
-    const weightLabel = document.getElementById('meat-weight-label');
+    // Update weight label
     if (weightLabel) {
-        let weightText = '';
         if (unit === 'bird') {
-            weightText = 'Number of Birds *';
+            weightLabel.textContent = 'Number of Birds *';
         } else if (unit === 'kg') {
-            weightText = 'Total Weight (kg) *';
+            weightLabel.textContent = 'Total Weight (kg) *';
         } else if (unit === 'lbs') {
-            weightText = 'Total Weight (lbs) *';
+            weightLabel.textContent = 'Total Weight (lbs) *';
         }
-        console.log('Setting weight label to:', weightText);
-        weightLabel.textContent = weightText;
+        console.log('✅ Weight label set to:', weightLabel.textContent);
     } else {
-        // Fallback: find by position in meat section
+        // If weight label doesn't have an ID, find it by position in meat section
         const meatSection = document.getElementById('meat-section');
         if (meatSection) {
             const labels = meatSection.querySelectorAll('label');
+            // The weight label is usually the second label (index 1)
             if (labels[1]) {
-                let weightText = '';
                 if (unit === 'bird') {
-                    weightText = 'Number of Birds *';
+                    labels[1].textContent = 'Number of Birds *';
                 } else if (unit === 'kg') {
-                    weightText = 'Total Weight (kg) *';
+                    labels[1].textContent = 'Total Weight (kg) *';
                 } else if (unit === 'lbs') {
-                    weightText = 'Total Weight (lbs) *';
+                    labels[1].textContent = 'Total Weight (lbs) *';
                 }
-                labels[1].textContent = weightText;
+                console.log('✅ Weight label (by position) set to:', labels[1].textContent);
             }
         }
     }
     
-    // Update animal count label
-    const animalCountLabel = document.getElementById('meat-animal-count-label');
-    if (animalCountLabel) {
-        if (unit === 'bird') {
-            animalCountLabel.textContent = 'Number of Birds *';
-        } else {
-            animalCountLabel.textContent = 'Number of Animals *';
-        }
-    }
-    
-    // Update the price unit label (the small text next to price input)
-    const priceUnitLabel = document.getElementById('meat-price-unit-label');
+    // Update price unit label
     if (priceUnitLabel) {
         if (unit === 'bird') {
             priceUnitLabel.textContent = 'per bird';
@@ -2889,7 +2877,7 @@ updateProductionItemsDisplay: function() {
     }
     
     // Update weight hint
-    const weightHint = document.getElementById('meat-weight-hint');
+    const weightHint = document.querySelector('#meat-weight')?.closest('div')?.parentElement?.querySelector('.form-hint');
     if (weightHint) {
         if (unit === 'bird') {
             weightHint.textContent = 'Number of birds being sold';
