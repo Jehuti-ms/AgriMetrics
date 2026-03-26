@@ -4713,26 +4713,19 @@ updateProductionItemsDisplay: function() {
     console.log(`💰 Registering ${MODULE_NAME} module...`);
     
     if (window.FarmModules) {
-        // Use the registerModule method if available
         if (typeof window.FarmModules.registerModule === 'function') {
             window.FarmModules.registerModule(MODULE_NAME, MODULE_OBJECT);
             console.log(`✅ ${MODULE_NAME} module registered successfully via registerModule!`);
         } else {
-            // Manual registration as fallback
-            // Ensure modules Map exists
             window.FarmModules.modules = window.FarmModules.modules || new Map();
-            
-            // Store the module
             window.FarmModules.modules.set(MODULE_NAME, MODULE_OBJECT);
             window.FarmModules[MODULE_NAME] = MODULE_OBJECT;
             window.FarmModules.SalesRecord = MODULE_OBJECT;
             window.FarmModules.Sales = MODULE_OBJECT;
-            
             console.log(`✅ ${MODULE_NAME} module registered successfully via manual registration!`);
         }
     } else {
         console.error('❌ FarmModules framework not found');
-        // Create FarmModules if it doesn't exist
         window.FarmModules = {
             modules: new Map(),
             SalesRecord: MODULE_OBJECT,
@@ -4742,9 +4735,15 @@ updateProductionItemsDisplay: function() {
         window.FarmModules[MODULE_NAME] = MODULE_OBJECT;
         console.log(`⚠️ Created FarmModules and registered ${MODULE_NAME}`);
     }
+    
+    // ========== GLOBAL EXPOSURE (ADD THIS) ==========
+    // Expose globally WITHOUT overwriting existing references
+    if (!window.SalesRecordModule) {
+        window.SalesRecordModule = MODULE_OBJECT;
+        console.log('✅ SalesRecordModule exposed globally');
+    }
+    if (!window.SalesModule) {
+        window.SalesModule = MODULE_OBJECT;
+        console.log('✅ SalesModule exposed globally');
+    }
 })();
-
-// Make globally available for debugging and direct access
-window.SalesRecordModule = SalesRecordModule;
-window.SalesModule = SalesRecordModule;
-console.log('✅ SalesRecordModule exposed globally for direct access');
