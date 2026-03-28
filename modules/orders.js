@@ -1056,16 +1056,45 @@ const OrdersModule = {
 
    
 // ========== Setup phone input formatting ============
+// Add this method to your OrdersModule if it's not there, or replace existing one
 setupPhoneField() {
     const phoneInput = document.getElementById('customer-phone');
-    if (phoneInput && window.PhoneUtils) {
-        window.PhoneUtils.setupPhoneInput(phoneInput);
-        console.log('📞 Phone formatting enabled for customer form');
-    } else if (phoneInput && !window.PhoneUtils) {
-        console.warn('PhoneUtils not loaded yet');
-        // Try again in a moment
-        setTimeout(() => this.setupPhoneField(), 500);
+    if (!phoneInput) return;
+    
+    // Create a local phone formatting function if PhoneUtils doesn't exist
+    if (!window.PhoneUtils) {
+        console.log('📞 Creating local phone formatting fallback');
+        window.PhoneUtils = {
+            formatPhoneNumberTyping: function(value) {
+                if (!value) return '';
+                let cleaned = value.toString().replace(/\D/g, '');
+                if (cleaned.length === 11 && cleaned.startsWith('1')) {
+                    cleaned = cleaned.substring(1);
+                }
+                if (cleaned.length === 0) return '';
+                if (cleaned.length <= 3) return `1 (${cleaned}`;
+                if (cleaned.length <= 6) return `1 (${cleaned.substring(0, 3)}) ${cleaned.substring(3)}`;
+                return `1 (${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6, 10)}`;
+            },
+            extractDigits: function(phoneNumber) {
+                if (!phoneNumber) return '';
+                return phoneNumber.toString().replace(/\D/g, '');
+            },
+            formatPhoneNumber: function(input) {
+                if (!input) return '';
+                let cleaned = input.toString().replace(/\D/g, '');
+                if (cleaned.length === 11 && cleaned.startsWith('1')) cleaned = cleaned.substring(1);
+                if (cleaned.length === 10) {
+                    return `1 (${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6, 10)}`;
+                }
+                return input;
+            }
+        };
     }
+    
+    // Now setup the input with PhoneUtils
+    window.PhoneUtils.setupPhoneInput(phoneInput);
+    console.log('📞 Phone formatting enabled for customer form');
 },
 
 // Format phone for display
@@ -1644,20 +1673,14 @@ isValidPhone(phone) {
         this.renderModule();
     },
 
-   handleCustomerSubmit(e) {
+  handleCustomerSubmit(e) {
     e.preventDefault();
     
     const phoneInput = document.getElementById('customer-phone');
     const phoneRaw = phoneInput?.value || '';
     
-    // Extract only digits for storage
+    // Extract digits using the existing method (which will use PhoneUtils or fallback)
     const phoneDigits = this.extractPhoneDigits(phoneRaw);
-    
-    // Optional: Validate phone if provided
-    if (phoneDigits && !this.isValidPhone(phoneDigits)) {
-        this.showNotification('Please enter a valid 10-digit phone number', 'warning');
-        return;
-    }
     
     const customerData = {
         id: Date.now(),
@@ -1701,7 +1724,7 @@ isValidPhone(phone) {
         }, 300);
     }
 },
-
+    
     deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
         if (!order) return;
