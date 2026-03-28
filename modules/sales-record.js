@@ -2501,74 +2501,7 @@ updateProductionItemsDisplay: function() {
             }
         });
     },
-
-   setupFormFieldListeners() {
-    console.log('🔧 Setting up form field listeners for meat UI...');
-    
-    // Product change
-    const productSelect = document.getElementById('sale-product');
-    if (productSelect) {
-        // Remove existing listener
-        const newProductSelect = productSelect.cloneNode(true);
-        productSelect.parentNode.replaceChild(newProductSelect, productSelect);
-        
-        newProductSelect.addEventListener('change', () => {
-            console.log('🔄 Product changed:', newProductSelect.value);
-            this.handleProductChange();
-        });
-    }
-
-    // Weight unit change - CRITICAL FIX
-    const weightUnit = document.getElementById('meat-weight-unit');
-    if (weightUnit) {
-        console.log('🎯 Setting up weight unit listener');
-        
-        // Remove existing listener by cloning
-        const newWeightUnit = weightUnit.cloneNode(true);
-        weightUnit.parentNode.replaceChild(newWeightUnit, weightUnit);
-        
-        // Add change listener
-        newWeightUnit.addEventListener('change', (e) => {
-            console.log('📏 WEIGHT UNIT CHANGED TO:', e.target.value);
-            this.updateMeatLabels();      // Update all labels
-            this.calculateSaleTotal();    // Recalculate total
-        });
-        
-        // Also add input event for safety
-        newWeightUnit.addEventListener('input', (e) => {
-            console.log('📏 WEIGHT UNIT INPUT:', e.target.value);
-            this.updateMeatLabels();
-        });
-    }
-    
-    // Real-time total calculation for all fields
-    const fieldsToWatch = [
-        'standard-quantity',
-        'standard-price',
-        'meat-animal-count',
-        'meat-weight',
-        'meat-price'
-    ];
-    
-    fieldsToWatch.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('input', () => this.calculateSaleTotal());
-        }
-    });
-    
-    // Unit change for standard products
-    const unitSelect = document.getElementById('sale-unit');
-    if (unitSelect) {
-        unitSelect.addEventListener('change', () => {
-            this.updateStandardPriceLabel();
-            this.calculateSaleTotal();
-        });
-    }
-    
-    console.log('✅ Form field listeners set up');
-},
-    
+   
    updateAnimalCountVisibility() {
     console.log('👀 Updating animal count visibility...');
     const weightUnit = document.getElementById('meat-weight-unit');
@@ -3294,7 +3227,7 @@ updateMeatLabels() {
             // Initial label update
             setTimeout(() => {
                 this.updateMeatLabels();
-                this.debugUnitSelection();
+                
             }, 100);
         } else {
             console.error('❌ Weight unit dropdown not found!');
