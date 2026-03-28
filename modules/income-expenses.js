@@ -94,10 +94,10 @@ async initialize() {
         return false;
     }
 
-    // ========== FIX: Wait for Firebase to be ready ==========
-    // Wait a bit for Firebase to initialize
+    // ========== FIX: Better Firebase availability check ==========
+    // Wait for Firebase to be ready
     let waitCount = 0;
-    while (!window.db && waitCount < 20) {
+    while (!window.db && waitCount < 10) {
         await new Promise(resolve => setTimeout(resolve, 100));
         waitCount++;
     }
@@ -106,10 +106,9 @@ async initialize() {
     this.isFirebaseAvailable = !!(window.firebase && window.db);
     console.log('Firebase available:', this.isFirebaseAvailable, {
         firebase: !!window.firebase,
-        db: !!window.db,
-        waitTime: waitCount * 100 + 'ms'
+        db: !!window.db
     });
-    // ========================================================
+    // ============================================================
 
     if (window.StyleManager) {
         StyleManager.registerModule(this.name, this.element, this);
@@ -121,15 +120,12 @@ async initialize() {
     // Load transactions
     await this.loadData();
 
-    // Setup real-time sync (ONLY if Firebase is available)
+    // Setup real-time sync
     if (this.isFirebaseAvailable) {
-        console.log('📡 Setting up real-time sync...');
         this.setupRealtimeSync();
-    } else {
-        console.warn('⚠️ Firebase not available, real-time sync disabled');
     }
     
-    // Load receipts from Firebase
+    // Load receipts
     await this.loadReceiptsFromFirebase();
 
     // Setup global click handler for receipts
