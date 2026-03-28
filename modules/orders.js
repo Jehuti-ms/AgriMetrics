@@ -769,50 +769,52 @@ const OrdersModule = {
         `;
     },
 
-    renderCustomersList() {
-        if (this.customers.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
-                    <div style="font-size: 32px; margin-bottom: 12px;">👥</div>
-                    <div style="font-size: 14px;">No customers</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Add your first customer</div>
-                </div>
-            `;
-        }
-
+   renderCustomersList() {
+    if (this.customers.length === 0) {
         return `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${this.customers.map(customer => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary);">${customer.name}</div>
-                            <div style="font-size: 14px; color: var(--text-secondary);">${customer.contact}</div>
-                            ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">${customer.email}</div>` : ''}
-                            ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${customer.address}</div>` : ''}
-                        </div>
-                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
-                            <div>
-                                <div style="font-size: 14px; color: var(--text-secondary);">
-                                    ${this.getCustomerOrderCount(customer.id)} orders
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">
-                                    ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 4px;">
-                                <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
-                                    ✏️
-                                </button>
-                                <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
+            <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                <div style="font-size: 32px; margin-bottom: 12px;">👥</div>
+                <div style="font-size: 14px;">No customers</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">Add your first customer</div>
             </div>
         `;
-    },
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            ${this.customers.map(customer => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--text-primary);">${customer.name}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">
+                            ${customer.contact ? `📞 ${this.formatPhone(customer.contact)}` : ''}
+                        </div>
+                        ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">✉️ ${customer.email}</div>` : ''}
+                        ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">📍 ${customer.address}</div>` : ''}
+                    </div>
+                    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                        <div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">
+                                ${this.getCustomerOrderCount(customer.id)} orders
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">
+                                ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
+                                ✏️
+                            </button>
+                            <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+},
 
     getCustomerOrderCount(customerId) {
         return this.orders.filter(order => order.customerId === customerId).length;
@@ -1366,61 +1368,59 @@ isValidPhone(phone) {
     },
 
     refreshCustomerDropdown() {
-        const customerSelect = document.getElementById('order-customer');
-        if (!customerSelect) return;
+    const customerSelect = document.getElementById('order-customer');
+    if (!customerSelect) return;
+    
+    // Clear current options
+    customerSelect.innerHTML = '';
+    
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select Customer';
+    customerSelect.appendChild(defaultOption);
+    
+    // Add customers
+    if (this.customers.length === 0) {
+        const noCustomerOption = document.createElement('option');
+        noCustomerOption.value = '';
+        noCustomerOption.textContent = '⚠️ No customers found';
+        noCustomerOption.disabled = true;
+        customerSelect.appendChild(noCustomerOption);
         
-        // Clear current options
-        customerSelect.innerHTML = '';
+        const addCustomerOption = document.createElement('option');
+        addCustomerOption.value = 'add-new';
+        addCustomerOption.textContent = '➕ Add New Customer...';
+        addCustomerOption.style.color = '#10b981';
+        addCustomerOption.style.fontWeight = 'bold';
+        customerSelect.appendChild(addCustomerOption);
+    } else {
+        // Add existing customers with formatted phone
+        this.customers.forEach(customer => {
+            const option = document.createElement('option');
+            option.value = customer.id;
+            let displayText = customer.name;
+            if (customer.contact) {
+                displayText += ` (${this.formatPhone(customer.contact)})`;
+            }
+            option.textContent = displayText;
+            customerSelect.appendChild(option);
+        });
         
-        // Add default option
-        const defaultOption = document.createElement('option');
-        defaultOption.value = '';
-        defaultOption.textContent = 'Select Customer';
-        customerSelect.appendChild(defaultOption);
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '──────────';
+        customerSelect.appendChild(separator);
         
-        // Add customers
-        if (this.customers.length === 0) {
-            // If no customers, add a message and a button to add customer
-            const noCustomerOption = document.createElement('option');
-            noCustomerOption.value = '';
-            noCustomerOption.textContent = '⚠️ No customers found';
-            noCustomerOption.disabled = true;
-            customerSelect.appendChild(noCustomerOption);
-            
-            // Add a quick add customer option
-            const addCustomerOption = document.createElement('option');
-            addCustomerOption.value = 'add-new';
-            addCustomerOption.textContent = '➕ Add New Customer...';
-            addCustomerOption.style.color = '#10b981';
-            addCustomerOption.style.fontWeight = 'bold';
-            customerSelect.appendChild(addCustomerOption);
-        } else {
-            // Add existing customers
-            this.customers.forEach(customer => {
-                const option = document.createElement('option');
-                option.value = customer.id;
-                option.textContent = customer.name;
-                if (customer.contact) {
-                    option.textContent += ` (${customer.contact})`;
-                }
-                customerSelect.appendChild(option);
-            });
-            
-            // Add a separator and add new option
-            const separator = document.createElement('option');
-            separator.disabled = true;
-            separator.textContent = '──────────';
-            customerSelect.appendChild(separator);
-            
-            const addCustomerOption = document.createElement('option');
-            addCustomerOption.value = 'add-new';
-            addCustomerOption.textContent = '➕ Add New Customer...';
-            addCustomerOption.style.color = '#10b981';
-            addCustomerOption.style.fontWeight = 'bold';
-            customerSelect.appendChild(addCustomerOption);
-        }
-    },
-
+        const addCustomerOption = document.createElement('option');
+        addCustomerOption.value = 'add-new';
+        addCustomerOption.textContent = '➕ Add New Customer...';
+        addCustomerOption.style.color = '#10b981';
+        addCustomerOption.style.fontWeight = 'bold';
+        customerSelect.appendChild(addCustomerOption);
+    }
+},
+    
     showCustomersSection() {
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
@@ -1644,59 +1644,63 @@ isValidPhone(phone) {
         this.renderModule();
     },
 
-    handleCustomerSubmit(e) {
-        e.preventDefault();
-        
-        const customerData = {
-            id: Date.now(),
-            name: document.getElementById('customer-name').value,
-            contact: document.getElementById('customer-phone').value,
-            email: document.getElementById('customer-email').value,
-            address: document.getElementById('customer-address').value
-        };
+   handleCustomerSubmit(e) {
+    e.preventDefault();
+    
+    const phoneInput = document.getElementById('customer-phone');
+    const phoneRaw = phoneInput?.value || '';
+    
+    // Extract only digits for storage
+    const phoneDigits = this.extractPhoneDigits(phoneRaw);
+    
+    // Optional: Validate phone if provided
+    if (phoneDigits && !this.isValidPhone(phoneDigits)) {
+        this.showNotification('Please enter a valid 10-digit phone number', 'warning');
+        return;
+    }
+    
+    const customerData = {
+        id: Date.now(),
+        name: document.getElementById('customer-name').value,
+        contact: phoneDigits,  // Store as digits only
+        email: document.getElementById('customer-email').value,
+        address: document.getElementById('customer-address').value
+    };
 
-        this.customers.push(customerData);
-        this.saveData();
-        
-        // Broadcast customer added
-        this.broadcastCustomerAdded(customerData);
-        
-        // Refresh the customer dropdown if the order form is visible
-        const orderFormContainer = document.getElementById('order-form-container');
-        const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
-        
-        if (wasOrderFormVisible) {
-            this.refreshCustomerDropdown();
-        }
-        
-        this.renderModule();
-        this.hideCustomerForm();
-        
-        // Show success message
-        this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
-        
-        // If order form was visible, show it again and select the new customer
-        if (wasOrderFormVisible) {
-            // Small delay to ensure render is complete
-            setTimeout(() => {
-                // Show order form again
-                this.showOrderForm();
-                
-                // Select the new customer
-                const customerSelect = document.getElementById('order-customer');
-                if (customerSelect) {
-                    customerSelect.value = customerData.id;
-                    
-                    // Trigger change event to update any dependent fields
-                    const event = new Event('change', { bubbles: true });
-                    customerSelect.dispatchEvent(event);
-                }
-                
-                // Show a confirmation message
-                this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
-            }, 300);
-        }
-    },
+    this.customers.push(customerData);
+    this.saveData();
+    
+    // Broadcast customer added
+    this.broadcastCustomerAdded(customerData);
+    
+    // Refresh the customer dropdown if the order form is visible
+    const orderFormContainer = document.getElementById('order-form-container');
+    const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
+    
+    if (wasOrderFormVisible) {
+        this.refreshCustomerDropdown();
+    }
+    
+    this.renderModule();
+    this.hideCustomerForm();
+    
+    // Show success message
+    this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
+    
+    // If order form was visible, show it again and select the new customer
+    if (wasOrderFormVisible) {
+        setTimeout(() => {
+            this.showOrderForm();
+            const customerSelect = document.getElementById('order-customer');
+            if (customerSelect) {
+                customerSelect.value = customerData.id;
+                const event = new Event('change', { bubbles: true });
+                customerSelect.dispatchEvent(event);
+            }
+            this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
+        }, 300);
+    }
+},
 
     deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
