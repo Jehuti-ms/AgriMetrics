@@ -1052,6 +1052,48 @@ const OrdersModule = {
         console.log('✅ Orders module event listeners setup complete');
     },
 
+   
+// ========== Setup phone input formatting ============
+setupPhoneField() {
+    const phoneInput = document.getElementById('customer-phone');
+    if (phoneInput && window.PhoneUtils) {
+        window.PhoneUtils.setupPhoneInput(phoneInput);
+        console.log('📞 Phone formatting enabled for customer form');
+    } else if (phoneInput && !window.PhoneUtils) {
+        console.warn('PhoneUtils not loaded yet');
+        // Try again in a moment
+        setTimeout(() => this.setupPhoneField(), 500);
+    }
+},
+
+// Format phone for display
+formatPhone(phone) {
+    if (!phone) return '';
+    if (window.PhoneUtils) {
+        return window.PhoneUtils.formatPhoneNumber(phone);
+    }
+    return phone;
+},
+
+// Extract digits for storage
+extractPhoneDigits(phone) {
+    if (!phone) return '';
+    if (window.PhoneUtils) {
+        return window.PhoneUtils.extractDigits(phone);
+    }
+    return phone.replace(/\D/g, '');
+},
+
+// Validate phone
+isValidPhone(phone) {
+    if (!phone) return true;
+    if (window.PhoneUtils) {
+        return window.PhoneUtils.isValidPhoneNumber(phone);
+    }
+    const digits = phone.replace(/\D/g, '');
+    return digits.length === 10;
+},
+    
     ensureCustomerFormVisible() {
         console.log('👁️ Ensuring customer form is visible');
         const customerContainer = document.getElementById('customer-form-container');
@@ -1207,88 +1249,107 @@ const OrdersModule = {
         }
     },
 
-    showCustomerForm() {
-        console.log('👤 Showing customer form');
-        
-        try {
-            // Get the customer form container
-            const customerContainer = document.getElementById('customer-form-container');
-            if (!customerContainer) {
-                console.error('❌ Customer form container not found');
-                this.showNotification('Customer form not found', 'error');
-                return;
-            }
-            
-            // Hide order form if visible
-            const orderContainer = document.getElementById('order-form-container');
-            if (orderContainer) {
-                orderContainer.classList.add('hidden');
-            }
-            
-            // Hide customers section temporarily for better focus
-            const customersSection = document.getElementById('customers-section');
-            if (customersSection) {
-                customersSection.style.display = 'none';
-            }
-            
-            // Show the customer form
-            customerContainer.classList.remove('hidden');
-            customerContainer.style.display = 'block';
-            
-            // Force a reflow to ensure scrolling works
-            customerContainer.offsetHeight;
-            
-            // Scroll to the form with smooth behavior
-            customerContainer.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start',
-                inline: 'nearest'
-            });
-            
-            // Reset form
-            const form = document.getElementById('customer-form');
-            if (form) {
-                form.reset();
-                
-                // Focus on the first input after a short delay (after scroll completes)
-                setTimeout(() => {
-                    const nameInput = document.getElementById('customer-name');
-                    if (nameInput) {
-                        nameInput.focus();
-                    }
-                }, 500);
-            }
-            
-            // Update title
-            const title = document.querySelector('#customer-form-container h3');
-            if (title) {
-                title.textContent = 'Add New Customer';
-            }
-            
-            // Update submit button
-            const submitBtn = document.querySelector('#customer-form button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'Add Customer';
-            }
-            
-            // Remove any cancel edit buttons
-            document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
-            
-            // Add visual highlight
-            customerContainer.style.transition = 'all 0.3s ease';
-            customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
-            
-            setTimeout(() => {
-                customerContainer.style.boxShadow = 'none';
-            }, 2000);
-            
-            console.log('✅ Customer form shown and scrolled into view');
-            
-        } catch (error) {
-            console.error('❌ Error in showCustomerForm:', error);
-            this.showNotification('Error showing customer form', 'error');
+   showCustomerForm() {
+    console.log('👤 Showing customer form');
+    
+    try {
+        // Get the customer form container
+        const customerContainer = document.getElementById('customer-form-container');
+        if (!customerContainer) {
+            console.error('❌ Customer form container not found');
+            this.showNotification('Customer form not found', 'error');
+            return;
         }
-    },
+        
+        // Hide order form if visible
+        const orderContainer = document.getElementById('order-form-container');
+        if (orderContainer) {
+            orderContainer.classList.add('hidden');
+        }
+        
+        // Hide customers section temporarily for better focus
+        const customersSection = document.getElementById('customers-section');
+        if (customersSection) {
+            customersSection.style.display = 'none';
+        }
+        
+        // Show the customer form
+        customerContainer.classList.remove('hidden');
+        customerContainer.style.display = 'block';
+        
+        // Force a reflow to ensure scrolling works
+        customerContainer.offsetHeight;
+        
+        // Scroll to the form with smooth behavior
+        customerContainer.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+        });
+        
+        // Reset form
+        const form = document.getElementById('customer-form');
+        if (form) {
+            form.reset();
+            
+            // ========== ADD PHONE FORMATTING HERE ==========
+            // Setup phone input formatting after reset
+            setTimeout(() => {
+                const phoneInput = document.getElementById('customer-phone');
+                if (phoneInput && window.PhoneUtils) {
+                    window.PhoneUtils.setupPhoneInput(phoneInput);
+                    console.log('📞 Phone formatting enabled for customer form');
+                } else if (phoneInput && !window.PhoneUtils) {
+                    console.warn('PhoneUtils not loaded, retrying...');
+                    // Try again if PhoneUtils isn't ready
+                    setTimeout(() => {
+                        if (window.PhoneUtils) {
+                            window.PhoneUtils.setupPhoneInput(phoneInput);
+                        }
+                    }, 500);
+                }
+            }, 100);
+            // =============================================
+            
+            // Focus on the first input after a short delay (after scroll completes)
+            setTimeout(() => {
+                const nameInput = document.getElementById('customer-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 500);
+        }
+        
+        // Update title
+        const title = document.querySelector('#customer-form-container h3');
+        if (title) {
+            title.textContent = 'Add New Customer';
+        }
+        
+        // Update submit button
+        const submitBtn = document.querySelector('#customer-form button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Add Customer';
+        }
+        
+        // Remove any cancel edit buttons
+        document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+        
+        // Add visual highlight
+        customerContainer.style.transition = 'all 0.3s ease';
+        customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+        
+        setTimeout(() => {
+            customerContainer.style.boxShadow = 'none';
+        }, 2000);
+        
+        console.log('✅ Customer form shown and scrolled into view');
+        
+    } catch (error) {
+        console.error('❌ Error in showCustomerForm:', error);
+        this.showNotification('Error showing customer form', 'error');
+    }
+},
 
     hideCustomerForm() {
         console.log('🙈 Hiding customer form');
