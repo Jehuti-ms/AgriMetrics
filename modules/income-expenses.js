@@ -94,60 +94,41 @@ async initialize() {
         return false;
     }
 
-    // ========== FIX: Better Firebase availability check ==========
     // Wait for Firebase to be ready
     let waitCount = 0;
-    while (!window.db && waitCount < 10) {
+    while (!window.db && waitCount < 20) {
         await new Promise(resolve => setTimeout(resolve, 100));
         waitCount++;
     }
     
-    // Check if Firebase services are available
     this.isFirebaseAvailable = !!(window.firebase && window.db);
-    console.log('Firebase available:', this.isFirebaseAvailable, {
-        firebase: !!window.firebase,
-        db: !!window.db
-    });
-    // ============================================================
+    console.log('Firebase available:', this.isFirebaseAvailable);
 
     if (window.StyleManager) {
         StyleManager.registerModule(this.name, this.element, this);
     }
 
-    // Setup network detection
     this.setupNetworkDetection();
-    
-    // Load transactions
     await this.loadData();
 
-    // Setup real-time sync
+    // Setup real-time sync (now it will work!)
     if (this.isFirebaseAvailable) {
         this.setupRealtimeSync();
     }
     
-    // Load receipts
     await this.loadReceiptsFromFirebase();
-
-    // Setup global click handler for receipts
     this.setupReceiptActionListeners();
     
-    // Process any pending syncs
     if (this.isFirebaseAvailable) {
         setTimeout(() => {
             this.syncLocalTransactionsToFirebase();
         }, 3000);
     }
 
-    // Make sure receiptQueue is initialized
     this.receiptQueue = this.receiptQueue || [];
-    
-    // Listen for sales from Orders module
     this.setupSalesListeners();  
-            
     this.renderModule();
     this.initialized = true;
-    
-    // Connect to Data Broadcaster
     this.connectToDataBroadcaster();
     
     console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
