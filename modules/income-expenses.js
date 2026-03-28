@@ -85,7 +85,7 @@ debugCameraCapture: function() {
 },
     
    // ==================== INITIALIZATION ====================
-async initialize() {  // ← ADD async
+async initialize() {
     console.log('💰 Initializing Income & Expenses...');
     
     this.element = document.getElementById('content-area');
@@ -94,12 +94,22 @@ async initialize() {  // ← ADD async
         return false;
     }
 
+    // ========== FIX: Wait for Firebase to be ready ==========
+    // Wait a bit for Firebase to initialize
+    let waitCount = 0;
+    while (!window.db && waitCount < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+    }
+    
     // Check if Firebase services are available
     this.isFirebaseAvailable = !!(window.firebase && window.db);
     console.log('Firebase available:', this.isFirebaseAvailable, {
         firebase: !!window.firebase,
-        db: !!window.db
+        db: !!window.db,
+        waitTime: waitCount * 100 + 'ms'
     });
+    // ========================================================
 
     if (window.StyleManager) {
         StyleManager.registerModule(this.name, this.element, this);
@@ -108,21 +118,24 @@ async initialize() {  // ← ADD async
     // Setup network detection
     this.setupNetworkDetection();
     
-    // Load transactions - WAIT for this to complete
-    await this.loadData();  // ← ADD await
+    // Load transactions
+    await this.loadData();
 
-    // Setup real-time sync
+    // Setup real-time sync (ONLY if Firebase is available)
     if (this.isFirebaseAvailable) {
+        console.log('📡 Setting up real-time sync...');
         this.setupRealtimeSync();
+    } else {
+        console.warn('⚠️ Firebase not available, real-time sync disabled');
     }
     
-    // Load receipts from Firebase - WAIT for this too
-    await this.loadReceiptsFromFirebase();  // ← ADD await
+    // Load receipts from Firebase
+    await this.loadReceiptsFromFirebase();
 
     // Setup global click handler for receipts
     this.setupReceiptActionListeners();
     
-    // Process any pending syncs (don't need to await this)
+    // Process any pending syncs
     if (this.isFirebaseAvailable) {
         setTimeout(() => {
             this.syncLocalTransactionsToFirebase();
@@ -135,7 +148,7 @@ async initialize() {  // ← ADD async
     // Listen for sales from Orders module
     this.setupSalesListeners();  
             
-    this.renderModule();  // ← Now this happens AFTER data is loaded
+    this.renderModule();
     this.initialized = true;
     
     // Connect to Data Broadcaster
@@ -528,59 +541,90 @@ async saveToFirebase() {
 
 // Setup real-time sync
 setupRealtimeSync() {
-    if (!this.isFirebaseAvailable || !window.db) return;
-    
-    const user = window.firebase.auth().currentUser;
-    if (!user) return;
-    
-    if (this.realtimeUnsubscribe) {
-        this.realtimeUnsubscribe();
-    }
-    
     console.log('📡 Setting up real-time sync...');
     
-    this.realtimeUnsubscribe = window.db.collection('users')
-        .doc(user.uid)
-        .collection('transactions')
-        .onSnapshot((snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === 'added' || change.type === 'modified') {
-                    const remote = change.doc.data();
-                    const myDeviceId = this.getDeviceId();
-                    
-                    // Skip if this change came from this device
-                    if (remote.deviceId === myDeviceId) return;
-                    
-                    console.log(`🔄 Received from other device: ${remote.id}`);
-                    
-                    const existingIndex = this.transactions.findIndex(t => t.id === remote.id);
-                    
-                    if (existingIndex === -1) {
-                        this.transactions.unshift(remote);
-                    } else {
-                        this.transactions[existingIndex] = remote;
-                    }
-                    
-                    // Sort and save
-                    this.transactions.sort((a, b) => {
-                        const dateA = new Date(a.date || a.createdAt);
-                        const dateB = new Date(b.date || b.createdAt);
-                        return dateB - dateA;
-                    });
-                    
-                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                    this.updateStats();
-                    this.updateTransactionsList();
-                    this.updateCategoryBreakdown();
-                    
-                    this.showNotification(`📱 New transaction from another device`, 'info');
-                }
-            });
-        });
+    if (!this.isFirebaseAvailable) {
+        console.log('❌ Firebase not available');
+        return false;
+    }
     
-    console.log('✅ Real-time sync active');
+    if (!window.db) {
+        console.log('❌ Firestore not available');
+        return false;
+    }
+    
+    const user = window.firebase.auth().currentUser;
+    if (!user) {
+        console.log('❌ No user logged in');
+        return false;
+    }
+    
+    // Clean up existing listener
+    if (this.realtimeUnsubscribe) {
+        console.log('Cleaning up existing listener...');
+        this.realtimeUnsubscribe();
+        this.realtimeUnsubscribe = null;
+    }
+    
+    console.log('Setting up listener for user:', user.uid);
+    
+    try {
+        this.realtimeUnsubscribe = window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .onSnapshot((snapshot) => {
+                console.log(`🔄 Received ${snapshot.docChanges().length} changes from Firebase`);
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added' || change.type === 'modified') {
+                        const remote = change.doc.data();
+                        const myDeviceId = this.getDeviceId();
+                        
+                        // Skip if this change came from this device
+                        if (remote.deviceId === myDeviceId) {
+                            return;
+                        }
+                        
+                        console.log(`🔄 Syncing transaction: ${remote.id} (${change.type})`);
+                        
+                        const existingIndex = this.transactions.findIndex(t => t.id == remote.id);
+                        
+                        if (existingIndex === -1) {
+                            this.transactions.unshift(remote);
+                            console.log(`✅ Added new transaction from other device`);
+                        } else {
+                            this.transactions[existingIndex] = remote;
+                            console.log(`✅ Updated transaction from other device`);
+                        }
+                        
+                        // Sort and save
+                        this.transactions.sort((a, b) => {
+                            const dateA = new Date(a.date || a.createdAt);
+                            const dateB = new Date(b.date || b.createdAt);
+                            return dateB - dateA;
+                        });
+                        
+                        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                        this.updateStats();
+                        this.updateTransactionsList();
+                        this.updateCategoryBreakdown();
+                        
+                        this.showNotification(`📱 New transaction from another device`, 'info');
+                    }
+                });
+            }, (error) => {
+                console.error('❌ Real-time sync error:', error);
+                this.realtimeUnsubscribe = null;
+            });
+        
+        console.log('✅ Real-time sync active');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Failed to set up real-time sync:', error);
+        return false;
+    }
 },
-
+    
     saveData() {
     console.log('💾 Saving transactions to localStorage');
     localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
