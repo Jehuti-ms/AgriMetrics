@@ -1061,93 +1061,110 @@ setupPhoneField() {
     const phoneInput = document.getElementById('customer-phone');
     if (!phoneInput) return;
     
-    // Set placeholder and attributes
-    phoneInput.placeholder = '(000) 000-0000';
-    phoneInput.title = 'Enter phone number as (123) 456-7890';
-    phoneInput.setAttribute('maxlength', '14');
+    // Set placeholder
+    phoneInput.placeholder = '1 (000) 000-0000 or +44 20 1234 5678';
+    phoneInput.title = 'Enter phone number with country code';
     
     // Add hint text
     if (!phoneInput.parentElement.querySelector('.phone-hint')) {
         const hint = document.createElement('small');
         hint.className = 'form-hint phone-hint';
         hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter 10-digit number (e.g., 2461234567)';
+        hint.textContent = 'Enter number with country code (e.g., 1 246 1234567 or +44 20 12345678)';
         phoneInput.parentElement.appendChild(hint);
     }
     
-    // Clear any existing value
-    phoneInput.value = '';
+    // Store last value to prevent interference
+    let lastValue = '';
     
-    // Handle input event for formatting
+    // Handle input event
     phoneInput.addEventListener('input', function(e) {
         // Get cursor position
         const cursorPos = e.target.selectionStart;
+        let value = e.target.value;
         
-        // Get only digits from what was typed
-        let digits = e.target.value.replace(/\D/g, '');
+        // Store raw digits
+        let digits = value.replace(/\D/g, '');
         
-        // Limit to 10 digits
-        if (digits.length > 10) {
-            digits = digits.substring(0, 10);
-        }
+        // Try to detect if user started with + (international format)
+        let hasPlus = value.startsWith('+');
         
-        // Build the formatted string
+        // Format based on what user typed
         let formatted = '';
         
-        if (digits.length === 0) {
+        if (value.length === 0) {
             formatted = '';
+        } else if (hasPlus) {
+            // International format with +
+            if (digits.length <= 2) {
+                formatted = `+${digits}`;
+            } else if (digits.length <= 5) {
+                formatted = `+${digits.substring(0, 2)} ${digits.substring(2)}`;
+            } else if (digits.length <= 8) {
+                formatted = `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5)}`;
+            } else {
+                formatted = `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 12)}`;
+            }
         } else {
-            // Add area code with parentheses
-            if (digits.length >= 1) {
-                formatted += '(';
-                formatted += digits.substring(0, Math.min(3, digits.length));
-                if (digits.length >= 3) {
-                    formatted += ')';
+            // US/Canada format with 1
+            if (digits.length === 0) {
+                formatted = '';
+            } else if (digits[0] === '1') {
+                // User included the country code
+                const numberDigits = digits.substring(1);
+                if (numberDigits.length <= 3) {
+                    formatted = `1 (${numberDigits}`;
+                } else if (numberDigits.length <= 6) {
+                    formatted = `1 (${numberDigits.substring(0, 3)}) ${numberDigits.substring(3)}`;
+                } else {
+                    formatted = `1 (${numberDigits.substring(0, 3)}) ${numberDigits.substring(3, 6)}-${numberDigits.substring(6, 10)}`;
                 }
-            }
-            
-            // Add space after area code
-            if (digits.length > 3) {
-                formatted += ' ';
-                formatted += digits.substring(3, Math.min(6, digits.length));
-            }
-            
-            // Add dash before last 4 digits
-            if (digits.length > 6) {
-                formatted += '-';
-                formatted += digits.substring(6, Math.min(10, digits.length));
+            } else {
+                // Assume US/Canada and add 1 automatically
+                if (digits.length <= 3) {
+                    formatted = `1 (${digits}`;
+                } else if (digits.length <= 6) {
+                    formatted = `1 (${digits.substring(0, 3)}) ${digits.substring(3)}`;
+                } else {
+                    formatted = `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+                }
             }
         }
         
         // Update input value
         e.target.value = formatted;
         
-        // Calculate new cursor position
-        let newCursorPos = cursorPos;
+        // Adjust cursor position
+        const diff = formatted.length - value.length;
+        const newCursorPos = cursorPos + diff;
         
-        // Handle cursor positioning for special characters
-        if (cursorPos === 4 && formatted.length > 4 && !formatted.includes(')')) {
-            newCursorPos = 5;
-        } else if (cursorPos === 8 && formatted.length > 8 && !formatted.includes('-')) {
-            newCursorPos = 9;
-        }
-        
-        // Set cursor position
         setTimeout(() => {
             e.target.setSelectionRange(newCursorPos, newCursorPos);
         }, 0);
+        
+        lastValue = formatted;
     });
     
-    // Prevent non-numeric input
+    // Handle keydown for backspace
     phoneInput.addEventListener('keydown', function(e) {
-        const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (allowed.includes(e.key)) return;
+        // Allow navigation keys
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowedKeys.includes(e.key)) {
+            return;
+        }
+        
+        // Allow plus sign for international format
+        if (e.key === '+') {
+            return;
+        }
+        
+        // Allow numbers
         if (!/^\d$/.test(e.key)) {
             e.preventDefault();
         }
     });
     
-    console.log('📞 Phone formatting enabled');
+    console.log('📞 Flexible phone formatting enabled');
 },
 
 // Format phone for display
@@ -1157,24 +1174,25 @@ formatPhone(phone) {
     // Get digits only
     let digits = phone.toString().replace(/\D/g, '');
     
-    // Remove leading 1 if present
-    if (digits.length === 11 && digits.startsWith('1')) {
-        digits = digits.substring(1);
-    }
-    
-    // Format: 1 (XXX) XXX-XXXX
+    // Check if it's a US/Canada number (starts with 1 or 10 digits)
     if (digits.length === 10) {
         return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+    } else if (digits.length === 11 && digits.startsWith('1')) {
+        const numberDigits = digits.substring(1);
+        return `1 (${numberDigits.substring(0, 3)}) ${numberDigits.substring(3, 6)}-${numberDigits.substring(6, 10)}`;
     }
     
-    // If not 10 digits, return original or partial format
+    // For other international numbers, just return the digits with spaces
     if (digits.length > 0) {
-        if (digits.length <= 3) {
-            return `1 (${digits}`;
-        } else if (digits.length <= 6) {
-            return `1 (${digits.substring(0, 3)}) ${digits.substring(3)}`;
+        // Simple formatting for international numbers
+        if (digits.length <= 2) {
+            return `+${digits}`;
+        } else if (digits.length <= 5) {
+            return `+${digits.substring(0, 2)} ${digits.substring(2)}`;
+        } else if (digits.length <= 8) {
+            return `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5)}`;
         } else {
-            return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, Math.min(10, digits.length))}`;
+            return `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 12)}`;
         }
     }
     
