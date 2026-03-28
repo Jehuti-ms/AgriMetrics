@@ -649,10 +649,7 @@ const OrdersModule = {
                                 </div>
                                 <div>
                                     <label class="form-label">Contact Phone</label>
-                                    <input type="tel" class="form-input" id="customer-phone" 
-                                       placeholder="1 (000) 000-0000"
-                                       title="Enter phone number as 1 (123) 456-7890"
-                                       required>
+                                    <input type="tel" class="form-input" id="customer-phone" required>
                                 </div>
                             </div>
                             <div style="margin-bottom: 16px;">
@@ -1064,58 +1061,131 @@ setupPhoneField() {
     const phoneInput = document.getElementById('customer-phone');
     if (!phoneInput) return;
     
-    // Create a local phone formatting function if PhoneUtils doesn't exist
-    if (!window.PhoneUtils) {
-        console.log('📞 Creating local phone formatting fallback');
-        window.PhoneUtils = {
-            formatPhoneNumberTyping: function(value) {
-                if (!value) return '';
-                let cleaned = value.toString().replace(/\D/g, '');
-                if (cleaned.length === 11 && cleaned.startsWith('1')) {
-                    cleaned = cleaned.substring(1);
-                }
-                if (cleaned.length === 0) return '';
-                if (cleaned.length <= 3) return `1 (${cleaned}`;
-                if (cleaned.length <= 6) return `1 (${cleaned.substring(0, 3)}) ${cleaned.substring(3)}`;
-                return `1 (${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6, 10)}`;
-            },
-            extractDigits: function(phoneNumber) {
-                if (!phoneNumber) return '';
-                return phoneNumber.toString().replace(/\D/g, '');
-            },
-            formatPhoneNumber: function(input) {
-                if (!input) return '';
-                let cleaned = input.toString().replace(/\D/g, '');
-                if (cleaned.length === 11 && cleaned.startsWith('1')) cleaned = cleaned.substring(1);
-                if (cleaned.length === 10) {
-                    return `1 (${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6, 10)}`;
-                }
-                return input;
-            }
-        };
+    // Set placeholder and attributes
+    phoneInput.placeholder = '(000) 000-0000';
+    phoneInput.title = 'Enter phone number as (123) 456-7890';
+    phoneInput.setAttribute('maxlength', '14');
+    
+    // Add hint text
+    if (!phoneInput.parentElement.querySelector('.phone-hint')) {
+        const hint = document.createElement('small');
+        hint.className = 'form-hint phone-hint';
+        hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
+        hint.textContent = 'Enter 10-digit number (e.g., 2461234567)';
+        phoneInput.parentElement.appendChild(hint);
     }
     
-    // Now setup the input with PhoneUtils
-    window.PhoneUtils.setupPhoneInput(phoneInput);
-    console.log('📞 Phone formatting enabled for customer form');
+    // Clear any existing value
+    phoneInput.value = '';
+    
+    // Handle input event for formatting
+    phoneInput.addEventListener('input', function(e) {
+        // Get cursor position
+        const cursorPos = e.target.selectionStart;
+        
+        // Get only digits from what was typed
+        let digits = e.target.value.replace(/\D/g, '');
+        
+        // Limit to 10 digits
+        if (digits.length > 10) {
+            digits = digits.substring(0, 10);
+        }
+        
+        // Build the formatted string
+        let formatted = '';
+        
+        if (digits.length === 0) {
+            formatted = '';
+        } else {
+            // Add area code with parentheses
+            if (digits.length >= 1) {
+                formatted += '(';
+                formatted += digits.substring(0, Math.min(3, digits.length));
+                if (digits.length >= 3) {
+                    formatted += ')';
+                }
+            }
+            
+            // Add space after area code
+            if (digits.length > 3) {
+                formatted += ' ';
+                formatted += digits.substring(3, Math.min(6, digits.length));
+            }
+            
+            // Add dash before last 4 digits
+            if (digits.length > 6) {
+                formatted += '-';
+                formatted += digits.substring(6, Math.min(10, digits.length));
+            }
+        }
+        
+        // Update input value
+        e.target.value = formatted;
+        
+        // Calculate new cursor position
+        let newCursorPos = cursorPos;
+        
+        // Handle cursor positioning for special characters
+        if (cursorPos === 4 && formatted.length > 4 && !formatted.includes(')')) {
+            newCursorPos = 5;
+        } else if (cursorPos === 8 && formatted.length > 8 && !formatted.includes('-')) {
+            newCursorPos = 9;
+        }
+        
+        // Set cursor position
+        setTimeout(() => {
+            e.target.setSelectionRange(newCursorPos, newCursorPos);
+        }, 0);
+    });
+    
+    // Prevent non-numeric input
+    phoneInput.addEventListener('keydown', function(e) {
+        const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowed.includes(e.key)) return;
+        if (!/^\d$/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+    
+    console.log('📞 Phone formatting enabled');
 },
 
 // Format phone for display
 formatPhone(phone) {
     if (!phone) return '';
-    if (window.PhoneUtils) {
-        return window.PhoneUtils.formatPhoneNumber(phone);
+    
+    // Get digits only
+    let digits = phone.toString().replace(/\D/g, '');
+    
+    // Remove leading 1 if present
+    if (digits.length === 11 && digits.startsWith('1')) {
+        digits = digits.substring(1);
     }
+    
+    // Format: 1 (XXX) XXX-XXXX
+    if (digits.length === 10) {
+        return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+    }
+    
+    // If not 10 digits, return original or partial format
+    if (digits.length > 0) {
+        if (digits.length <= 3) {
+            return `1 (${digits}`;
+        } else if (digits.length <= 6) {
+            return `1 (${digits.substring(0, 3)}) ${digits.substring(3)}`;
+        } else {
+            return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, Math.min(10, digits.length))}`;
+        }
+    }
+    
     return phone;
 },
 
 // Extract digits for storage
 extractPhoneDigits(phone) {
     if (!phone) return '';
-    if (window.PhoneUtils) {
-        return window.PhoneUtils.extractDigits(phone);
-    }
-    return phone.replace(/\D/g, '');
+    // Just remove all non-digit characters
+    return phone.toString().replace(/\D/g, '');
 },
 
 // Validate phone
