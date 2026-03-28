@@ -9,28 +9,33 @@ const SalesRecordModule = {
     pendingProductionSale: null,
     broadcaster: null, // Add broadcaster reference
 
-    initialize() {
-        console.log('💰 Initializing Enhanced Sales Records...');
-        
-        if (!this.checkDependencies()) {
-            console.error('❌ Sales Records initialization failed');
-            return false;
-        }
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
-        
-        // ✅ Get Broadcaster instance
-        if (window.Broadcaster) {
-            this.broadcaster = window.Broadcaster;
-            console.log('📡 Sales module connected to Data Broadcaster');
-        }
+   initialize() {
+    console.log('💰 Initializing Enhanced Sales Records...');
+    
+    if (!this.checkDependencies()) {
+        console.error('❌ Sales Records initialization failed');
+        return false;
+    }
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) {
+        console.error('Content area element not found');
+        return false;
+    }
+    
+    // ✅ Get Broadcaster instance - MAKE SURE THIS WORKS
+    if (window.DataBroadcaster) {
+        this.broadcaster = window.DataBroadcaster;
+        console.log('📡 Sales module connected to Data Broadcaster');
+    } else if (window.Broadcaster) {
+        this.broadcaster = window.Broadcaster;
+        console.log('📡 Sales module connected to Broadcaster');
+    } else {
+        console.warn('⚠️ No broadcaster found, module integrations may not work');
+    }
 
-        this.setupBroadcasterListeners();
-        
+    this.setupBroadcasterListeners();
+           
         // ✅ Register with StyleManager
         if (window.StyleManager) {
             window.StyleManager.registerComponent(this.name);
