@@ -649,7 +649,10 @@ const OrdersModule = {
                                 </div>
                                 <div>
                                     <label class="form-label">Contact Phone</label>
-                                    <input type="tel" class="form-input" id="customer-phone" required>
+                                    <input type="tel" class="form-input" id="customer-phone" 
+                                       placeholder="1 (000) 000-0000"
+                                       title="Enter phone number as 1 (123) 456-7890"
+                                       required>
                                 </div>
                             </div>
                             <div style="margin-bottom: 16px;">
