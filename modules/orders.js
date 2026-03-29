@@ -1063,21 +1063,22 @@ setupPhoneField() {
 
     // Placeholder and maxlength
     phoneInput.placeholder = 'Enter phone number';
-    phoneInput.setAttribute('maxlength', '17');
+    phoneInput.setAttribute('maxlength', '20'); // allow longer for international
 
     // Hint
     if (!phoneInput.parentElement.querySelector('.phone-hint')) {
         const hint = document.createElement('small');
         hint.className = 'form-hint phone-hint';
         hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter digits only (7 or 10 digits)';
+        hint.textContent = 'Enter digits only (supports local, US, or international)';
         phoneInput.parentElement.appendChild(hint);
     }
 
     // Only digits while typing
     phoneInput.addEventListener('input', function(e) {
         let digits = e.target.value.replace(/\D/g, '');
-        if (digits.length > 10) digits = digits.substring(0, 10);
+        // Allow up to 15 digits for international
+        if (digits.length > 15) digits = digits.substring(0, 15);
         e.target.value = digits;
     });
 
@@ -1088,19 +1089,19 @@ setupPhoneField() {
             e.target.value = `1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
         } else if (digits.length === 7) {
             e.target.value = `${digits.slice(0,3)}-${digits.slice(3)}`;
+        } else if (digits.length > 10) {
+            // For international, just show raw digits with a leading +
+            e.target.value = `+${digits}`;
         }
     });
 
     // On focus, always strip formatting back to raw digits
     phoneInput.addEventListener('focus', function(e) {
         const digits = e.target.value.replace(/\D/g, '');
-        // Don’t auto‑remove leading 1 unless it’s exactly 11 digits
-        e.target.value = digits.length === 11 && digits.startsWith('1')
-            ? digits.slice(1)
-            : digits;
+        e.target.value = digits;
     });
 
-    // Block non‑numeric keys
+    // Block non-numeric keys
     phoneInput.addEventListener('keydown', function(e) {
         const allowed = ['Backspace','Delete','Tab','Escape','Enter',
                          'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
@@ -1108,10 +1109,8 @@ setupPhoneField() {
         if (!/^\d$/.test(e.key)) e.preventDefault();
     });
 
-    console.log('📞 Phone field fixed: clean digits, formats only on blur');
+    console.log('📞 Phone field fixed: supports local, US, and international numbers');
 },
-
-
     
 // Format phone for display
 formatPhone(phone) {
