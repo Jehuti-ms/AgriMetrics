@@ -1070,58 +1070,55 @@ setupPhoneField() {
         const hint = document.createElement('small');
         hint.className = 'form-hint phone-hint';
         hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter numbers only (e.g., 2461234567)';
+        hint.textContent = 'Enter numbers only (e.g., 2461234567 or 1234567)';
         phoneInput.parentElement.appendChild(hint);
     }
     
-    // Simple: allow only numbers while typing
+    // Allow only digits while typing
     phoneInput.addEventListener('input', function(e) {
-        // Keep only digits
         let digits = e.target.value.replace(/\D/g, '');
-        
-        // Limit to 10 digits
         if (digits.length > 10) {
             digits = digits.substring(0, 10);
         }
-        
         e.target.value = digits;
     });
     
-    // Format when user LEAVES the field
+    // Format when user leaves the field
     phoneInput.addEventListener('blur', function(e) {
         let digits = e.target.value;
         
         if (digits.length === 10) {
             // Format as 1 (XXX) XXX-XXXX
             e.target.value = `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+        } else if (digits.length === 7) {
+            // Format as XXX-XXXX
+            e.target.value = `${digits.substring(0, 3)}-${digits.substring(3, 7)}`;
         }
     });
     
-    // Show raw digits when user clicks back in to edit
+    // Show raw digits when editing again
     phoneInput.addEventListener('focus', function(e) {
-        // Get current value and extract just the digits
         let currentValue = e.target.value;
         let digits = currentValue.replace(/\D/g, '');
-        
-        // Remove leading 1 if present
-        if (digits.length > 0 && digits[0] === '1') {
+        if (digits.length > 0 && digits[0] === '1' && digits.length === 11) {
             digits = digits.substring(1);
         }
-        
         e.target.value = digits;
     });
     
     // Prevent non-numeric keys
     phoneInput.addEventListener('keydown', function(e) {
-        const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 
+                         'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (allowed.includes(e.key)) return;
         if (!/^\d$/.test(e.key)) {
             e.preventDefault();
         }
     });
     
-    console.log('📞 Simple phone formatting - no interference while typing');
+    console.log('📞 Phone formatting fixed: supports 7 or 10 digits');
 },
+
     
 // Format phone for display
 formatPhone(phone) {
