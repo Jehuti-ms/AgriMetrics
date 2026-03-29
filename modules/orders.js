@@ -1074,7 +1074,10 @@ setupPhoneField() {
         phoneInput.parentElement.appendChild(hint);
     }
     
-    // Format function
+    // Store the 10-digit number (without country code)
+    let phoneDigits = '';
+    
+    // Format function - 1 stays OUTSIDE the parentheses
     function formatPhoneNumber(digits) {
         if (digits.length === 0) return '';
         if (digits.length <= 3) return `1 (${digits}`;
@@ -1082,15 +1085,16 @@ setupPhoneField() {
         return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
     }
     
-    // When user types
+    // Handle input
     phoneInput.addEventListener('input', function(e) {
         // Get cursor position
-        const cursorPos = e.target.selectionStart;
+        let cursorPos = e.target.selectionStart;
         
-        // Get only digits
-        let digits = e.target.value.replace(/\D/g, '');
+        // Get raw value and extract ONLY digits (ignore the 1 country code)
+        let rawValue = e.target.value;
+        let digits = rawValue.replace(/\D/g, '');
         
-        // Remove leading 1 if present (we'll add it back)
+        // If there's a leading 1, remove it (we'll add it back)
         if (digits.length > 0 && digits[0] === '1') {
             digits = digits.substring(1);
         }
@@ -1100,28 +1104,33 @@ setupPhoneField() {
             digits = digits.substring(0, 10);
         }
         
+        // Store the actual phone digits
+        phoneDigits = digits;
+        
         // Format the number
         let formatted = formatPhoneNumber(digits);
+        
+        // Calculate new cursor position
+        let oldLength = e.target.value.length;
+        let newLength = formatted.length;
+        let diff = newLength - oldLength;
+        let newCursorPos = cursorPos + diff;
+        
+        // Special case: when area code completes
+        if (digits.length === 3 && cursorPos === 5) {
+            newCursorPos = 6;
+        }
         
         // Update input
         e.target.value = formatted;
         
-        // Adjust cursor position
-        let newCursorPos = cursorPos;
-        if (cursorPos === 3 && digits.length === 3) {
-            newCursorPos = 5;
-        } else if (cursorPos === 8 && digits.length === 6) {
-            newCursorPos = 9;
-        } else {
-            newCursorPos = Math.min(cursorPos, formatted.length);
-        }
-        
+        // Set cursor position
         setTimeout(() => {
             e.target.setSelectionRange(newCursorPos, newCursorPos);
         }, 0);
     });
     
-    // Prevent non-numeric
+    // Handle keydown - prevent non-numeric
     phoneInput.addEventListener('keydown', function(e) {
         const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (allowed.includes(e.key)) return;
@@ -1130,7 +1139,31 @@ setupPhoneField() {
         }
     });
     
-    console.log('📞 Phone formatting ready');
+    // Handle paste
+    phoneInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text');
+        let digits = pasted.replace(/\D/g, '');
+        
+        // Remove leading 1 if present
+        if (digits.length > 0 && digits[0] === '1') {
+            digits = digits.substring(1);
+        }
+        
+        // Limit to 10 digits
+        if (digits.length > 10) {
+            digits = digits.substring(0, 10);
+        }
+        
+        phoneDigits = digits;
+        e.target.value = formatPhoneNumber(digits);
+        
+        setTimeout(() => {
+            e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+        }, 0);
+    });
+    
+    console.log('📞 Phone formatting fixed - 1 stays outside parentheses');
 },
     
 // Format phone for display
