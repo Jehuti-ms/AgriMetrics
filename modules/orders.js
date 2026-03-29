@@ -1062,111 +1062,77 @@ setupPhoneField() {
     if (!phoneInput) return;
     
     // Set placeholder
-    phoneInput.placeholder = '1 (000) 000-0000 or +44 20 1234 5678';
-    phoneInput.title = 'Enter phone number with country code';
+    phoneInput.placeholder = '1 (000) 000-0000';
+    phoneInput.setAttribute('maxlength', '17');
     
-    // Add hint text
+    // Add hint
     if (!phoneInput.parentElement.querySelector('.phone-hint')) {
         const hint = document.createElement('small');
         hint.className = 'form-hint phone-hint';
         hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter number with country code (e.g., 1 246 1234567 or +44 20 12345678)';
+        hint.textContent = 'Enter 10-digit number (e.g., 2462336758)';
         phoneInput.parentElement.appendChild(hint);
     }
     
-    // Store last value to prevent interference
-    let lastValue = '';
+    // Format function
+    function formatPhoneNumber(digits) {
+        if (digits.length === 0) return '';
+        if (digits.length <= 3) return `1 (${digits}`;
+        if (digits.length <= 6) return `1 (${digits.substring(0, 3)}) ${digits.substring(3)}`;
+        return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+    }
     
-    // Handle input event
+    // When user types
     phoneInput.addEventListener('input', function(e) {
         // Get cursor position
         const cursorPos = e.target.selectionStart;
-        let value = e.target.value;
         
-        // Store raw digits
-        let digits = value.replace(/\D/g, '');
+        // Get only digits
+        let digits = e.target.value.replace(/\D/g, '');
         
-        // Try to detect if user started with + (international format)
-        let hasPlus = value.startsWith('+');
-        
-        // Format based on what user typed
-        let formatted = '';
-        
-        if (value.length === 0) {
-            formatted = '';
-        } else if (hasPlus) {
-            // International format with +
-            if (digits.length <= 2) {
-                formatted = `+${digits}`;
-            } else if (digits.length <= 5) {
-                formatted = `+${digits.substring(0, 2)} ${digits.substring(2)}`;
-            } else if (digits.length <= 8) {
-                formatted = `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5)}`;
-            } else {
-                formatted = `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 12)}`;
-            }
-        } else {
-            // US/Canada format with 1
-            if (digits.length === 0) {
-                formatted = '';
-            } else if (digits[0] === '1') {
-                // User included the country code
-                const numberDigits = digits.substring(1);
-                if (numberDigits.length <= 3) {
-                    formatted = `1 (${numberDigits}`;
-                } else if (numberDigits.length <= 6) {
-                    formatted = `1 (${numberDigits.substring(0, 3)}) ${numberDigits.substring(3)}`;
-                } else {
-                    formatted = `1 (${numberDigits.substring(0, 3)}) ${numberDigits.substring(3, 6)}-${numberDigits.substring(6, 10)}`;
-                }
-            } else {
-                // Assume US/Canada and add 1 automatically
-                if (digits.length <= 3) {
-                    formatted = `1 (${digits}`;
-                } else if (digits.length <= 6) {
-                    formatted = `1 (${digits.substring(0, 3)}) ${digits.substring(3)}`;
-                } else {
-                    formatted = `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
-                }
-            }
+        // Remove leading 1 if present (we'll add it back)
+        if (digits.length > 0 && digits[0] === '1') {
+            digits = digits.substring(1);
         }
         
-        // Update input value
+        // Limit to 10 digits
+        if (digits.length > 10) {
+            digits = digits.substring(0, 10);
+        }
+        
+        // Format the number
+        let formatted = formatPhoneNumber(digits);
+        
+        // Update input
         e.target.value = formatted;
         
         // Adjust cursor position
-        const diff = formatted.length - value.length;
-        const newCursorPos = cursorPos + diff;
+        let newCursorPos = cursorPos;
+        if (cursorPos === 3 && digits.length === 3) {
+            newCursorPos = 5;
+        } else if (cursorPos === 8 && digits.length === 6) {
+            newCursorPos = 9;
+        } else {
+            newCursorPos = Math.min(cursorPos, formatted.length);
+        }
         
         setTimeout(() => {
             e.target.setSelectionRange(newCursorPos, newCursorPos);
         }, 0);
-        
-        lastValue = formatted;
     });
     
-    // Handle keydown for backspace
+    // Prevent non-numeric
     phoneInput.addEventListener('keydown', function(e) {
-        // Allow navigation keys
-        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
-        if (allowedKeys.includes(e.key)) {
-            return;
-        }
-        
-        // Allow plus sign for international format
-        if (e.key === '+') {
-            return;
-        }
-        
-        // Allow numbers
+        const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        if (allowed.includes(e.key)) return;
         if (!/^\d$/.test(e.key)) {
             e.preventDefault();
         }
     });
     
-    console.log('📞 Flexible phone formatting enabled');
+    console.log('📞 Phone formatting ready');
 },
-
+    
 // Format phone for display
 formatPhone(phone) {
     if (!phone) return '';
