@@ -1060,64 +1060,57 @@ const OrdersModule = {
 setupPhoneField() {
     const phoneInput = document.getElementById('customer-phone');
     if (!phoneInput) return;
-    
-    // Set placeholder
-    phoneInput.placeholder = '1 (000) 000-0000';
+
+    // Placeholder and maxlength
+    phoneInput.placeholder = 'Enter phone number';
     phoneInput.setAttribute('maxlength', '17');
-    
-    // Add hint
+
+    // Hint
     if (!phoneInput.parentElement.querySelector('.phone-hint')) {
         const hint = document.createElement('small');
         hint.className = 'form-hint phone-hint';
         hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter numbers only (e.g., 2461234567 or 1234567)';
+        hint.textContent = 'Enter digits only (7 or 10 digits)';
         phoneInput.parentElement.appendChild(hint);
     }
-    
-    // Allow only digits while typing
+
+    // Only digits while typing
     phoneInput.addEventListener('input', function(e) {
         let digits = e.target.value.replace(/\D/g, '');
-        if (digits.length > 10) {
-            digits = digits.substring(0, 10);
-        }
+        if (digits.length > 10) digits = digits.substring(0, 10);
         e.target.value = digits;
     });
-    
-    // Format when user leaves the field
+
+    // Format on blur
     phoneInput.addEventListener('blur', function(e) {
-        let digits = e.target.value;
-        
+        const digits = e.target.value.replace(/\D/g, '');
         if (digits.length === 10) {
-            // Format as 1 (XXX) XXX-XXXX
-            e.target.value = `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+            e.target.value = `1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
         } else if (digits.length === 7) {
-            // Format as XXX-XXXX
-            e.target.value = `${digits.substring(0, 3)}-${digits.substring(3, 7)}`;
+            e.target.value = `${digits.slice(0,3)}-${digits.slice(3)}`;
         }
     });
-    
-    // Show raw digits when editing again
+
+    // On focus, always strip formatting back to raw digits
     phoneInput.addEventListener('focus', function(e) {
-        let currentValue = e.target.value;
-        let digits = currentValue.replace(/\D/g, '');
-        if (digits.length > 0 && digits[0] === '1' && digits.length === 11) {
-            digits = digits.substring(1);
-        }
-        e.target.value = digits;
+        const digits = e.target.value.replace(/\D/g, '');
+        // Don’t auto‑remove leading 1 unless it’s exactly 11 digits
+        e.target.value = digits.length === 11 && digits.startsWith('1')
+            ? digits.slice(1)
+            : digits;
     });
-    
-    // Prevent non-numeric keys
+
+    // Block non‑numeric keys
     phoneInput.addEventListener('keydown', function(e) {
-        const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 
-                         'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+        const allowed = ['Backspace','Delete','Tab','Escape','Enter',
+                         'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
         if (allowed.includes(e.key)) return;
-        if (!/^\d$/.test(e.key)) {
-            e.preventDefault();
-        }
+        if (!/^\d$/.test(e.key)) e.preventDefault();
     });
-    
-    console.log('📞 Phone formatting fixed: supports 7 or 10 digits');
+
+    console.log('📞 Phone field fixed: clean digits, formats only on blur');
 },
+
 
     
 // Format phone for display
