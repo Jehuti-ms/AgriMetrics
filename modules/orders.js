@@ -1070,67 +1070,48 @@ setupPhoneField() {
         const hint = document.createElement('small');
         hint.className = 'form-hint phone-hint';
         hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter 10-digit number (e.g., 2462336758)';
+        hint.textContent = 'Enter numbers only (e.g., 2461234567)';
         phoneInput.parentElement.appendChild(hint);
     }
     
-    // Store the 10-digit number (without country code)
-    let phoneDigits = '';
-    
-    // Format function - 1 stays OUTSIDE the parentheses
-    function formatPhoneNumber(digits) {
-        if (digits.length === 0) return '';
-        if (digits.length <= 3) return `1 (${digits}`;
-        if (digits.length <= 6) return `1 (${digits.substring(0, 3)}) ${digits.substring(3)}`;
-        return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
-    }
-    
-    // Handle input
+    // Simple: allow only numbers while typing
     phoneInput.addEventListener('input', function(e) {
-        // Get cursor position
-        let cursorPos = e.target.selectionStart;
-        
-        // Get raw value and extract ONLY digits (ignore the 1 country code)
-        let rawValue = e.target.value;
-        let digits = rawValue.replace(/\D/g, '');
-        
-        // If there's a leading 1, remove it (we'll add it back)
-        if (digits.length > 0 && digits[0] === '1') {
-            digits = digits.substring(1);
-        }
+        // Keep only digits
+        let digits = e.target.value.replace(/\D/g, '');
         
         // Limit to 10 digits
         if (digits.length > 10) {
             digits = digits.substring(0, 10);
         }
         
-        // Store the actual phone digits
-        phoneDigits = digits;
-        
-        // Format the number
-        let formatted = formatPhoneNumber(digits);
-        
-        // Calculate new cursor position
-        let oldLength = e.target.value.length;
-        let newLength = formatted.length;
-        let diff = newLength - oldLength;
-        let newCursorPos = cursorPos + diff;
-        
-        // Special case: when area code completes
-        if (digits.length === 3 && cursorPos === 5) {
-            newCursorPos = 6;
-        }
-        
-        // Update input
-        e.target.value = formatted;
-        
-        // Set cursor position
-        setTimeout(() => {
-            e.target.setSelectionRange(newCursorPos, newCursorPos);
-        }, 0);
+        e.target.value = digits;
     });
     
-    // Handle keydown - prevent non-numeric
+    // Format when user LEAVES the field
+    phoneInput.addEventListener('blur', function(e) {
+        let digits = e.target.value;
+        
+        if (digits.length === 10) {
+            // Format as 1 (XXX) XXX-XXXX
+            e.target.value = `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
+        }
+    });
+    
+    // Show raw digits when user clicks back in to edit
+    phoneInput.addEventListener('focus', function(e) {
+        // Get current value and extract just the digits
+        let currentValue = e.target.value;
+        let digits = currentValue.replace(/\D/g, '');
+        
+        // Remove leading 1 if present
+        if (digits.length > 0 && digits[0] === '1') {
+            digits = digits.substring(1);
+        }
+        
+        e.target.value = digits;
+    });
+    
+    // Prevent non-numeric keys
     phoneInput.addEventListener('keydown', function(e) {
         const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
         if (allowed.includes(e.key)) return;
@@ -1139,31 +1120,7 @@ setupPhoneField() {
         }
     });
     
-    // Handle paste
-    phoneInput.addEventListener('paste', function(e) {
-        e.preventDefault();
-        const pasted = (e.clipboardData || window.clipboardData).getData('text');
-        let digits = pasted.replace(/\D/g, '');
-        
-        // Remove leading 1 if present
-        if (digits.length > 0 && digits[0] === '1') {
-            digits = digits.substring(1);
-        }
-        
-        // Limit to 10 digits
-        if (digits.length > 10) {
-            digits = digits.substring(0, 10);
-        }
-        
-        phoneDigits = digits;
-        e.target.value = formatPhoneNumber(digits);
-        
-        setTimeout(() => {
-            e.target.setSelectionRange(e.target.value.length, e.target.value.length);
-        }, 0);
-    });
-    
-    console.log('📞 Phone formatting fixed - 1 stays outside parentheses');
+    console.log('📞 Simple phone formatting - no interference while typing');
 },
     
 // Format phone for display
