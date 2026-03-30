@@ -314,27 +314,111 @@ const OrdersModule = {
     },
 
     // Enhanced loadData
-   loadData() {
+   // In your OrdersModule
+
+loadData() {
+    // Load from localStorage first (fast)
     const savedOrders = localStorage.getItem('farm-orders');
     const savedCustomers = localStorage.getItem('farm-customers');
     
-    // Load from localStorage or start with empty arrays
     this.orders = savedOrders ? JSON.parse(savedOrders) : [];
     this.customers = savedCustomers ? JSON.parse(savedCustomers) : [];
     
-    // Don't add demo customers automatically - let user add their own
+    // Sync with Central Data Service (Firebase)
+    if (window.CentralDataService) {
+        const firebaseCustomers = window.CentralDataService.get('customers');
+        const firebaseOrders = window.CentralDataService.get('orders');
+        
+        if (firebaseCustomers && firebaseCustomers.length > 0) {
+            this.customers = firebaseCustomers;
+        }
+        if (firebaseOrders && firebaseOrders.length > 0) {
+            this.orders = firebaseOrders;
+        }
+        
+        // Subscribe to future updates
+        this.subscribeToDataUpdates();
+    }
     
-    // Broadcast data loaded
+    // Save to localStorage to ensure consistency
+    this.saveData();
+    
+    // Broadcast
     if (this.broadcaster) {
         this.broadcaster.broadcast('orders-data-loaded', {
             module: 'orders',
-            timestamp: new Date().toISOString(),
             ordersCount: this.orders.length,
             customersCount: this.customers.length
         });
     }
 },
 
+/**
+ * Subscribe to Central Data Service updates
+ */
+subscribeToDataUpdates() {
+    if (!window.CentralDataService) return;
+    
+    // Handle customer updates
+    window.CentralDataService.on('customers-updated', (customers) => {
+        console.log('📡 Customers updated from Central Service');
+        this.customers = customers;
+        this.saveData();
+        this.renderModule();
+    });
+    
+    // Handle order updates
+    window.CentralDataService.on('orders-updated', (orders) => {
+        console.log('📡 Orders updated from Central Service');
+        this.orders = orders;
+        this.saveData();
+        this.renderModule();
+    });
+},
+
+/**
+ * Save customer - uses Central Data Service
+ */
+async saveCustomerToFirebase(customerData) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.save('customers', customerData);
+        if (result.success) {
+            console.log('✅ Customer saved via Central Service');
+            // No need to update local arrays - Central Service will broadcast the update
+        }
+        return result.success;
+    }
+    return false;
+},
+
+/**
+ * Delete customer - uses Central Data Service
+ */
+async deleteCustomerFromFirebase(customerId) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.delete('customers', customerId);
+        if (result.success) {
+            console.log('✅ Customer deleted via Central Service');
+        }
+        return result.success;
+    }
+    return false;
+},
+
+/**
+ * Save order - uses Central Data Service
+ */
+async saveOrderToFirebase(orderData) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.save('orders', orderData);
+        if (result.success) {
+            console.log('✅ Order saved via Central Service');
+        }
+        return result.success;
+    }
+    return false;
+},
+    
     // Theme change handler
     onThemeChange(theme) {
         console.log(`Orders Management updating for theme: ${theme}`);
@@ -784,32 +868,48 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     return digits.length >= 7 && digits.length <= 15;
 },
 
-  /**
- * Get Firestore instance safely
- * @returns {FirebaseFirestore|null}
- */
 getFirestore() {
-    // window.db is the correct reference in your setup
-    if (window.db && window.db.collection) {
-        return window.db;
-    }
-    // Fallback to firebase.firestore() if needed
-    if (window.firebase && window.firebase.firestore) {
-        return window.firebase.firestore();
-    }
-    return null;
+    return window.CentralDataService?.db || null;
 },
 
-/**
- * Get current authenticated user ID
- * @returns {string|null}
- */
 getCurrentUserId() {
-    if (window.firebase && window.firebase.auth) {
-        const user = window.firebase.auth().currentUser;
-        return user ? user.uid : null;
+    return window.CentralDataService?.userId || null;
+},
+
+// SIMPLIFIED saveCustomerToFirebase - now just calls central service
+async saveCustomerToFirebase(customerData) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.save('customers', customerData);
+        return result.success;
     }
-    return null;
+    return false;
+},
+
+// SIMPLIFIED deleteCustomerFromFirebase
+async deleteCustomerFromFirebase(customerId) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.delete('customers', customerId);
+        return result.success;
+    }
+    return false;
+},
+
+// SIMPLIFIED saveOrderToFirebase
+async saveOrderToFirebase(orderData) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.save('orders', orderData);
+        return result.success;
+    }
+    return false;
+},
+
+// SIMPLIFIED deleteOrderFromFirebase
+async deleteOrderFromFirebase(orderId) {
+    if (window.CentralDataService) {
+        const result = await window.CentralDataService.delete('orders', orderId);
+        return result.success;
+    }
+    return false;
 },
     
     renderModule() {
