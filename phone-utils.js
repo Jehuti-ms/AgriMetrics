@@ -11,18 +11,15 @@ const PhoneUtils = {
   validatePhone(input) {
     if (!input) return false;
     const digits = input.replace(/\D/g, '');
-    // Basic validation: 7–15 digits allowed
     return digits.length >= 7 && digits.length <= 15;
   },
 
   formatPhone(input, defaultCountry = 'BB') {
     if (!input) return '';
     const digits = input.replace(/\D/g, '');
-    // Simple formatting: show with leading +
     return digits ? `+${digits}` : '';
   }
 };
 
-// Expose globally so other modules can use it
 window.PhoneUtils = PhoneUtils;
 console.log('✅ PhoneUtils loaded successfully');
