@@ -1,4 +1,4 @@
-// central-data-service.js - Centralized Data Management for All Modules
+// central-data-service.js - With Broadcaster Integration
 console.log('🏢 Initializing Central Data Service...');
 
 class CentralDataService {
@@ -23,10 +23,31 @@ class CentralDataService {
         // Queue for offline operations
         this.pendingOperations = [];
         
-        // Event listeners
-        this.listeners = new Map();
-        
         console.log('🏢 Central Data Service created');
+    }
+    
+    /**
+     * Get the broadcaster instance
+     */
+    getBroadcaster() {
+        return window.Broadcaster || null;
+    }
+    
+    /**
+     * Broadcast event using the existing Broadcaster
+     */
+    broadcast(eventName, data) {
+        const broadcaster = this.getBroadcaster();
+        
+        if (broadcaster && typeof broadcaster.broadcast === 'function') {
+            // Use the existing Broadcaster
+            broadcaster.broadcast(eventName, data);
+            console.log(`📡 Broadcasted: ${eventName}`);
+        } else {
+            // Fallback to custom events
+            window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+            console.log(`📡 Dispatched custom event: ${eventName}`);
+        }
     }
     
     /**
@@ -58,10 +79,17 @@ class CentralDataService {
                     this.userId = newUserId;
                     await this.loadAllData();
                     this.startRealtimeListeners();
+                    
+                    // Broadcast user authenticated
+                    this.broadcast('user-authenticated', { userId: this.userId });
+                    
                 } else if (!newUserId) {
                     console.log('👤 User logged out');
                     this.userId = null;
                     this.clearCache();
+                    
+                    // Broadcast user logged out
+                    this.broadcast('user-logged-out', {});
                 }
             });
             
@@ -79,6 +107,9 @@ class CentralDataService {
         
         this.isInitialized = true;
         console.log('✅ Central Data Service initialized');
+        
+        // Broadcast that service is ready
+        this.broadcast('central-data-ready', { timestamp: new Date().toISOString() });
         
         // Process any pending offline operations
         await this.processPendingOperations();
@@ -102,7 +133,15 @@ class CentralDataService {
         }
         
         console.log('✅ All data loaded from Firebase');
-        this.broadcast('all-data-loaded', { data: this.cache });
+        
+        // Broadcast that all data is loaded
+        this.broadcast('all-data-loaded', { 
+            collections: Object.keys(this.cache).reduce((acc, key) => {
+                acc[key] = this.cache[key].length;
+                return acc;
+            }, {}),
+            timestamp: new Date().toISOString()
+        });
     }
     
     /**
@@ -127,6 +166,8 @@ class CentralDataService {
             this.saveToLocalStorage(collectionName);
             
             console.log(`  📥 Loaded ${items.length} ${collectionName}`);
+            
+            // Broadcast collection loaded
             this.broadcast(`${collectionName}-loaded`, items);
             
         } catch (error) {
@@ -170,7 +211,11 @@ class CentralDataService {
                 id: docId
             });
             this.updateLocalCache(collectionName, docData);
+            
+            // Broadcast offline save
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+            this.broadcast('offline-operation-queued', { collection: collectionName, operation: 'save', id: docId });
+            
             return { success: false, offline: true, id: docId };
         }
         
@@ -187,9 +232,23 @@ class CentralDataService {
             
             console.log(`✅ Saved ${collectionName} to Firebase:`, docId);
             
-            // Broadcast update
+            // Broadcast the update to all modules via Broadcaster
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-            this.broadcast('data-changed', { collection: collectionName, action: 'save', data: docData });
+            this.broadcast('data-saved', { 
+                collection: collectionName, 
+                action: 'save', 
+                data: docData,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Also broadcast specific events for modules that listen for them
+            if (collectionName === 'customers') {
+                this.broadcast('customer-added', docData);
+            } else if (collectionName === 'orders') {
+                this.broadcast('order-created', docData);
+            } else if (collectionName === 'sales') {
+                this.broadcast('sale-recorded', docData);
+            }
             
             return { success: true, id: docId, data: docData };
             
@@ -218,7 +277,11 @@ class CentralDataService {
                 id: id
             });
             this.deleteFromLocalCache(collectionName, id);
+            
+            // Broadcast offline delete
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+            this.broadcast('offline-operation-queued', { collection: collectionName, operation: 'delete', id: id });
+            
             return { success: false, offline: true };
         }
         
@@ -235,9 +298,20 @@ class CentralDataService {
             
             console.log(`✅ Deleted ${collectionName} from Firebase:`, id);
             
-            // Broadcast update
+            // Broadcast the update to all modules
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-            this.broadcast('data-changed', { collection: collectionName, action: 'delete', id: id });
+            this.broadcast('data-deleted', { 
+                collection: collectionName, 
+                id: id,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Also broadcast specific events
+            if (collectionName === 'customers') {
+                this.broadcast('customer-deleted', { customerId: id });
+            } else if (collectionName === 'orders') {
+                this.broadcast('order-deleted', { orderId: id });
+            }
             
             return { success: true };
             
@@ -266,7 +340,11 @@ class CentralDataService {
                 updates: updates
             });
             this.updateLocalCache(collectionName, { id, ...updates });
+            
+            // Broadcast offline update
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+            this.broadcast('offline-operation-queued', { collection: collectionName, operation: 'update', id: id });
+            
             return { success: false, offline: true };
         }
         
@@ -286,9 +364,14 @@ class CentralDataService {
             
             console.log(`✅ Updated ${collectionName} in Firebase:`, id);
             
-            // Broadcast update
+            // Broadcast the update to all modules
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-            this.broadcast('data-changed', { collection: collectionName, action: 'update', id: id, updates: updates });
+            this.broadcast('data-updated', { 
+                collection: collectionName, 
+                id: id,
+                updates: updates,
+                timestamp: new Date().toISOString()
+            });
             
             return { success: true };
             
@@ -311,34 +394,6 @@ class CentralDataService {
     getById(collectionName, id) {
         const collection = this.cache[collectionName] || [];
         return collection.find(item => item.id == id);
-    }
-    
-    /**
-     * Subscribe to data changes
-     */
-    on(eventName, callback) {
-        if (!this.listeners.has(eventName)) {
-            this.listeners.set(eventName, []);
-        }
-        this.listeners.get(eventName).push(callback);
-    }
-    
-    /**
-     * Broadcast event to all subscribers
-     */
-    broadcast(eventName, data) {
-        if (this.listeners.has(eventName)) {
-            this.listeners.get(eventName).forEach(callback => {
-                try {
-                    callback(data);
-                } catch (error) {
-                    console.error(`Error in ${eventName} listener:`, error);
-                }
-            });
-        }
-        
-        // Also dispatch DOM event for modules that prefer that
-        window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
     }
     
     /**
@@ -368,8 +423,14 @@ class CentralDataService {
                     
                     if (oldCount !== items.length) {
                         console.log(`🔄 Real-time update: ${collection} (${items.length} items)`);
+                        
+                        // Broadcast real-time update via Broadcaster
                         this.broadcast(`${collection}-updated`, items);
-                        this.broadcast('data-changed', { collection: collection, action: 'realtime', count: items.length });
+                        this.broadcast('realtime-update', { 
+                            collection: collection, 
+                            count: items.length,
+                            timestamp: new Date().toISOString()
+                        });
                     }
                 }, (error) => {
                     console.error(`Error in real-time listener for ${collection}:`, error);
@@ -378,6 +439,9 @@ class CentralDataService {
         
         this.isListening = true;
         console.log('✅ Real-time listeners active');
+        
+        // Broadcast that real-time listeners are active
+        this.broadcast('realtime-listeners-active', { collections: collections });
     }
     
     /**
@@ -470,6 +534,9 @@ class CentralDataService {
             }
         }
         
+        // Broadcast that offline operations are complete
+        this.broadcast('offline-operations-complete', { count: operations.length });
+        
         console.log('✅ All pending operations processed');
     }
     
@@ -500,4 +567,4 @@ if (document.readyState === 'loading') {
     window.CentralDataService.initialize();
 }
 
-console.log('✅ Central Data Service ready - All modules can now use it!');
+console.log('✅ Central Data Service ready with Broadcaster integration!');
