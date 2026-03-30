@@ -783,6 +783,34 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     const digits = phoneNumber.replace(/\D/g, '');
     return digits.length >= 7 && digits.length <= 15;
 },
+
+    /**
+ * Get Firestore instance safely
+ * @returns {FirebaseFirestore|null}
+ */
+getFirestore() {
+    // window.db is the correct reference in your setup
+    if (window.db && window.db.collection) {
+        return window.db;
+    }
+    // Fallback to firebase.firestore() if needed
+    if (window.firebase && window.firebase.firestore) {
+        return window.firebase.firestore();
+    }
+    return null;
+},
+
+/**
+ * Get current authenticated user ID
+ * @returns {string|null}
+ */
+getCurrentUserId() {
+    if (window.firebase && window.firebase.auth) {
+        const user = window.firebase.auth().currentUser;
+        return user ? user.uid : null;
+    }
+    return null;
+},
     
     renderModule() {
         if (!this.element) return;
@@ -1598,7 +1626,7 @@ showCustomerForm() {
     }
 },
 
-    handleCustomerSubmit(e) {
+   handleCustomerSubmit(e) {
     e.preventDefault();
     
     const phoneInput = document.getElementById('customer-phone');
@@ -1607,8 +1635,6 @@ showCustomerForm() {
     let phoneNumber = '';
     if (phoneInput) {
         phoneNumber = this.getPhoneNumberE164(phoneInput);
-        
-        // If no stored E.164, try to parse from raw value
         if (!phoneNumber && phoneInput.value) {
             const result = this.normalizePhoneNumber(phoneInput.value, 'BB');
             phoneNumber = result.e164;
@@ -1618,13 +1644,41 @@ showCustomerForm() {
     const customerData = {
         id: Date.now(),
         name: document.getElementById('customer-name').value,
-        contact: phoneNumber,  // Store in E.164 format
+        contact: phoneNumber,
         email: document.getElementById('customer-email').value,
-        address: document.getElementById('customer-address').value
+        address: document.getElementById('customer-address').value,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
 
+    // Save to localStorage first
     this.customers.push(customerData);
     this.saveData();
+    
+    // ========== SAVE TO FIREBASE ==========
+    const db = this.getFirestore();
+    const userId = this.getCurrentUserId();
+    
+    if (db && userId) {
+        console.log('💾 Saving customer to Firebase...');
+        
+        // Save to Firestore
+        db.collection('users').doc(userId).collection('customers')
+            .doc(customerData.id.toString())
+            .set(customerData)
+            .then(() => {
+                console.log('✅ Customer saved to Firebase:', customerData.name);
+                console.log('📡 Customer ID:', customerData.id);
+            })
+            .catch(error => {
+                console.error('❌ Error saving customer to Firebase:', error);
+            });
+    } else {
+        console.warn('⚠️ Cannot save to Firebase. db:', !!db, 'userId:', userId);
+        if (!db) console.warn('   Firestore not available');
+        if (!userId) console.warn('   User not authenticated');
+    }
+    // =====================================
     
     // Broadcast customer added
     this.broadcastCustomerAdded(customerData);
@@ -1868,86 +1922,130 @@ showCustomerForm() {
         });
     },
 
-    handleOrderSubmit(e) {
-        e.preventDefault();
+   handleOrderSubmit(e) {
+    e.preventDefault();
+    
+    const editingId = document.getElementById('editing-order-id')?.value;
+    const isEditing = editingId && editingId !== '';
+    
+    // Get form values
+    const customerId = parseInt(document.getElementById('order-customer').value);
+    const date = document.getElementById('order-date').value;
+    const status = document.getElementById('order-status').value;
+    const notes = document.getElementById('order-notes').value;
+    
+    // Collect items
+    const items = [];
+    document.querySelectorAll('.order-item').forEach(item => {
+        const productSelect = item.querySelector('.product-select');
+        const quantityInput = item.querySelector('.quantity-input');
+        const priceInput = item.querySelector('.price-input');
         
-        const editingId = document.getElementById('editing-order-id')?.value;
-        const isEditing = editingId && editingId !== '';
-        
-        // Get form values
-        const customerId = parseInt(document.getElementById('order-customer').value);
-        const date = document.getElementById('order-date').value;
-        const status = document.getElementById('order-status').value;
-        const notes = document.getElementById('order-notes').value;
-        
-        // Collect items
-        const items = [];
-        document.querySelectorAll('.order-item').forEach(item => {
-            const productSelect = item.querySelector('.product-select');
-            const quantityInput = item.querySelector('.quantity-input');
-            const priceInput = item.querySelector('.price-input');
-            
-            if (productSelect.value && quantityInput.value && priceInput.value) {
-                items.push({
-                    productId: productSelect.value,
-                    productName: productSelect.options[productSelect.selectedIndex].text.split(' - ')[0],
-                    quantity: parseFloat(quantityInput.value),
-                    price: parseFloat(priceInput.value)
-                });
-            }
-        });
-        
-        if (items.length === 0) {
-            this.showNotification('Please add at least one item', 'error');
-            return;
+        if (productSelect.value && quantityInput.value && priceInput.value) {
+            items.push({
+                productId: productSelect.value,
+                productName: productSelect.options[productSelect.selectedIndex].text.split(' - ')[0],
+                quantity: parseFloat(quantityInput.value),
+                price: parseFloat(priceInput.value)
+            });
         }
+    });
+    
+    if (items.length === 0) {
+        this.showNotification('Please add at least one item', 'error');
+        return;
+    }
+    
+    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    
+    // Helper function to save to Firebase
+    const saveOrderToFirebase = (orderData) => {
+        const db = this.getFirestore();
+        const userId = this.getCurrentUserId();
         
-        const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        
-        if (isEditing) {
-            // Update existing order
-            const orderIndex = this.orders.findIndex(o => o.id == editingId);
-            if (orderIndex !== -1) {
-                this.orders[orderIndex] = {
-                    ...this.orders[orderIndex],
-                    customerId,
-                    date,
-                    items,
-                    totalAmount,
-                    status,
-                    notes
-                };
-                this.saveData();
-                
-                // Broadcast update
-                this.broadcastOrderUpdated(this.orders[orderIndex]);
-                
-                this.showNotification(`Order #${editingId} updated!`, 'success');
-            }
-        } else {
-            // Create new order
-            const orderData = {
-                id: Date.now(),
+        if (db && userId) {
+            return db.collection('users').doc(userId).collection('orders')
+                .doc(orderData.id.toString())
+                .set(orderData)
+                .then(() => console.log('✅ Order saved to Firebase:', orderData.id))
+                .catch(error => console.error('❌ Error saving order to Firebase:', error));
+        }
+        return Promise.resolve();
+    };
+    
+    if (isEditing) {
+        // Update existing order
+        const orderIndex = this.orders.findIndex(o => o.id == editingId);
+        if (orderIndex !== -1) {
+            const updatedOrder = {
+                ...this.orders[orderIndex],
                 customerId,
                 date,
                 items,
                 totalAmount,
                 status,
-                notes
+                notes,
+                updatedAt: new Date().toISOString()
             };
-            this.orders.unshift(orderData);
+            this.orders[orderIndex] = updatedOrder;
             this.saveData();
             
-            // Broadcast creation
-            this.broadcastOrderCreated(orderData);
+            // Save to Firebase
+            saveOrderToFirebase(updatedOrder);
             
-            this.showNotification('Order created successfully!', 'success');
+            // Broadcast update
+            this.broadcastOrderUpdated(updatedOrder);
+            
+            this.showNotification(`Order #${editingId} updated!`, 'success');
         }
+    } else {
+        // Create new order
+        const orderData = {
+            id: Date.now(),
+            customerId,
+            date,
+            items,
+            totalAmount,
+            status,
+            notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        this.orders.unshift(orderData);
+        this.saveData();
         
-        // Reset and hide form
-        this.hideOrderForm();
-        this.renderModule();
-    },
+        // Save to Firebase
+        saveOrderToFirebase(orderData);
+        
+        // Broadcast creation
+        this.broadcastOrderCreated(orderData);
+        
+        this.showNotification('Order created successfully!', 'success');
+    }
+    
+    // Reset and hide form
+    this.hideOrderForm();
+    this.renderModule();
+},
+    
+    /**
+ * Check if Firebase is available and user is authenticated
+ */
+isFirebaseAvailable() {
+    return window.firebaseDb && 
+           window.firebase.auth && 
+           firebase.auth().currentUser;
+},
+
+/**
+ * Get Firebase Firestore instance
+ */
+getFirebaseDb() {
+    if (this.isFirebaseAvailable()) {
+        return window.firebaseDb;
+    }
+    return null;
+},
 
     
     deleteOrder(id) {
