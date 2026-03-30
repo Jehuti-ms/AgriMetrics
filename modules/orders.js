@@ -478,6 +478,298 @@ const OrdersModule = {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
+    // ========== PHONE NUMBER HANDLING WITH libphonenumber-js ==========
+
+/**
+ * Normalize and format phone number using libphonenumber-js
+ * @param {string} rawInput - Raw phone input
+ * @param {string} defaultCountry - Default country code (default: 'BB' for Barbados)
+ * @returns {object} - { formatted, e164, isValid }
+ */
+normalizePhoneNumber(rawInput, defaultCountry = 'BB') {
+    if (!rawInput) return { formatted: '', e164: '', isValid: false };
+    
+    // Check if libphonenumber is available
+    if (typeof parsePhoneNumberFromString === 'undefined') {
+        console.warn('libphonenumber-js not loaded, using fallback');
+        return this.fallbackPhoneFormat(rawInput);
+    }
+    
+    try {
+        // Extract digits
+        const digits = rawInput.replace(/\D/g, '');
+        
+        // Parse the phone number
+        const phoneNumber = parsePhoneNumberFromString(digits, defaultCountry);
+        
+        if (phoneNumber && phoneNumber.isValid()) {
+            return {
+                formatted: phoneNumber.formatInternational(),
+                e164: phoneNumber.format('E.164'),
+                isValid: true,
+                national: phoneNumber.formatNational(),
+                countryCode: phoneNumber.country
+            };
+        }
+        
+        // If not valid, return raw digits
+        return {
+            formatted: digits,
+            e164: digits ? `+${digits}` : '',
+            isValid: false
+        };
+    } catch (error) {
+        console.error('Error parsing phone number:', error);
+        return this.fallbackPhoneFormat(rawInput);
+    }
+},
+
+/**
+ * Fallback phone formatting when libphonenumber is not available
+ */
+fallbackPhoneFormat(rawInput) {
+    const digits = rawInput.replace(/\D/g, '');
+    
+    // Basic formatting for Barbados/US numbers
+    if (digits.length === 11 && digits.startsWith('1')) {
+        const formatted = `+1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7,11)}`;
+        return { formatted, e164: `+${digits}`, isValid: digits.length >= 10 };
+    } else if (digits.length === 10) {
+        const formatted = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
+        return { formatted, e164: `+1${digits}`, isValid: true };
+    } else if (digits.length === 7) {
+        const formatted = `${digits.slice(0,3)}-${digits.slice(3,7)}`;
+        return { formatted, e164: `+${digits}`, isValid: true };
+    }
+    
+    return { formatted: digits, e164: digits ? `+${digits}` : '', isValid: digits.length >= 7 };
+},
+
+/**
+ * Setup phone input with libphonenumber-js
+ * @param {HTMLElement} phoneInput - The phone input element
+ * @param {string} defaultCountry - Default country code (default: 'BB' for Barbados)
+ */
+setupPhoneField(phoneInput, defaultCountry = 'BB') {
+    if (!phoneInput) return;
+    
+    // Store the E.164 value separately
+    let storedE164 = '';
+    
+    // Remove existing event listeners by cloning
+    const newInput = phoneInput.cloneNode(true);
+    phoneInput.parentNode.replaceChild(newInput, phoneInput);
+    
+    // Set attributes
+    newInput.placeholder = 'Enter phone number';
+    newInput.setAttribute('maxlength', '20');
+    
+    // Input event - only allow digits and basic formatting
+    newInput.addEventListener('input', (e) => {
+        // Store raw digits for editing
+        const digits = e.target.value.replace(/\D/g, '');
+        e.target.dataset.rawDigits = digits;
+        
+        // Show raw digits while typing (no formatting to avoid cursor jumps)
+        e.target.value = digits;
+    });
+    
+    // Blur event - format the number
+    newInput.addEventListener('blur', (e) => {
+        const digits = e.target.dataset.rawDigits || e.target.value.replace(/\D/g, '');
+        
+        if (digits) {
+            const result = this.normalizePhoneNumber(digits, defaultCountry);
+            
+            if (result.isValid) {
+                // Store E.164 format
+                storedE164 = result.e164;
+                e.target.dataset.e164 = storedE164;
+                
+                // Display formatted version
+                e.target.value = result.formatted;
+                
+                // Optional: show success feedback
+                e.target.style.borderColor = '#10b981';
+                setTimeout(() => {
+                    e.target.style.borderColor = '';
+                }, 2000);
+            } else {
+                // Invalid number
+                e.target.value = digits; // Show raw digits
+                e.target.dataset.e164 = '';
+                e.target.style.borderColor = '#ef4444';
+                
+                // Show warning (optional)
+                if (digits.length >= 3) {
+                    this.showNotification('Please enter a valid phone number', 'warning');
+                }
+            }
+        } else {
+            e.target.value = '';
+            e.target.dataset.e164 = '';
+            storedE164 = '';
+        }
+    });
+    
+    // Focus event - show raw digits for editing
+    newInput.addEventListener('focus', (e) => {
+        const digits = e.target.dataset.rawDigits || '';
+        if (digits) {
+            e.target.value = digits;
+            e.target.setSelectionRange(digits.length, digits.length);
+        }
+        e.target.style.borderColor = '';
+    });
+    
+    return newInput;
+},
+
+/**
+ * Get the stored E.164 phone number from input
+ * @param {HTMLElement} phoneInput - The phone input element
+ * @returns {string} - E.164 formatted number (e.g., +12465551234)
+ */
+getPhoneNumberE164(phoneInput) {
+    if (!phoneInput) return '';
+    return phoneInput.dataset.e164 || '';
+},
+
+/**
+ * Format phone number for display (from E.164)
+ * @param {string} e164Number - E.164 formatted number
+ * @returns {string} - User-friendly formatted number
+ */
+formatPhoneForDisplay(e164Number) {
+    if (!e164Number) return '';
+    
+    // Clean the input - remove any non-digit except plus
+    const cleanNumber = e164Number.trim();
+    
+    if (typeof parsePhoneNumberFromString !== 'undefined') {
+        try {
+            // Try to parse as E.164 or any format
+            const phoneNumber = parsePhoneNumberFromString(cleanNumber);
+            if (phoneNumber && phoneNumber.isValid()) {
+                // Return international format for display
+                return phoneNumber.formatInternational();
+            }
+            
+            // If parsing fails but it starts with +, try to extract digits
+            if (cleanNumber.startsWith('+')) {
+                const digits = cleanNumber.replace(/\D/g, '');
+                const fallbackParse = parsePhoneNumberFromString(digits);
+                if (fallbackParse && fallbackParse.isValid()) {
+                    return fallbackParse.formatInternational();
+                }
+            }
+        } catch (error) {
+            console.error('Error formatting phone number:', error);
+        }
+    }
+    
+    // Fallback formatting for Barbados/US numbers
+    const digits = cleanNumber.replace(/\D/g, '');
+    
+    // Handle duplicate leading 1s (fix for duplication bug)
+    let cleanDigits = digits;
+    if (cleanDigits.startsWith('11')) {
+        cleanDigits = cleanDigits.substring(1);
+    }
+    
+    // Format based on length
+    if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
+        // International format: +1 (246) 555-1234
+        const countryCode = cleanDigits[0];
+        const areaCode = cleanDigits.slice(1, 4);
+        const firstPart = cleanDigits.slice(4, 7);
+        const secondPart = cleanDigits.slice(7, 11);
+        return `+${countryCode} (${areaCode}) ${firstPart}-${secondPart}`;
+    } 
+    else if (cleanDigits.length === 10) {
+        // US/Barbados local format: (246) 555-1234
+        const areaCode = cleanDigits.slice(0, 3);
+        const firstPart = cleanDigits.slice(3, 6);
+        const secondPart = cleanDigits.slice(6, 10);
+        return `(${areaCode}) ${firstPart}-${secondPart}`;
+    } 
+    else if (cleanDigits.length === 7) {
+        // Local 7-digit format: 555-1234
+        const firstPart = cleanDigits.slice(0, 3);
+        const secondPart = cleanDigits.slice(3, 7);
+        return `${firstPart}-${secondPart}`;
+    }
+    else if (cleanDigits.length === 8 && cleanDigits.startsWith('1')) {
+        // Short international format
+        return `+${cleanDigits}`;
+    }
+    else if (cleanDigits.length > 0) {
+        // Show with + prefix for other lengths
+        return cleanDigits.length > 7 ? `+${cleanDigits}` : cleanDigits;
+    }
+    
+    return cleanNumber;
+},
+
+    formatPhone(phoneNumber) {
+    if (!phoneNumber) return '';
+    
+    // If it's already in E.164 format with +
+    if (phoneNumber.startsWith('+')) {
+        return this.formatPhoneForDisplay(phoneNumber);
+    }
+    
+    // If it's just digits
+    const digits = phoneNumber.replace(/\D/g, '');
+    
+    if (typeof parsePhoneNumberFromString !== 'undefined') {
+        try {
+            // Try to parse with default country (Barbados)
+            const parsed = parsePhoneNumberFromString(digits, 'BB');
+            if (parsed && parsed.isValid()) {
+                return parsed.formatInternational();
+            }
+        } catch (error) {
+            console.error('Error parsing phone number:', error);
+        }
+    }
+    
+    // Fallback formatting
+    if (digits.length === 10) {
+        return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
+    } else if (digits.length === 11 && digits.startsWith('1')) {
+        return `+${digits.slice(0,1)} (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7,11)}`;
+    } else if (digits.length === 7) {
+        return `${digits.slice(0,3)}-${digits.slice(3,7)}`;
+    }
+    
+    return digits || phoneNumber;
+},
+
+/**
+ * Validate a phone number
+ * @param {string} phoneNumber - Phone number to validate
+ * @param {string} defaultCountry - Default country code
+ * @returns {boolean} - True if valid
+ */
+validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
+    if (!phoneNumber) return false;
+    
+    if (typeof parsePhoneNumberFromString !== 'undefined') {
+        try {
+            const digits = phoneNumber.replace(/\D/g, '');
+            const parsed = parsePhoneNumberFromString(digits, defaultCountry);
+            return parsed ? parsed.isValid() : false;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    // Fallback validation
+    const digits = phoneNumber.replace(/\D/g, '');
+    return digits.length >= 7 && digits.length <= 15;
+},
+    
     renderModule() {
         if (!this.element) return;
 
@@ -1213,7 +1505,6 @@ const OrdersModule = {
     console.log('👤 Showing customer form');
     
     try {
-        // Get the customer form container
         const customerContainer = document.getElementById('customer-form-container');
         if (!customerContainer) {
             console.error('❌ Customer form container not found');
@@ -1221,55 +1512,75 @@ const OrdersModule = {
             return;
         }
         
-        // Hide order form if visible
         const orderContainer = document.getElementById('order-form-container');
         if (orderContainer) {
             orderContainer.classList.add('hidden');
         }
         
-        // Hide customers section temporarily for better focus
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
             customersSection.style.display = 'none';
         }
         
-        // Show the customer form
         customerContainer.classList.remove('hidden');
         customerContainer.style.display = 'block';
-        
-        // Force a reflow to ensure scrolling works
         customerContainer.offsetHeight;
         
-        // Scroll to the form with smooth behavior
         customerContainer.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'start',
             inline: 'nearest'
         });
         
-        // Reset form
         const form = document.getElementById('customer-form');
         if (form) {
             form.reset();
             
-            // ========== ADD PHONE FORMATTING HERE ==========
-            // Setup phone input formatting after reset
+            // Setup phone input with libphonenumber
             setTimeout(() => {
                 const phoneInput = document.getElementById('customer-phone');
-                if (phoneInput && window.PhoneUtils) {
-                    window.PhoneUtils.setupPhoneInput(phoneInput);
-                    console.log('📞 Phone formatting enabled for customer form');
-                } else if (phoneInput && !window.PhoneUtils) {
-                    console.warn('PhoneUtils not loaded, retrying...');
-                    // Try again if PhoneUtils isn't ready
-                    setTimeout(() => {
-                        if (window.PhoneUtils) {
-                            window.PhoneUtils.setupPhoneInput(phoneInput);
-                        }
-                    }, 500);
+                if (phoneInput) {
+                    this.setupPhoneField(phoneInput, 'BB'); // 'BB' for Barbados
+                    console.log('📞 Phone field setup with libphonenumber-js');
                 }
             }, 100);
-            // =============================================
+            
+            setTimeout(() => {
+                const nameInput = document.getElementById('customer-name');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 500);
+        }
+        
+        const title = document.querySelector('#customer-form-container h3');
+        if (title) {
+            title.textContent = 'Add New Customer';
+        }
+        
+        const submitBtn = document.querySelector('#customer-form button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Add Customer';
+        }
+        
+        document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+        
+        customerContainer.style.transition = 'all 0.3s ease';
+        customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+        
+        setTimeout(() => {
+            customerContainer.style.boxShadow = 'none';
+        }, 2000);
+        
+        console.log('✅ Customer form shown with libphonenumber-js');
+        
+    } catch (error) {
+        console.error('❌ Error in showCustomerForm:', error);
+        this.showNotification('Error showing customer form', 'error');
+    }
+},
+            
+    // =============================================
             
             // Focus on the first input after a short delay (after scroll completes)
             setTimeout(() => {
@@ -1601,20 +1912,27 @@ const OrdersModule = {
         this.hideOrderForm();
         this.renderModule();
     },
-
-  handleCustomerSubmit(e) {
+handleCustomerSubmit(e) {
     e.preventDefault();
     
     const phoneInput = document.getElementById('customer-phone');
-    const phoneRaw = phoneInput?.value || '';
     
-    // Extract digits using the existing method (which will use PhoneUtils or fallback)
-    const phoneDigits = this.extractPhoneDigits(phoneRaw);
+    // Get the E.164 formatted number
+    let phoneNumber = '';
+    if (phoneInput) {
+        phoneNumber = this.getPhoneNumberE164(phoneInput);
+        
+        // If no stored E.164, try to parse from raw value
+        if (!phoneNumber && phoneInput.value) {
+            const result = this.normalizePhoneNumber(phoneInput.value, 'BB');
+            phoneNumber = result.e164;
+        }
+    }
     
     const customerData = {
         id: Date.now(),
         name: document.getElementById('customer-name').value,
-        contact: phoneDigits,  // Store as digits only
+        contact: phoneNumber,  // Store in E.164 format
         email: document.getElementById('customer-email').value,
         address: document.getElementById('customer-address').value
     };
