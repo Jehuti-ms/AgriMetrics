@@ -478,8 +478,7 @@ const OrdersModule = {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
-   // Add this entire block to your OrdersModule object
-// Place it right after getTotalRevenue() method
+
 
 // ========== PHONE NUMBER HANDLING WITH libphonenumber-js ==========
 
