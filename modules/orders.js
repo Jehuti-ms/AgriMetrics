@@ -1072,6 +1072,7 @@ function setupPhoneField() {
     }
   });
 },
+
    
     ensureCustomerFormVisible() {
         console.log('👁️ Ensuring customer form is visible');
