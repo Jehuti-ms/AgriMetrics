@@ -1053,27 +1053,7 @@ const OrdersModule = {
         this._orderListenersAttached = true;
         console.log('✅ Orders module event listeners setup complete');
     },
-
-
-    // ================= Phone Number Formatting =================
-function setupPhoneField() {
-  const phoneInput = document.getElementById('customer-phone');
-  if (!phoneInput) return;
-
-  phoneInput.addEventListener('input', e => {
-    e.target.value = PhoneUtils.normalizePhone(e.target.value);
-  });
-
-  phoneInput.addEventListener('blur', e => {
-    const raw = PhoneUtils.normalizePhone(e.target.value);
-    e.target.value = PhoneUtils.formatPhone(raw, 'BB'); // default Barbados
-    if (!PhoneUtils.validatePhone(raw, 'BB')) {
-      alert('⚠️ Invalid phone number');
-    }
-  });
-},
-
-   
+ 
     ensureCustomerFormVisible() {
         console.log('👁️ Ensuring customer form is visible');
         const customerContainer = document.getElementById('customer-form-container');
