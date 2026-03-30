@@ -478,8 +478,6 @@ const OrdersModule = {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
-
-
 // ========== PHONE NUMBER HANDLING WITH libphonenumber-js ==========
 
 /**
@@ -492,7 +490,9 @@ normalizePhoneNumber(rawInput, defaultCountry = 'BB') {
     if (!rawInput) return { formatted: '', e164: '', isValid: false };
     
     // Check if libphonenumber is available
-    if (typeof parsePhoneNumberFromString === 'undefined') {
+    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
+    
+    if (typeof parsePhone === 'undefined') {
         console.warn('libphonenumber-js not loaded, using fallback');
         return this.fallbackPhoneFormat(rawInput);
     }
@@ -502,7 +502,7 @@ normalizePhoneNumber(rawInput, defaultCountry = 'BB') {
         const digits = rawInput.replace(/\D/g, '');
         
         // Parse the phone number
-        const phoneNumber = parsePhoneNumberFromString(digits, defaultCountry);
+        const phoneNumber = parsePhone(digits, defaultCountry);
         
         if (phoneNumber && phoneNumber.isValid()) {
             return {
@@ -532,19 +532,25 @@ normalizePhoneNumber(rawInput, defaultCountry = 'BB') {
 fallbackPhoneFormat(rawInput) {
     const digits = rawInput.replace(/\D/g, '');
     
-    // Basic formatting for Barbados/US numbers
-    if (digits.length === 11 && digits.startsWith('1')) {
-        const formatted = `+1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7,11)}`;
-        return { formatted, e164: `+${digits}`, isValid: digits.length >= 10 };
-    } else if (digits.length === 10) {
-        const formatted = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
-        return { formatted, e164: `+1${digits}`, isValid: true };
-    } else if (digits.length === 7) {
-        const formatted = `${digits.slice(0,3)}-${digits.slice(3,7)}`;
-        return { formatted, e164: `+${digits}`, isValid: true };
+    // Fix duplicate leading 1s
+    let cleanDigits = digits;
+    if (cleanDigits.startsWith('11')) {
+        cleanDigits = cleanDigits.substring(1);
     }
     
-    return { formatted: digits, e164: digits ? `+${digits}` : '', isValid: digits.length >= 7 };
+    // Basic formatting for Barbados/US numbers
+    if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
+        const formatted = `+1 (${cleanDigits.slice(1,4)}) ${cleanDigits.slice(4,7)}-${cleanDigits.slice(7,11)}`;
+        return { formatted, e164: `+${cleanDigits}`, isValid: true };
+    } else if (cleanDigits.length === 10) {
+        const formatted = `(${cleanDigits.slice(0,3)}) ${cleanDigits.slice(3,6)}-${cleanDigits.slice(6,10)}`;
+        return { formatted, e164: `+1${cleanDigits}`, isValid: true };
+    } else if (cleanDigits.length === 7) {
+        const formatted = `${cleanDigits.slice(0,3)}-${cleanDigits.slice(3,7)}`;
+        return { formatted, e164: `+1246${cleanDigits}`, isValid: true };
+    }
+    
+    return { formatted: cleanDigits, e164: cleanDigits ? `+${cleanDigits}` : '', isValid: cleanDigits.length >= 7 };
 },
 
 /**
@@ -555,25 +561,18 @@ fallbackPhoneFormat(rawInput) {
 formatPhoneForDisplay(e164Number) {
     if (!e164Number) return '';
     
-    // Clean the input - remove any non-digit except plus
+    // Clean the input
     const cleanNumber = e164Number.trim();
     
-    if (typeof parsePhoneNumberFromString !== 'undefined') {
+    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
+    
+    if (typeof parsePhone !== 'undefined') {
         try {
             // Try to parse as E.164 or any format
-            const phoneNumber = parsePhoneNumberFromString(cleanNumber);
+            const phoneNumber = parsePhone(cleanNumber);
             if (phoneNumber && phoneNumber.isValid()) {
                 // Return international format for display
                 return phoneNumber.formatInternational();
-            }
-            
-            // If parsing fails but it starts with +, try to extract digits
-            if (cleanNumber.startsWith('+')) {
-                const digits = cleanNumber.replace(/\D/g, '');
-                const fallbackParse = parsePhoneNumberFromString(digits);
-                if (fallbackParse && fallbackParse.isValid()) {
-                    return fallbackParse.formatInternational();
-                }
             }
         } catch (error) {
             console.error('Error formatting phone number:', error);
@@ -591,32 +590,23 @@ formatPhoneForDisplay(e164Number) {
     
     // Format based on length
     if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
-        // International format: +1 (246) 555-1234
         const countryCode = cleanDigits[0];
         const areaCode = cleanDigits.slice(1, 4);
         const firstPart = cleanDigits.slice(4, 7);
         const secondPart = cleanDigits.slice(7, 11);
         return `+${countryCode} (${areaCode}) ${firstPart}-${secondPart}`;
     } else if (cleanDigits.length === 10) {
-        // US/Barbados local format: (246) 555-1234
         const areaCode = cleanDigits.slice(0, 3);
         const firstPart = cleanDigits.slice(3, 6);
         const secondPart = cleanDigits.slice(6, 10);
         return `(${areaCode}) ${firstPart}-${secondPart}`;
     } else if (cleanDigits.length === 7) {
-        // Local 7-digit format: 555-1234
         const firstPart = cleanDigits.slice(0, 3);
         const secondPart = cleanDigits.slice(3, 7);
         return `${firstPart}-${secondPart}`;
-    } else if (cleanDigits.length === 8 && cleanDigits.startsWith('1')) {
-        // Short international format
-        return `+${cleanDigits}`;
-    } else if (cleanDigits.length > 0) {
-        // Show with + prefix for other lengths
-        return cleanDigits.length > 7 ? `+${cleanDigits}` : cleanDigits;
     }
     
-    return cleanNumber;
+    return cleanDigits.length > 0 ? `+${cleanDigits}` : cleanNumber;
 },
 
 /**
@@ -635,10 +625,12 @@ formatPhone(phoneNumber) {
     // If it's just digits
     const digits = phoneNumber.replace(/\D/g, '');
     
-    if (typeof parsePhoneNumberFromString !== 'undefined') {
+    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
+    
+    if (typeof parsePhone !== 'undefined') {
         try {
             // Try to parse with default country (Barbados)
-            const parsed = parsePhoneNumberFromString(digits, 'BB');
+            const parsed = parsePhone(digits, 'BB');
             if (parsed && parsed.isValid()) {
                 return parsed.formatInternational();
             }
@@ -775,10 +767,12 @@ getPhoneNumberE164(phoneInput) {
 validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     if (!phoneNumber) return false;
     
-    if (typeof parsePhoneNumberFromString !== 'undefined') {
+    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
+    
+    if (typeof parsePhone !== 'undefined') {
         try {
             const digits = phoneNumber.replace(/\D/g, '');
-            const parsed = parsePhoneNumberFromString(digits, defaultCountry);
+            const parsed = parsePhone(digits, defaultCountry);
             return parsed ? parsed.isValid() : false;
         } catch (error) {
             return false;
