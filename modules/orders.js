@@ -784,7 +784,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     return digits.length >= 7 && digits.length <= 15;
 },
 
-    /**
+  /**
  * Get Firestore instance safely
  * @returns {FirebaseFirestore|null}
  */
@@ -1626,7 +1626,7 @@ showCustomerForm() {
     }
 },
 
-   handleCustomerSubmit(e) {
+  handleCustomerSubmit(e) {
     e.preventDefault();
     
     const phoneInput = document.getElementById('customer-phone');
@@ -1651,7 +1651,7 @@ showCustomerForm() {
         updatedAt: new Date().toISOString()
     };
 
-    // Save to localStorage first
+    // Save to localStorage
     this.customers.push(customerData);
     this.saveData();
     
@@ -1660,21 +1660,23 @@ showCustomerForm() {
     const userId = this.getCurrentUserId();
     
     if (db && userId) {
-        console.log('💾 Saving customer to Firebase...');
+        console.log('💾 Saving customer to Firebase:', customerData.name);
         
         // Save to Firestore
         db.collection('users').doc(userId).collection('customers')
             .doc(customerData.id.toString())
             .set(customerData)
             .then(() => {
-                console.log('✅ Customer saved to Firebase:', customerData.name);
-                console.log('📡 Customer ID:', customerData.id);
+                console.log('✅ Customer saved to Firebase successfully!');
+                console.log('   Customer ID:', customerData.id);
+                console.log('   Name:', customerData.name);
+                console.log('   Phone:', customerData.contact);
             })
             .catch(error => {
                 console.error('❌ Error saving customer to Firebase:', error);
             });
     } else {
-        console.warn('⚠️ Cannot save to Firebase. db:', !!db, 'userId:', userId);
+        console.warn('⚠️ Cannot save to Firebase. Using localStorage only.');
         if (!db) console.warn('   Firestore not available');
         if (!userId) console.warn('   User not authenticated');
     }
@@ -1711,7 +1713,7 @@ showCustomerForm() {
         }, 300);
     }
 },
-
+    
     hideCustomerForm() {
         console.log('🙈 Hiding customer form');
         const customerContainer = document.getElementById('customer-form-container');
@@ -1922,7 +1924,7 @@ showCustomerForm() {
         });
     },
 
-   handleOrderSubmit(e) {
+  handleOrderSubmit(e) {
     e.preventDefault();
     
     const editingId = document.getElementById('editing-order-id')?.value;
@@ -1964,6 +1966,7 @@ showCustomerForm() {
         const userId = this.getCurrentUserId();
         
         if (db && userId) {
+            console.log('💾 Saving order to Firebase:', orderData.id);
             return db.collection('users').doc(userId).collection('orders')
                 .doc(orderData.id.toString())
                 .set(orderData)
