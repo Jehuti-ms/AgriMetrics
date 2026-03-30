@@ -1561,7 +1561,7 @@ showCustomerForm() {
             setTimeout(() => {
                 const phoneInput = document.getElementById('customer-phone');
                 if (phoneInput) {
-                    this.setupPhoneField(phoneInput, 'BB'); // 'BB' for Barbados
+                    this.setupPhoneField(phoneInput, 'BB');
                     console.log('📞 Phone field setup with libphonenumber-js');
                 }
             }, 100);
@@ -1602,6 +1602,66 @@ showCustomerForm() {
     } catch (error) {
         console.error('❌ Error in showCustomerForm:', error);
         this.showNotification('Error showing customer form', 'error');
+    }
+},
+
+    handleCustomerSubmit(e) {
+    e.preventDefault();
+    
+    const phoneInput = document.getElementById('customer-phone');
+    
+    // Get the E.164 formatted number
+    let phoneNumber = '';
+    if (phoneInput) {
+        phoneNumber = this.getPhoneNumberE164(phoneInput);
+        
+        // If no stored E.164, try to parse from raw value
+        if (!phoneNumber && phoneInput.value) {
+            const result = this.normalizePhoneNumber(phoneInput.value, 'BB');
+            phoneNumber = result.e164;
+        }
+    }
+    
+    const customerData = {
+        id: Date.now(),
+        name: document.getElementById('customer-name').value,
+        contact: phoneNumber,  // Store in E.164 format
+        email: document.getElementById('customer-email').value,
+        address: document.getElementById('customer-address').value
+    };
+
+    this.customers.push(customerData);
+    this.saveData();
+    
+    // Broadcast customer added
+    this.broadcastCustomerAdded(customerData);
+    
+    // Refresh the customer dropdown if the order form is visible
+    const orderFormContainer = document.getElementById('order-form-container');
+    const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
+    
+    if (wasOrderFormVisible) {
+        this.refreshCustomerDropdown();
+    }
+    
+    this.renderModule();
+    this.hideCustomerForm();
+    
+    // Show success message
+    this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
+    
+    // If order form was visible, show it again and select the new customer
+    if (wasOrderFormVisible) {
+        setTimeout(() => {
+            this.showOrderForm();
+            const customerSelect = document.getElementById('order-customer');
+            if (customerSelect) {
+                customerSelect.value = customerData.id;
+                const event = new Event('change', { bubbles: true });
+                customerSelect.dispatchEvent(event);
+            }
+            this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
+        }, 300);
     }
 },
 
@@ -1895,65 +1955,7 @@ showCustomerForm() {
         this.hideOrderForm();
         this.renderModule();
     },
-handleCustomerSubmit(e) {
-    e.preventDefault();
-    
-    const phoneInput = document.getElementById('customer-phone');
-    
-    // Get the E.164 formatted number
-    let phoneNumber = '';
-    if (phoneInput) {
-        phoneNumber = this.getPhoneNumberE164(phoneInput);
-        
-        // If no stored E.164, try to parse from raw value
-        if (!phoneNumber && phoneInput.value) {
-            const result = this.normalizePhoneNumber(phoneInput.value, 'BB');
-            phoneNumber = result.e164;
-        }
-    }
-    
-    const customerData = {
-        id: Date.now(),
-        name: document.getElementById('customer-name').value,
-        contact: phoneNumber,  // Store in E.164 format
-        email: document.getElementById('customer-email').value,
-        address: document.getElementById('customer-address').value
-    };
 
-    this.customers.push(customerData);
-    this.saveData();
-    
-    // Broadcast customer added
-    this.broadcastCustomerAdded(customerData);
-    
-    // Refresh the customer dropdown if the order form is visible
-    const orderFormContainer = document.getElementById('order-form-container');
-    const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
-    
-    if (wasOrderFormVisible) {
-        this.refreshCustomerDropdown();
-    }
-    
-    this.renderModule();
-    this.hideCustomerForm();
-    
-    // Show success message
-    this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
-    
-    // If order form was visible, show it again and select the new customer
-    if (wasOrderFormVisible) {
-        setTimeout(() => {
-            this.showOrderForm();
-            const customerSelect = document.getElementById('order-customer');
-            if (customerSelect) {
-                customerSelect.value = customerData.id;
-                const event = new Event('change', { bubbles: true });
-                customerSelect.dispatchEvent(event);
-            }
-            this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
-        }, 300);
-    }
-},
     
     deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
