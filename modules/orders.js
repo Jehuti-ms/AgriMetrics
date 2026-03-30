@@ -478,7 +478,10 @@ const OrdersModule = {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
-    // ========== PHONE NUMBER HANDLING WITH libphonenumber-js ==========
+   // Add this entire block to your OrdersModule object
+// Place it right after getTotalRevenue() method
+
+// ========== PHONE NUMBER HANDLING WITH libphonenumber-js ==========
 
 /**
  * Normalize and format phone number using libphonenumber-js
@@ -546,96 +549,6 @@ fallbackPhoneFormat(rawInput) {
 },
 
 /**
- * Setup phone input with libphonenumber-js
- * @param {HTMLElement} phoneInput - The phone input element
- * @param {string} defaultCountry - Default country code (default: 'BB' for Barbados)
- */
-setupPhoneField(phoneInput, defaultCountry = 'BB') {
-    if (!phoneInput) return;
-    
-    // Store the E.164 value separately
-    let storedE164 = '';
-    
-    // Remove existing event listeners by cloning
-    const newInput = phoneInput.cloneNode(true);
-    phoneInput.parentNode.replaceChild(newInput, phoneInput);
-    
-    // Set attributes
-    newInput.placeholder = 'Enter phone number';
-    newInput.setAttribute('maxlength', '20');
-    
-    // Input event - only allow digits and basic formatting
-    newInput.addEventListener('input', (e) => {
-        // Store raw digits for editing
-        const digits = e.target.value.replace(/\D/g, '');
-        e.target.dataset.rawDigits = digits;
-        
-        // Show raw digits while typing (no formatting to avoid cursor jumps)
-        e.target.value = digits;
-    });
-    
-    // Blur event - format the number
-    newInput.addEventListener('blur', (e) => {
-        const digits = e.target.dataset.rawDigits || e.target.value.replace(/\D/g, '');
-        
-        if (digits) {
-            const result = this.normalizePhoneNumber(digits, defaultCountry);
-            
-            if (result.isValid) {
-                // Store E.164 format
-                storedE164 = result.e164;
-                e.target.dataset.e164 = storedE164;
-                
-                // Display formatted version
-                e.target.value = result.formatted;
-                
-                // Optional: show success feedback
-                e.target.style.borderColor = '#10b981';
-                setTimeout(() => {
-                    e.target.style.borderColor = '';
-                }, 2000);
-            } else {
-                // Invalid number
-                e.target.value = digits; // Show raw digits
-                e.target.dataset.e164 = '';
-                e.target.style.borderColor = '#ef4444';
-                
-                // Show warning (optional)
-                if (digits.length >= 3) {
-                    this.showNotification('Please enter a valid phone number', 'warning');
-                }
-            }
-        } else {
-            e.target.value = '';
-            e.target.dataset.e164 = '';
-            storedE164 = '';
-        }
-    });
-    
-    // Focus event - show raw digits for editing
-    newInput.addEventListener('focus', (e) => {
-        const digits = e.target.dataset.rawDigits || '';
-        if (digits) {
-            e.target.value = digits;
-            e.target.setSelectionRange(digits.length, digits.length);
-        }
-        e.target.style.borderColor = '';
-    });
-    
-    return newInput;
-},
-
-/**
- * Get the stored E.164 phone number from input
- * @param {HTMLElement} phoneInput - The phone input element
- * @returns {string} - E.164 formatted number (e.g., +12465551234)
- */
-getPhoneNumberE164(phoneInput) {
-    if (!phoneInput) return '';
-    return phoneInput.dataset.e164 || '';
-},
-
-/**
  * Format phone number for display (from E.164)
  * @param {string} e164Number - E.164 formatted number
  * @returns {string} - User-friendly formatted number
@@ -685,25 +598,21 @@ formatPhoneForDisplay(e164Number) {
         const firstPart = cleanDigits.slice(4, 7);
         const secondPart = cleanDigits.slice(7, 11);
         return `+${countryCode} (${areaCode}) ${firstPart}-${secondPart}`;
-    } 
-    else if (cleanDigits.length === 10) {
+    } else if (cleanDigits.length === 10) {
         // US/Barbados local format: (246) 555-1234
         const areaCode = cleanDigits.slice(0, 3);
         const firstPart = cleanDigits.slice(3, 6);
         const secondPart = cleanDigits.slice(6, 10);
         return `(${areaCode}) ${firstPart}-${secondPart}`;
-    } 
-    else if (cleanDigits.length === 7) {
+    } else if (cleanDigits.length === 7) {
         // Local 7-digit format: 555-1234
         const firstPart = cleanDigits.slice(0, 3);
         const secondPart = cleanDigits.slice(3, 7);
         return `${firstPart}-${secondPart}`;
-    }
-    else if (cleanDigits.length === 8 && cleanDigits.startsWith('1')) {
+    } else if (cleanDigits.length === 8 && cleanDigits.startsWith('1')) {
         // Short international format
         return `+${cleanDigits}`;
-    }
-    else if (cleanDigits.length > 0) {
+    } else if (cleanDigits.length > 0) {
         // Show with + prefix for other lengths
         return cleanDigits.length > 7 ? `+${cleanDigits}` : cleanDigits;
     }
@@ -711,7 +620,12 @@ formatPhoneForDisplay(e164Number) {
     return cleanNumber;
 },
 
-    formatPhone(phoneNumber) {
+/**
+ * Format phone number for display (public method)
+ * @param {string} phoneNumber - Phone number in any format
+ * @returns {string} - Formatted phone number
+ */
+formatPhone(phoneNumber) {
     if (!phoneNumber) return '';
     
     // If it's already in E.164 format with +
@@ -744,6 +658,113 @@ formatPhoneForDisplay(e164Number) {
     }
     
     return digits || phoneNumber;
+},
+
+/**
+ * Setup phone input with libphonenumber-js
+ * @param {HTMLElement} phoneInput - The phone input element
+ * @param {string} defaultCountry - Default country code (default: 'BB' for Barbados)
+ */
+setupPhoneField(phoneInput, defaultCountry = 'BB') {
+    if (!phoneInput) return;
+    
+    // Store the E.164 value separately
+    let storedE164 = '';
+    
+    // Remove existing event listeners by cloning
+    const newInput = phoneInput.cloneNode(true);
+    phoneInput.parentNode.replaceChild(newInput, phoneInput);
+    
+    // Set attributes
+    newInput.placeholder = 'Enter phone number';
+    newInput.setAttribute('maxlength', '20');
+    
+    // Input event - only allow digits
+    newInput.addEventListener('input', (e) => {
+        // Store raw digits for editing
+        const digits = e.target.value.replace(/\D/g, '');
+        
+        // Fix duplicate leading 1s
+        let cleanDigits = digits;
+        if (cleanDigits.startsWith('11')) {
+            cleanDigits = cleanDigits.substring(1);
+        }
+        
+        e.target.dataset.rawDigits = cleanDigits;
+        
+        // Show raw digits while typing (no formatting to avoid cursor jumps)
+        e.target.value = cleanDigits;
+    });
+    
+    // Blur event - format the number
+    newInput.addEventListener('blur', (e) => {
+        const digits = e.target.dataset.rawDigits || e.target.value.replace(/\D/g, '');
+        
+        if (digits) {
+            // Fix duplicate leading 1s
+            let cleanDigits = digits;
+            if (cleanDigits.startsWith('11')) {
+                cleanDigits = cleanDigits.substring(1);
+                e.target.dataset.rawDigits = cleanDigits;
+            }
+            
+            const result = this.normalizePhoneNumber(cleanDigits, defaultCountry);
+            
+            if (result.isValid) {
+                // Store E.164 format
+                storedE164 = result.e164;
+                e.target.dataset.e164 = storedE164;
+                
+                // Display formatted version
+                e.target.value = result.formatted;
+                
+                // Visual feedback for valid number
+                e.target.style.borderColor = '#10b981';
+                e.target.style.transition = 'border-color 0.3s ease';
+                setTimeout(() => {
+                    e.target.style.borderColor = '';
+                }, 2000);
+            } else {
+                // Invalid number - show raw digits
+                e.target.value = cleanDigits;
+                e.target.dataset.e164 = '';
+                e.target.style.borderColor = '#ef4444';
+                
+                // Show warning for longer numbers
+                if (cleanDigits.length >= 5) {
+                    this.showNotification('Please enter a valid phone number', 'warning');
+                }
+            }
+        } else {
+            e.target.value = '';
+            e.target.dataset.e164 = '';
+            storedE164 = '';
+            e.target.style.borderColor = '';
+        }
+    });
+    
+    // Focus event - show raw digits for editing
+    newInput.addEventListener('focus', (e) => {
+        const digits = e.target.dataset.rawDigits || '';
+        if (digits) {
+            e.target.value = digits;
+            // Place cursor at the end
+            e.target.setSelectionRange(digits.length, digits.length);
+        }
+        e.target.style.borderColor = '';
+    });
+    
+    return newInput;
+},
+
+/**
+ * Get the stored E.164 phone number from input
+ * @param {HTMLElement} phoneInput - The phone input element
+ * @returns {string} - E.164 formatted number (e.g., +12465551234)
+ */
+getPhoneNumberE164(phoneInput) {
+    if (!phoneInput) return '';
+    return phoneInput.dataset.e164 || '';
 },
 
 /**
