@@ -1522,7 +1522,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         }
     },
 
-   showCustomerForm() {
+showCustomerForm() {
     console.log('👤 Showing customer form');
     
     try {
@@ -1574,44 +1574,6 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             }, 500);
         }
         
-        const title = document.querySelector('#customer-form-container h3');
-        if (title) {
-            title.textContent = 'Add New Customer';
-        }
-        
-        const submitBtn = document.querySelector('#customer-form button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.textContent = 'Add Customer';
-        }
-        
-        document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
-        
-        customerContainer.style.transition = 'all 0.3s ease';
-        customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
-        
-        setTimeout(() => {
-            customerContainer.style.boxShadow = 'none';
-        }, 2000);
-        
-        console.log('✅ Customer form shown with libphonenumber-js');
-        
-    } catch (error) {
-        console.error('❌ Error in showCustomerForm:', error);
-        this.showNotification('Error showing customer form', 'error');
-    }
-},
-            
-    // =============================================
-            
-            // Focus on the first input after a short delay (after scroll completes)
-            setTimeout(() => {
-                const nameInput = document.getElementById('customer-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
-            }, 500);
-        }
-        
         // Update title
         const title = document.querySelector('#customer-form-container h3');
         if (title) {
@@ -1635,7 +1597,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             customerContainer.style.boxShadow = 'none';
         }, 2000);
         
-        console.log('✅ Customer form shown and scrolled into view');
+        console.log('✅ Customer form shown with libphonenumber-js');
         
     } catch (error) {
         console.error('❌ Error in showCustomerForm:', error);
