@@ -1054,112 +1054,30 @@ const OrdersModule = {
         console.log('✅ Orders module event listeners setup complete');
     },
 
-   
-// ========== Setup phone input formatting ============
-// Add this method to your OrdersModule if it's not there, or replace existing one
-setupPhoneField() {
-    const phoneInput = document.getElementById('customer-phone');
-    if (!phoneInput) return;
+// ================= Phone Number Formatting =================
+    import { normalizePhone, validatePhone, formatPhone } from './phoneUtils.js';
 
-    // Placeholder and maxlength
-    phoneInput.placeholder = 'Enter phone number';
-    phoneInput.setAttribute('maxlength', '20'); // allow longer for international
+function setupPhoneField() {
+  const phoneInput = document.getElementById('customer-phone');
+  if (!phoneInput) return;
 
-    // Hint
-    if (!phoneInput.parentElement.querySelector('.phone-hint')) {
-        const hint = document.createElement('small');
-        hint.className = 'form-hint phone-hint';
-        hint.style.cssText = 'color: #6b7280; font-size: 12px; display: block; margin-top: 4px;';
-        hint.textContent = 'Enter digits only (supports local, US, or international)';
-        phoneInput.parentElement.appendChild(hint);
+  phoneInput.addEventListener('input', e => {
+    e.target.value = normalizePhone(e.target.value);
+  });
+
+  phoneInput.addEventListener('blur', e => {
+    const raw = normalizePhone(e.target.value);
+    e.target.value = formatPhone(raw, 'BB'); // default Barbados
+    if (!validatePhone(raw, 'BB')) {
+      alert('⚠️ Invalid phone number');
     }
+  });
 
-    // Only digits while typing
-    phoneInput.addEventListener('input', function(e) {
-        let digits = e.target.value.replace(/\D/g, '');
-        // Allow up to 15 digits for international
-        if (digits.length > 15) digits = digits.substring(0, 15);
-        e.target.value = digits;
-    });
-
-    // Format on blur
-    phoneInput.addEventListener('blur', function(e) {
-        const digits = e.target.value.replace(/\D/g, '');
-        if (digits.length === 10) {
-            e.target.value = `1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
-        } else if (digits.length === 7) {
-            e.target.value = `${digits.slice(0,3)}-${digits.slice(3)}`;
-        } else if (digits.length > 10) {
-            // For international, just show raw digits with a leading +
-            e.target.value = `+${digits}`;
-        }
-    });
-
-    // On focus, always strip formatting back to raw digits
-    phoneInput.addEventListener('focus', function(e) {
-        const digits = e.target.value.replace(/\D/g, '');
-        e.target.value = digits;
-    });
-
-    // Block non-numeric keys
-    phoneInput.addEventListener('keydown', function(e) {
-        const allowed = ['Backspace','Delete','Tab','Escape','Enter',
-                         'ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
-        if (allowed.includes(e.key)) return;
-        if (!/^\d$/.test(e.key)) e.preventDefault();
-    });
-
-    console.log('📞 Phone field fixed: supports local, US, and international numbers');
-},
-    
-// Format phone for display
-formatPhone(phone) {
-    if (!phone) return '';
-    
-    // Get digits only
-    let digits = phone.toString().replace(/\D/g, '');
-    
-    // Check if it's a US/Canada number (starts with 1 or 10 digits)
-    if (digits.length === 10) {
-        return `1 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 10)}`;
-    } else if (digits.length === 11 && digits.startsWith('1')) {
-        const numberDigits = digits.substring(1);
-        return `1 (${numberDigits.substring(0, 3)}) ${numberDigits.substring(3, 6)}-${numberDigits.substring(6, 10)}`;
-    }
-    
-    // For other international numbers, just return the digits with spaces
-    if (digits.length > 0) {
-        // Simple formatting for international numbers
-        if (digits.length <= 2) {
-            return `+${digits}`;
-        } else if (digits.length <= 5) {
-            return `+${digits.substring(0, 2)} ${digits.substring(2)}`;
-        } else if (digits.length <= 8) {
-            return `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5)}`;
-        } else {
-            return `+${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 8)} ${digits.substring(8, 12)}`;
-        }
-    }
-    
-    return phone;
+  phoneInput.addEventListener('focus', e => {
+    e.target.value = normalizePhone(e.target.value);
+  });
 },
 
-// Extract digits for storage
-extractPhoneDigits(phone) {
-    if (!phone) return '';
-    // Just remove all non-digit characters
-    return phone.toString().replace(/\D/g, '');
-},
-
-// Validate phone
-isValidPhone(phone) {
-    if (!phone) return true;
-    if (window.PhoneUtils) {
-        return window.PhoneUtils.isValidPhoneNumber(phone);
-    }
-    const digits = phone.replace(/\D/g, '');
-    return digits.length === 10;
-},
     
     ensureCustomerFormVisible() {
         console.log('👁️ Ensuring customer form is visible');
