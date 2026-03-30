@@ -1055,7 +1055,7 @@ const OrdersModule = {
     },
 
 // ================= Phone Number Formatting =================
-    import { normalizePhone, validatePhone, formatPhone } from './phoneUtils.js';
+    import { normalizePhone, validatePhone, formatPhone } from './phone-utils.js';
 
 function setupPhoneField() {
   const phoneInput = document.getElementById('customer-phone');
