@@ -1,4 +1,4 @@
-// phoneUtils.js
+// phone-utils.js
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 /**
