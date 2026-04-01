@@ -26,6 +26,7 @@ const IncomeExpensesModule = {
     isDeleting: false,
     isCapturing: false,  // Add this
     captureTimeout: null, // Add this
+     dataService: null,
 
     // Add this near the top of your module properties
 cameraFacingMode: 'environment', // 'environment' for back camera, 'user' for front
@@ -94,6 +95,82 @@ async initialize() {
         return false;
     }
 
+    // Get reference to UnifiedDataService
+    this.dataService = window.UnifiedDataService;
+    
+    if (!this.dataService) {
+        console.error('❌ UnifiedDataService not available! Falling back to legacy mode...');
+        // Fallback to legacy initialization
+        return this.initializeLegacy();
+    }
+
+    // Wait for Firebase to be ready (via data service)
+    let waitCount = 0;
+    while (!this.dataService.db && waitCount < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+    }
+    
+    this.isFirebaseAvailable = !!(this.dataService.db && this.dataService.userId);
+    console.log('Firebase available:', this.isFirebaseAvailable);
+    console.log('UnifiedDataService online:', this.dataService.isOnline);
+    console.log('Pending operations:', this.dataService.offlineQueue?.length || 0);
+
+    // Register with StyleManager
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    // Setup network detection (using unified service's status)
+    this.setupNetworkDetection();
+    
+    // Load data from unified service
+    await this.loadData();
+
+    // Setup real-time sync via unified service
+    if (this.isFirebaseAvailable) {
+        this.setupRealtimeSync();
+    }
+    
+    // Load receipts (using unified service or localStorage)
+    await this.loadReceiptsFromUnifiedService();
+    
+    // Setup receipt action listeners
+    this.setupReceiptActionListeners();
+    
+    // Sync any pending operations if online
+    if (this.isFirebaseAvailable && this.dataService.offlineQueue?.length > 0) {
+        console.log(`📦 Found ${this.dataService.offlineQueue.length} pending operations, syncing...`);
+        setTimeout(() => {
+            this.dataService.processOfflineQueue();
+        }, 3000);
+    }
+
+    this.receiptQueue = this.receiptQueue || [];
+    this.setupSalesListeners();
+    
+    // Render module
+    this.renderModule();
+    this.initialized = true;
+    
+    // Connect to data broadcaster for backward compatibility
+    this.connectToDataBroadcaster();
+    
+    // Update sync status in UI
+    this.updateSyncStatus(this.dataService.getSyncStatus());
+    
+    console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
+    console.log('📊 Sync status:', this.dataService.getSyncStatus());
+    
+    return true;
+},
+
+/**
+ * Legacy initialization for backward compatibility
+ */
+async initializeLegacy() {
+    console.log('⚠️ Using legacy initialization (no UnifiedDataService)');
+    
     // Wait for Firebase to be ready
     let waitCount = 0;
     while (!window.db && waitCount < 20) {
@@ -109,11 +186,11 @@ async initialize() {
     }
 
     this.setupNetworkDetection();
-    await this.loadData();
+    await this.loadDataLegacy();
 
-    // Setup real-time sync (now it will work!)
+    // Setup real-time sync (legacy)
     if (this.isFirebaseAvailable) {
-        this.setupRealtimeSync();
+        this.setupRealtimeSyncLegacy();
     }
     
     await this.loadReceiptsFromFirebase();
@@ -131,7 +208,7 @@ async initialize() {
     this.initialized = true;
     this.connectToDataBroadcaster();
     
-    console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
+    console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions (legacy mode)');
     return true;
 },
     
@@ -176,6 +253,7 @@ async initialize() {
         tryConnect();
     },
 
+        
     // ✅ FIXED: Moved inside the module
     setupFallbackListeners() {
         window.addEventListener('sales-updated', (event) => {
@@ -378,11 +456,56 @@ async initialize() {
     },
 
     // ==================== DATA MANAGEMENT ====================
-   async loadData() {
-    console.log('Loading transactions...');
+  async loadData() {
+    console.log('Loading transactions from UnifiedDataService...');
     
     try {
-        // Your existing loadData code here...
+        // Get transactions from unified service
+        this.transactions = this.dataService.get('transactions') || [];
+        
+        // Also check localStorage for any data that might not be in unified service yet
+        if (this.transactions.length === 0) {
+            const saved = localStorage.getItem('farm-transactions');
+            if (saved) {
+                const localTransactions = JSON.parse(saved);
+                console.log(`📁 Found ${localTransactions.length} transactions in localStorage, importing...`);
+                
+                // Import to unified service
+                for (const transaction of localTransactions) {
+                    await this.dataService.save('transactions', transaction);
+                }
+                
+                // Reload from unified service
+                this.transactions = this.dataService.get('transactions') || [];
+            }
+        }
+        
+        // Sort by date (newest first)
+        this.transactions.sort((a, b) => {
+            const dateA = new Date(a.date || a.createdAt);
+            const dateB = new Date(b.date || b.createdAt);
+            return dateB - dateA;
+        });
+        
+        console.log(`✅ Loaded ${this.transactions.length} transactions from UnifiedDataService`);
+        
+        // Update sync status
+        this.updateSyncStatus(this.dataService.getSyncStatus());
+        
+    } catch (error) {
+        console.error('❌ Error loading transactions from unified service:', error);
+        // Fallback to legacy load
+        await this.loadDataLegacy();
+    }
+},
+
+/**
+ * Legacy data load (backup)
+ */
+async loadDataLegacy() {
+    console.log('Loading transactions from localStorage (legacy)...');
+    
+    try {
         const saved = localStorage.getItem('farm-transactions');
         if (saved) {
             this.transactions = JSON.parse(saved);
@@ -391,12 +514,10 @@ async initialize() {
             this.transactions = [];
         }
         
-        // ========== ADD THIS ==========
-        // Load from Firebase and merge
+        // Load from Firebase and merge if available
         if (this.isFirebaseAvailable && window.db) {
-            await this.loadFromFirebase();
+            await this.loadFromFirebaseLegacy();
         }
-        // ==============================
         
         // Sort and save
         this.transactions.sort((a, b) => {
@@ -409,6 +530,7 @@ async initialize() {
         
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
+        this.transactions = [];
     }
 },
 
@@ -518,89 +640,23 @@ async saveToFirebase() {
 
 // Setup real-time sync
 setupRealtimeSync() {
-    console.log('📡 Setting up real-time sync...');
-    
-    if (!this.isFirebaseAvailable) {
-        console.log('❌ Firebase not available');
-        return false;
-    }
-    
-    if (!window.db) {
-        console.log('❌ Firestore not available');
-        return false;
-    }
-    
-    const user = window.firebase.auth().currentUser;
-    if (!user) {
-        console.log('❌ No user logged in');
-        return false;
-    }
-    
-    // Clean up existing listener
-    if (this.realtimeUnsubscribe) {
-        console.log('Cleaning up existing listener...');
-        this.realtimeUnsubscribe();
-        this.realtimeUnsubscribe = null;
-    }
-    
-    console.log('Setting up listener for user:', user.uid);
-    
-    try {
-        this.realtimeUnsubscribe = window.db.collection('users')
-            .doc(user.uid)
-            .collection('transactions')
-            .onSnapshot((snapshot) => {
-                console.log(`🔄 Received ${snapshot.docChanges().length} changes from Firebase`);
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === 'added' || change.type === 'modified') {
-                        const remote = change.doc.data();
-                        const myDeviceId = this.getDeviceId();
-                        
-                        // Skip if this change came from this device
-                        if (remote.deviceId === myDeviceId) {
-                            return;
-                        }
-                        
-                        console.log(`🔄 Syncing transaction: ${remote.id} (${change.type})`);
-                        
-                        const existingIndex = this.transactions.findIndex(t => t.id == remote.id);
-                        
-                        if (existingIndex === -1) {
-                            this.transactions.unshift(remote);
-                            console.log(`✅ Added new transaction from other device`);
-                        } else {
-                            this.transactions[existingIndex] = remote;
-                            console.log(`✅ Updated transaction from other device`);
-                        }
-                        
-                        // Sort and save
-                        this.transactions.sort((a, b) => {
-                            const dateA = new Date(a.date || a.createdAt);
-                            const dateB = new Date(b.date || b.createdAt);
-                            return dateB - dateA;
-                        });
-                        
-                        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                        this.updateStats();
-                        this.updateTransactionsList();
-                        this.updateCategoryBreakdown();
-                        
-                        this.showNotification(`📱 New transaction from another device`, 'info');
-                    }
-                });
-            }, (error) => {
-                console.error('❌ Real-time sync error:', error);
-                this.realtimeUnsubscribe = null;
-            });
+        console.log('📡 Setting up real-time sync...');
         
-        console.log('✅ Real-time sync active');
-        return true;
+        // Listen for transaction updates from unified service
+        this.dataService.on('transactions-updated', (transactions) => {
+            console.log('🔄 Transactions updated from unified service:', transactions?.length);
+            this.transactions = transactions || [];
+            this.updateStats();
+            this.updateTransactionsList();
+            this.updateCategoryBreakdown();
+        });
         
-    } catch (error) {
-        console.error('❌ Failed to set up real-time sync:', error);
-        return false;
-    }
-},
+        // Listen for sync status changes
+        this.dataService.on('sync-completed', (status) => {
+            console.log('✅ Sync completed:', status);
+            this.updateSyncStatus(status);
+        });
+    },
     
     saveData() {
     console.log('💾 Saving transactions to localStorage');
@@ -4996,176 +5052,110 @@ showCameraInterface: function() {
     }
 },
     
-    async saveTransaction() {
-        console.log('Saving transaction...');
+   async saveTransaction(transactionData) {
+        console.log('Saving transaction via unified service...', transactionData);
         
-        // Improved Firebase auth check
-        let userId = 'anonymous';
-        try {
-            if (window.firebase && window.firebase.auth) {
-                const auth = window.firebase.auth();
-                if (auth && auth.currentUser) {
-                    userId = auth.currentUser.uid;
-                    console.log('✅ User ID:', userId);
-                }
-            }
-        } catch (authError) {
-            console.warn('⚠️ Error getting user:', authError);
-        }
+        const now = new Date().toISOString();
+        const formattedDate = this.formatDateForStorage(transactionData.date);
         
-        // Get form values with validation
-        const idInput = document.getElementById('transaction-id');
-        const dateInput = document.getElementById('transaction-date');
-        const typeInput = document.getElementById('transaction-type');
-        const categoryInput = document.getElementById('transaction-category');
-        const amountInput = document.getElementById('transaction-amount');
-        const descriptionInput = document.getElementById('transaction-description');
-        const paymentInput = document.getElementById('transaction-payment');
-        const referenceInput = document.getElementById('transaction-reference');
-        const notesInput = document.getElementById('transaction-notes');
-        
-        // Check if elements exist
-        if (!dateInput || !typeInput || !categoryInput || !amountInput || !descriptionInput) {
-            console.error('❌ Required form elements not found');
-            this.showNotification('Form elements not found', 'error');
-            return;
-        }
-        
-        const id = idInput?.value || Date.now();
-        const date = dateInput.value;
-        const type = typeInput.value;
-        const category = categoryInput.value;
-        const amount = parseFloat(amountInput.value) || 0;
-        const description = descriptionInput.value.trim();
-        const paymentMethod = paymentInput?.value || 'cash';
-        const reference = referenceInput?.value || '';
-        const notes = notesInput?.value || '';
-        
-        // Validate required fields
-        if (!date || !type || !category || !amount || !description) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        if (amount <= 0) {
-            this.showNotification('Amount must be greater than 0', 'error');
-            return;
-        }
-        
-        // Prepare receipt data if exists
-        let receiptData = null;
-        if (this.receiptPreview && this.receiptPreview.downloadURL) {
-            receiptData = {
-                id: this.receiptPreview.id || `receipt_${Date.now()}`,
-                name: this.receiptPreview.name || 'receipt.jpg',
-                downloadURL: this.receiptPreview.downloadURL,
-                size: this.receiptPreview.size || 0,
-                type: this.receiptPreview.type || 'image/jpeg',
-                uploadedAt: this.receiptPreview.uploadedAt || new Date().toISOString(),
-                status: 'attached'
-            };
-        }
-        
-        // Ensure ID is a number
-        const transactionId = typeof id === 'string' ? parseInt(id) || Date.now() : id;
-        
-        const transactionData = {
-            id: transactionId,
-            date,
-            type,
-            category,
-            amount,
-            description,
-            paymentMethod,
-            reference,
-            notes,
-            receipt: receiptData,
-            userId: userId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+        const finalTransaction = {
+            ...transactionData,
+            date: formattedDate,
+            updatedAt: now,
+            createdAt: transactionData.createdAt || now
         };
         
-        // Check if transaction exists
-        const existingIndex = this.transactions ? this.transactions.findIndex(t => t.id == transactionId) : -1;
+        // Generate ID if needed
+        if (!finalTransaction.id) {
+            finalTransaction.id = Date.now().toString();
+        }
         
-        try {
-            if (existingIndex > -1) {
-                // Update existing transaction
-                this.transactions[existingIndex] = transactionData;
-                console.log('📝 Updated existing transaction:', transactionId);
+        // Save via unified service
+        const result = await this.dataService.save('transactions', finalTransaction);
+        
+        if (result.success) {
+            // Update local array (unified service will broadcast the update)
+            const existingIndex = this.transactions.findIndex(t => t.id === finalTransaction.id);
+            if (existingIndex >= 0) {
+                this.transactions[existingIndex] = finalTransaction;
             } else {
-                // Add new transaction
-                if (!idInput?.value) {
-                    transactionData.id = Date.now(); // Generate new ID for new transactions
-                }
-                if (!this.transactions) this.transactions = [];
-                this.transactions.unshift(transactionData);
-                console.log('➕ Added new transaction:', transactionData.id);
+                this.transactions.unshift(finalTransaction);
             }
             
-            // Save to localStorage
-            try {
-                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                console.log('💾 Saved to localStorage');
-            } catch (storageError) {
-                console.warn('⚠️ Failed to save to localStorage:', storageError);
+            // Sort by date
+            this.transactions.sort((a, b) => {
+                return this.compareDates(a.date, b.date);
+            });
+            
+            // Update UI
+            this.updateStats();
+            this.updateTransactionsList();
+            this.updateCategoryBreakdown();
+            
+            // Show notification
+            this.showNotification(result.offline ? 'Transaction saved locally (will sync when online)' : 'Transaction saved!', 'success');
+            
+            // If this is an income transaction, broadcast to other modules
+            if (finalTransaction.type === 'income') {
+                this.broadcastIncomeToSales(finalTransaction);
             }
             
-            // Save to Firebase if available
-            if (this.isFirebaseAvailable && window.db) {
-                try {
-                    const docRef = window.db.collection('transactions')
-                        .doc(transactionData.id.toString());
-                    
-                    await docRef.set(transactionData, { merge: true });
-                    console.log('✅ Transaction saved to Firebase:', transactionData.id);
-                    
-                    // Verify the save
-                    const savedDoc = await docRef.get();
-                    if (savedDoc.exists) {
-                        console.log('✅ Firebase save verified');
-                    }
-                    
-                    this.showNotification('Transaction saved successfully!', 'success');
-                } catch (firebaseError) {
-                    console.warn('⚠️ Firebase error:', firebaseError.message);
-                    this.showNotification('Saved locally (Firebase error: ' + firebaseError.message + ')', 'warning');
-                }
-            } else {
-                console.log('💾 Firebase not available, saved locally only');
-                this.showNotification('Transaction saved locally!', 'success');
+            // If this is an expense transaction, broadcast to inventory
+            if (finalTransaction.type === 'expense') {
+                this.broadcastExpenseToInventory(finalTransaction);
+            }
+        } else {
+            this.showNotification('Error saving transaction: ' + result.error, 'error');
+        }
+        
+        return result;
+    },
+    
+    async deleteTransaction(transactionId) {
+        console.log('Deleting transaction via unified service:', transactionId);
+        
+        const result = await this.dataService.delete('transactions', transactionId);
+        
+        if (result.success) {
+            // Update local array
+            this.transactions = this.transactions.filter(t => t.id != transactionId);
+            
+            // Update UI
+            this.updateStats();
+            this.updateTransactionsList();
+            this.updateCategoryBreakdown();
+            
+            this.showNotification(result.offline ? 'Transaction deleted locally (will sync when online)' : 'Transaction deleted!', 'success');
+        } else {
+            this.showNotification('Error deleting transaction: ' + result.error, 'error');
+        }
+        
+        return result;
+    },
+
+    async updateTransaction(transactionId, updates) {
+        console.log('Updating transaction via unified service:', transactionId);
+        
+        const result = await this.dataService.update('transactions', transactionId, updates);
+        
+        if (result.success) {
+            // Update local array
+            const index = this.transactions.findIndex(t => t.id == transactionId);
+            if (index !== -1) {
+                this.transactions[index] = { ...this.transactions[index], ...updates, updatedAt: new Date().toISOString() };
             }
             
             // Update UI
-            if (typeof this.updateStats === 'function') this.updateStats();
-            if (typeof this.updateTransactionsList === 'function') this.updateTransactionsList();
-            if (typeof this.updateCategoryBreakdown === 'function') this.updateCategoryBreakdown();
+            this.updateStats();
+            this.updateTransactionsList();
+            this.updateCategoryBreakdown();
             
-            // Close modal
-            if (typeof this.hideTransactionModal === 'function') {
-                this.hideTransactionModal();
-            }
-            
-            // Clear form if needed
-            this.clearTransactionForm?.();
-            
-        } catch (error) {
-            console.error('❌ Error saving transaction:', error);
-            this.showNotification('Error saving transaction: ' + error.message, 'error');
-        }
-    },
-    
-    deleteTransaction() {
-        const transactionId = document.getElementById('transaction-id')?.value;
-        if (!transactionId) {
-            this.showNotification('No transaction selected', 'error');
-            return;
+            this.showNotification(result.offline ? 'Transaction updated locally (will sync when online)' : 'Transaction updated!', 'success');
+        } else {
+            this.showNotification('Error updating transaction: ' + result.error, 'error');
         }
         
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            this.deleteTransactionRecord(transactionId);
-            this.hideTransactionModal();
-        }
+        return result;
     },
 
     async deleteTransactionRecord(transactionId) {
@@ -5192,6 +5182,42 @@ showCameraInterface: function() {
         this.showNotification('Transaction deleted successfully', 'success');
     },
 
+     broadcastIncomeToSales(transaction) {
+        // Broadcast to sales module via unified service
+        this.dataService.broadcast('income-recorded', {
+            amount: transaction.amount,
+            description: transaction.description,
+            date: transaction.date,
+            source: 'income-module',
+            transactionId: transaction.id
+        });
+    },
+
+    broadcastExpenseToInventory(transaction) {
+        // Broadcast to inventory module
+        this.dataService.broadcast('expense-recorded', {
+            amount: transaction.amount,
+            description: transaction.description,
+            category: transaction.category,
+            date: transaction.date,
+            source: 'income-module',
+            transactionId: transaction.id
+        });
+    },
+
+    updateSyncStatus(status) {
+        const syncElement = document.getElementById('income-sync-status');
+        if (syncElement) {
+            if (status.pendingRemaining > 0) {
+                syncElement.textContent = `⏳ Syncing (${status.pendingRemaining} pending)`;
+                syncElement.style.color = '#FF9800';
+            } else {
+                syncElement.textContent = `✅ Synced`;
+                syncElement.style.color = '#4CAF50';
+            }
+        }
+    },
+    
     // ==================== RECEIPT PROCESSING ====================
     handleTransactionReceiptUpload(file) {
         if (!this.isValidReceiptFile(file)) {
@@ -7605,9 +7631,11 @@ unload() {
 };
 
 // =============== Register with FarmModules framework ===================
+
+// Register module
 if (window.FarmModules) {
     window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
-    console.log('✅ Income & Expenses module registered');
+    console.log('✅ Income & Expenses module registered with UnifiedDataService');
 }
 
 // MAKE IT GLOBAL - ADD THIS LINE!
