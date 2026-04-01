@@ -1,1237 +1,1157 @@
-// modules/feed-record.js - COMPLETE WITH UNIFIED DATA SERVICE INTEGRATION
-console.log('🌾 Loading feed-record module...');
+// modules/income-expenses.js - COMPLETE WITH ALL METHODS
+console.log('💰 Loading Income & Expenses module...');
 
-const FeedRecordModule = {
-    name: 'feed-record',
+const IncomeExpensesModule = {
+    name: 'income-expenses',
     initialized: false,
-    feedRecords: [],
-    feedInventory: [],
-    birdsStock: 0,
     element: null,
-    broadcaster: null,
-    dataService: null,
+    transactions: [],
+    categories: ['feed', 'medical', 'equipment', 'labor', 'utilities', 'sales', 'other'],
     currentEditingId: null,
+    receiptQueue: [],
+    cameraStream: null,
+    receiptPreview: null,
+    isFirebaseAvailable: false,
+    currentUploadTask: null,
+    cameraFacingMode: 'environment',
+    lastSwitchClick: 0,
+    isOnline: true,
+    isDeleting: false,
+    isCapturing: false,
+    captureTimeout: null,
+    dataService: null,
+    realtimeUnsubscribe: null,
+    _globalClickHandler: null,
+    _globalChangeHandler: null,
 
     // ==================== INITIALIZATION ====================
     async initialize() {
-        console.log('🌾 Initializing Feed Records...');
+        console.log('💰 Initializing Income & Expenses...');
         
         this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+        if (!this.element) {
+            console.error('Content area element not found');
+            return false;
+        }
 
-        // Get reference to UnifiedDataService
         this.dataService = window.UnifiedDataService;
         
         if (!this.dataService) {
-            console.warn('⚠️ UnifiedDataService not available, using legacy mode');
+            console.error('❌ UnifiedDataService not available! Falling back to legacy mode...');
             return this.initializeLegacy();
         }
 
-        // Get broadcaster if available (fallback for legacy events)
-        if (window.Broadcaster) {
-            this.broadcaster = window.Broadcaster;
-            console.log('📡 Feed module connected to Broadcaster');
+        let waitCount = 0;
+        while (!this.dataService.db && waitCount < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitCount++;
         }
+        
+        this.isFirebaseAvailable = !!(this.dataService.db && this.dataService.userId);
+        console.log('Firebase available:', this.isFirebaseAvailable);
+        console.log('UnifiedDataService online:', this.dataService.isOnline);
 
         if (window.StyleManager) {
             StyleManager.registerModule(this.name, this.element, this);
         }
 
-        // Load data from unified service
+        this.setupNetworkDetection();
         await this.loadData();
+
+        if (this.isFirebaseAvailable) {
+            this.setupRealtimeSync();
+        }
         
-        // Sync with FarmData (legacy compatibility)
-        await this.syncWithFarmData();
+        await this.loadReceipts();
+        this.setupReceiptActionListeners();
         
-        // Setup real-time sync
-        this.setupRealtimeSync();
-        
-        // Render module
+        if (this.isFirebaseAvailable && this.dataService.offlineQueue?.length > 0) {
+            setTimeout(() => this.dataService.processOfflineQueue(), 3000);
+        }
+
+        this.receiptQueue = this.receiptQueue || [];
+        this.setupSalesListeners();
         this.renderModule();
-        
-        // Setup event listeners
-        this.setupEventListeners();
-        
-        // Setup broadcaster listeners (legacy)
-        this.setupBroadcasterListeners();
-        
         this.initialized = true;
-        
-        // Update sync status
+        this.connectToDataBroadcaster();
         this.updateSyncStatus(this.dataService.getSyncStatus());
         
-        console.log('✅ Feed Records initialized with UnifiedDataService');
-        console.log('📊 Sync status:', this.dataService.getSyncStatus());
-        console.log('📦 Pending operations:', this.dataService.offlineQueue?.length || 0);
-        
+        console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
         return true;
     },
 
-    /**
-     * Legacy initialization for backward compatibility
-     */
-    initializeLegacy() {
-        console.log('⚠️ Using legacy initialization for Feed Records...');
+    async initializeLegacy() {
+        console.log('⚠️ Using legacy initialization (no UnifiedDataService)');
         
-        this.element = document.getElementById('content-area');
-        if (!this.element) return false;
-
-        if (window.Broadcaster) {
-            this.broadcaster = window.Broadcaster;
-            console.log('📡 Feed module connected to Broadcaster');
+        let waitCount = 0;
+        while (!window.db && waitCount < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            waitCount++;
         }
+        
+        this.isFirebaseAvailable = !!(window.firebase && window.db);
+        console.log('Firebase available:', this.isFirebaseAvailable);
 
         if (window.StyleManager) {
             StyleManager.registerModule(this.name, this.element, this);
         }
 
-        this.loadDataLegacy();
-        this.syncWithFarmDataLegacy();
-        this.renderModule();
-        this.setupEventListeners();
-        this.setupBroadcasterListeners();
-        this.initialized = true;
+        this.setupNetworkDetection();
+        await this.loadDataLegacy();
+
+        if (this.isFirebaseAvailable) {
+            this.setupRealtimeSyncLegacy();
+        }
         
-        console.log('✅ Feed Records initialized with StyleManager (legacy mode)');
+        await this.loadReceiptsFromFirebase();
+        this.setupReceiptActionListeners();
+        
+        if (this.isFirebaseAvailable) {
+            setTimeout(() => this.syncLocalTransactionsToFirebase(), 3000);
+        }
+
+        this.receiptQueue = this.receiptQueue || [];
+        this.setupSalesListeners();
+        this.renderModule();  // This is the line that was causing the error
+        this.initialized = true;
+        this.connectToDataBroadcaster();
+        
+        console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions (legacy mode)');
         return true;
     },
 
-    // ==================== DATA LOADING ====================
-    async loadData() {
-        console.log('Loading feed data from UnifiedDataService...');
-        
-        try {
-            // Get from unified service
-            this.feedRecords = this.dataService.get('feedRecords') || [];
-            this.feedInventory = this.dataService.get('feedInventory') || [];
-            
-            // Get birds stock from inventory
-            const inventory = this.dataService.get('inventory') || [];
-            const birdItem = inventory.find(item => 
-                item.name?.toLowerCase().includes('bird') || 
-                item.name?.toLowerCase().includes('broiler') ||
-                item.name?.toLowerCase().includes('chicken') ||
-                item.category?.toLowerCase().includes('poultry')
-            );
-            
-            this.birdsStock = birdItem?.quantity || 0;
-            
-            // Also check localStorage for any data that might not be in unified service yet
-            if (this.feedRecords.length === 0) {
-                const savedRecords = localStorage.getItem('farm-feed-records');
-                if (savedRecords) {
-                    const localRecords = JSON.parse(savedRecords);
-                    console.log(`📁 Found ${localRecords.length} feed records in localStorage, importing...`);
-                    
-                    for (const record of localRecords) {
-                        await this.dataService.save('feedRecords', record);
-                    }
-                    this.feedRecords = this.dataService.get('feedRecords') || [];
-                }
-            }
-            
-            if (this.feedInventory.length === 0) {
-                const savedInventory = localStorage.getItem('farm-feed-inventory');
-                if (savedInventory) {
-                    const localInventory = JSON.parse(savedInventory);
-                    console.log(`📁 Found ${localInventory.length} inventory items in localStorage, importing...`);
-                    
-                    for (const item of localInventory) {
-                        await this.dataService.save('feedInventory', item);
-                    }
-                    this.feedInventory = this.dataService.get('feedInventory') || [];
-                }
-            }
-            
-            // If still no bird stock, check farm-birds-storage
-            if (this.birdsStock === 0) {
-                const savedBirds = localStorage.getItem('farm-birds-stock');
-                if (savedBirds) {
-                    this.birdsStock = parseInt(savedBirds);
-                    if (this.birdsStock > 0) {
-                        await this.updateBirdStockInUnifiedService(this.birdsStock);
-                    }
-                }
-            }
-            
-            console.log(`✅ Loaded: ${this.feedRecords.length} feed records, ${this.feedInventory.length} inventory items, ${this.birdsStock} birds`);
-            
-        } catch (error) {
-            console.error('❌ Error loading feed data from unified service:', error);
-            this.loadDataLegacy();
-        }
-    },
-
-    loadDataLegacy() {
-        console.log('Loading feed data from localStorage (legacy)...');
-        
-        const savedRecords = localStorage.getItem('farm-feed-records');
-        const savedInventory = localStorage.getItem('farm-feed-inventory');
-        const savedBirds = localStorage.getItem('farm-birds-stock');
-        
-        this.feedRecords = savedRecords ? JSON.parse(savedRecords) : [];
-        this.feedInventory = savedInventory ? JSON.parse(savedInventory) : [];
-        this.birdsStock = savedBirds ? parseInt(savedBirds) : 0;
-        
-        console.log(`✅ Legacy load: ${this.feedRecords.length} records, ${this.feedInventory.length} inventory, ${this.birdsStock} birds`);
-    },
-
-    saveData() {
-        if (this.dataService) {
-            // Unified service handles saving - we just need to save locally for UI
-            localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
-            localStorage.setItem('farm-feed-inventory', JSON.stringify(this.feedInventory));
-            localStorage.setItem('farm-birds-stock', this.birdsStock.toString());
-        } else {
-            // Legacy save
-            localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
-            localStorage.setItem('farm-feed-inventory', JSON.stringify(this.feedInventory));
-            localStorage.setItem('farm-birds-stock', this.birdsStock.toString());
-        }
-        console.log('💾 Saved feed data:', this.feedRecords.length, 'records');
-    },
-
-    // ==================== REAL-TIME SYNC ====================
-    setupRealtimeSync() {
-        console.log('📡 Setting up real-time sync for feed...');
-        
-        if (!this.dataService) return;
-        
-        // Listen for feed record updates
-        this.dataService.on('feedRecords-updated', (records) => {
-            console.log('🔄 Feed records updated from unified service:', records?.length);
-            const oldCount = this.feedRecords.length;
-            this.feedRecords = records || [];
-            
-            if (oldCount !== this.feedRecords.length) {
-                this.renderModule();
-                this.showNotification(`📱 ${this.feedRecords.length - oldCount > 0 ? 'New' : 'Updated'} feed records synced`, 'info');
-            }
-        });
-        
-        // Listen for feed inventory updates
-        this.dataService.on('feedInventory-updated', (inventory) => {
-            console.log('🔄 Feed inventory updated from unified service:', inventory?.length);
-            this.feedInventory = inventory || [];
-            this.renderModule();
-        });
-        
-        // Listen for inventory updates (bird count)
-        this.dataService.on('inventory-updated', async (inventory) => {
-            const birdItem = inventory?.find(item => 
-                item.name?.toLowerCase().includes('bird') || 
-                item.name?.toLowerCase().includes('broiler') ||
-                item.name?.toLowerCase().includes('chicken')
-            );
-            
-            if (birdItem && birdItem.quantity !== this.birdsStock) {
-                const oldCount = this.birdsStock;
-                this.birdsStock = birdItem.quantity;
-                this.updateBirdCountDisplay();
-                console.log(`🐔 Bird count updated: ${oldCount} → ${this.birdsStock}`);
-                
-                if (this.birdsStock > oldCount) {
-                    this.showNotification(`📱 Bird count increased to ${this.birdsStock} (synced from another device)`, 'info');
-                } else if (this.birdsStock < oldCount) {
-                    this.showNotification(`📱 Bird count decreased to ${this.birdsStock} (synced from another device)`, 'info');
-                }
-            }
-        });
-        
-        // Listen for sync status changes
-        this.dataService.on('sync-completed', (status) => {
-            console.log('✅ Sync completed for feed module:', status);
-            this.updateSyncStatus(status);
-            
-            if (status.successCount > 0) {
-                this.showNotification(`✅ Synced ${status.successCount} feed record(s)`, 'success');
-            }
-        });
-        
-        // Listen for offline queue updates
-        this.dataService.on('offline-operation-queued', (data) => {
-            console.log('📦 Feed operation queued:', data);
-            this.updateSyncStatus({ pendingRemaining: data.queueLength });
-        });
-    },
-
-    updateSyncStatus(status) {
-        const statusElement = document.getElementById('feed-sync-status');
-        if (!statusElement) return;
-        
-        if (this.dataService && !this.dataService.isOnline) {
-            statusElement.textContent = `📴 Offline`;
-            statusElement.style.color = '#f44336';
-        } else if (status.pendingRemaining > 0) {
-            statusElement.textContent = `⏳ Syncing (${status.pendingRemaining} pending)`;
-            statusElement.style.color = '#FF9800';
-        } else {
-            statusElement.textContent = `✅ Synced`;
-            statusElement.style.color = '#4CAF50';
-        }
-    },
-
-    // ==================== FARM DATA SYNC ====================
-    async syncWithFarmData() {
-        console.log('🔄 Syncing Feed module with FarmData...');
-        
-        if (this.dataService) {
-            const inventory = this.dataService.get('inventory') || [];
-            const birdItem = inventory.find(item => 
-                item.name?.toLowerCase().includes('bird') || 
-                item.name?.toLowerCase().includes('broiler') ||
-                item.category?.toLowerCase().includes('poultry')
-            );
-            
-            if (birdItem && birdItem.quantity) {
-                this.birdsStock = parseInt(birdItem.quantity) || 0;
-            }
-            
-            if (window.FarmData) {
-                if (!window.FarmData.feed) {
-                    window.FarmData.feed = { records: this.feedRecords, inventory: this.feedInventory };
-                } else {
-                    window.FarmData.feed.records = this.feedRecords;
-                    window.FarmData.feed.inventory = this.feedInventory;
-                    window.FarmData.feed.birdsStock = this.birdsStock;
-                }
-            }
-            
-            this.updateBirdCountDisplay();
-        } else {
-            this.syncWithFarmDataLegacy();
-        }
-    },
-
-    syncWithFarmDataLegacy() {
-        console.log('🔄 Syncing Feed module with FarmData (legacy)...');
-        
-        if (window.FarmData) {
-            let birdCount = 0;
-            
-            if (window.FarmData.inventory && Array.isArray(window.FarmData.inventory)) {
-                const birdItem = window.FarmData.inventory.find(item => 
-                    item.name?.toLowerCase().includes('bird') || 
-                    item.name?.toLowerCase().includes('broiler') ||
-                    item.category?.toLowerCase().includes('poultry')
-                );
-                if (birdItem && birdItem.quantity) birdCount = parseInt(birdItem.quantity) || 0;
-            }
-            
-            if (birdCount > 0) {
-                this.birdsStock = birdCount;
-            } else {
-                const savedBirds = localStorage.getItem('farm-birds-stock');
-                this.birdsStock = savedBirds ? parseInt(savedBirds) : 0;
-            }
-            
-            if (!window.FarmData.feed) {
-                window.FarmData.feed = { records: this.feedRecords, inventory: this.feedInventory };
-            } else {
-                window.FarmData.feed.records = this.feedRecords;
-                window.FarmData.feed.inventory = this.feedInventory;
-            }
-            
-            window.dispatchEvent(new CustomEvent('feed-data-updated', {
-                detail: { birdsStock: this.birdsStock, records: this.feedRecords.length, inventory: this.feedInventory.length }
-            }));
-        }
-        
-        this.updateBirdCountDisplay();
-    },
-
-    updateFarmDataLegacy(formData) {
-        if (!window.FarmData) return;
-        
-        if (!window.FarmData.feed) {
-            window.FarmData.feed = { records: [], usage: [] };
-        }
-        
-        window.FarmData.feed.usage = window.FarmData.feed.usage || [];
-        window.FarmData.feed.usage.push({
-            id: formData.id,
-            date: formData.date,
-            feedType: formData.feedType,
-            quantity: formData.quantity,
-            cost: formData.cost,
-            birdsFed: this.birdsStock,
-            notes: formData.notes
-        });
-        
-        window.dispatchEvent(new CustomEvent('farm-data-updated', {
-            detail: { module: 'feed-record', action: 'feed-used', data: formData }
-        }));
-    },
-
-    // ==================== CORE FUNCTIONALITY ====================
-    async createFeedRecord(feedType, quantity, notes) {
-        console.log('Creating feed record via unified service...');
-        
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        if (!inventoryItem) {
-            this.showNotification('Invalid feed type selected!', 'error');
-            return null;
-        }
-        
-        if (inventoryItem.currentStock < quantity) {
-            this.showNotification(`Insufficient stock! Only ${inventoryItem.currentStock}kg available.`, 'error');
-            return null;
-        }
-
-        const formData = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            feedType: feedType,
-            quantity: quantity,
-            cost: this.calculateCost(feedType, quantity),
-            notes: notes,
-            birdsFed: this.birdsStock,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        const oldStock = inventoryItem.currentStock;
-        
-        try {
-            let result;
-            
-            if (this.dataService) {
-                // Save feed record
-                const feedResult = await this.dataService.save('feedRecords', formData);
-                if (!feedResult.success) {
-                    this.showNotification('Error saving feed record: ' + (feedResult.error || 'Unknown error'), 'error');
-                    return null;
-                }
-                
-                // Update inventory
-                inventoryItem.currentStock -= quantity;
-                await this.dataService.save('feedInventory', inventoryItem);
-                
-                // Create expense record
-                const expenseData = {
-                    id: Date.now() + 1,
-                    date: formData.date,
-                    type: 'expense',
-                    category: 'feed',
-                    description: `Feed: ${feedType} - ${quantity}kg`,
-                    amount: formData.cost,
-                    paymentMethod: 'cash',
-                    reference: `FEED-${formData.id.toString().slice(-6)}`,
-                    notes: notes || `Feed usage record #${formData.id}`,
-                    source: 'feed-module',
-                    feedRecordId: formData.id,
-                    feedType: feedType,
-                    quantity: quantity,
-                    birdsFed: this.birdsStock
-                };
-                
-                await this.dataService.save('transactions', expenseData);
-                
-                // Update local arrays
-                this.feedRecords = this.dataService.get('feedRecords') || [];
-                this.feedInventory = this.dataService.get('feedInventory') || [];
-                
-                result = feedResult;
-            } else {
-                result = await this.saveFeedRecordLegacy(formData, inventoryItem, oldStock);
-            }
-            
-            if (!result.success) {
-                this.showNotification('Error saving feed record: ' + (result.error || 'Unknown error'), 'error');
-                return null;
-            }
-            
-            // Broadcast feed recorded
-            await this.broadcastFeedRecorded(formData, oldStock, inventoryItem.currentStock);
-            
-            // Broadcast expense to modules
-            const expenseData = {
-                id: Date.now() + 1,
-                date: formData.date,
-                type: 'expense',
-                category: 'feed',
-                description: `Feed: ${feedType} - ${quantity}kg`,
-                amount: formData.cost,
-                paymentMethod: 'cash',
-                reference: `FEED-${formData.id.toString().slice(-6)}`,
-                notes: notes || `Feed usage record #${formData.id}`,
-                source: 'feed-module',
-                feedRecordId: formData.id
-            };
-            await this.broadcastExpenseToModules(expenseData);
-            
-            // Update main inventory module
-            await this.updateMainInventoryModule(feedType, quantity, formData.date);
-            
-            // Update FarmData (legacy compatibility)
-            this.updateFarmDataLegacy(formData);
-            
-            // Check low stock alert
-            this.checkLowStockAlert(inventoryItem, feedType);
-            
-            // Broadcast feed analytics
-            this.broadcastFeedAnalytics(formData);
-            
-            // Update UI
-            if (!this.dataService) {
-                this.feedRecords.unshift(formData);
-                this.saveData();
-                this.renderModule();
-            }
-            
-            const offlineMsg = result.offline ? ' (will sync when online)' : '';
-            this.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!${offlineMsg}`, 'success');
-            
-            if (this.dataService) {
-                this.updateSyncStatus(this.dataService.getSyncStatus());
-            }
-            
-            return formData;
-            
-        } catch (error) {
-            console.error('❌ Error in createFeedRecord:', error);
-            this.showNotification('Error creating feed record: ' + error.message, 'error');
-            return null;
-        }
-    },
-
-    async saveFeedRecordLegacy(formData, inventoryItem, oldStock) {
-        console.log('Saving feed record via legacy method...');
-        
-        try {
-            inventoryItem.currentStock -= formData.quantity;
-            this.feedRecords.unshift(formData);
-            this.saveData();
-            this.updateFarmData();
-            return { success: true, offline: false };
-        } catch (error) {
-            console.error('Legacy save error:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    async updateFeedRecord(recordId, feedType, quantity, notes) {
-        console.log('💾 UPDATING FEED RECORD:', recordId);
-        
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        if (!inventoryItem) {
-            this.showNotification('Invalid feed type selected!', 'error');
-            return;
-        }
-        
-        const originalRecord = this.feedRecords.find(r => r.id === recordId);
-        if (!originalRecord) return;
-        
-        const stockAdjustment = originalRecord.quantity - quantity;
-        const newStock = inventoryItem.currentStock + stockAdjustment;
-        
-        if (newStock < 0) {
-            this.showNotification(`Cannot adjust stock below zero!`, 'error');
-            return;
-        }
-        
-        const updatedRecord = {
-            ...originalRecord,
-            feedType,
-            quantity,
-            cost: this.calculateCost(feedType, quantity),
-            notes,
-            updatedAt: new Date().toISOString()
-        };
-        
-        if (this.dataService) {
-            await this.dataService.update('feedRecords', recordId, updatedRecord);
-            inventoryItem.currentStock = newStock;
-            await this.dataService.save('feedInventory', inventoryItem);
-        } else {
-            inventoryItem.currentStock = newStock;
-            const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
-            if (recordIndex !== -1) {
-                this.feedRecords[recordIndex] = updatedRecord;
-                this.saveData();
-            }
-        }
-        
-        this.renderModule();
-        this.cancelFeedEdit();
-        
-        this.broadcastFeedUpdated(recordId, originalRecord, updatedRecord);
-        this.showNotification(`Feed record updated!`, 'success');
-    },
-
-    async deleteFeedRecord(recordId) {
-        const record = this.feedRecords.find(r => r.id === recordId);
-        if (!record) return;
-        
-        if (confirm(`Delete feed record for ${record.quantity}kg of ${record.feedType} feed?`)) {
-            const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
-            let stockReturned = 0;
-            
-            if (inventoryItem) {
-                stockReturned = record.quantity;
-                inventoryItem.currentStock += record.quantity;
-            }
-            
-            if (this.dataService) {
-                await this.dataService.delete('feedRecords', recordId);
-                if (inventoryItem) {
-                    await this.dataService.save('feedInventory', inventoryItem);
-                }
-            } else {
-                this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-                this.saveData();
-            }
-            
-            this.renderModule();
-            this.broadcastFeedDeleted(recordId, record);
-            this.showNotification('Feed record deleted!', 'success');
-        }
-    },
-
-    // ==================== BROADCAST METHODS ====================
-    async broadcastFeedRecorded(formData, oldStock, newStock) {
-        const broadcastData = {
-            id: formData.id,
-            feedType: formData.feedType,
-            quantity: formData.quantity,
-            birdsFed: this.birdsStock,
-            cost: formData.cost,
-            oldStock: oldStock,
-            newStock: newStock,
-            timestamp: new Date().toISOString()
-        };
-        
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('feed-recorded', broadcastData);
-        }
-        
-        window.dispatchEvent(new CustomEvent('feed-recorded', { detail: broadcastData }));
-        
-        if (this.dataService) {
-            this.dataService.broadcast('feed-recorded', broadcastData);
-        }
-    },
-
-    async broadcastExpenseToModules(expenseData) {
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('expense-recorded', expenseData);
-        }
-        
-        window.dispatchEvent(new CustomEvent('expense-recorded', { detail: expenseData }));
-        
-        if (this.dataService) {
-            this.dataService.broadcast('expense-recorded', expenseData);
-        }
-        
-        if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
-            window.IncomeExpensesModule.transactions.unshift(expenseData);
-            if (typeof window.IncomeExpensesModule.saveData === 'function') {
-                window.IncomeExpensesModule.saveData();
-            }
-            if (window.app?.currentSection === 'income-expenses') {
-                window.IncomeExpensesModule.renderModule();
-            }
-        }
-    },
-
-    broadcastFeedUpdated(recordId, oldRecord, newRecord) {
-        const broadcastData = {
-            id: recordId,
-            oldData: oldRecord,
-            newData: newRecord,
-            timestamp: new Date().toISOString()
-        };
-        
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('feed-updated', broadcastData);
-        }
-        
-        if (this.dataService) {
-            this.dataService.broadcast('feed-updated', broadcastData);
-        }
-    },
-
-    broadcastFeedDeleted(recordId, record) {
-        const broadcastData = {
-            id: recordId,
-            data: record,
-            timestamp: new Date().toISOString()
-        };
-        
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('feed-deleted', broadcastData);
-        }
-        
-        if (this.dataService) {
-            this.dataService.broadcast('feed-deleted', broadcastData);
-        }
-    },
-
-    broadcastFeedAnalytics(formData) {
-        const costPerBird = this.birdsStock > 0 ? formData.cost / this.birdsStock : 0;
-        console.log(`📊 Feed cost analytics: $${costPerBird.toFixed(2)} per bird`);
-        
-        const analyticsData = {
-            module: 'feed-record',
-            feedType: formData.feedType,
-            totalCost: formData.cost,
-            birdsFed: this.birdsStock,
-            costPerBird: costPerBird,
-            quantity: formData.quantity,
-            date: formData.date,
-            timestamp: new Date().toISOString()
-        };
-        
-        if (this.broadcaster && this.birdsStock > 0) {
-            this.broadcaster.broadcast('feed-cost-analytics', analyticsData);
-        }
-        
-        if (this.dataService && this.birdsStock > 0) {
-            this.dataService.broadcast('feed-cost-analytics', analyticsData);
-        }
-        
-        window.dispatchEvent(new CustomEvent('feed-cost-analytics', { detail: analyticsData }));
-    },
-
-    // ==================== INVENTORY INTEGRATION ====================
-    async updateMainInventoryModule(feedType, quantity, date) {
-        if (!window.InventoryCheckModule || !window.InventoryCheckModule.inventory) {
-            console.log('⚠️ Inventory module not available');
-            return;
-        }
-        
-        console.log('📦 Updating main Inventory module feed stock');
-        
-        const mainInventoryItem = window.InventoryCheckModule.inventory.find(item => 
-            item.category === 'feed' && 
-            item.name?.toLowerCase().includes(feedType.toLowerCase())
-        );
-        
-        if (mainInventoryItem) {
-            const mainOldStock = mainInventoryItem.currentStock;
-            mainInventoryItem.currentStock -= quantity;
-            mainInventoryItem.lastRestocked = date;
-            
-            if (typeof window.InventoryCheckModule.saveData === 'function') {
-                window.InventoryCheckModule.saveData();
-            }
-            
-            const inventoryUpdateData = {
-                module: 'feed-record',
-                itemId: mainInventoryItem.id,
-                itemName: mainInventoryItem.name,
-                oldStock: mainOldStock,
-                newStock: mainInventoryItem.currentStock,
-                timestamp: new Date().toISOString()
-            };
-            
-            if (this.broadcaster) this.broadcaster.broadcast('inventory-updated', inventoryUpdateData);
-            if (this.dataService) this.dataService.broadcast('inventory-updated', inventoryUpdateData);
-            window.dispatchEvent(new CustomEvent('inventory-updated', { detail: inventoryUpdateData }));
-        } else {
-            if (confirm(`Feed type "${feedType}" not found in main inventory. Would you like to create it?`)) {
-                const newItem = {
-                    id: Date.now(),
-                    name: `${feedType.charAt(0).toUpperCase() + feedType.slice(1)} Feed`,
-                    category: 'feed',
-                    currentStock: 0,
-                    unit: 'kg',
-                    minStock: 20,
-                    costPerKg: 2.5,
-                    notes: `Auto-created from feed record`
-                };
-                window.InventoryCheckModule.inventory.push(newItem);
-                if (typeof window.InventoryCheckModule.saveData === 'function') {
-                    window.InventoryCheckModule.saveData();
-                }
-                this.showNotification(`Created "${newItem.name}" in inventory`, 'info');
-            }
-        }
-    },
-
-    checkLowStockAlert(inventoryItem, feedType) {
-        if (inventoryItem.currentStock <= inventoryItem.minStock) {
-            this.showNotification(`⚠️ Low stock: ${feedType} feed (${inventoryItem.currentStock}kg remaining)`, 'warning');
-            
-            const alertData = {
-                module: 'feed-record',
-                itemType: 'feed',
-                feedType: feedType,
-                currentStock: inventoryItem.currentStock,
-                minStock: inventoryItem.minStock,
-                suggestedOrder: inventoryItem.minStock * 2,
-                timestamp: new Date().toISOString()
-            };
-            
-            if (this.broadcaster) this.broadcaster.broadcast('low-stock-alert', alertData);
-            if (this.dataService) this.dataService.broadcast('low-stock-alert', alertData);
-            window.dispatchEvent(new CustomEvent('low-stock-alert', { detail: alertData }));
-            
-            if (window.InventoryCheckModule && typeof window.InventoryCheckModule.showNotification === 'function') {
-                window.InventoryCheckModule.showNotification(`⚠️ Low feed: ${feedType} (${inventoryItem.currentStock}kg left)`, 'warning');
-            }
-        }
-    },
-
-    async updateBirdStockInUnifiedService(newStock) {
-        if (!this.dataService) return;
-        
-        const inventory = this.dataService.get('inventory') || [];
-        const birdItem = inventory.find(item => 
-            item.name?.toLowerCase().includes('bird') || 
-            item.name?.toLowerCase().includes('broiler')
-        );
-        
-        if (birdItem) {
-            await this.dataService.update('inventory', birdItem.id, { quantity: newStock });
-        } else {
-            const newBirdItem = {
-                id: Date.now(),
-                name: 'Broiler Birds',
-                category: 'poultry',
-                quantity: newStock,
-                unit: 'birds',
-                minStock: 10,
-                cost: 0
-            };
-            await this.dataService.save('inventory', newBirdItem);
-        }
-        
-        this.birdsStock = newStock;
-        localStorage.setItem('farm-birds-stock', newStock.toString());
-        this.updateBirdCountDisplay();
-    },
-
-    // ==================== QUICK ACTIONS ====================
-    showFeedForm() {
-        document.getElementById('feed-record-form')?.scrollIntoView({ behavior: 'smooth' });
-    },
-
-    showAddStockForm() {
-        const feedType = prompt('Enter feed type (starter/grower/finisher/layer):');
-        if (!feedType) return;
-        
-        const quantity = parseFloat(prompt(`Enter quantity to add to ${feedType} (kg):`));
-        if (isNaN(quantity) || quantity <= 0) {
-            this.showNotification('Invalid quantity entered!', 'error');
-            return;
-        }
-        
-        this.addToInventory(feedType, quantity);
-    },
-
-    async addToInventory(feedType, quantity) {
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        
-        if (inventoryItem) {
-            const oldStock = inventoryItem.currentStock;
-            inventoryItem.currentStock += quantity;
-            
-            if (this.dataService) {
-                await this.dataService.save('feedInventory', inventoryItem);
-            } else {
-                this.saveData();
-            }
-            
-            this.renderModule();
-            
-            const updateData = {
-                feedType: feedType,
-                quantity: quantity,
-                oldStock: oldStock,
-                newStock: inventoryItem.currentStock,
-                timestamp: new Date().toISOString()
-            };
-            
-            if (this.broadcaster) this.broadcaster.broadcast('inventory-updated', updateData);
-            if (this.dataService) this.dataService.broadcast('inventory-updated', updateData);
-            
-            this.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
-        } else {
-            const newItem = {
-                id: Date.now(),
-                feedType: feedType,
-                currentStock: quantity,
-                unit: 'kg',
-                costPerKg: 2.5,
-                minStock: 20
-            };
-            
-            if (this.dataService) {
-                await this.dataService.save('feedInventory', newItem);
-            } else {
-                this.feedInventory.push(newItem);
-                this.saveData();
-            }
-            
-            this.renderModule();
-            
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('inventory-created', {
-                    feedType: feedType,
-                    quantity: quantity,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            this.showNotification(`Created new ${feedType} inventory with ${quantity}kg!`, 'success');
-        }
-    },
-
-    showAdjustBirdsForm() {
-        const newCount = parseInt(prompt(`Current birds: ${this.birdsStock}\nEnter new bird count:`));
-        if (isNaN(newCount) || newCount < 0) {
-            this.showNotification('Invalid bird count entered!', 'error');
-            return;
-        }
-        
-        this.adjustBirdCount(newCount);
-    },
-
-    async adjustBirdCount(newCount) {
-        const oldCount = this.birdsStock;
-        this.birdsStock = newCount;
-        
-        if (this.dataService) {
-            await this.updateBirdStockInUnifiedService(newCount);
-        } else {
-            this.saveData();
-        }
-        
-        this.updateBirdCountDisplay();
-        
-        const updateData = {
-            oldCount: oldCount,
-            newCount: newCount,
-            timestamp: new Date().toISOString()
-        };
-        
-        if (this.broadcaster) this.broadcaster.broadcast('birds-updated', updateData);
-        if (this.dataService) this.dataService.broadcast('birds-updated', updateData);
-        window.dispatchEvent(new CustomEvent('birds-updated', { detail: updateData }));
-        
-        this.showNotification(`Adjusted bird count to ${newCount}!`, 'success');
-    },
-
-    // ==================== UI RENDER METHODS ====================
+    // ==================== RENDER MODULE ====================
     renderModule() {
         if (!this.element) return;
 
         const stats = this.calculateStats();
+        const recentTransactions = this.getRecentTransactions(10);
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
         this.element.innerHTML = `
-            <style>
-                .cause-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
-                .cause-item { padding: 20px; background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border); transition: all 0.3s ease; display: flex; flex-direction: column; }
-                .cause-item:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12); border-color: var(--primary-color); }
-                .cause-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-border); }
-                .cause-icon { font-size: 24px; flex-shrink: 0; }
-                .cause-title { font-weight: 600; font-size: 16px; color: var(--text-primary); flex-grow: 1; }
-                .cause-stats { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; flex-grow: 1; }
-                .cause-stat { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
-                .cause-stat-label { font-size: 14px; color: var(--text-secondary); }
-                .cause-stat-value { font-weight: 600; font-size: 14px; color: var(--text-primary); }
-                .cause-stat-percentage { font-weight: 700; font-size: 16px; color: var(--primary-color); }
-                .cause-actions { display: flex; gap: 10px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--glass-border); }
-                .delete-cause-records { flex: 1; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-                .delete-cause-records:hover { background: #ef4444; color: white; transform: translateY(-2px); }
-                .view-cause-details { flex: 1; background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; color: #3b82f6; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
-                .view-cause-details:hover { background: #3b82f6; color: white; transform: translateY(-2px); }
-                .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
-                .edit-mortality:hover { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-                .delete-mortality:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-                .quick-action-btn { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; gap: 8px; }
-                .quick-action-btn:hover { border-color: var(--primary-color); transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
-                .glass-card.highlighted { animation: pulse-highlight 2s ease; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 8px 32px rgba(59, 130, 246, 0.15) !important; }
-                @keyframes pulse-highlight { 0%, 100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), 0 8px 32px rgba(59, 130, 246, 0.15); } 50% { box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.4), 0 12px 40px rgba(59, 130, 246, 0.25); } }
-                html { scroll-behavior: smooth; }
-            </style>
-                
             <div class="module-container">
                 <div class="module-header">
-                    <h1 class="module-title">Feed Records</h1>
-                    <p class="module-subtitle">Track feed usage and inventory</p>
-                    <div class="sync-status" id="feed-sync-status" style="font-size: 12px; margin-top: 8px;"></div>
+                    <h1 class="module-title">Income & Expenses</h1>
+                    <p class="module-subtitle">Track farm finances and cash flow</p>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="add-transaction">➕ Add Transaction</button>
+                        <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                            📄 Import Receipts
+                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
+                        </button>
+                    </div>
                 </div>
 
+                ${pendingReceipts.length > 0 ? `
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-outline" id="refresh-receipts-btn">🔄 Refresh</button>
+                                <button class="btn btn-primary" id="process-all-receipts">⚡ Process All</button>
+                            </div>
+                        </div>
+                        <div id="pending-receipts-list">
+                            ${this.renderPendingReceiptsList(pendingReceipts)}
+                        </div>
+                    </div>
+                ` : ''}
+
                 <div class="stats-grid">
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">🌾</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.totalStock} kg</div><div style="font-size: 14px; color: var(--text-secondary);">Current Stock</div></div>
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">🐔</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="birds-stock-display">${this.birdsStock}</div><div style="font-size: 14px; color: var(--text-secondary);">Birds to Feed</div></div>
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">💰</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${this.formatCurrency(stats.totalInventoryValue)}</div><div style="font-size: 14px; color: var(--text-secondary);">Inventory Value</div></div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
+                    </div>
                 </div>
 
                 <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="record-feed-btn"><div style="font-size: 32px;">📝</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Feed</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Log feed usage</span></button>
-                    <button class="quick-action-btn" id="add-stock-btn"><div style="font-size: 32px;">📦</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Stock</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add feed to inventory</span></button>
-                    <button class="quick-action-btn" id="adjust-birds-btn"><div style="font-size: 32px;">🐔</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Adjust Birds</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Update bird count</span></button>
+                    <button class="quick-action-btn" id="add-income-btn"><div style="font-size: 32px;">💰</div><span>Add Income</span></button>
+                    <button class="quick-action-btn" id="add-expense-btn"><div style="font-size: 32px;">💸</div><span>Add Expense</span></button>
+                    <button class="quick-action-btn" id="financial-report-btn"><div style="font-size: 32px;">📊</div><span>Financial Report</span></button>
+                    <button class="quick-action-btn" id="category-analysis-btn"><div style="font-size: 32px;">📋</div><span>Category Analysis</span></button>
                 </div>
 
-                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px;">Feed Inventory</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        ${this.renderInventoryOverview()}
-                    </div>
-                </div>
-
-                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="feed-form-title">Record Feed Usage</h3>
-                    <form id="feed-record-form">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                            <div><label class="form-label">Feed Type</label><select class="form-input" id="feed-type" required><option value="">Select feed type</option>${this.feedInventory.map(item => `<option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}</option>`).join('')}</select></div>
-                            <div><label class="form-label">Quantity (kg)</label><input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required></div>
-                        </div>
-                        <div style="margin-bottom: 20px;"><label class="form-label">Notes</label><textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea></div>
-                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                            <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
-                            <button type="button" class="btn-outline" id="cancel-feed-form">Cancel</button>
-                            <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
-                        </div>
-                    </form>
-                </div>
-                    
-                <div class="glass-card" style="padding: 24px;">
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Feed Records</h3>
-                        <button class="btn-outline" id="export-feed-records">Export</button>
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <select id="transaction-filter" class="form-input" style="width: auto;">
+                                <option value="all">All Transactions</option>
+                                <option value="income">Income Only</option>
+                                <option value="expense">Expenses Only</option>
+                            </select>
+                            <button class="btn-outline" id="export-transactions">Export</button>
+                        </div>
                     </div>
-                    <div id="feed-records-list">${this.renderFeedRecordsList()}</div>
+                    <div id="transactions-list">
+                        ${this.renderTransactionsList(recentTransactions)}
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
+                    <div id="category-breakdown">
+                        ${this.renderCategoryBreakdown()}
+                    </div>
+                </div>
+            </div>
+
+            <div id="import-receipts-modal" class="popout-modal hidden">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">📥 Import Receipts</h3>
+                        <button class="popout-modal-close" id="close-import-receipts">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="import-receipts-content">
+                            ${this.renderImportReceiptsModal()}
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                        <button class="btn btn-primary hidden" id="process-receipts-btn">⚡ Process Receipts<span id="process-receipts-count">0</span></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="transaction-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 600px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
+                        <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <form id="transaction-form">
+                            <input type="hidden" id="transaction-id">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div><label class="form-label">Date *</label><input type="date" id="transaction-date" class="form-input" value="${this.getLocalDate()}" required></div>
+                                <div><label class="form-label">Type *</label><select id="transaction-type" class="form-input" required><option value="income">💰 Income</option><option value="expense">💸 Expense</option></select></div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div><label class="form-label">Category *</label><select id="transaction-category" class="form-input" required><option value="">Select Category</option></select></div>
+                                <div><label class="form-label">Amount ($) *</label><input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00"></div>
+                            </div>
+                            <div style="margin-bottom: 16px;"><label class="form-label">Description *</label><input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description"></div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div><label class="form-label">Payment Method</label><select id="transaction-payment" class="form-input"><option value="cash">Cash</option><option value="card">Card</option><option value="transfer">Bank Transfer</option></select></div>
+                                <div><label class="form-label">Reference Number</label><input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #"></div>
+                            </div>
+                            <div style="margin-bottom: 16px;"><label class="form-label">Notes</label><textarea id="transaction-notes" class="form-input" rows="3"></textarea></div>
+                        </form>
+                    </div>
+                    <div class="popout-modal-footer">
+                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
+                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
+                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
+                    </div>
                 </div>
             </div>
         `;
 
         this.setupEventListeners();
+        this.setupReceiptFormHandlers();
+        setTimeout(() => this.setupReceiptActionListeners(), 100);
     },
 
-    renderInventoryOverview() {
-        return this.feedInventory.map(item => {
-            const isLowStock = item.currentStock <= item.minStock;
-            const statusColor = isLowStock ? '#ef4444' : '#10b981';
-            return `
-                <div style="padding: 16px; background: var(--glass-bg); border-radius: 8px; border-left: 4px solid ${statusColor};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">${item.feedType}</span>
-                        <span style="font-size: 12px; color: ${statusColor}; font-weight: 600;">${isLowStock ? 'Low Stock' : 'Good'}</span>
+    renderImportReceiptsModal() {
+        return `
+            <div class="import-receipts-container">
+                <div class="quick-actions-section">
+                    <h2 class="section-title">Upload Method</h2>
+                    <div class="card-grid">
+                        <button class="card-button" id="camera-option"><div class="card-icon">📷</div><span class="card-title">Take Photo</span></button>
+                        <button class="card-button" id="upload-option"><div class="card-icon">📁</div><span class="card-title">Upload Files</span></button>
                     </div>
-                    <div style="font-size: 20px; font-weight: bold; color: var(--text-primary);">${item.currentStock} ${item.unit}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary);">Min: ${item.minStock}${item.unit} • ${this.formatCurrency(item.costPerKg)}/kg</div>
                 </div>
-            `;
-        }).join('');
+                <div id="upload-section" style="display: none;">
+                    <div class="upload-dropzone" id="receipt-dropzone"><div class="dropzone-icon">📁</div><h4>Drop receipt files here</h4><p>or click to browse</p><input type="file" id="receipt-file-input" accept="image/*,.pdf" multiple style="display: none;"></div>
+                </div>
+                <div class="camera-section" id="camera-section" style="display: none;">
+                    <div class="glass-card"><div class="camera-preview"><video id="camera-preview" autoplay playsinline></video></div>
+                    <div class="camera-controls"><button class="btn btn-primary" id="capture-photo">📸 Capture</button><button class="btn btn-outline" id="cancel-camera">Cancel</button></div></div>
+                </div>
+                <div class="recent-section" id="recent-section"><div id="recent-receipts-list">${this.renderRecentReceiptsList()}</div></div>
+            </div>
+        `;
     },
 
-    renderFeedRecordsList() {
-        if (this.feedRecords.length === 0) {
-            return `<div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;"><div style="font-size: 48px; margin-bottom: 16px;">🌾</div><div style="font-size: 16px; margin-bottom: 8px;">No feed records yet</div><div style="font-size: 14px; color: var(--text-secondary);">Record your first feed usage</div></div>`;
-        }
+    renderPendingReceiptsList(receipts) {
+        if (receipts.length === 0) return '<div style="text-align: center; padding: 40px;">No pending receipts</div>';
+        return receipts.map(r => `<div class="pending-receipt-item"><span>${r.name}</span><button class="process-receipt-btn" data-receipt-id="${r.id}">Process</button><button class="delete-receipt-btn" data-receipt-id="${r.id}">Delete</button></div>`).join('');
+    },
 
-        return this.feedRecords.slice(0, 5).map(record => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 12px;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">${record.feedType} Feed</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">${record.date} • ${record.quantity}kg • ${record.birdsFed} birds</div>
-                    ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
-                </div>
-                <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
-                    <div><div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">${this.formatCurrency(record.cost)}</div><div style="font-size: 12px; color: var(--text-secondary);">${(record.cost / record.quantity).toFixed(2)}/kg</div></div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon edit-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit Record">✏️</button>
-                        <button class="btn-icon delete-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Record">🗑️</button>
-                    </div>
-                </div>
+    renderRecentReceiptsList() {
+        if (this.receiptQueue.length === 0) return '<div>No receipts</div>';
+        return this.receiptQueue.slice(0, 5).map(r => `<div>${r.name}</div>`).join('');
+    },
+
+    renderTransactionsList(transactions) {
+        if (transactions.length === 0) return '<div style="text-align: center; padding: 40px;">No transactions</div>';
+        return transactions.map(t => `
+            <div class="transaction-item" data-id="${t.id}" style="display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer;">
+                <div><strong>${t.date}</strong><br>${t.description}</div>
+                <div style="text-align: right;"><span style="color: ${t.type === 'income' ? 'green' : 'red'}">${t.type === 'income' ? '+' : '-'}$${t.amount}</span><br>${t.category}</div>
             </div>
         `).join('');
     },
 
-    calculateStats() {
-        const totalStock = this.feedInventory.reduce((sum, item) => sum + item.currentStock, 0);
-        const totalInventoryValue = this.feedInventory.reduce((sum, item) => sum + (item.currentStock * item.costPerKg), 0);
-        return { totalStock, totalInventoryValue };
+    renderCategoryBreakdown() {
+        const incomeByCat = {};
+        const expenseByCat = {};
+        this.transactions.forEach(t => {
+            if (t.type === 'income') incomeByCat[t.category] = (incomeByCat[t.category] || 0) + t.amount;
+            else expenseByCat[t.category] = (expenseByCat[t.category] || 0) + t.amount;
+        });
+        return `<div><h4>Income</h4>${Object.entries(incomeByCat).map(([c, a]) => `<div>${c}: $${a}</div>`).join('')}</div><div><h4>Expenses</h4>${Object.entries(expenseByCat).map(([c, a]) => `<div>${c}: $${a}</div>`).join('')}</div>`;
     },
 
-    calculateCost(feedType, quantity) {
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        return quantity * (inventoryItem?.costPerKg || 2.5);
+    // ==================== DATA LOADING ====================
+    async loadData() {
+        console.log('Loading transactions from UnifiedDataService...');
+        try {
+            this.transactions = this.dataService.get('transactions') || [];
+            if (this.transactions.length === 0) {
+                const saved = localStorage.getItem('farm-transactions');
+                if (saved) {
+                    const localTransactions = JSON.parse(saved);
+                    for (const t of localTransactions) await this.dataService.save('transactions', t);
+                    this.transactions = this.dataService.get('transactions') || [];
+                }
+            }
+            this.transactions.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+            console.log(`✅ Loaded ${this.transactions.length} transactions`);
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+            await this.loadDataLegacy();
+        }
     },
 
-    // ==================== UI HELPERS ====================
-    updateBirdCountDisplay() {
-        const birdElement = document.getElementById('birds-stock-display');
-        if (birdElement) birdElement.textContent = this.birdsStock;
-        const statBirdElement = document.querySelector('.stat-card:nth-child(2) .stat-value');
-        if (statBirdElement) statBirdElement.textContent = this.birdsStock;
+    async loadDataLegacy() {
+        console.log('Loading transactions from localStorage (legacy)...');
+        try {
+            const saved = localStorage.getItem('farm-transactions');
+            this.transactions = saved ? JSON.parse(saved) : [];
+            if (this.isFirebaseAvailable && window.db) await this.loadFromFirebaseLegacy();
+            this.transactions.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+            this.transactions = [];
+        }
     },
 
-    cancelFeedForm() {
-        document.getElementById('feed-record-form').reset();
-        document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
-        const submitBtn = document.getElementById('feed-submit-btn');
-        submitBtn.textContent = 'Save Record';
-        delete submitBtn.dataset.editingId;
-        document.getElementById('cancel-feed-edit').style.display = 'none';
-        this.showNotification('Form cleared', 'info');
+    async loadFromFirebaseLegacy() {
+        try {
+            const user = window.firebase.auth().currentUser;
+            if (!user) return;
+            const snapshot = await window.db.collection('users').doc(user.uid).collection('transactions').orderBy('date', 'desc').get();
+            if (snapshot.empty) return;
+            const existingMap = new Map(this.transactions.map(t => [t.id?.toString(), t]));
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const id = doc.id;
+                if (!existingMap.has(id)) {
+                    this.transactions.push({ id, ...data });
+                    existingMap.set(id, data);
+                }
+            });
+            console.log(`✅ Firebase sync complete, total: ${this.transactions.length}`);
+        } catch (error) {
+            console.error('Error loading from Firebase:', error);
+        }
     },
 
-    cancelFeedEdit() {
-        document.getElementById('feed-record-form').reset();
-        document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
-        const submitBtn = document.getElementById('feed-submit-btn');
-        submitBtn.textContent = 'Save Record';
-        delete submitBtn.dataset.editingId;
-        document.getElementById('cancel-feed-edit').style.display = 'none';
-        this.showNotification('Edit cancelled', 'info');
+    // ==================== SYNC METHODS ====================
+    setupRealtimeSync() {
+        if (!this.dataService) return;
+        this.dataService.on('transactions-updated', (transactions) => {
+            this.transactions = transactions || [];
+            this.updateStats();
+            this.updateTransactionsList();
+            this.updateCategoryBreakdown();
+        });
+        this.dataService.on('sync-completed', (status) => this.updateSyncStatus(status));
     },
 
-    editFeedRecord(recordId) {
-        console.log('🌾 EDITING FEED RECORD:', recordId);
+    setupRealtimeSyncLegacy() {
+        if (!this.isFirebaseAvailable || !window.db) return;
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        if (this.realtimeUnsubscribe) this.realtimeUnsubscribe();
+        this.realtimeUnsubscribe = window.db.collection('users').doc(user.uid).collection('transactions').onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'added' || change.type === 'modified') {
+                    const remote = change.doc.data();
+                    const existingIndex = this.transactions.findIndex(t => t.id == remote.id);
+                    if (existingIndex === -1) this.transactions.unshift(remote);
+                    else this.transactions[existingIndex] = remote;
+                    this.transactions.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                    this.updateStats();
+                    this.updateTransactionsList();
+                    this.updateCategoryBreakdown();
+                }
+            });
+        });
+    },
+
+    async syncLocalTransactionsToFirebase() {
+        if (!this.isOnline || !this.isFirebaseAvailable || !window.db) return;
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        const localTransactions = JSON.parse(localStorage.getItem('farm-transactions') || '[]');
+        for (const t of localTransactions) {
+            if (t.source === 'demo') continue;
+            await window.db.collection('users').doc(user.uid).collection('transactions').doc(t.id.toString()).set({ ...t, userId: user.uid, syncedAt: new Date().toISOString() }, { merge: true });
+        }
+    },
+
+    // ==================== NETWORK DETECTION ====================
+    setupNetworkDetection() {
+        this.isOnline = navigator.onLine;
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            this.showNotification('Back online. Syncing data...', 'info');
+            if (this.dataService) this.dataService.processOfflineQueue();
+            else if (this.isFirebaseAvailable) this.syncLocalTransactionsToFirebase();
+        });
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            this.showNotification('You are offline. Changes saved locally.', 'info');
+        });
+    },
+
+    // ==================== RECEIPTS ====================
+    async loadReceipts() {
+        if (this.dataService) await this.loadReceiptsFromUnifiedService();
+        else await this.loadReceiptsFromFirebase();
+    },
+
+    async loadReceiptsFromUnifiedService() {
+        try {
+            const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+            this.receiptQueue = localReceipts.filter(r => r.status === 'pending');
+            if (this.isFirebaseAvailable) await this.loadReceiptsFromFirebase();
+            this.updateReceiptQueueUI();
+        } catch (error) {
+            this.receiptQueue = [];
+        }
+    },
+
+    async loadReceiptsFromFirebase() {
+        try {
+            if (!this.isFirebaseAvailable || !window.db) return;
+            const user = window.firebase.auth().currentUser;
+            if (!user) return;
+            const snapshot = await window.db.collection('receipts').where('userId', '==', user.uid).limit(50).get();
+            if (!snapshot.empty) {
+                const firebaseReceipts = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.status === 'pending') {
+                        firebaseReceipts.push({
+                            id: data.id || doc.id,
+                            name: data.name,
+                            dataURL: data.dataURL,
+                            size: data.size,
+                            type: data.type,
+                            status: 'pending',
+                            uploadedAt: data.uploadedAt
+                        });
+                    }
+                });
+                this.mergeReceipts(firebaseReceipts);
+                this.updateReceiptQueueUI();
+            }
+        } catch (error) {
+            console.warn('Error loading receipts:', error);
+        }
+        this.loadFromLocalStorage();
+    },
+
+    loadFromLocalStorage() {
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        this.receiptQueue = localReceipts.filter(r => r.status === 'pending');
+        this.updateReceiptQueueUI();
+    },
+
+    mergeReceipts(firebaseReceipts) {
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        const receiptMap = new Map();
+        firebaseReceipts.forEach(r => receiptMap.set(r.id, r));
+        localReceipts.forEach(r => { if (!receiptMap.has(r.id)) receiptMap.set(r.id, { ...r, source: 'local' }); });
+        this.receiptQueue = Array.from(receiptMap.values()).filter(r => r.status === 'pending').sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+        localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
+    },
+
+    saveReceiptToStorage(receipt) {
+        this.receiptQueue.unshift(receipt);
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        const existingIndex = localReceipts.findIndex(r => r.id === receipt.id);
+        if (existingIndex !== -1) localReceipts.splice(existingIndex, 1);
+        localReceipts.unshift(receipt);
+        localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+    },
+
+    // ==================== SALES INTEGRATION ====================
+    setupSalesListeners() {
+        window.addEventListener('sale-completed', (event) => this.addIncomeFromSale(event.detail));
+        window.addEventListener('order-completed', (event) => this.addIncomeFromSale(event.detail));
+    },
+
+    addIncomeFromSale(saleData) {
+        const existing = this.transactions.find(t => t.reference === `ORDER-${saleData.orderId}`);
+        if (existing) return;
+        const transaction = {
+            id: Date.now(),
+            date: saleData.date || new Date().toISOString().split('T')[0],
+            type: 'income',
+            category: 'sales',
+            amount: saleData.amount,
+            description: saleData.description || `Sale from order`,
+            paymentMethod: saleData.paymentMethod || 'cash',
+            reference: `ORDER-${saleData.orderId}`,
+            source: 'orders-module',
+            orderId: saleData.orderId
+        };
+        this.transactions.unshift(transaction);
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        if (this.dataService) this.dataService.save('transactions', transaction);
+        else if (this.isFirebaseAvailable) this.saveTransactionToFirebase(transaction);
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        this.showNotification(`💰 Income added from order: ${this.formatCurrency(saleData.amount)}`, 'success');
+    },
+
+    // ==================== TRANSACTION CRUD ====================
+    async saveTransaction() {
+        const transactionData = {
+            id: document.getElementById('transaction-id')?.value || Date.now(),
+            date: document.getElementById('transaction-date')?.value,
+            type: document.getElementById('transaction-type')?.value,
+            category: document.getElementById('transaction-category')?.value,
+            amount: parseFloat(document.getElementById('transaction-amount')?.value) || 0,
+            description: document.getElementById('transaction-description')?.value,
+            paymentMethod: document.getElementById('transaction-payment')?.value,
+            reference: document.getElementById('transaction-reference')?.value,
+            notes: document.getElementById('transaction-notes')?.value
+        };
         
-        const record = this.feedRecords.find(r => r.id === recordId);
-        if (!record) {
-            this.showNotification('Feed record not found', 'error');
+        if (!transactionData.date || !transactionData.type || !transactionData.amount || !transactionData.description) {
+            this.showNotification('Please fill all required fields', 'error');
             return;
         }
         
-        this.showFeedForm();
+        const existingIndex = this.transactions.findIndex(t => t.id == transactionData.id);
+        if (existingIndex >= 0) this.transactions[existingIndex] = transactionData;
+        else this.transactions.unshift(transactionData);
         
+        this.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        
+        if (this.dataService) await this.dataService.save('transactions', transactionData);
+        else if (this.isFirebaseAvailable) await this.saveTransactionToFirebase(transactionData);
+        
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        this.hideTransactionModal();
+        this.showNotification('Transaction saved!', 'success');
+    },
+
+    async deleteTransaction() {
+        const id = document.getElementById('transaction-id')?.value;
+        if (!id || !confirm('Delete this transaction?')) return;
+        
+        this.transactions = this.transactions.filter(t => t.id != id);
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        
+        if (this.dataService) await this.dataService.delete('transactions', id);
+        else if (this.isFirebaseAvailable && window.db) await window.db.collection('transactions').doc(id.toString()).delete();
+        
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        this.hideTransactionModal();
+        this.showNotification('Transaction deleted!', 'success');
+    },
+
+    async saveTransactionToFirebase(transaction) {
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        await window.db.collection('users').doc(user.uid).collection('transactions').doc(transaction.id.toString()).set(transaction, { merge: true });
+    },
+
+    editTransaction(id) {
+        const transaction = this.transactions.find(t => t.id == id);
+        if (!transaction) return;
+        document.getElementById('transaction-id').value = transaction.id;
+        document.getElementById('transaction-date').value = transaction.date;
+        document.getElementById('transaction-type').value = transaction.type;
+        document.getElementById('transaction-category').value = transaction.category;
+        document.getElementById('transaction-amount').value = transaction.amount;
+        document.getElementById('transaction-description').value = transaction.description;
+        document.getElementById('transaction-payment').value = transaction.paymentMethod || 'cash';
+        document.getElementById('transaction-reference').value = transaction.reference || '';
+        document.getElementById('transaction-notes').value = transaction.notes || '';
+        document.getElementById('delete-transaction').style.display = 'block';
+        document.getElementById('transaction-modal-title').textContent = 'Edit Transaction';
+        this.showTransactionModal();
+    },
+
+    // ==================== UI UPDATES ====================
+    updateStats() {
+        const income = this.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const expenses = this.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        document.getElementById('total-income')?.textContent = this.formatCurrency(income);
+        document.getElementById('total-expenses')?.textContent = this.formatCurrency(expenses);
+        document.getElementById('net-income')?.textContent = this.formatCurrency(income - expenses);
+    },
+
+    updateTransactionsList() {
+        const filter = document.getElementById('transaction-filter')?.value || 'all';
+        const filtered = filter === 'all' ? this.transactions : this.transactions.filter(t => t.type === filter);
+        document.getElementById('transactions-list').innerHTML = this.renderTransactionsList(filtered.slice(0, 10));
+    },
+
+    updateCategoryBreakdown() {
+        document.getElementById('category-breakdown').innerHTML = this.renderCategoryBreakdown();
+    },
+
+    updateReceiptQueueUI() {
+        const pending = this.receiptQueue.filter(r => r.status === 'pending');
+        const badge = document.getElementById('receipt-count-badge');
+        if (pending.length > 0) {
+            if (badge) badge.textContent = pending.length;
+            else document.getElementById('upload-receipt-btn')?.insertAdjacentHTML('beforeend', `<span class="receipt-queue-badge">${pending.length}</span>`);
+        } else if (badge) badge.remove();
+        document.getElementById('pending-receipts-list').innerHTML = this.renderPendingReceiptsList(pending);
+        this.updateProcessReceiptsButton();
+    },
+
+    updateModalReceiptsList() {
+        document.getElementById('recent-receipts-list').innerHTML = this.renderRecentReceiptsList();
+        this.updateProcessReceiptsButton();
+    },
+
+    updateProcessReceiptsButton() {
+        const pending = this.receiptQueue.filter(r => r.status === 'pending').length;
+        const btn = document.getElementById('process-receipts-btn');
+        const count = document.getElementById('process-receipts-count');
+        if (btn && count) {
+            if (pending > 0) {
+                btn.classList.remove('hidden');
+                count.textContent = pending;
+                count.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+                count.classList.add('hidden');
+            }
+        }
+    },
+
+    updateSyncStatus(status) {
+        const el = document.getElementById('income-sync-status');
+        if (!el) return;
+        if (this.dataService && !this.dataService.isOnline) {
+            el.textContent = '📴 Offline';
+            el.style.color = '#f44336';
+        } else if (status?.pendingRemaining > 0) {
+            el.textContent = `⏳ Syncing (${status.pendingRemaining} pending)`;
+            el.style.color = '#FF9800';
+        } else {
+            el.textContent = '✅ Synced';
+            el.style.color = '#4CAF50';
+        }
+    },
+
+    // ==================== MODAL CONTROLS ====================
+    showTransactionModal() {
+        this.hideAllModals();
+        document.getElementById('transaction-modal').classList.remove('hidden');
+        document.getElementById('transaction-date').value = this.getLocalDate();
+        document.getElementById('delete-transaction').style.display = 'none';
+        document.getElementById('transaction-modal-title').textContent = 'Add Transaction';
+    },
+
+    hideTransactionModal() {
+        document.getElementById('transaction-modal').classList.add('hidden');
+        document.getElementById('transaction-form').reset();
+    },
+
+    showAddIncome() {
+        this.showTransactionModal();
+        document.getElementById('transaction-type').value = 'income';
+        document.getElementById('transaction-modal-title').textContent = 'Add Income';
+    },
+
+    showAddExpense() {
+        this.showTransactionModal();
+        document.getElementById('transaction-type').value = 'expense';
+        document.getElementById('transaction-modal-title').textContent = 'Add Expense';
+    },
+
+    showImportReceiptsModal() {
+        this.stopCamera();
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+        }
+        this.setupImportReceiptsHandlers();
+        this.showQuickActionsView();
+    },
+
+    hideImportReceiptsModal() {
+        this.stopCamera();
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+        }
+    },
+
+    hideAllModals() {
+        document.querySelectorAll('.popout-modal').forEach(m => m.classList.add('hidden'));
+        this.stopCamera();
+    },
+
+    showQuickActionsView() {
+        this.stopCamera();
+        document.getElementById('camera-section')?.style.setProperty('display', 'none');
+        document.getElementById('upload-section')?.style.setProperty('display', 'none');
+        document.querySelector('.quick-actions-section')?.style.setProperty('display', 'block');
+        document.getElementById('recent-section')?.style.setProperty('display', 'block');
+    },
+
+    showUploadInterface() {
+        this.stopCamera();
+        document.getElementById('camera-section')?.style.setProperty('display', 'none');
+        document.getElementById('upload-section')?.style.setProperty('display', 'block');
+        document.querySelector('.quick-actions-section')?.style.setProperty('display', 'none');
+        document.getElementById('recent-section')?.style.setProperty('display', 'block');
+        setTimeout(() => this.setupDragAndDrop(), 100);
+    },
+
+    showCameraInterface() {
+        this.resetAndShowCamera();
+    },
+
+    stopCamera() {
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(t => t.stop());
+            this.cameraStream = null;
+        }
+        const video = document.getElementById('camera-preview');
+        if (video) video.srcObject = null;
+    },
+
+    resetAndShowCamera() {
+        this.stopCamera();
+        const existing = document.getElementById('camera-section');
+        if (existing) existing.remove();
+        const container = document.getElementById('import-receipts-content');
+        if (!container) return;
+        container.insertAdjacentHTML('beforeend', `<div class="camera-section" id="camera-section"><video id="camera-preview" autoplay playsinline></video><button class="btn-primary" id="capture-photo">📸 Capture</button><button class="btn-outline" id="cancel-camera">Cancel</button></div>`);
+        this.initializeCamera();
+    },
+
+    initializeCamera() {
+        const video = document.getElementById('camera-preview');
+        if (!video) return;
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            this.cameraStream = stream;
+            video.srcObject = stream;
+        }).catch(err => {
+            console.error('Camera error:', err);
+            this.showNotification('Camera access denied', 'error');
+            this.showUploadInterface();
+        });
+    },
+
+    capturePhoto() {
+        const video = document.getElementById('camera-preview');
+        if (!video || !video.srcObject) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        canvas.toBlob(blob => {
+            const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            this.showSimpleImageViewer(file);
+            this.stopCamera();
+        }, 'image/jpeg');
+    },
+
+    showSimpleImageViewer(file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:100000;display:flex;align-items:center;justify-content:center';
+            modal.innerHTML = `<div style="background:white;padding:20px;border-radius:10px;max-width:90%"><img src="${e.target.result}" style="max-width:100%;max-height:60vh"><div style="margin-top:20px"><button id="save-img">Save</button><button id="cancel-img">Cancel</button></div></div>`;
+            document.body.appendChild(modal);
+            document.getElementById('save-img')?.addEventListener('click', () => {
+                this.saveReceiptFromFile(file, e.target.result);
+                modal.remove();
+                this.hideImportReceiptsModal();
+            });
+            document.getElementById('cancel-img')?.addEventListener('click', () => modal.remove());
+        };
+        reader.readAsDataURL(file);
+    },
+
+    saveReceiptFromFile(file, dataURL) {
+        const receipt = {
+            id: `receipt_${Date.now()}`,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            dataURL: dataURL,
+            status: 'pending',
+            uploadedAt: new Date().toISOString()
+        };
+        this.saveReceiptToStorage(receipt);
+        this.showNotification('Receipt saved!', 'success');
+    },
+
+    // ==================== EVENT HANDLERS ====================
+    setupEventListeners() {
+        if (this._globalClickHandler) document.removeEventListener('click', this._globalClickHandler);
+        if (this._globalChangeHandler) document.removeEventListener('change', this._globalChangeHandler);
+        
+        this._globalClickHandler = (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const id = btn.id;
+            if (id === 'add-transaction') this.showTransactionModal();
+            else if (id === 'add-income-btn') this.showAddIncome();
+            else if (id === 'add-expense-btn') this.showAddExpense();
+            else if (id === 'save-transaction') this.saveTransaction();
+            else if (id === 'delete-transaction') this.deleteTransaction();
+            else if (id === 'cancel-transaction') this.hideTransactionModal();
+            else if (id === 'upload-receipt-btn') this.showImportReceiptsModal();
+            else if (id === 'process-all-receipts') this.processPendingReceipts();
+            else if (id === 'export-transactions') this.exportTransactions();
+            else if (id === 'financial-report-btn') this.generateFinancialReport();
+            else if (id === 'category-analysis-btn') this.generateCategoryAnalysis();
+            else if (id === 'capture-photo') this.capturePhoto();
+            else if (id === 'cancel-camera') { this.stopCamera(); this.showQuickActionsView(); }
+            else if (id === 'upload-option') this.showUploadInterface();
+            else if (id === 'camera-option') this.showCameraInterface();
+            
+            const transactionItem = e.target.closest('.transaction-item');
+            if (transactionItem && transactionItem.dataset.id) this.editTransaction(transactionItem.dataset.id);
+        };
+        
+        this._globalChangeHandler = (e) => {
+            if (e.target.id === 'transaction-filter') this.updateTransactionsList();
+        };
+        
+        document.addEventListener('click', this._globalClickHandler);
+        document.addEventListener('change', this._globalChangeHandler);
+    },
+
+    setupImportReceiptsHandlers() {
+        const setup = (id, handler) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.onclick = (e) => { e.preventDefault(); handler(); };
+        };
+        setup('upload-option', () => this.showUploadInterface());
+        setup('camera-option', () => this.showCameraInterface());
+        setup('cancel-camera', () => { this.stopCamera(); this.showQuickActionsView(); });
+        setup('back-to-main-view', () => { this.stopCamera(); this.showQuickActionsView(); });
+        setup('capture-photo', () => this.capturePhoto());
+        setup('refresh-receipts', () => this.loadReceiptsFromFirebase());
+        this.setupFileInput();
+        this.setupDragAndDrop();
+    },
+
+    setupFileInput() {
+        let input = document.getElementById('receipt-file-input');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'file';
+            input.id = 'receipt-file-input';
+            input.accept = 'image/*,.pdf';
+            input.multiple = true;
+            input.style.display = 'none';
+            document.body.appendChild(input);
+        }
+        input.onchange = (e) => {
+            if (e.target.files?.length) this.handleFileUpload(e.target.files);
+            e.target.value = '';
+        };
+    },
+
+    setupDragAndDrop() {
+        const dropArea = document.getElementById('receipt-dropzone');
+        if (!dropArea) return;
+        dropArea.ondragover = e => { e.preventDefault(); dropArea.classList.add('drag-over'); };
+        dropArea.ondragleave = () => dropArea.classList.remove('drag-over');
+        dropArea.ondrop = e => {
+            e.preventDefault();
+            dropArea.classList.remove('drag-over');
+            if (e.dataTransfer.files?.length) this.handleFileUpload(e.dataTransfer.files);
+        };
+        dropArea.onclick = () => document.getElementById('receipt-file-input')?.click();
+    },
+
+    handleFileUpload(files) {
+        for (const file of files) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = e => this.saveReceiptFromFile(file, e.target.result);
+                reader.readAsDataURL(file);
+            } else {
+                this.saveReceiptFromFile(file, '');
+            }
+        }
+    },
+
+    setupReceiptFormHandlers() {
+        const uploadArea = document.getElementById('receipt-upload-area');
+        const fileInput = document.getElementById('receipt-upload');
+        if (uploadArea && fileInput) {
+            uploadArea.onclick = () => fileInput.click();
+            fileInput.onchange = e => {
+                if (e.target.files?.[0]) this.handleTransactionReceiptUpload(e.target.files[0]);
+            };
+        }
+        document.getElementById('remove-receipt')?.addEventListener('click', () => this.clearReceiptPreview());
+    },
+
+    handleTransactionReceiptUpload(file) {
+        if (!file.type.startsWith('image/')) {
+            this.showNotification('Please upload an image file', 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = e => {
+            this.receiptPreview = { name: file.name, downloadURL: e.target.result };
+            this.showReceiptPreviewInTransactionModal(this.receiptPreview);
+        };
+        reader.readAsDataURL(file);
+    },
+
+    showReceiptPreviewInTransactionModal(receipt) {
+        const container = document.getElementById('receipt-preview-container');
+        const preview = document.getElementById('image-preview');
+        const img = document.getElementById('receipt-image-preview');
+        if (container && preview && img) {
+            container.classList.remove('hidden');
+            img.src = receipt.downloadURL;
+            preview.classList.remove('hidden');
+            document.getElementById('receipt-filename').textContent = receipt.name;
+        }
+    },
+
+    clearReceiptPreview() {
+        const container = document.getElementById('receipt-preview-container');
+        if (container) container.classList.add('hidden');
+        document.getElementById('receipt-upload').value = '';
+        this.receiptPreview = null;
+    },
+
+    setupReceiptActionListeners() {
+        document.addEventListener('click', e => {
+            const process = e.target.closest('.process-receipt-btn');
+            if (process && process.dataset.receiptId) this.processSingleReceipt(process.dataset.receiptId);
+            const del = e.target.closest('.delete-receipt-btn');
+            if (del && del.dataset.receiptId) this.confirmAndDeleteReceipt(del.dataset.receiptId);
+        });
+    },
+
+    processSingleReceipt(id) {
+        const receipt = this.receiptQueue.find(r => r.id === id);
+        if (!receipt) return;
+        this.showTransactionModal();
         setTimeout(() => {
-            document.getElementById('feed-type').value = record.feedType;
-            document.getElementById('feed-quantity').value = record.quantity;
-            document.getElementById('feed-notes').value = record.notes || '';
-            document.getElementById('feed-form-title').textContent = 'Edit Feed Record';
-            const submitBtn = document.getElementById('feed-submit-btn');
-            submitBtn.textContent = 'Update Record';
-            submitBtn.dataset.editingId = recordId;
-            document.getElementById('cancel-feed-edit').style.display = 'inline-block';
+            document.getElementById('transaction-description').value = `Receipt: ${receipt.name}`;
+            this.receiptPreview = receipt;
+            this.showReceiptPreviewInTransactionModal(receipt);
+            this.markReceiptAsProcessed(id);
         }, 100);
     },
 
-    exportFeedRecords() {
-        const dataStr = JSON.stringify(this.feedRecords, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `feed-records-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        if (this.broadcaster) this.broadcaster.broadcast('feed-exported', { count: this.feedRecords.length, timestamp: new Date().toISOString() });
-        this.showNotification('Feed records exported successfully!', 'success');
+    processPendingReceipts() {
+        const pending = this.receiptQueue.filter(r => r.status === 'pending');
+        pending.forEach((r, i) => setTimeout(() => this.processSingleReceipt(r.id), i * 1000));
     },
 
-    // ==================== EVENT LISTENERS ====================
-    setupEventListeners() {
-        document.getElementById('feed-record-form')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('feed-submit-btn');
-            const isEditMode = submitBtn.textContent === 'Update Record';
-            const recordId = submitBtn.dataset.editingId;
-            
-            const feedType = document.getElementById('feed-type').value;
-            const quantity = parseFloat(document.getElementById('feed-quantity').value);
-            const notes = document.getElementById('feed-notes').value;
-            
-            if (isEditMode && recordId) {
-                await this.updateFeedRecord(parseInt(recordId), feedType, quantity, notes);
-            } else {
-                await this.createFeedRecord(feedType, quantity, notes);
-            }
-        });
-        
-        document.getElementById('record-feed-btn')?.addEventListener('click', () => this.showFeedForm());
-        document.getElementById('add-stock-btn')?.addEventListener('click', () => this.showAddStockForm());
-        document.getElementById('adjust-birds-btn')?.addEventListener('click', () => this.showAdjustBirdsForm());
-        document.getElementById('export-feed-records')?.addEventListener('click', () => this.exportFeedRecords());
-        document.getElementById('cancel-feed-form')?.addEventListener('click', () => this.cancelFeedForm());
-        document.getElementById('cancel-feed-edit')?.addEventListener('click', () => this.cancelFeedEdit());
-        
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-feed-record')) {
-                const id = parseInt(e.target.closest('.edit-feed-record').dataset.id);
-                this.editFeedRecord(id);
-            } else if (e.target.closest('.delete-feed-record')) {
-                const id = parseInt(e.target.closest('.delete-feed-record').dataset.id);
-                this.deleteFeedRecord(id);
-            }
-        });
-        
-        const buttons = document.querySelectorAll('.quick-action-btn');
-        buttons.forEach(button => {
-            button.addEventListener('mouseenter', (e) => e.currentTarget.style.transform = 'translateY(-4px)');
-            button.addEventListener('mouseleave', (e) => e.currentTarget.style.transform = 'translateY(0)');
-        });
+    markReceiptAsProcessed(id) {
+        const idx = this.receiptQueue.findIndex(r => r.id === id);
+        if (idx !== -1) {
+            this.receiptQueue[idx].status = 'processed';
+            this.saveReceiptsToLocalStorage();
+            this.updateReceiptQueueUI();
+        }
     },
 
-    setupBroadcasterListeners() {
-        if (!this.broadcaster) return;
-        
-        this.broadcaster.on('birds-updated', (data) => {
-            console.log('📡 Feed module received birds-updated:', data);
-            if (data.count !== undefined) {
-                this.birdsStock = data.count;
-                this.saveData();
-                this.updateBirdCountDisplay();
-            }
-        });
-        
-        this.broadcaster.on('inventory-updated', (data) => {
-            console.log('📡 Feed module received inventory-updated:', data);
-        });
-        
-        window.addEventListener('farm-data-loaded', () => this.syncWithFarmData());
-        window.addEventListener('farm-data-updated', () => this.syncWithFarmData());
+    saveReceiptsToLocalStorage() {
+        localStorage.setItem('local-receipts', JSON.stringify(this.receiptQueue));
+    },
+
+    confirmAndDeleteReceipt(id) {
+        if (confirm('Delete this receipt?')) this.deleteReceiptFromAllSources(id);
+    },
+
+    deleteReceiptFromAllSources(id) {
+        this.receiptQueue = this.receiptQueue.filter(r => r.id !== id);
+        this.saveReceiptsToLocalStorage();
+        this.updateReceiptQueueUI();
+        this.updateModalReceiptsList();
+        this.showNotification('Receipt deleted', 'success');
     },
 
     // ==================== UTILITY METHODS ====================
+    connectToDataBroadcaster() {
+        if (window.DataBroadcaster) {
+            window.DataBroadcaster.on('sales:updated', data => this.handleSalesUpdate(data.sales || data));
+        }
+    },
+
+    handleSalesUpdate(salesData) {
+        if (salesData && Array.isArray(salesData)) {
+            const income = salesData.map(s => ({
+                id: Date.now() + Math.random(),
+                date: s.date,
+                description: `Sale: ${s.product || s.customer}`,
+                amount: s.total || 0,
+                category: 'Sales Revenue',
+                type: 'income',
+                source: 'sales'
+            }));
+            this.transactions.push(...income);
+            this.saveData();
+            this.updateStats();
+            this.updateTransactionsList();
+        }
+    },
+
+    getDeviceId() {
+        let id = localStorage.getItem('device-id');
+        if (!id) {
+            id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('device-id', id);
+        }
+        return id;
+    },
+
+    getLocalDate() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    },
+
+    calculateStats() {
+        const income = this.transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const expenses = this.transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        return { totalIncome: income, totalExpenses: expenses, netIncome: income - expenses, transactionCount: this.transactions.length };
+    },
+
+    getRecentTransactions(limit = 10) {
+        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+    },
+
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     },
 
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+
     showNotification(message, type = 'info') {
-        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
-        } else {
-            console.log(`${type.toUpperCase()}: ${message}`);
-            const notification = document.createElement('div');
-            notification.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 12px 20px; background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'}; color: white; border-radius: 8px; z-index: 10000;`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+        if (window.coreModule?.showNotification) window.coreModule.showNotification(message, type);
+        else {
+            const div = document.createElement('div');
+            div.style.cssText = `position:fixed;top:20px;right:20px;padding:12px 20px;background:${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};color:white;border-radius:8px;z-index:10000`;
+            div.textContent = message;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
         }
     },
 
-    onThemeChange(theme) {
-        console.log(`Feed Records updating for theme: ${theme}`);
-        if (this.initialized) this.renderModule();
+    exportTransactions() {
+        const data = { transactions: this.transactions, stats: this.calculateStats(), exportDate: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `farm-transactions-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.showNotification('Transactions exported', 'success');
+    },
+
+    generateFinancialReport() {
+        const stats = this.calculateStats();
+        const report = `Farm Financial Report\nGenerated: ${new Date().toLocaleDateString()}\n\nTotal Income: ${this.formatCurrency(stats.totalIncome)}\nTotal Expenses: ${this.formatCurrency(stats.totalExpenses)}\nNet Income: ${this.formatCurrency(stats.netIncome)}\nTotal Transactions: ${stats.transactionCount}`;
+        const blob = new Blob([report], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `financial-report-${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.showNotification('Report generated', 'success');
+    },
+
+    generateCategoryAnalysis() {
+        const incomeByCat = {};
+        const expenseByCat = {};
+        this.transactions.forEach(t => {
+            if (t.type === 'income') incomeByCat[t.category] = (incomeByCat[t.category] || 0) + t.amount;
+            else expenseByCat[t.category] = (expenseByCat[t.category] || 0) + t.amount;
+        });
+        let csv = 'Category,Type,Amount\n';
+        Object.entries(incomeByCat).forEach(([c, a]) => csv += `"${c}",income,${a}\n`);
+        Object.entries(expenseByCat).forEach(([c, a]) => csv += `"${c}",expense,${a}\n`);
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `category-analysis-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.showNotification('Category analysis exported', 'success');
     },
 
     unload() {
-        console.log('📦 Unloading Feed module...');
-        if (this.broadcaster) this.broadcaster = null;
-        const modal = document.getElementById('feed-modal');
-        if (modal) modal.classList.add('hidden');
+        console.log('📦 Unloading Income & Expenses module...');
+        this.stopCamera();
+        if (this._globalClickHandler) document.removeEventListener('click', this._globalClickHandler);
+        if (this._globalChangeHandler) document.removeEventListener('change', this._globalChangeHandler);
+        if (this.realtimeUnsubscribe) this.realtimeUnsubscribe();
+        this.hideAllModals();
         this.initialized = false;
         this.element = null;
-        this.currentEditingId = null;
-        console.log('✅ Feed module unloaded');
     }
 };
 
-// ==================== REGISTRATION ====================
+// Register module
 if (window.FarmModules) {
-    window.FarmModules.registerModule('feed-record', FeedRecordModule);
-    console.log('✅ Feed Records module registered with UnifiedDataService');
+    window.FarmModules.registerModule('income-expenses', IncomeExpensesModule);
+    console.log('✅ Income & Expenses module registered');
 }
 
-window.FeedRecordModule = FeedRecordModule;
-
-(function() {
-    console.log(`📦 Registering feed-record module...`);
-    if (window.FarmModules) {
-        FarmModules.registerModule('feed-record', FeedRecordModule);
-        console.log(`✅ feed-record module registered successfully!`);
-    } else {
-        console.error('❌ FarmModules framework not found');
-    }
-})();
+window.IncomeExpensesModule = IncomeExpensesModule;
