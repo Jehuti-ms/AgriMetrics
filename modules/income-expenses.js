@@ -563,6 +563,37 @@ setupRealtimeSync() {
     console.log('Loading transactions...');
     
     try {
+        // ===== ADD THIS SECTION FIRST =====
+        // 1. Try DataService first (this has your 12 transactions)
+        if (window.DataService?.data?.transactions?.length > 0) {
+            this.transactions = window.DataService.data.transactions;
+            console.log('📁 Loaded from DataService:', this.transactions.length);
+            // Save to localStorage for persistence
+            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+            // Sort and return
+            this.transactions.sort((a, b) => {
+                const dateA = new Date(a.date || a.createdAt);
+                const dateB = new Date(b.date || b.createdAt);
+                return dateB - dateA;
+            });
+            return;
+        }
+        
+        // 2. Try FarmData second
+        if (window.FarmData?.transactions?.length > 0) {
+            this.transactions = window.FarmData.transactions;
+            console.log('📁 Loaded from FarmData:', this.transactions.length);
+            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+            this.transactions.sort((a, b) => {
+                const dateA = new Date(a.date || a.createdAt);
+                const dateB = new Date(b.date || b.createdAt);
+                return dateB - dateA;
+            });
+            return;
+        }
+        
+        // ===== END ADDED SECTION =====
+        
         // If using UnifiedDataService, get from there
         if (this.dataService) {
             this.transactions = this.dataService.get('transactions') || [];
@@ -579,8 +610,8 @@ setupRealtimeSync() {
         }
         
         // Load from Firebase and merge (legacy only)
-        if (!this.dataService && this.isFirebaseAvailable && window.db) {
-            await this.loadFromFirebaseLegacy();  // ← CHANGE THIS LINE - use Legacy version
+        if (!this.dataService && this.isFirebaseAvailable && window.db && this.transactions.length === 0) {
+            await this.loadFromFirebaseLegacy();
         }
         
         // Sort and save
@@ -600,10 +631,56 @@ setupRealtimeSync() {
     async loadFromFirebaseLegacy() {
     try {
         const user = window.firebase.auth().currentUser;
-        if (!user) return;
+        if (!user) {
+            console.log('No user logged in');
+            return;
+        }
         
         console.log('☁️ Loading from Firebase (legacy)...');
         
+        // Try multiple Firebase paths
+        const today = new Date();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+        const period = `${month}-${year}`;
+        
+        // Path 1: income collection (where saveToFirebase saves)
+        try {
+            const incomeRef = window.db.collection('income').doc(user.uid).collection('transactions').doc(period);
+            const incomeDoc = await incomeRef.get();
+            
+            if (incomeDoc.exists) {
+                const data = incomeDoc.data();
+                if (data.entries && data.entries.length > 0) {
+                    this.transactions = data.entries;
+                    console.log('✅ Loaded from income collection:', this.transactions.length);
+                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                    return;
+                }
+            }
+        } catch (e) {
+            console.log('No data in income collection');
+        }
+        
+        // Path 2: income-expenses collection
+        try {
+            const ieRef = window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period);
+            const ieDoc = await ieRef.get();
+            
+            if (ieDoc.exists) {
+                const data = ieDoc.data();
+                if (data.entries && data.entries.length > 0) {
+                    this.transactions = data.entries;
+                    console.log('✅ Loaded from income-expenses collection:', this.transactions.length);
+                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                    return;
+                }
+            }
+        } catch (e) {
+            console.log('No data in income-expenses collection');
+        }
+        
+        // Path 3: users collection (original)
         const snapshot = await window.db.collection('users')
             .doc(user.uid)
             .collection('transactions')
@@ -655,7 +732,7 @@ setupRealtimeSync() {
         console.error('Error loading from Firebase:', error);
     }
 },
-
+    
   async saveToFirebase() {
     console.log('💾 Saving to Firebase...');
     
