@@ -580,7 +580,7 @@ setupRealtimeSync() {
         
         // Load from Firebase and merge (legacy only)
         if (!this.dataService && this.isFirebaseAvailable && window.db) {
-            await this.loadFromFirebase();
+            await this.loadFromFirebaseLegacy();  // ← CHANGE THIS LINE - use Legacy version
         }
         
         // Sort and save
@@ -594,6 +594,65 @@ setupRealtimeSync() {
         
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
+    }
+},
+
+    async loadFromFirebaseLegacy() {
+    try {
+        const user = window.firebase.auth().currentUser;
+        if (!user) return;
+        
+        console.log('☁️ Loading from Firebase (legacy)...');
+        
+        const snapshot = await window.db.collection('users')
+            .doc(user.uid)
+            .collection('transactions')
+            .orderBy('date', 'desc')
+            .get();
+        
+        if (snapshot.empty) return;
+        
+        // Create map of existing transactions
+        const existingMap = new Map();
+        this.transactions.forEach(t => {
+            if (t.id) existingMap.set(t.id.toString(), t);
+        });
+        
+        let newCount = 0;
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const firebaseId = doc.id.toString();
+            
+            if (!existingMap.has(firebaseId)) {
+                existingMap.set(firebaseId, {
+                    id: firebaseId,
+                    date: data.date,
+                    type: data.type,
+                    category: data.category,
+                    amount: parseFloat(data.amount) || 0,
+                    description: data.description || '',
+                    paymentMethod: data.paymentMethod || 'cash',
+                    reference: data.reference || '',
+                    notes: data.notes || '',
+                    receipt: data.receipt || null,
+                    userId: data.userId || user.uid,
+                    createdAt: data.createdAt || new Date().toISOString(),
+                    updatedAt: data.updatedAt || new Date().toISOString(),
+                    source: 'firebase'
+                });
+                newCount++;
+            }
+        });
+        
+        this.transactions = Array.from(existingMap.values());
+        console.log(`✅ Firebase sync: +${newCount} new, total: ${this.transactions.length}`);
+        
+        // Save merged data
+        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        
+    } catch (error) {
+        console.error('Error loading from Firebase:', error);
     }
 },
 
