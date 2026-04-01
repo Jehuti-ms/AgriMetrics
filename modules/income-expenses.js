@@ -3114,372 +3114,614 @@ const IncomeExpensesModule = {
     },
 
     // ==================== UI RENDERING ====================
-    renderModule() {
-        if (!this.element) return;
+    // ==================== UI RENDERING - FULL ORIGINAL VERSION ====================
+renderModule() {
+    if (!this.element) return;
 
-        const stats = this.calculateStats();
-        const recentTransactions = this.getRecentTransactions(10);
-        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+    const stats = this.calculateStats();
+    const recentTransactions = this.getRecentTransactions(10);
+    const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
 
-        this.element.innerHTML = `
-            <style>
-                /* All existing styles from your original file */
-                .popout-modal {
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    background: rgba(0, 0, 0, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    z-index: 99999 !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    padding: 20px !important;
-                    box-sizing: border-box !important;
-                    overflow: auto !important;
-                }
-                .popout-modal.hidden { display: none !important; }
-                .popout-modal-content {
-                    background: white;
-                    border-radius: 16px;
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-                    max-width: 800px;
-                    max-height: 85vh;
-                    display: flex;
-                    flex-direction: column;
-                    overflow: hidden;
-                    position: relative;
-                    width: 90%;
-                    margin: auto !important;
-                }
-                .popout-modal-header {
-                    padding: 16px 24px !important;
-                    display: flex !important;
-                    justify-content: space-between !important;
-                    align-items: center !important;
-                    flex-shrink: 0 !important;
-                    min-height: 60px !important;
-                    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
-                    color: white !important;
-                }
-                /* Add all other styles from your original file... */
-            </style>
+    this.element.innerHTML = `
+        <style>
+            /* Keep all your original styles here - they should already be in your file */
+            /* The styles from your original income-expenses.js should remain unchanged */
+        </style>
 
-            <div class="module-container">
-                <div class="module-header">
-                    <h1 class="module-title">Income & Expenses</h1>
-                    <p class="module-subtitle">Track farm finances and cash flow</p>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" id="add-transaction">➕ Add Transaction</button>
-                        <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
-                            📄 Import Receipts
-                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
+        <div class="module-container">
+            <!-- Module Header -->
+            <div class="module-header">
+                <h1 class="module-title">Income & Expenses</h1>
+                <p class="module-subtitle">Track farm finances and cash flow</p>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-transaction">
+                        ➕ Add Transaction
+                    </button>
+                    <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                        📄 Import Receipts
+                        ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pending Receipts Section -->
+            ${pendingReceipts.length > 0 ? `
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-outline" id="refresh-receipts-btn">
+                                <span class="btn-icon">🔄</span>
+                                <span class="btn-text">Refresh</span>
+                            </button>
+                            <button class="btn btn-primary" id="process-all-receipts">
+                                ⚡ Process All
+                            </button>
+                        </div>
+                    </div>
+                    <div id="pending-receipts-list">
+                        ${this.renderPendingReceiptsList(pendingReceipts)}
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Financial Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-action-grid">
+                <button class="quick-action-btn" id="add-income-btn">
+                    <div style="font-size: 32px;">💰</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span>
+                </button>
+                <button class="quick-action-btn" id="add-expense-btn">
+                    <div style="font-size: 32px;">💸</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span>
+                </button>
+                <button class="quick-action-btn" id="financial-report-btn">
+                    <div style="font-size: 32px;">📊</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span>
+                </button>
+                <button class="quick-action-btn" id="category-analysis-btn">
+                    <div style="font-size: 32px;">📋</div>
+                    <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span>
+                    <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span>
+                </button>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
+                    <div style="display: flex; gap: 12px;">
+                        <select id="transaction-filter" class="form-input" style="width: auto;">
+                            <option value="all">All Transactions</option>
+                            <option value="income">Income Only</option>
+                            <option value="expense">Expenses Only</option>
+                        </select>
+                        <button class="btn-outline" id="export-transactions">Export</button>
+                    </div>
+                </div>
+                <div id="transactions-list">
+                    ${this.renderTransactionsList(recentTransactions)}
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="glass-card" style="padding: 24px;">
+                <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
+                <div id="category-breakdown">
+                    ${this.renderCategoryBreakdown()}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODALS ==================== -->
+        <!-- Import Receipts Modal -->
+        <div id="import-receipts-modal" class="popout-modal hidden">
+            <div class="popout-modal-content">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title">📥 Import Receipts</h3>
+                    <button class="popout-modal-close" id="close-import-receipts">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <div id="import-receipts-content">
+                        <!-- Content loaded dynamically -->
+                    </div>
+                </div>
+                <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                    <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                    <button class="btn btn-primary hidden" id="process-receipts-btn">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">Process Receipts</span>
+                        <span id="process-receipts-count">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction Modal -->
+        <div id="transaction-modal" class="popout-modal hidden">
+            <div class="popout-modal-content" style="max-width: 600px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
+                    <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    <form id="transaction-form">
+                        <input type="hidden" id="transaction-id" value="">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Date *</label>
+                                <input type="date" id="transaction-date" class="form-input" value="${this.getLocalDate()}" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Type *</label>
+                                <select id="transaction-type" class="form-input" required>
+                                    <option value="income">💰 Income</option>
+                                    <option value="expense">💸 Expense</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Category *</label>
+                                <select id="transaction-category" class="form-input" required>
+                                    <option value="">Select Category</option>
+                                    
+                                    <!-- Income Categories -->
+                                    <optgroup label="💰 Income">
+                                        <option value="broilers-income">Broilers</option>
+                                        <option value="layers-income">Layers</option>
+                                        <option value="ducks-income">Ducks</option>
+                                        <option value="sheep-income">Sheep</option>
+                                        <option value="goats-income">Goats</option>
+                                        <option value="rabbits-income">Rabbits</option>
+                                        <option value="crops">Crops/Produce</option>
+                                        <option value="eggs">Eggs</option>
+                                        <option value="milk">Milk/Dairy</option>
+                                        <option value="wool">Wool/Fiber</option>
+                                        <option value="breeding">Breeding Stock</option>
+                                        <option value="services">Services</option>
+                                        <option value="grants">Grants/Subsidies</option>
+                                        <option value="other-income">Other Income</option>
+                                    </optgroup>
+                                    
+                                    <!-- Expense Categories -->
+                                    <optgroup label="💸 Expenses">
+                                        <!-- Animal-specific feed -->
+                                        <option value="feed-broilers">Feed - Broilers</option>
+                                        <option value="feed-layers">Feed - Layers</option>
+                                        <option value="feed-ducks">Feed - Ducks</option>
+                                        <option value="feed-sheep">Feed - Sheep</option>
+                                        <option value="feed-goats">Feed - Goats</option>
+                                        <option value="feed-rabbits">Feed - Rabbits</option>
+                                        
+                                        <!-- Medical/Vet by animal -->
+                                        <option value="medical-broilers">Medical - Broilers</option>
+                                        <option value="medical-layers">Medical - Layers</option>
+                                        <option value="medical-ducks">Medical - Ducks</option>
+                                        <option value="medical-sheep">Medical - Sheep</option>
+                                        <option value="medical-goats">Medical - Goats</option>
+                                        <option value="medical-rabbits">Medical - Rabbits</option>
+                                        
+                                        <!-- General farm expenses -->
+                                        <option value="bedding">Bedding/Litter</option>
+                                        <option value="equipment">Equipment</option>
+                                        <option value="labor">Labor</option>
+                                        <option value="utilities">Utilities</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="transport">Transport</option>
+                                        <option value="marketing">Marketing</option>
+                                        <option value="fencing">Fencing</option>
+                                        <option value="buildings">Buildings/Shelter</option>
+                                        <option value="water">Water Systems</option>
+                                        <option value="electricity">Electricity</option>
+                                        <option value="other-expense">Other Expenses</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Amount ($) *</label>
+                                <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label class="form-label">Description *</label>
+                            <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Payment Method</label>
+                                <select id="transaction-payment" class="form-input">
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Card</option>
+                                    <option value="transfer">Bank Transfer</option>
+                                    <option value="check">Check</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Reference Number</label>
+                                <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
+                        </div>
+
+                        <!-- Receipt Section -->
+                        <div style="margin-bottom: 16px;">
+                            <label class="form-label">Receipt (Optional)</label>
+                            <div id="receipt-upload-area" style="border: 2px dashed var(--glass-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px;">
+                                <div style="font-size: 48px; margin-bottom: 8px;">📄</div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Attach Receipt</div>
+                                <div style="color: var(--text-secondary); font-size: 14px;">Click to upload or drag & drop</div>
+                                <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Supports JPG, PNG, PDF (Max 10MB)</div>
+                                <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
+                            </div>
+                            
+                            <!-- Receipt Preview -->
+                            <div id="receipt-preview-container" class="hidden">
+                                <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="font-size: 24px;">📄</div>
+                                        <div>
+                                            <div style="font-weight: 600; color: var(--text-primary);" id="receipt-filename">receipt.jpg</div>
+                                            <div style="font-size: 12px; color: var(--text-secondary);" id="receipt-size">2.5 MB</div>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="remove-receipt" class="btn-icon" style="color: var(--text-secondary);">🗑️</button>
+                                </div>
+                                
+                                <!-- Image Preview -->
+                                <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                                    <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                </div>
+                                
+                                <!-- Process Button -->
+                                <button type="button" id="process-receipt-btn" class="btn-outline" style="width: 100%; margin-top: 8px;">
+                                    🔍 Extract Information from Receipt
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- OCR Results -->
+                        <div id="ocr-results" class="hidden" style="background: #f0f9ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <h4 style="color: #1e40af; margin: 0;">📄 Extracted from Receipt</h4>
+                                <button type="button" id="use-ocr-data" class="btn-primary" style="font-size: 12px; padding: 4px 8px;">Apply</button>
+                            </div>
+                            <div id="ocr-details" style="font-size: 14px; color: #374151;">
+                                <!-- OCR extracted details will appear here -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                    <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
+                    <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    this.setupEventListeners();
+    this.setupReceiptFormHandlers();
+    
+    setTimeout(() => {
+        this.setupReceiptActionListeners();
+    }, 100);
+},
+
+renderImportReceiptsModal() {
+    // Keep your original renderImportReceiptsModal method
+    return `
+        <div class="import-receipts-container">
+            <div class="quick-actions-section">
+                <h2 class="section-title">Upload Method</h2>
+                <div class="card-grid">
+                    <button class="card-button" id="camera-option">
+                        <div class="card-icon">📷</div>
+                        <span class="card-title">Take Photo</span>
+                        <span class="card-subtitle">Use camera</span>
+                    </button>
+                    <button class="card-button" id="upload-option">
+                        <div class="card-icon">📁</div>
+                        <span class="card-title">Upload Files</span>
+                        <span class="card-subtitle">From device</span>
+                    </button>
+                </div>
+            </div>
+            <div id="upload-section" style="display: none;">
+                <div class="upload-system-container">
+                    <div class="upload-dropzone" id="receipt-dropzone">
+                        <div class="dropzone-icon">📁</div>
+                        <h4 class="dropzone-title">Drop receipt files here</h4>
+                        <p class="dropzone-subtitle">or click to browse</p>
+                        <input type="file" id="receipt-file-input" accept="image/*,.pdf" multiple style="display: none;">
+                    </div>
+                </div>
+            </div>
+            <div class="camera-section" id="camera-section" style="display: none;">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📷 Camera</h3>
+                        <div class="camera-status" id="camera-status">Ready</div>
+                    </div>
+                    <div class="camera-preview">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn btn-outline" id="switch-camera">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Switch Camera</span>
+                        </button>
+                        <button class="btn btn-primary" id="capture-photo">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Capture</span>
+                        </button>
+                        <button class="btn btn-outline" id="cancel-camera">
+                            <span class="btn-icon">✖️</span>
+                            <span class="btn-text">Back to Upload</span>
                         </button>
                     </div>
                 </div>
-
-                ${pendingReceipts.length > 0 ? `
-                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
-                            <div style="display: flex; gap: 12px;">
-                                <button class="btn btn-outline" id="refresh-receipts-btn">🔄 Refresh</button>
-                                <button class="btn btn-primary" id="process-all-receipts">⚡ Process All</button>
-                            </div>
-                        </div>
-                        <div id="pending-receipts-list">
-                            ${this.renderPendingReceiptsList(pendingReceipts)}
-                        </div>
+            </div>
+            <div class="recent-section" id="recent-section">
+                <div class="glass-card">
+                    <div class="card-header header-flex">
+                        <h3>📋 Recent Receipts</h3>
+                        <button class="btn btn-outline" id="refresh-receipts">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">Refresh</span>
+                        </button>
                     </div>
-                ` : ''}
-
-                <div class="stats-grid">
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">💰</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div><div style="font-size: 14px; color: var(--text-secondary);">Total Income</div></div>
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">📊</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div><div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div></div>
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">📈</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div><div style="font-size: 14px; color: var(--text-secondary);">Net Income</div></div>
-                    <div class="stat-card"><div style="font-size: 24px; margin-bottom: 8px;">💳</div><div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div><div style="font-size: 14px; color: var(--text-secondary);">Transactions</div></div>
-                </div>
-
-                <div class="quick-action-grid">
-                    <button class="quick-action-btn" id="add-income-btn"><div style="font-size: 32px;">💰</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span></button>
-                    <button class="quick-action-btn" id="add-expense-btn"><div style="font-size: 32px;">💸</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span></button>
-                    <button class="quick-action-btn" id="financial-report-btn"><div style="font-size: 32px;">📊</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span></button>
-                    <button class="quick-action-btn" id="category-analysis-btn"><div style="font-size: 32px;">📋</div><span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span><span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span></button>
-                </div>
-
-                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
-                        <div style="display: flex; gap: 12px;">
-                            <select id="transaction-filter" class="form-input" style="width: auto;">
-                                <option value="all">All Transactions</option>
-                                <option value="income">Income Only</option>
-                                <option value="expense">Expenses Only</option>
-                            </select>
-                            <button class="btn-outline" id="export-transactions">Export</button>
-                        </div>
-                    </div>
-                    <div id="transactions-list">
-                        ${this.renderTransactionsList(recentTransactions)}
-                    </div>
-                </div>
-
-                <div class="glass-card" style="padding: 24px;">
-                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
-                    <div id="category-breakdown">
-                        ${this.renderCategoryBreakdown()}
+                    <div id="recent-receipts-list" class="receipts-list">
+                        ${this.renderRecentReceiptsList()}
                     </div>
                 </div>
             </div>
+        </div>
+    `;
+},
 
-            <div id="import-receipts-modal" class="popout-modal hidden">
-                <div class="popout-modal-content">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title">📥 Import Receipts</h3>
-                        <button class="popout-modal-close" id="close-import-receipts">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <div id="import-receipts-content">
-                            ${this.renderImportReceiptsModal()}
-                        </div>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
-                        <button class="btn btn-primary hidden" id="process-receipts-btn">⚡ Process Receipts<span id="process-receipts-count">0</span></button>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="transaction-modal" class="popout-modal hidden">
-                <div class="popout-modal-content" style="max-width: 600px;">
-                    <div class="popout-modal-header">
-                        <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
-                        <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
-                    </div>
-                    <div class="popout-modal-body">
-                        <form id="transaction-form">
-                            <input type="hidden" id="transaction-id" value="">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div><label class="form-label">Date *</label><input type="date" id="transaction-date" class="form-input" value="${this.getLocalDate()}" required></div>
-                                <div><label class="form-label">Type *</label><select id="transaction-type" class="form-input" required><option value="income">💰 Income</option><option value="expense">💸 Expense</option></select></div>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div><label class="form-label">Category *</label><select id="transaction-category" class="form-input" required><option value="">Select Category</option></select></div>
-                                <div><label class="form-label">Amount ($) *</label><input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00"></div>
-                            </div>
-                            <div style="margin-bottom: 16px;"><label class="form-label">Description *</label><input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description"></div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div><label class="form-label">Payment Method</label><select id="transaction-payment" class="form-input"><option value="cash">Cash</option><option value="card">Card</option><option value="transfer">Bank Transfer</option></select></div>
-                                <div><label class="form-label">Reference Number</label><input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #"></div>
-                            </div>
-                            <div style="margin-bottom: 16px;"><label class="form-label">Notes (Optional)</label><textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea></div>
-                        </form>
-                    </div>
-                    <div class="popout-modal-footer">
-                        <button type="button" class="btn-outline" id="cancel-transaction">Cancel</button>
-                        <button type="button" class="btn-danger" id="delete-transaction" style="display: none;">Delete</button>
-                        <button type="button" class="btn-primary" id="save-transaction">Save Transaction</button>
-                    </div>
-                </div>
+renderPendingReceiptsList(receipts) {
+    if (receipts.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
             </div>
         `;
+    }
 
-        this.setupEventListeners();
-        this.setupReceiptFormHandlers();
-        
-        setTimeout(() => {
-            this.setupReceiptActionListeners();
-        }, 100);
-    },
-
-    renderImportReceiptsModal() {
-        return `
-            <div class="import-receipts-container">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #10b981, #34d399, #10b981); border-radius: 20px 20px 0 0; z-index: 1000 !important;"></div>
-                <div class="quick-actions-section" style="padding-top: 8px;">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option"><div class="card-icon">📷</div><span class="card-title">Take Photo</span><span class="card-subtitle">Use camera</span></button>
-                        <button class="card-button" id="upload-option"><div class="card-icon">📁</div><span class="card-title">Upload Files</span><span class="card-subtitle">From device</span></button>
-                    </div>
-                </div>
-                <div id="upload-section" style="display: none;">
-                    <div class="upload-system-container" id="upload-system">
-                        <div style="display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
-                            <button class="btn btn-outline" id="back-to-main-view" style="display: flex; align-items: center; gap: 8px; margin-right: 16px; padding: 8px 16px;"><span>←</span><span>Back</span></button>
-                            <div><h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">📤 Upload Files</h3><p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Drag & drop or select files from your device</p></div>
-                        </div>
-                        <div class="upload-section active" data-mode="receipts">
-                            <div class="upload-header" style="margin-bottom: 24px;"><h3 class="upload-title">📄 Upload Receipts</h3><p class="upload-subtitle">Take photos or scan receipts to track expenses</p></div>
-                            <div class="upload-dropzone" id="receipt-dropzone">
-                                <div class="dropzone-content">
-                                    <div class="dropzone-icon">📁</div>
-                                    <h4 class="dropzone-title">Drop receipt files here</h4>
-                                    <p class="dropzone-subtitle">or click to browse</p>
-                                    <div class="file-types"><span class="file-type-badge">JPG</span><span class="file-type-badge">PNG</span><span class="file-type-badge">PDF</span><span class="file-type-badge">HEIC</span></div>
-                                </div>
-                                <input type="file" id="receipt-file-input" accept="image/*,.pdf,.heic,.heif" multiple class="dropzone-input" style="display: none;">
-                            </div>
-                            <div class="uploaded-files-container" style="margin-top: 24px;">
-                                <h5 class="files-title">📎 Uploaded Receipts <span class="badge" id="receipt-count">0</span></h5>
-                                <div class="files-list" id="receipt-files-list"><div class="empty-state">📭<p>No receipts uploaded yet</p></div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="camera-section" id="camera-section" style="display: none;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex"><h3>📷 Camera</h3><div class="camera-status" id="camera-status">Ready</div></div>
-                        <div class="camera-preview"><video id="camera-preview" autoplay playsinline></video><canvas id="camera-canvas" style="display: none;"></canvas></div>
-                        <div class="camera-controls">
-                            <button class="btn btn-outline" id="switch-camera"><span class="btn-icon">🔄</span><span class="btn-text">Switch Camera</span></button>
-                            <button class="btn btn-primary" id="capture-photo"><span class="btn-icon">📸</span><span class="btn-text">Capture</span></button>
-                            <button class="btn btn-outline" id="cancel-camera"><span class="btn-icon">✖️</span><span class="btn-text">Back to Upload</span></button>
-                        </div>
-                    </div>
-                </div>
-                <div class="recent-section" id="recent-section" style="display: block;">
-                    <div class="glass-card">
-                        <div class="card-header header-flex"><h3>📋 Recent Receipts</h3><button class="btn btn-outline" id="refresh-receipts"><span class="btn-icon">🔄</span><span class="btn-text">Refresh</span></button></div>
-                        <div id="recent-receipts-list" class="receipts-list">${this.renderRecentReceiptsList()}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-
-    renderPendingReceiptsList(receipts) {
-        if (receipts.length === 0) {
-            return `<div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;"><div style="font-size: 48px; margin-bottom: 16px;">📄</div><div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div><div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div></div>`;
-        }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
-                ${receipts.map(receipt => {
-                    const imageUrl = this.getReceiptImageUrl(receipt);
-                    return `
-                        <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                            <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
-                                <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
-                                <div class="receipt-details">
-                                    <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${this.escapeHtml(receipt.name)}</div>
-                                    <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
-                                        <span>${this.formatFileSize(receipt.size || 0)}</span>
-                                        <span>•</span>
-                                        <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
-                                        <span>•</span>
-                                        <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="receipt-actions" style="display: flex; gap: 8px;">
-                                ${imageUrl ? `<button class="btn btn-sm btn-outline view-receipt-btn" data-receipt-id="${receipt.id}" data-receipt-url="${this.escapeHtml(imageUrl)}" data-receipt-name="${this.escapeHtml(receipt.name)}" style="padding: 6px 12px;"><span class="btn-icon">👁️</span><span class="btn-text">View</span></button>` : `<button class="btn btn-sm btn-outline view-receipt-btn-disabled" disabled style="padding: 6px 12px; opacity: 0.5;"><span class="btn-icon">👁️</span><span class="btn-text">View</span></button>`}
-                                <button class="btn btn-sm btn-primary process-receipt-btn" data-receipt-id="${receipt.id}" style="padding: 6px 12px;"><span class="btn-icon">🔍</span><span class="btn-text">Process</span></button>
-                                <button class="btn btn-sm btn-danger delete-receipt-btn" data-receipt-id="${receipt.id}" style="padding: 6px 12px;"><span class="btn-icon">🗑️</span></button>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    renderRecentReceiptsList() {
-        if (this.receiptQueue.length === 0) {
-            return `<div class="empty-state"><div class="empty-icon">📄</div><h4>No receipts found</h4><p>Upload receipts to get started</p></div>`;
-        }
-        
-        const recentReceipts = this.receiptQueue.slice(0, 5).sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-        
-        return `
-            <div class="receipts-grid" id="recent-receipts-grid">
-                ${recentReceipts.map(receipt => {
-                    return `
-                        <div class="receipt-card" data-receipt-id="${receipt.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px;">
-                            <div class="receipt-preview">
-                                ${receipt.type?.startsWith('image/') && receipt.downloadURL?.startsWith('http') ? `<img src="${receipt.downloadURL}" alt="${receipt.name}" loading="lazy" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">` : `<div class="file-icon" style="font-size: 24px;">📄</div>`}
-                            </div>
-                            <div class="receipt-info" style="flex: 1;">
-                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
-                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary);">
-                                    <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
+    return `
+        <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
+            ${receipts.map(receipt => {
+                const imageUrl = this.getReceiptImageUrl(receipt);
+                return `
+                    <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
+                            <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                            <div class="receipt-details">
+                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${this.escapeHtml(receipt.name)}</div>
+                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
+                                    <span>${this.formatFileSize(receipt.size || 0)}</span>
                                     <span>•</span>
-                                    <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                                    <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
+                                    <span>•</span>
+                                    <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-sm btn-outline process-btn" data-receipt-id="${receipt.id}" style="white-space: nowrap; padding: 6px 12px;">🔍 Process</button>
-                                <button class="btn btn-sm btn-danger delete-receipt-btn" data-receipt-id="${receipt.id}" style="padding: 6px 12px;">🗑️ Delete</button>
-                            </div>
                         </div>
-                    `;
-                }).join('')}
+                        <div class="receipt-actions" style="display: flex; gap: 8px;">
+                            ${imageUrl ? `
+                                <button class="btn btn-sm btn-outline view-receipt-btn" 
+                                        data-receipt-id="${receipt.id}"
+                                        data-receipt-url="${this.escapeHtml(imageUrl)}"
+                                        data-receipt-name="${this.escapeHtml(receipt.name)}"
+                                        style="padding: 6px 12px;" 
+                                        title="View receipt">
+                                    <span class="btn-icon">👁️</span>
+                                    <span class="btn-text">View</span>
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-outline view-receipt-btn-disabled" 
+                                        disabled
+                                        style="padding: 6px 12px; opacity: 0.5;" 
+                                        title="Preview not available">
+                                    <span class="btn-icon">👁️</span>
+                                    <span class="btn-text">View</span>
+                                </button>
+                            `}
+                            <button class="btn btn-sm btn-primary process-receipt-btn" 
+                                    data-receipt-id="${receipt.id}" 
+                                    style="padding: 6px 12px;">
+                                <span class="btn-icon">🔍</span>
+                                <span class="btn-text">Process</span>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                    data-receipt-id="${receipt.id}" 
+                                    style="padding: 6px 12px;" 
+                                    title="Delete receipt">
+                                <span class="btn-icon">🗑️</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
+
+renderRecentReceiptsList() {
+    if (this.receiptQueue.length === 0) {
+        return `
+            <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <h4>No receipts found</h4>
+                <p>Upload receipts to get started</p>
             </div>
         `;
-    },
+    }
+    
+    const recentReceipts = this.receiptQueue.slice(0, 5).sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+    
+    return `
+        <div class="receipts-grid" id="recent-receipts-grid">
+            ${recentReceipts.map(receipt => {
+                return `
+                    <div class="receipt-card" data-receipt-id="${receipt.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px;">
+                        <div class="receipt-preview">
+                            ${receipt.type?.startsWith('image/') && receipt.downloadURL?.startsWith('http') ? 
+                                `<img src="${receipt.downloadURL}" alt="${receipt.name}" 
+                                      loading="lazy" 
+                                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">` : 
+                                `<div class="file-icon" style="font-size: 24px;">📄</div>`
+                            }
+                        </div>
+                        <div class="receipt-info" style="flex: 1;">
+                            <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
+                            <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary);">
+                                <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
+                                <span>•</span>
+                                <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-outline process-btn" 
+                                    data-receipt-id="${receipt.id}"
+                                    style="white-space: nowrap; padding: 6px 12px;">
+                                🔍 Process
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                    data-receipt-id="${receipt.id}"
+                                    style="padding: 6px 12px;" 
+                                    title="Delete receipt">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
 
-    renderTransactionsList(transactions) {
-        if (transactions.length === 0) {
-            return `<div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;"><div style="font-size: 48px; margin-bottom: 16px;">📊</div><div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div><div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div></div>`;
+renderTransactionsList(transactions) {
+    if (transactions.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
+            </div>
+        `;
+    }
+
+    return `
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${transactions.map(transaction => {
+                const isIncome = transaction.type === 'income';
+                const icon = isIncome ? '💰' : '💸';
+                const displayDate = this.formatDateForDisplay(transaction.date);
+                
+                return `
+                    <div class="transaction-item" data-id="${transaction.id}" 
+                         style="display: flex; justify-content: space-between; align-items: center; 
+                                padding: 16px; background: var(--glass-bg); border-radius: 8px; 
+                                border: 1px solid var(--glass-border); cursor: pointer;"
+                         onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 24px;">${icon}</span>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                    ${transaction.description || 'No description'}
+                                </div>
+                                <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                    <span>${displayDate}</span>
+                                    <span>•</span>
+                                    <span>${transaction.category || 'Uncategorized'}</span>
+                                    <span>•</span>
+                                    <span>${transaction.paymentMethod || 'Cash'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
+                                ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                            </div>
+                            ${transaction.reference ? `
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                    Ref: ${transaction.reference}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+},
+
+renderCategoryBreakdown() {
+    const incomeByCategory = {};
+    const expensesByCategory = {};
+    
+    this.transactions.forEach(transaction => {
+        if (transaction.type === 'income') {
+            incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
+        } else {
+            expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
         }
-
-        return `
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${transactions.map(transaction => {
-                    const isIncome = transaction.type === 'income';
-                    const icon = isIncome ? '💰' : '💸';
-                    const displayDate = this.formatDateForDisplay(transaction.date);
-                    
-                    return `
-                        <div class="transaction-item" data-id="${transaction.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 24px;">${icon}</span>
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${transaction.description || 'No description'}</div>
-                                    <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
-                                        <span>${displayDate}</span>
-                                        <span>•</span>
-                                        <span>${transaction.category || 'Uncategorized'}</span>
-                                        <span>•</span>
-                                        <span>${transaction.paymentMethod || 'Cash'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}</div>
-                                ${transaction.reference ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Ref: ${transaction.reference}</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    },
-
-    renderCategoryBreakdown() {
-        const incomeByCategory = {};
-        const expensesByCategory = {};
-        
-        this.transactions.forEach(transaction => {
-            if (transaction.type === 'income') {
-                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
-            } else {
-                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
-            }
-        });
-        
-        const totalIncome = this.calculateStats().totalIncome;
-        const totalExpenses = this.calculateStats().totalExpenses;
-        
-        return `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                <div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💰 Income</h4>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${Object.entries(incomeByCategory).length > 0 ? 
-                            Object.entries(incomeByCategory).sort(([,a], [,b]) => b - a).map(([category, amount]) => {
+    });
+    
+    const totalIncome = this.calculateStats().totalIncome;
+    const totalExpenses = this.calculateStats().totalExpenses;
+    
+    return `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div>
+                <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💰 Income</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${Object.entries(incomeByCategory).length > 0 ? 
+                        Object.entries(incomeByCategory)
+                            .sort(([,a], [,b]) => b - a)
+                            .map(([category, amount]) => {
                                 const percentage = totalIncome > 0 ? (amount / totalIncome * 100).toFixed(1) : 0;
                                 return `
                                     <div style="margin-bottom: 8px;">
@@ -3490,19 +3732,28 @@ const IncomeExpensesModule = {
                                         <div style="height: 6px; background: #d1fae5; border-radius: 3px; overflow: hidden;">
                                             <div style="height: 100%; width: ${percentage}%; background: #10b981; border-radius: 3px;"></div>
                                         </div>
-                                        <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${percentage}%</div>
+                                        <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                            ${percentage}%
+                                        </div>
                                     </div>
                                 `;
                             }).join('')
-                            : `<div style="text-align: center; color: var(--text-secondary); padding: 20px;">No income recorded yet</div>`
-                        }
-                    </div>
+                        : `
+                            <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                No income recorded yet
+                            </div>
+                        `
+                    }
                 </div>
-                <div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💸 Expenses</h4>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${Object.entries(expensesByCategory).length > 0 ? 
-                            Object.entries(expensesByCategory).sort(([,a], [,b]) => b - a).map(([category, amount]) => {
+            </div>
+            
+            <div>
+                <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💸 Expenses</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${Object.entries(expensesByCategory).length > 0 ? 
+                        Object.entries(expensesByCategory)
+                            .sort(([,a], [,b]) => b - a)
+                            .map(([category, amount]) => {
                                 const percentage = totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : 0;
                                 return `
                                     <div style="margin-bottom: 8px;">
@@ -3513,18 +3764,23 @@ const IncomeExpensesModule = {
                                         <div style="height: 6px; background: #fee2e2; border-radius: 3px; overflow: hidden;">
                                             <div style="height: 100%; width: ${percentage}%; background: #ef4444; border-radius: 3px;"></div>
                                         </div>
-                                        <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${percentage}%</div>
+                                        <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                            ${percentage}%
+                                        </div>
                                     </div>
                                 `;
                             }).join('')
-                            : `<div style="text-align: center; color: var(--text-secondary); padding: 20px;">No expenses recorded yet</div>`
-                        }
-                    </div>
+                        : `
+                            <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                No expenses recorded yet
+                            </div>
+                        `
+                    }
                 </div>
             </div>
-        `;
-    },
-
+        </div>
+    `;
+},
     // ==================== UI UPDATES ====================
     updateReceiptQueueUI() {
         const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
