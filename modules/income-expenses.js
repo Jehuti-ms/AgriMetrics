@@ -1,4 +1,4 @@
-// modules/income-expenses.js - COMPLETE FIXED VERSION WITH UNIFIED DATA SERVICE
+// modules/income-expenses.js - COMPLETE FIXED VERSION
 console.log('💰 Loading Income & Expenses module...');
 
 const Broadcaster = window.DataBroadcaster || {
@@ -26,11 +26,7 @@ const IncomeExpensesModule = {
     isDeleting: false,
     isCapturing: false,  // Add this
     captureTimeout: null, // Add this
-    dataService: null, // ADDED: Reference to UnifiedDataService
 
-    // Add this near the top of your module properties
-cameraFacingMode: 'environment', // 'environment' for back camera, 'user' for front
-lastSwitchClick: 0,
       
     // Add this debug method
 debugCameraCapture: function() {
@@ -86,7 +82,7 @@ debugCameraCapture: function() {
 },
     
    // ==================== INITIALIZATION ====================
-async initialize() {
+async initialize() {  // ← ADD async
     console.log('💰 Initializing Income & Expenses...');
     
     this.element = document.getElementById('content-area');
@@ -95,51 +91,46 @@ async initialize() {
         return false;
     }
 
-    // Check for UnifiedDataService FIRST
-    this.dataService = window.UnifiedDataService;
-    
-    if (this.dataService) {
-        console.log('✅ Using UnifiedDataService');
-        this.isFirebaseAvailable = !!(this.dataService.db && this.dataService.userId);
-    } else {
-        console.log('⚠️ UnifiedDataService not available, using legacy Firebase');
-        
-        // Wait for Firebase to be ready (legacy)
-        let waitCount = 0;
-        while (!window.db && waitCount < 20) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            waitCount++;
-        }
-        this.isFirebaseAvailable = !!(window.firebase && window.db);
-    }
-    
-    console.log('Firebase available:', this.isFirebaseAvailable);
+    // Check if Firebase services are available
+    this.isFirebaseAvailable = !!(window.firebase && window.db);
+    console.log('Firebase available:', this.isFirebaseAvailable, {
+        firebase: !!window.firebase,
+        db: !!window.db
+    });
 
     if (window.StyleManager) {
         StyleManager.registerModule(this.name, this.element, this);
     }
 
+    // Setup network detection
     this.setupNetworkDetection();
-    await this.loadData();
-
-    // Setup real-time sync
-    if (this.isFirebaseAvailable) {
-        this.setupRealtimeSync();
-    }
     
-    await this.loadReceiptsFromFirebase();
+    // Load transactions - WAIT for this to complete
+    await this.loadData();  // ← ADD await
+    
+    // Load receipts from Firebase - WAIT for this too
+    await this.loadReceiptsFromFirebase();  // ← ADD await
+
+    // Setup global click handler for receipts
     this.setupReceiptActionListeners();
     
+    // Process any pending syncs (don't need to await this)
     if (this.isFirebaseAvailable) {
         setTimeout(() => {
             this.syncLocalTransactionsToFirebase();
         }, 3000);
     }
 
+    // Make sure receiptQueue is initialized
     this.receiptQueue = this.receiptQueue || [];
+    
+    // Listen for sales from Orders module
     this.setupSalesListeners();  
-    this.renderModule();
+            
+    this.renderModule();  // ← Now this happens AFTER data is loaded
     this.initialized = true;
+    
+    // Connect to Data Broadcaster
     this.connectToDataBroadcaster();
     
     console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
@@ -289,85 +280,74 @@ async initialize() {
         console.log('✅ Fallback sales listeners setup complete');
     },
 
-   addIncomeFromSale(saleData) {
-    console.log('➕ Adding income from sale:', saleData);
-    
-    // Skip if this sale came from this device and was auto-created
-    if (saleData.sourceDeviceId === this.getDeviceId() && saleData.source === 'income-module') {
-        console.log('⚠️ Skipping - this sale was auto-created from this device');
-        return;
-    }
-    
-    // Check if this order was already added
-    const existingTransaction = this.transactions.find(t => 
-        t.reference === `ORDER-${saleData.orderId}` || 
-        (t.source === 'orders-module' && t.orderId === saleData.orderId) ||
-        t.id === saleData.transactionId
-    );
-    
-    if (existingTransaction) {
-        console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
-        return;
-    }
-    
-    // Create transaction data
-    const transactionData = {
-        id: Date.now() + Math.floor(Math.random() * 1000),
-        date: saleData.date || new Date().toISOString().split('T')[0],
-        type: 'income',
-        category: 'sales',
-        amount: saleData.amount,
-        description: saleData.description || `Sale from order`,
-        paymentMethod: saleData.paymentMethod || 'cash',
-        reference: saleData.reference || `ORDER-${saleData.orderId}`,
-        notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
-        receipt: null,
-        userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        source: 'orders-module',
-        orderId: saleData.orderId,
-        customerName: saleData.customerName,
-        sourceDeviceId: saleData.sourceDeviceId || 'external'  // ← ADD THIS
-    };
-    
-    // Add to transactions array
-    if (!this.transactions) this.transactions = [];
-    this.transactions.unshift(transactionData);
-    
-    // Save to localStorage
-    try {
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-        console.log('💾 Saved sale to localStorage:', transactionData.id);
-    } catch (storageError) {
-        console.warn('⚠️ Failed to save to localStorage:', storageError);
-    }
-    
-    // Save to Firebase/Unified Service
-    if (this.dataService) {
-        // Use UnifiedDataService
-        this.dataService.save('transactions', transactionData);
-    } else if (this.isFirebaseAvailable && window.db) {
-        // Legacy Firebase save
-        this.saveTransactionToFirebase(transactionData)
-            .then(() => {
-                console.log('✅ Sale saved to Firebase');
-            })
-            .catch(error => {
-                console.warn('⚠️ Failed to save sale to Firebase:', error.message);
-            });
-    }
-    
-    // Update UI
-    this.updateStats();
-    this.updateTransactionsList();
-    this.updateCategoryBreakdown();
-    
-    // Show notification
-    this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
-    
-    console.log('✅ Income added successfully:', transactionData);
-},
+    addIncomeFromSale(saleData) {
+        console.log('➕ Adding income from sale:', saleData);
+        
+        // Check if this order was already added
+        const existingTransaction = this.transactions.find(t => 
+            t.reference === `ORDER-${saleData.orderId}` || 
+            (t.source === 'orders-module' && t.orderId === saleData.orderId)
+        );
+        
+        if (existingTransaction) {
+            console.log('⚠️ Sale already added as income, skipping:', existingTransaction.id);
+            return;
+        }
+        
+        // Create transaction data
+        const transactionData = {
+            id: Date.now() + Math.floor(Math.random() * 1000), // Ensure unique ID
+            date: saleData.date || new Date().toISOString().split('T')[0],
+            type: 'income',
+            category: 'sales',
+            amount: saleData.amount,
+            description: saleData.description || `Sale from order`,
+            paymentMethod: saleData.paymentMethod || 'cash',
+            reference: saleData.reference || `ORDER-${saleData.orderId}`,
+            notes: saleData.notes || `Auto-generated from order #${saleData.orderId}`,
+            receipt: null,
+            userId: window.firebase?.auth()?.currentUser?.uid || 'anonymous',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            source: 'orders-module',
+            orderId: saleData.orderId,
+            customerName: saleData.customerName
+        };
+        
+        // Add to transactions array
+        if (!this.transactions) this.transactions = [];
+        this.transactions.unshift(transactionData);
+        
+        // Save to localStorage
+        try {
+            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+            console.log('💾 Saved sale to localStorage:', transactionData.id);
+        } catch (storageError) {
+            console.warn('⚠️ Failed to save to localStorage:', storageError);
+        }
+        
+        // Save to Firebase if available
+        if (this.isFirebaseAvailable && window.db) {
+            this.saveTransactionToFirebase(transactionData)
+                .then(() => {
+                    console.log('✅ Sale saved to Firebase');
+                })
+                .catch(error => {
+                    console.warn('⚠️ Failed to save sale to Firebase:', error.message);
+                });
+        }
+        
+        // Update UI
+        this.updateStats();
+        this.updateTransactionsList();
+        this.updateCategoryBreakdown();
+        
+        // Show notification
+        this.showNotification(`💰 Income added from order #${saleData.orderId}: ${this.formatCurrency(saleData.amount)}`, 'success');
+        
+        console.log('✅ Income added successfully:', transactionData);
+    },
+
     
     // ==================== NETWORK DETECTION ====================
     setupNetworkDetection() {
@@ -379,9 +359,7 @@ async initialize() {
             this.isOnline = true;
             this.showNotification('Back online. Syncing data...', 'info');
             
-            if (this.dataService) {
-                this.dataService.processOfflineQueue();
-            } else if (this.isFirebaseAvailable) {
+            if (this.isFirebaseAvailable) {
                 this.syncLocalTransactionsToFirebase();
                 this.loadReceiptsFromFirebase();
             }
@@ -395,261 +373,207 @@ async initialize() {
     },
 
     // ==================== DATA MANAGEMENT ====================
-   async loadData() {
+    async loadData() {
     console.log('Loading transactions...');
     
     try {
-        // If using UnifiedDataService, get from there
-        if (this.dataService) {
-            this.transactions = this.dataService.get('transactions') || [];
-            console.log('📁 Loaded from UnifiedDataService:', this.transactions.length);
-        } else {
-            // Legacy localStorage load
-            const saved = localStorage.getItem('farm-transactions');
-            if (saved) {
-                this.transactions = JSON.parse(saved);
-                console.log('📁 Loaded from localStorage:', this.transactions.length);
-            } else {
-                this.transactions = [];
+        let loadedFromFirebase = false;
+        
+        // Try to load from Firebase first
+        if (this.isFirebaseAvailable && window.db) {
+            try {
+                const user = window.firebase.auth().currentUser;
+                if (user) {
+                    console.log('👤 User authenticated:', user.uid);
+                    
+                    const today = new Date();
+                    const month = today.getMonth();
+                    const year = today.getFullYear();
+                    const period = `${month}-${year}`;
+                    
+                    // TRY MULTIPLE PATHS WHERE DATA MIGHT BE
+                    
+                    // Path 1: income collection (this is where your phone likely saves)
+                    try {
+                        const incomeRef = window.db.collection('income').doc(user.uid).collection('transactions').doc(period);
+                        const incomeDoc = await incomeRef.get();
+                        
+                        if (incomeDoc.exists) {
+                            const data = incomeDoc.data();
+                            if (data.entries && data.entries.length > 0) {
+                                this.transactions = data.entries;
+                                console.log('✅ Loaded from income collection:', this.transactions.length);
+                                loadedFromFirebase = true;
+                                
+                                // Save to localStorage
+                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('No data in income collection');
+                    }
+                    
+                    // Path 2: income-expenses collection
+                    if (!loadedFromFirebase) {
+                        try {
+                            const ieRef = window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period);
+                            const ieDoc = await ieRef.get();
+                            
+                            if (ieDoc.exists) {
+                                const data = ieDoc.data();
+                                if (data.entries && data.entries.length > 0) {
+                                    this.transactions = data.entries;
+                                    console.log('✅ Loaded from income-expenses collection:', this.transactions.length);
+                                    loadedFromFirebase = true;
+                                    
+                                    // Save to localStorage
+                                    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('No data in income-expenses collection');
+                        }
+                    }
+                    
+                    // Path 3: your original transactions collection (for backward compatibility)
+                    if (!loadedFromFirebase) {
+                        try {
+                            const snapshot = await window.db.collection('transactions')
+                                .where('userId', '==', user.uid)
+                                .limit(100)
+                                .get();
+                            
+                            if (!snapshot.empty) {
+                                this.transactions = snapshot.docs.map(doc => {
+                                    const data = doc.data();
+                                    return {
+                                        id: data.id || parseInt(doc.id),
+                                        date: data.date,
+                                        type: data.type,
+                                        category: data.category,
+                                        amount: parseFloat(data.amount) || 0,
+                                        description: data.description || '',
+                                        paymentMethod: data.paymentMethod || 'cash',
+                                        reference: data.reference || '',
+                                        notes: data.notes || '',
+                                        receipt: data.receipt || null,
+                                        userId: data.userId || user.uid,
+                                        createdAt: data.createdAt || new Date().toISOString(),
+                                        updatedAt: data.updatedAt || new Date().toISOString(),
+                                        syncedAt: data.syncedAt,
+                                        source: 'firebase'
+                                    };
+                                });
+                                
+                                // Sort locally after loading
+                                this.transactions.sort((a, b) => {
+                                    const dateA = new Date(a.createdAt || a.date);
+                                    const dateB = new Date(b.createdAt || b.date);
+                                    return dateB - dateA;
+                                });
+                                
+                                console.log('✅ Loaded transactions from Firebase (transactions collection):', this.transactions.length);
+                                
+                                // Save to localStorage for offline use
+                                localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+                                localStorage.setItem('last-firebase-sync', new Date().toISOString());
+                                
+                                loadedFromFirebase = true;
+                            }
+                        } catch (firebaseError) {
+                            console.error('❌ Firebase load error:', firebaseError);
+                            
+                            if (firebaseError.code === 'permission-denied') {
+                                this.showNotification(
+                                    'Firebase permission denied. Using local data for now.',
+                                    'warning'
+                                );
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error in Firebase loading:', error);
             }
         }
         
-        // Load from Firebase and merge (legacy only)
-        if (!this.dataService && this.isFirebaseAvailable && window.db) {
-            await this.loadFromFirebase();
+        // Fallback to localStorage if Firebase failed or no data
+        if (!loadedFromFirebase) {
+            console.log('🔄 Falling back to localStorage');
+            const saved = localStorage.getItem('farm-transactions');
+            this.transactions = saved ? JSON.parse(saved) : [];
+            //this.transactions = saved ? JSON.parse(saved) : this.getDemoData();
+            
+            // Add source marker for local transactions
+            this.transactions.forEach(t => {
+                if (!t.source) {
+                    t.source = 'local';
+                    t.updatedAt = t.updatedAt || new Date().toISOString();
+                }
+            });
+            
+            console.log('📁 Loaded transactions from localStorage:', this.transactions.length);
         }
-        
-        // Sort and save
-        this.transactions.sort((a, b) => {
-            const dateA = new Date(a.date || a.createdAt);
-            const dateB = new Date(b.date || b.createdAt);
-            return dateB - dateA;
-        });
-        
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
         
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
+       // this.transactions = this.getDemoData();
+        console.log('📝 Loaded demo transactions:', this.transactions.length);
     }
 },
 
- // ==================== SYNC METHODS (ADD THESE) ====================
-
-// Get device ID
-getDeviceId() {
-    let deviceId = localStorage.getItem('device-id');
-    if (!deviceId) {
-        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('device-id', deviceId);
+  async saveToFirebase() {
+    console.log('💾 Saving to Firebase...');
+    
+    if (!this.isFirebaseAvailable || !window.db) {
+        console.log('Firebase not available, skipping cloud save');
+        return false;
     }
-    return deviceId;
-},
-
-// Load from Firebase (no duplication)
-async loadFromFirebase() {
-    try {
-        const user = window.firebase.auth().currentUser;
-        if (!user) return;
-        
-        console.log('☁️ Loading from Firebase...');
-        
-        const snapshot = await window.db.collection('users')
-            .doc(user.uid)
-            .collection('transactions')
-            .orderBy('date', 'desc')
-            .get();
-        
-        if (snapshot.empty) return;
-        
-        // Create map of existing transactions
-        const existingMap = new Map();
-        this.transactions.forEach(t => {
-            if (t.id) existingMap.set(t.id.toString(), t);
-        });
-        
-        let newCount = 0;
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const firebaseId = doc.id.toString();
-            
-            if (!existingMap.has(firebaseId)) {
-                existingMap.set(firebaseId, {
-                    id: firebaseId,
-                    date: data.date,
-                    type: data.type,
-                    category: data.category,
-                    amount: parseFloat(data.amount) || 0,
-                    description: data.description || '',
-                    paymentMethod: data.paymentMethod || 'cash',
-                    reference: data.reference || '',
-                    notes: data.notes || '',
-                    receipt: data.receipt || null,
-                    userId: data.userId || user.uid,
-                    createdAt: data.createdAt || new Date().toISOString(),
-                    updatedAt: data.updatedAt || new Date().toISOString(),
-                    source: 'firebase'
-                });
-                newCount++;
-            }
-        });
-        
-        this.transactions = Array.from(existingMap.values());
-        console.log(`✅ Firebase sync: +${newCount} new, total: ${this.transactions.length}`);
-        
-        // Save merged data
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-        
-    } catch (error) {
-        console.error('Error loading from Firebase:', error);
-    }
-},
-
-// Save to Firebase (single path)
-async saveToFirebase() {
-    if (!this.isFirebaseAvailable || !window.db) return false;
     
     try {
         const user = window.firebase.auth().currentUser;
-        if (!user) return false;
-        
-        console.log('💾 Saving to Firebase...');
-        
-        for (const transaction of this.transactions) {
-            await window.db.collection('users')
-                .doc(user.uid)
-                .collection('transactions')
-                .doc(transaction.id.toString())
-                .set({
-                    ...transaction,
-                    userId: user.uid,
-                    deviceId: this.getDeviceId(),
-                    updatedAt: new Date().toISOString()
-                }, { merge: true });
+        if (!user) {
+            console.log('No user logged in, skipping cloud save');
+            return false;
         }
         
-        console.log('✅ Saved to Firebase');
+        const today = new Date();
+        const month = today.getMonth();
+        const year = today.getFullYear();
+        const period = `${month}-${year}`;
+        
+        // Save to income collection (primary)
+        await window.db.collection('income').doc(user.uid).collection('transactions').doc(period).set({
+            entries: this.transactions,
+            totalAmount: this.calculateStats().totalIncome,
+            lastUpdated: new Date().toISOString(),
+            userId: user.uid,
+            period: period
+        }, { merge: true });
+        
+        // Also save to income-expenses as backup
+        await window.db.collection('income-expenses').doc(user.uid).collection('transactions').doc(period).set({
+            entries: this.transactions,
+            lastUpdated: new Date().toISOString()
+        }, { merge: true });
+        
+        console.log('✅ Saved to Firebase:', this.transactions.length, 'transactions');
         return true;
         
     } catch (error) {
-        console.error('Error saving to Firebase:', error);
+        console.error('❌ Error saving to Firebase:', error);
         return false;
     }
 },
 
-// Setup real-time sync
-setupRealtimeSync() {
-    console.log('📡 Setting up real-time sync...');
-    
-    // If using UnifiedDataService, use its real-time system
-    if (this.dataService) {
-        this.dataService.on('transactions-updated', (transactions) => {
-            console.log('🔄 Transactions updated from unified service:', transactions?.length);
-            this.transactions = transactions || [];
-            this.updateStats();
-            this.updateTransactionsList();
-            this.updateCategoryBreakdown();
-        });
-        return;
-    }
-    
-    // Legacy Firebase real-time sync
-    if (!this.isFirebaseAvailable) {
-        console.log('❌ Firebase not available');
-        return false;
-    }
-    
-    if (!window.db) {
-        console.log('❌ Firestore not available');
-        return false;
-    }
-    
-    const user = window.firebase.auth().currentUser;
-    if (!user) {
-        console.log('❌ No user logged in');
-        return false;
-    }
-    
-    // Clean up existing listener
-    if (this.realtimeUnsubscribe) {
-        console.log('Cleaning up existing listener...');
-        this.realtimeUnsubscribe();
-        this.realtimeUnsubscribe = null;
-    }
-    
-    console.log('Setting up listener for user:', user.uid);
-    
-    try {
-        this.realtimeUnsubscribe = window.db.collection('users')
-            .doc(user.uid)
-            .collection('transactions')
-            .onSnapshot((snapshot) => {
-                console.log(`🔄 Received ${snapshot.docChanges().length} changes from Firebase`);
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === 'added' || change.type === 'modified') {
-                        const remote = change.doc.data();
-                        const myDeviceId = this.getDeviceId();
-                        
-                        // Skip if this change came from this device
-                        if (remote.deviceId === myDeviceId) {
-                            return;
-                        }
-                        
-                        console.log(`🔄 Syncing transaction: ${remote.id} (${change.type})`);
-                        
-                        const existingIndex = this.transactions.findIndex(t => t.id == remote.id);
-                        
-                        if (existingIndex === -1) {
-                            this.transactions.unshift(remote);
-                            console.log(`✅ Added new transaction from other device`);
-                        } else {
-                            this.transactions[existingIndex] = remote;
-                            console.log(`✅ Updated transaction from other device`);
-                        }
-                        
-                        // Sort and save
-                        this.transactions.sort((a, b) => {
-                            const dateA = new Date(a.date || a.createdAt);
-                            const dateB = new Date(b.date || b.createdAt);
-                            return dateB - dateA;
-                        });
-                        
-                        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-                        this.updateStats();
-                        this.updateTransactionsList();
-                        this.updateCategoryBreakdown();
-                        
-                        this.showNotification(`📱 New transaction from another device`, 'info');
-                    }
-                });
-            }, (error) => {
-                console.error('❌ Real-time sync error:', error);
-                this.realtimeUnsubscribe = null;
-            });
-        
-        console.log('✅ Real-time sync active');
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Failed to set up real-time sync:', error);
-        return false;
-    }
-},
-    
     saveData() {
     console.log('💾 Saving transactions to localStorage');
     localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
     
-    // Save to Firebase/Unified Service
-    if (this.dataService) {
-        // Individual transactions are already saved via saveTransaction
-        // Just update sync status if available
-        if (this.dataService.getSyncStatus) {
-            this.updateSyncStatus(this.dataService.getSyncStatus());
-        }
-    } else if (this.isFirebaseAvailable) {
-        this.saveToFirebase();
-    }
+    // Also save to Firebase
+    this.saveToFirebase();
 },
 
     setupExpenseBroadcast() {
@@ -667,99 +591,67 @@ async saveTransaction(transactionData) {
     // Add to transactions array
     if (!this.transactions) this.transactions = [];
     
+    // Check if exists
     const existingIndex = this.transactions.findIndex(t => t.id === transactionData.id);
     const isNewTransaction = existingIndex < 0;
     const oldTransaction = existingIndex >= 0 ? this.transactions[existingIndex] : null;
     
-    // Generate ID if needed
-    const transactionId = transactionData.id || Date.now();
-    const myDeviceId = this.getDeviceId();
-    
-    // ========== FIX DATES ==========
-    // Ensure date is stored correctly in YYYY-MM-DD format
-    const formattedDate = this.formatDateForStorage(transactionData.date);
-    
-    const finalTransaction = {
-        ...transactionData,
-        id: transactionId,
-        date: formattedDate,  // ← Always stored as YYYY-MM-DD
-        sourceDeviceId: myDeviceId,
-        updatedAt: new Date().toISOString(),
-        deviceId: myDeviceId
-    };
-    
-    if (!finalTransaction.createdAt) {
-        finalTransaction.createdAt = finalTransaction.updatedAt;
-    }
-    
     if (existingIndex >= 0) {
-        this.transactions[existingIndex] = finalTransaction;
+        // Update
+        this.transactions[existingIndex] = transactionData;
     } else {
-        this.transactions.unshift(finalTransaction);
+        // Add new
+        this.transactions.unshift(transactionData);
     }
-    
-    // Sort by date (newest first)
-    this.transactions.sort((a, b) => {
-        return this.compareDates(a.date, b.date);
-    });
     
     // Save to localStorage
-    localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+    this.saveData();
     
-    // Save to Firebase/Unified Service
-    if (this.dataService) {
-        // Use UnifiedDataService
-        const result = await this.dataService.save('transactions', finalTransaction);
-        if (!result.success && result.offline) {
-            this.showNotification('Transaction saved locally (will sync when online)', 'info');
-        }
-    } else if (this.isFirebaseAvailable) {
-        // Legacy Firebase save
-        await this.saveToFirebase();
-    }
+    // Save to Firebase
+    await this.saveToFirebase();
     
     // Update UI
     this.updateStats();
     this.updateTransactionsList();
     this.updateCategoryBreakdown();
     
-    // ==================== BROADCASTS WITH DATE FIX ====================
+    // ==================== INTEGRATION BROADCASTS ====================
     
     // 1. Broadcast general transaction update
-    this.broadcastTransactionUpdate(finalTransaction, isNewTransaction, oldTransaction);
+    this.broadcastTransactionUpdate(transactionData, isNewTransaction, oldTransaction);
     
-    // 2. If this is an INCOME transaction, create sale (skip if from sales module)
-    if (finalTransaction.type === 'income' && isNewTransaction && 
-        (!finalTransaction.source || !finalTransaction.source.includes('sales'))) {
-        await this.createSaleFromIncome(finalTransaction);
+    // 2. If this is an INCOME transaction, create sale (FIXED: removed optional chaining)
+    if (transactionData.type === 'income' && isNewTransaction && 
+        (!transactionData.source || !transactionData.source.includes('sales'))) {
+        await this.createSaleFromIncome(transactionData);
     }
     
     // 3. If this is an EXPENSE transaction, handle inventory updates
-    if (finalTransaction.type === 'expense') {
-        await this.handleExpenseIntegration(finalTransaction, isNewTransaction, oldTransaction);
+    if (transactionData.type === 'expense') {
+        await this.handleExpenseIntegration(transactionData, isNewTransaction, oldTransaction);
     }
     
     // 4. If this is a FEED expense, handle feed-specific logic
-    if (finalTransaction.type === 'expense' && this.isFeedRelated(finalTransaction)) {
-        await this.handleFeedExpense(finalTransaction);
+    if (transactionData.type === 'expense' && this.isFeedRelated(transactionData)) {
+        await this.handleFeedExpense(transactionData);
     }
     
     // 5. If this is a MEDICAL expense, handle medical inventory
-    if (finalTransaction.type === 'expense' && this.isMedicalRelated(finalTransaction)) {
-        await this.handleMedicalExpense(finalTransaction);
+    if (transactionData.type === 'expense' && this.isMedicalRelated(transactionData)) {
+        await this.handleMedicalExpense(transactionData);
     }
     
     // 6. If this is an EQUIPMENT expense, handle equipment inventory
-    if (finalTransaction.type === 'expense' && this.isEquipmentRelated(finalTransaction)) {
-        await this.handleEquipmentExpense(finalTransaction);
+    if (transactionData.type === 'expense' && this.isEquipmentRelated(transactionData)) {
+        await this.handleEquipmentExpense(transactionData);
     }
     
-    // 7. Broadcast to dashboard
-    this.broadcastToDashboard(finalTransaction);
+    // 7. Broadcast to dashboard for real-time updates
+    this.broadcastToDashboard(transactionData);
     
     return true;
 },
-    
+
 // ==================== INTEGRATION METHODS ====================
 
 broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
@@ -774,8 +666,7 @@ broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
         description: transactionData.description,
         isNew: isNew,
         timestamp: new Date().toISOString(),
-        oldData: oldTransaction || null,
-        sourceDeviceId: transactionData.sourceDeviceId || this.getDeviceId()  // ← ADD THIS
+        oldData: oldTransaction || null
     };
     
     // Broadcast via Data Broadcaster
@@ -790,12 +681,6 @@ broadcastTransactionUpdate: function(transactionData, isNew, oldTransaction) {
 
 createSaleFromIncome: async function(transactionData) {
     console.log('💰 Creating sale from income transaction:', transactionData);
-    
-    // Check if this sale was already created from this transaction
-    if (transactionData.saleCreated) {
-        console.log('⚠️ Sale already created for this transaction, skipping');
-        return;
-    }
     
     // Determine product from description or category
     let product = 'other';
@@ -830,12 +715,8 @@ createSaleFromIncome: async function(transactionData) {
         paymentStatus: 'paid',
         notes: `Auto-generated from income: ${transactionData.description}`,
         source: 'income-module',
-        transactionId: transactionData.id,
-        sourceDeviceId: transactionData.sourceDeviceId || this.getDeviceId()  // ← ADD THIS
+        transactionId: transactionData.id
     };
-    
-    // Mark original transaction to prevent loop
-    transactionData.saleCreated = true;
     
     // Broadcast to Sales module
     if (window.DataBroadcaster) {
@@ -1155,6 +1036,7 @@ getUnitForProduct: function(product) {
         'honey': 'kg',
         'other': 'units'
     };
+    
     return units[product] || 'units';
 },
 
@@ -1200,6 +1082,7 @@ formatItemName: function(description, category) {
         'cleaning': 'Cleaning Supplies',
         'other': 'Miscellaneous Items'
     };
+    
     return defaultNames[category] || 'Inventory Item';
 },
 
@@ -1383,7 +1266,7 @@ estimateMedicalQuantity: function(expenseData) {
     // ==================== SIMPLIFIED CAMERA METHODS ====================
 
 // Initialize camera
-/*initializeCamera: function() {
+initializeCamera: function() {
     console.log('📷 Initializing camera...');
     
     const video = document.getElementById('camera-preview');
@@ -1456,169 +1339,10 @@ estimateMedicalQuantity: function(expenseData) {
                 }
             }, 2000);
         });
-}, */
-
-    initializeCamera: function() {
-    console.log('📷 Initializing camera...');
-    
-    // First, ensure any existing stream is stopped
-    this.stopCamera();
-    
-    const video = document.getElementById('camera-preview');
-    const status = document.getElementById('camera-status');
-    
-    if (!video) {
-        console.error('Video element not found');
-        this.showNotification('Camera error', 'error');
-        return;
-    }
-    
-    // Reset video element completely
-    video.pause();
-    video.srcObject = null;
-    video.load();
-    video.removeAttribute('src');
-    video.removeAttribute('srcObject');
-    
-    // Add required attributes
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('autoplay', 'true');
-    
-    if (status) status.textContent = 'Requesting camera...';
-    
-    // Check if camera is supported
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error('❌ Camera API not supported');
-        if (status) status.textContent = 'Camera not supported';
-        this.showNotification('Camera not supported in this browser', 'error');
-        return;
-    }
-    
-    // Small delay to ensure cleanup
-    setTimeout(() => {
-        // Try with basic constraints first (more compatible)
-        const basicConstraints = {
-            video: true,
-            audio: false
-        };
-        
-        console.log('📱 Requesting camera with basic constraints');
-        
-        navigator.mediaDevices.getUserMedia(basicConstraints)
-            .then(stream => {
-                console.log('✅ Camera access granted with basic constraints');
-                this.cameraStream = stream;
-                video.srcObject = stream;
-                
-                return video.play();
-            })
-            .then(() => {
-                console.log('📹 Video playing successfully');
-                if (status) status.textContent = 'Camera Ready';
-                
-                // Update switch button
-                const switchBtn = document.getElementById('switch-camera');
-                if (switchBtn) {
-                    const nextMode = this.cameraFacingMode === 'user' ? 'Rear' : 'Front';
-                    switchBtn.innerHTML = `<span class="btn-icon">🔄</span> <span class="btn-text">Switch to ${nextMode}</span>`;
-                }
-            })
-            .catch(error => {
-                console.error('❌ Camera error:', error);
-                
-                let errorMessage = 'Camera access failed. ';
-                
-                if (error.name === 'NotAllowedError') {
-                    errorMessage = 'Camera permission denied. Please check browser settings and refresh.';
-                } else if (error.name === 'NotFoundError') {
-                    errorMessage = 'No camera found on this device.';
-                } else if (error.name === 'NotReadableError') {
-                    errorMessage = 'Camera is busy. Please close other apps using the camera and refresh the page.';
-                } else if (error.name === 'OverconstrainedError') {
-                    errorMessage = 'Camera constraints too strict. Trying fallback...';
-                    // Try with even simpler constraints
-                    this.initializeCameraFallback();
-                    return;
-                }
-                
-                if (status) status.textContent = 'Camera unavailable';
-                this.showNotification(errorMessage, 'error');
-                
-                // Show upload interface after delay
-                setTimeout(() => {
-                    if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                        this.showUploadInterface();
-                    } else {
-                        this.showQuickActionsView();
-                    }
-                }, 2000);
-            });
-    }, 300);
-},
-
-    checkCameraAvailability: function() {
-    return new Promise((resolve) => {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-            resolve(false);
-            return;
-        }
-        
-        navigator.mediaDevices.enumerateDevices()
-            .then(devices => {
-                const hasCamera = devices.some(device => device.kind === 'videoinput');
-                console.log('📹 Camera available:', hasCamera);
-                resolve(hasCamera);
-            })
-            .catch(() => {
-                resolve(false);
-            });
-    });
-},
-    
-// Fallback camera initialization with minimal constraints
-initializeCameraFallback: function() {
-    console.log('📷 Trying fallback camera initialization...');
-    
-    const video = document.getElementById('camera-preview');
-    const status = document.getElementById('camera-status');
-    
-    if (!video) return;
-    
-    if (status) status.textContent = 'Trying fallback...';
-    
-    const fallbackConstraints = {
-        video: {
-            width: { min: 320, ideal: 640 },
-            height: { min: 240, ideal: 480 }
-        },
-        audio: false
-    };
-    
-    navigator.mediaDevices.getUserMedia(fallbackConstraints)
-        .then(stream => {
-            console.log('✅ Fallback camera succeeded!');
-            this.cameraStream = stream;
-            video.srcObject = stream;
-            return video.play();
-        })
-        .then(() => {
-            console.log('📹 Fallback camera playing');
-            if (status) status.textContent = 'Camera Ready (Fallback mode)';
-            this.showNotification('Camera working in fallback mode', 'info');
-        })
-        .catch(fallbackError => {
-            console.error('❌ Fallback also failed:', fallbackError);
-            if (status) status.textContent = 'Camera unavailable';
-            this.showNotification('Camera not available. Please upload a file instead.', 'error');
-            
-            setTimeout(() => {
-                this.showUploadInterface();
-            }, 2000);
-        });
 },
 
 // Stop camera
-/*stopCamera: function() {
+stopCamera: function() {
     console.log('🛑 Stopping camera');
     if (this.cameraStream) {
         this.cameraStream.getTracks().forEach(track => track.stop());
@@ -1644,299 +1368,8 @@ switchCamera: function() {
     this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
     this.stopCamera();
     setTimeout(() => this.initializeCamera(), 300);
-}, */
-
-    stopCamera: function() {
-    console.log('🛑 Stopping camera aggressively...');
-    
-    // 1. Stop all tracks in the stream
-    if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => {
-            try {
-                track.stop();
-                track.enabled = false;
-                console.log(`✅ Stopped track: ${track.kind}`);
-            } catch (e) {
-                console.warn('⚠️ Error stopping track:', e);
-            }
-        });
-        this.cameraStream = null;
-    }
-    
-    // 2. Clear all video elements
-    const videoElements = document.querySelectorAll('video');
-    videoElements.forEach(video => {
-        try {
-            if (video.srcObject) {
-                const stream = video.srcObject;
-                if (stream.getTracks) {
-                    stream.getTracks().forEach(track => {
-                        try { track.stop(); } catch (e) {}
-                    });
-                }
-            }
-            video.srcObject = null;
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-            console.log(`✅ Cleared video: ${video.id || 'unnamed'}`);
-        } catch (e) {
-            console.warn('⚠️ Error clearing video:', e);
-        }
-    });
-    
-    // 3. Specifically target the camera preview
-    const preview = document.getElementById('camera-preview');
-    if (preview) {
-        preview.srcObject = null;
-        preview.pause();
-        preview.removeAttribute('src');
-        preview.load();
-    }
-    
-    // 4. Remove any camera sections from DOM
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) {
-        cameraSection.style.display = 'none';
-    }
-    
-    // 5. Force garbage collection hint
-    this.cameraStream = null;
-    
-    console.log('✅ Camera fully stopped and cleaned up');
 },
 
-// Completely reset and rebuild camera interface
-resetAndShowCamera: function() {
-    console.log('🔄 Resetting and showing camera interface...');
-    
-    // 1. Stop any existing camera streams
-    this.stopCamera();
-    
-    // 2. Remove existing camera section if any
-    const existingCameraSection = document.getElementById('camera-section');
-    if (existingCameraSection) {
-        existingCameraSection.remove();
-    }
-    
-    // 3. Find the import receipts content container
-    const importReceiptsContent = document.getElementById('import-receipts-content');
-    if (!importReceiptsContent) {
-        console.error('❌ Import receipts content not found');
-        return;
-    }
-    
-    // 4. Create fresh camera section HTML
-    const cameraHTML = `
-        <div class="camera-section" id="camera-section" style="display: block;">
-            <div class="glass-card">
-                <div class="card-header header-flex">
-                    <h3>📷 Camera</h3>
-                    <div class="camera-status" id="camera-status">Initializing...</div>
-                </div>
-                <div class="camera-preview">
-                    <video id="camera-preview" autoplay playsinline></video>
-                    <canvas id="camera-canvas" style="display: none;"></canvas>
-                </div>
-                <div class="camera-controls">
-                    <button class="btn btn-outline" id="switch-camera-btn">
-                        <span class="btn-icon">🔄</span>
-                        <span class="btn-text">Switch Camera</span>
-                    </button>
-                    <button class="btn btn-primary" id="capture-photo-btn">
-                        <span class="btn-icon">📸</span>
-                        <span class="btn-text">Capture</span>
-                    </button>
-                    <button class="btn btn-outline" id="cancel-camera-btn">
-                        <span class="btn-icon">✖️</span>
-                        <span class="btn-text">Back</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // 5. Insert camera section after the quick actions section
-    const quickActionsSection = importReceiptsContent.querySelector('.quick-actions-section');
-    if (quickActionsSection) {
-        quickActionsSection.insertAdjacentHTML('afterend', cameraHTML);
-    } else {
-        importReceiptsContent.insertAdjacentHTML('beforeend', cameraHTML);
-    }
-    
-    // 6. Hide other sections
-    const uploadSection = document.getElementById('upload-section');
-    const recentSection = document.getElementById('recent-section');
-    const quickActions = document.querySelector('.quick-actions-section');
-    
-    if (uploadSection) uploadSection.style.display = 'none';
-    if (recentSection) recentSection.style.display = 'none';
-    if (quickActions) quickActions.style.display = 'none';
-    
-    // 7. Initialize camera with a slight delay
-    setTimeout(() => {
-        this.initializeCameraWithRetry();
-    }, 100);
-},
-
-// Initialize camera with retry logic
-initializeCameraWithRetry: function(retryCount = 0) {
-    console.log(`📷 Initializing camera (attempt ${retryCount + 1})...`);
-    
-    const video = document.getElementById('camera-preview');
-    const status = document.getElementById('camera-status');
-    
-    if (!video) {
-        console.error('❌ Video element not found');
-        if (retryCount < 3) {
-            setTimeout(() => this.initializeCameraWithRetry(retryCount + 1), 500);
-        }
-        return;
-    }
-    
-    // Reset video element
-    video.pause();
-    video.srcObject = null;
-    video.load();
-    
-    // Add required attributes
-    video.setAttribute('playsinline', 'true');
-    video.setAttribute('autoplay', 'true');
-    
-    if (status) status.textContent = 'Requesting camera...';
-    
-    // Simple constraints for better compatibility
-    const constraints = {
-        video: {
-            facingMode: this.cameraFacingMode || 'environment',
-            width: { ideal: 720 },
-            height: { ideal: 720 }
-        },
-        audio: false
-    };
-    
-    navigator.mediaDevices.getUserMedia(constraints)
-        .then(stream => {
-            console.log('✅ Camera access granted');
-            this.cameraStream = stream;
-            video.srcObject = stream;
-            
-            // Wait for video to be ready
-            return new Promise((resolve) => {
-                video.onloadedmetadata = () => {
-                    video.play().then(resolve).catch(resolve);
-                };
-            });
-        })
-        .then(() => {
-            console.log('📹 Video playing successfully');
-            if (status) status.textContent = 'Camera Ready';
-            
-            // Attach button handlers after camera is ready
-            this.attachCameraButtonHandlers();
-        })
-        .catch(error => {
-            console.error('❌ Camera error:', error);
-            
-            let errorMessage = 'Camera access failed. ';
-            if (error.name === 'NotAllowedError') {
-                errorMessage = 'Camera permission denied. Please check browser settings.';
-            } else if (error.name === 'NotFoundError') {
-                errorMessage = 'No camera found on this device.';
-            } else if (error.name === 'NotReadableError') {
-                errorMessage = 'Camera is busy. Please close other apps using the camera.';
-            }
-            
-            if (status) status.textContent = 'Camera unavailable';
-            this.showNotification(errorMessage, 'error');
-            
-            // Show upload interface as fallback
-            setTimeout(() => {
-                if (confirm('Camera not available. Would you like to upload a file instead?')) {
-                    this.showUploadInterface();
-                }
-            }, 2000);
-        });
-},
-
-// Attach camera button handlers
-attachCameraButtonHandlers: function() {
-    console.log('🔧 Attaching camera button handlers...');
-    
-    // Capture button
-    const captureBtn = document.getElementById('capture-photo-btn');
-    if (captureBtn) {
-        // Remove old listeners
-        const newCaptureBtn = captureBtn.cloneNode(true);
-        captureBtn.parentNode.replaceChild(newCaptureBtn, captureBtn);
-        
-        newCaptureBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('📸 Capture button clicked');
-            this.capturePhoto();
-        };
-        console.log('✅ Capture button handler attached');
-    } else {
-        console.warn('⚠️ Capture button not found');
-    }
-    
-    // Switch camera button
-    const switchBtn = document.getElementById('switch-camera-btn');
-    if (switchBtn) {
-        const newSwitchBtn = switchBtn.cloneNode(true);
-        switchBtn.parentNode.replaceChild(newSwitchBtn, switchBtn);
-        
-        newSwitchBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🔄 Switch camera button clicked');
-            this.switchCameraAndReinit();
-        };
-        console.log('✅ Switch camera button handler attached');
-    }
-    
-    // Cancel/Back button
-    const cancelBtn = document.getElementById('cancel-camera-btn');
-    if (cancelBtn) {
-        const newCancelBtn = cancelBtn.cloneNode(true);
-        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        
-        newCancelBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('✖️ Cancel camera button clicked');
-            this.stopCamera();
-            this.showQuickActionsView();
-        };
-        console.log('✅ Cancel button handler attached');
-    }
-},
-
-// Switch camera and reinitialize
-switchCameraAndReinit: function() {
-    console.log('🔄 Switching camera...');
-    
-    const now = Date.now();
-    if (this.lastSwitchClick && (now - this.lastSwitchClick) < 1500) {
-        console.log('⏳ Please wait before switching camera again');
-        return;
-    }
-    this.lastSwitchClick = now;
-    
-    // Toggle facing mode
-    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
-    console.log('📱 New camera mode:', this.cameraFacingMode);
-    
-    // Stop current stream
-    this.stopCamera();
-    
-    // Reinitialize with new facing mode
-    setTimeout(() => {
-        this.initializeCameraWithRetry();
-    }, 300);
-},
-    
 capturePhoto: function() {
     console.log('📸 Capture photo');
     
@@ -1971,49 +1404,91 @@ capturePhoto: function() {
     video.style.opacity = '0.7';
     setTimeout(() => video.style.opacity = '1', 100);
     
-    // Get image data as blob
+    // Get image data
     canvas.toBlob((blob) => {
         const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const imageUrl = URL.createObjectURL(blob);
         
         if (status) status.textContent = 'Photo captured!';
         this.showNotification('📸 Photo captured!', 'success');
-        
-        // Stop camera
-        this.stopCamera();
-        
-        // Hide camera section
-        const cameraSection = document.getElementById('camera-section');
-        if (cameraSection) {
-            cameraSection.style.display = 'none';
-        }
-        
-        // Show the image viewer with options (Edit, Save, Retake, Delete)
-        this.showSimpleImageViewer(file);
         
         // Re-enable button
         if (captureBtn) {
             captureBtn.disabled = false;
             captureBtn.style.opacity = '1';
         }
-        this.isCapturing = false;
+        
+        // ===== AGGRESSIVE CAMERA CLEANUP =====
+        
+        // 1. Stop all tracks
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
+            this.cameraStream = null;
+        }
+        
+        // 2. Clear video element
+        if (video) {
+            video.srcObject = null;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+        }
+        
+        // 3. Remove camera section completely
+        const cameraSection = document.getElementById('camera-section');
+        if (cameraSection) {
+            cameraSection.remove();
+        }
+        
+        // 4. Also remove any camera elements from DOM
+        const anyVideo = document.querySelector('video');
+        if (anyVideo && anyVideo.id === 'camera-preview') {
+            anyVideo.remove();
+        }
+        
+        // 5. Hide import modal
+        const importModal = document.getElementById('import-receipts-modal');
+        if (importModal) {
+            importModal.style.display = 'none';
+            importModal.classList.add('hidden');
+        }
+        
+        // Small delay to ensure cleanup
+        setTimeout(() => {
+            // Check if cropper is available
+            if (typeof window.openCropper === 'function') {
+                console.log('📷 Opening cropper with captured image');
+                
+                // Convert blob to data URL for cropper
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    window.openCropper(e.target.result, (croppedFile) => {
+                        console.log('📷 Cropped file received:', croppedFile);
+                        
+                        // Create preview URL for cropped image
+                        const croppedImageUrl = URL.createObjectURL(croppedFile);
+                        
+                        // Show simple viewer with cropped image
+                        setTimeout(() => {
+                            this.showSimpleImageViewer(croppedFile);
+                        }, 100);
+                        
+                    }, file.name);
+                };
+                reader.readAsDataURL(blob);
+            } else {
+                console.warn('⚠️ Cropper not available, using original image');
+                this.showSimpleImageViewer(file);
+            }
+            this.isCapturing = false;
+        }, 200);
         
     }, 'image/jpeg', 0.9);
 },
 
-// Helper: Convert dataURL to File object
-dataURLtoFile: function(dataurl, filename) {
-    const arr = dataurl.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) {
-        u8arr[n] = bstr.charCodeAt(n);
-    }
-    return new File([u8arr], filename, { type: mime });
-},
-
-    
    // SIMPLE TEST VIEWER - ADD THIS AFTER capturePhoto
 /*showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
@@ -2156,7 +1631,7 @@ dataURLtoFile: function(dataurl, filename) {
     reader.readAsDataURL(file);
 }, */
 
-   showSimpleImageViewer: function(file) {
+    showSimpleImageViewer: function(file) {
     console.log('🖼️ SIMPLE VIEWER - SHOWING WITH OPTIONS');
     
     // Force remove camera
@@ -2193,26 +1668,10 @@ dataURLtoFile: function(dataurl, filename) {
         `;
         
         modal.innerHTML = `
-            <div style="
-                background: white; 
-                padding: 25px; 
-                border-radius: 16px; 
-                text-align: center; 
-                max-width: 90%; 
-                max-height: 90%; 
-                overflow-y: auto; 
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            ">
+            <div style="background: white; padding: 25px; border-radius: 16px; text-align: center; max-width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
                 <h3 style="margin-bottom: 20px; color: #2E7D32; font-weight: 600;">Review Image</h3>
                 
-                <div style="
-                    max-width: 100%; 
-                    max-height: 50vh; 
-                    overflow: hidden; 
-                    margin-bottom: 20px; 
-                    border-radius: 8px; 
-                    border: 2px solid #e0e0e0;
-                ">
+                <div style="max-width: 100%; max-height: 50vh; overflow: hidden; margin-bottom: 20px; border-radius: 8px; border: 2px solid #e0e0e0;">
                     <img src="${e.target.result}" style="width: 100%; height: auto; display: block;">
                 </div>
                 
@@ -2314,17 +1773,12 @@ dataURLtoFile: function(dataurl, filename) {
             saveBtn.onclick = () => {
                 console.log('💾 Save button clicked');
                 modal.remove();
-                // Convert to base64 directly for storage
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64Data = e.target.result;
-                    this.saveReceiptFromFile(file, base64Data);
-                };
-                reader.readAsDataURL(file);
+                const imageUrl = URL.createObjectURL(file);
+                this.saveReceiptFromFile(file, imageUrl);
             };
         }
         
-       // Retake button - go back to camera
+        // Retake button - go back to camera
         if (retakeBtn) {
             retakeBtn.onclick = () => {
                 console.log('↺ Retake button clicked - going back to camera');
@@ -2333,21 +1787,51 @@ dataURLtoFile: function(dataurl, filename) {
                 // Force stop any existing camera
                 this.stopCamera();
                 
-                // Make sure we're in the import modal
+                // Show the import modal
                 const importModal = document.getElementById('import-receipts-modal');
                 if (importModal) {
                     importModal.style.display = 'flex';
                     importModal.classList.remove('hidden');
+                    
+                    // Hide the image review modal
+                    const imageReviewModal = document.getElementById('image-review-modal');
+                    if (imageReviewModal) {
+                        imageReviewModal.remove();
+                    }
+                    
+                    // Hide upload and recent sections
+                    const uploadSection = document.getElementById('upload-section');
+                    const recentSection = document.getElementById('recent-section');
+                    const quickActions = document.getElementById('quick-actions-view');
+                    
+                    if (quickActions) quickActions.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    if (recentSection) recentSection.style.display = 'none';
+                    
+                    // Show and trigger camera section
+                    const cameraSection = document.getElementById('camera-section');
+                    if (cameraSection) {
+                        cameraSection.style.display = 'block';
+                        
+                        // Small delay to ensure DOM is ready
+                        setTimeout(() => {
+                            this.initializeCamera();
+                            console.log('📷 Camera re-initialized for retake');
+                        }, 200);
+                    } else {
+                        // Fallback: trigger camera option click
+                        setTimeout(() => {
+                            const cameraOption = document.getElementById('camera-option');
+                            if (cameraOption) {
+                                cameraOption.click();
+                            }
+                        }, 100);
+                    }
                 }
-                
-                // Reset and show camera with fresh interface
-                setTimeout(() => {
-                    this.resetAndShowCamera();
-                }, 200);
             };
         }
         
-       // Delete button - discard image
+        // Delete button - discard image
         if (deleteBtn) {
             deleteBtn.onclick = () => {
                 console.log('🗑️ Delete button clicked');
@@ -2360,10 +1844,20 @@ dataURLtoFile: function(dataurl, filename) {
                     importModal.style.display = 'flex';
                     importModal.classList.remove('hidden');
                     
-                    // Make sure quick actions are visible
-                    setTimeout(() => {
-                        this.showQuickActionsView();
-                    }, 100);
+                    // Hide camera and upload sections
+                    const cameraSection = document.getElementById('camera-section');
+                    const uploadSection = document.getElementById('upload-section');
+                    
+                    if (cameraSection) cameraSection.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'none';
+                    
+                    // Show quick actions
+                    const quickActions = document.getElementById('quick-actions-view');
+                    if (quickActions) quickActions.style.display = 'block';
+                    
+                    // Also show recent receipts
+                    const recentSection = document.getElementById('recent-section');
+                    if (recentSection) recentSection.style.display = 'block';
                 }
             };
         }
@@ -2408,40 +1902,26 @@ handleFileUpload: async function(files) {
         const file = files[i];
         console.log(`📄 Processing file ${i+1}:`, file.name);
         
-        // Convert file to base64 directly (no blob URL!)
-        const base64Data = await this.fileToBase64(file);
-        console.log(`✅ Converted to base64, length: ${base64Data.length}`);
-        
         // For images, offer cropping
         if (file.type.startsWith('image/')) {
             setTimeout(async () => {
                 if (confirm(`Crop "${file.name}"?`)) {
                     try {
                         await this.loadCropperLibrary();
-                        this.showStandardCropperWithBase64(file, base64Data);
+                        this.showStandardCropper(file);
                     } catch (error) {
                         console.error('Failed to load cropper:', error);
-                        this.saveReceiptFromFile(file, base64Data);
+                        this.processReceiptFile(file);
                     }
                 } else {
-                    this.saveReceiptFromFile(file, base64Data);
+                    this.processReceiptFile(file);
                 }
-            }, i * 500);
+            }, i * 500); // Delay for multiple files
         } else {
             // For non-images (PDFs), process directly
-            this.saveReceiptFromFile(file, base64Data);
+            this.processReceiptFile(file);
         }
     }
-},
-
-// Helper: Convert file to base64
-fileToBase64: function(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
 },
 
 // ==================== CROPPER WITH DEBUGGING ====================
@@ -2616,8 +2096,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            // Show the image viewer again
-            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`close-${modalId}`).onclick = () => {
@@ -2626,8 +2104,6 @@ showStandardCropper: function(file) {
                 this.cropperInstance = null;
             }
             modal.remove();
-            // Show the image viewer again
-            this.showSimpleImageViewer(file);
         };
         
         document.getElementById(`save-${modalId}`).onclick = () => {
@@ -2640,15 +2116,15 @@ showStandardCropper: function(file) {
             
             croppedCanvas.toBlob((blob) => {
                 const croppedFile = new File([blob], this.currentImageFile.name, { type: 'image/jpeg' });
+                const croppedUrl = URL.createObjectURL(blob);
                 
-                // Show the viewer with the cropped image
-                this.showSimpleImageViewer(croppedFile);
+                this.saveCroppedReceipt(croppedFile, croppedUrl);
                 
                 this.cropperInstance.destroy();
                 this.cropperInstance = null;
                 modal.remove();
                 
-                this.showNotification('✅ Image cropped! Review and save.', 'success');
+                this.showNotification('✅ Image cropped and saved!', 'success');
             }, 'image/jpeg', 0.95);
         };
     };
@@ -2794,140 +2270,27 @@ injectCropperStyles: function() {
     console.log('✅ Injected inline cropper styles');
 },
 
-  saveCroppedReceipt: function(file, imageUrl) {
-    console.log('💾 Saving cropped receipt:', file.name);
     
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        const base64Data = e.target.result;
-        const receiptId = `camera_${Date.now()}`;
-        
-        const receipt = {
-            id: receiptId,
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            dataURL: base64Data,
-            downloadURL: base64Data,
-            status: 'pending',
-            uploadedAt: new Date().toISOString(),
-            source: 'camera',
-            cropped: true
-        };
-        
-        this.saveReceiptToStorage(receipt);
-        this.showNotification('✅ Cropped receipt saved!', 'success');
-        this.updateModalReceiptsList();
-        this.updateReceiptQueueUI();
-        this.showCaptureSuccess(receipt);
-    };
-    
-    reader.readAsDataURL(file);
-},
-    
+// Save receipt from file (keep your existing method)
 // Save receipt from file (keep your existing method)
 saveReceiptFromFile: function(file, dataURL) {
     console.log('💾 Saving receipt:', file.name);
     
-    // If dataURL is a blob URL, we need to convert it to base64
-    if (dataURL && dataURL.startsWith('blob:')) {
-        console.log('📸 Converting blob URL to base64...');
-        
-        // Fetch the blob data and convert to base64
-        fetch(dataURL)
-            .then(response => response.blob())
-            .then(blob => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64Data = e.target.result;
-                    console.log('✅ Converted to base64, length:', base64Data.length);
-                    this.saveReceiptWithBase64(file, base64Data);
-                };
-                reader.onerror = (error) => {
-                    console.error('❌ Failed to convert blob to base64:', error);
-                    this.saveReceiptWithBase64(file, dataURL); // Fallback
-                };
-                reader.readAsDataURL(blob);
-            })
-            .catch(error => {
-                console.error('❌ Failed to fetch blob:', error);
-                this.saveReceiptWithBase64(file, dataURL);
-            });
-    } else {
-        // Already a data URL or base64
-        this.saveReceiptWithBase64(file, dataURL);
-    }
-},
-
-saveReceiptWithBase64: function(file, base64Data) {
     const receiptId = `receipt_${Date.now()}`;
-    
-    // Extract base64 data without the prefix if needed
-    let imageData = base64Data;
-    let mimeType = file.type;
-    
-    // If it's already a data URL with prefix, keep it
-    if (base64Data.startsWith('data:')) {
-        // Extract just the base64 part for storage efficiency
-        const matches = base64Data.match(/^data:([^;]+);base64,(.+)$/);
-        if (matches) {
-            mimeType = matches[1];
-            const base64Only = matches[2];
-            
-            const receipt = {
-                id: receiptId,
-                name: file.name,
-                type: mimeType,
-                size: file.size,
-                dataURL: base64Data, // Store full data URL for easy display
-                downloadURL: base64Data, // Also store in downloadURL for compatibility
-                base64Data: base64Only, // Store just the base64 part
-                status: 'pending',
-                uploadedAt: new Date().toISOString(),
-                source: file.source || 'camera',
-                cropped: false,
-                storageType: 'base64'
-            };
-            
-            this.saveReceiptToStorage(receipt);
-            return;
-        }
-    }
-    
-    // Fallback: store as is
     const receipt = {
         id: receiptId,
         name: file.name,
         type: file.type,
         size: file.size,
-        dataURL: base64Data,
-        downloadURL: base64Data,
+        dataURL: dataURL,
         status: 'pending',
         uploadedAt: new Date().toISOString(),
-        source: file.source || 'camera',
-        cropped: false,
-        storageType: 'base64'
+        source: 'camera',
+        cropped: false
     };
     
-    this.saveReceiptToStorage(receipt);
-},
-
-saveReceiptToStorage: function(receipt) {
-    console.log('💾 Saving receipt to storage:', receipt.name);
-    
-    // Save locally
-    this.receiptQueue.unshift(receipt);
-    
-    const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
-    const existingIndex = localReceipts.findIndex(r => r.id === receipt.id);
-    if (existingIndex !== -1) {
-        localReceipts.splice(existingIndex, 1);
-    }
-    localReceipts.unshift(receipt);
-    localStorage.setItem('local-receipts', JSON.stringify(localReceipts));
-    
-    console.log('✅ Saved to localStorage, receipt data length:', receipt.dataURL?.length);
+    // Always save locally first
+    this.saveReceiptLocally(receipt);
     
     // Try Firebase save
     if (this.isFirebaseAvailable) {
@@ -2942,6 +2305,8 @@ saveReceiptToStorage: function(receipt) {
             .catch(err => {
                 console.log('⚠️ Firebase save failed, keeping local only:', err);
             });
+    } else {
+        console.log('📱 Firebase not available, saved locally only');
     }
     
     // Update UI
@@ -3437,61 +2802,22 @@ saveReceiptToStorage: function(receipt) {
         }, 100);
     },
 
-   stopCamera: function() {
-    console.log('🛑 Stopping camera aggressively...');
-    
-    // 1. Stop all tracks in the stream
-    if (this.cameraStream) {
-        this.cameraStream.getTracks().forEach(track => {
-            try {
-                track.stop();
-                track.enabled = false;
-                console.log(`✅ Stopped track: ${track.kind}`);
-            } catch (e) {
-                console.warn('⚠️ Error stopping track:', e);
-            }
-        });
-        this.cameraStream = null;
-    }
-    
-    // 2. Clear all video elements
-    const videoElements = document.querySelectorAll('video');
-    videoElements.forEach(video => {
-        try {
-            if (video.srcObject) {
-                const stream = video.srcObject;
-                if (stream.getTracks) {
-                    stream.getTracks().forEach(track => {
-                        try { track.stop(); } catch (e) {}
-                    });
-                }
-            }
+    stopCamera() {
+        console.log('🛑 Stopping camera...');
+        
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
+            this.cameraStream = null;
+        }
+        
+        const video = document.getElementById('camera-preview');
+        if (video) {
             video.srcObject = null;
             video.pause();
-            video.removeAttribute('src');
-            video.load();
-        } catch (e) {
-            console.warn('⚠️ Error clearing video:', e);
         }
-    });
-    
-    // 3. Specifically target the camera preview
-    const preview = document.getElementById('camera-preview');
-    if (preview) {
-        preview.srcObject = null;
-        preview.pause();
-        preview.removeAttribute('src');
-        preview.load();
-    }
-    
-    // 4. Reset camera status
-    const status = document.getElementById('camera-status');
-    if (status) {
-        status.textContent = 'Camera stopped';
-    }
-    
-    console.log('✅ Camera fully stopped and cleaned up');
-},
+        
+        console.log('✅ Camera stopped');
+    },
 
     switchCamera() {
         console.log('🔄 Switching camera...');
@@ -3892,241 +3218,35 @@ showReceiptCropperModal: function(file) {
     },
 
     // ==================== DELETE FUNCTIONALITY ====================
-   setupReceiptActionListeners() {
-    console.log('🔧 Setting up receipt action listeners...');
-    
-    // Use event delegation on document
-    document.addEventListener('click', (e) => {
-        // Handle delete button
-        const deleteBtn = e.target.closest('.delete-receipt-btn');
-        if (deleteBtn) {
-            const receiptId = deleteBtn.dataset.receiptId;
-            if (receiptId) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🗑️ Delete button clicked:', receiptId);
-                this.confirmAndDeleteReceipt(receiptId);
-            }
-            return;
-        }
+    setupReceiptActionListeners() {
+        console.log('🔧 Setting up receipt action listeners...');
         
-        // Handle process button
-        const processBtn = e.target.closest('.process-receipt-btn');
-        if (processBtn) {
-            const receiptId = processBtn.dataset.receiptId;
-            if (receiptId) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🔍 Process button clicked:', receiptId);
-                this.processSingleReceipt(receiptId);
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-receipt-btn')) {
+                const btn = e.target.closest('.delete-receipt-btn');
+                const receiptId = btn.dataset.receiptId;
+                
+                if (receiptId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🗑️ Delete button clicked:', receiptId);
+                    this.confirmAndDeleteReceipt(receiptId);
+                }
             }
-            return;
-        }
-        
-        // Handle view button (NEW)
-        const viewBtn = e.target.closest('.view-receipt-btn');
-        if (viewBtn) {
-            const receiptId = viewBtn.dataset.receiptId;
-            const imageUrl = viewBtn.dataset.receiptUrl;
-            const receiptName = viewBtn.dataset.receiptName;
             
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (imageUrl) {
-                console.log('👁️ View button clicked for:', receiptName);
-                this.showReceiptViewer(imageUrl, receiptName);
-            } else {
-                console.warn('No image URL for receipt:', receiptId);
-                this.showNotification('Receipt preview not available', 'warning');
+            if (e.target.closest('.process-receipt-btn, .process-btn')) {
+                const btn = e.target.closest('.process-receipt-btn, .process-btn');
+                const receiptId = btn.dataset.receiptId;
+                
+                if (receiptId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔍 Process button clicked:', receiptId);
+                    this.processSingleReceipt(receiptId);
+                }
             }
-            return;
-        }
-    });
-},
-
-getReceiptImageUrl(receipt) {
-    if (!receipt) return null;
-    
-    // Try dataURL first (should be full data URL now)
-    if (receipt.dataURL && receipt.dataURL.startsWith('data:')) {
-        console.log('✅ Found dataURL (base64)');
-        return receipt.dataURL;
-    }
-    
-    // Try downloadURL
-    if (receipt.downloadURL && receipt.downloadURL.startsWith('data:')) {
-        console.log('✅ Found downloadURL (base64)');
-        return receipt.downloadURL;
-    }
-    
-    // Reconstruct from base64Data
-    if (receipt.base64Data && receipt.type) {
-        console.log('✅ Reconstructing from base64Data');
-        return `data:${receipt.type};base64,${receipt.base64Data}`;
-    }
-    
-    console.log('❌ No valid image data found');
-    return null;
-},
-
-    escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-},
-
-    showReceiptViewer(imageUrl, receiptName) {
-    console.log('🖼️ Showing receipt viewer for:', receiptName);
-    console.log('Image URL type:', imageUrl.substring(0, 50));
-    
-    // Remove any existing viewer
-    const existingViewer = document.getElementById('receipt-viewer-modal');
-    if (existingViewer) {
-        existingViewer.remove();
-    }
-    
-    // Create modal
-    const modal = document.createElement('div');
-    modal.id = 'receipt-viewer-modal';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        z-index: 1000000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    `;
-    
-    modal.innerHTML = `
-        <div style="
-            background: white;
-            max-width: 90%;
-            max-height: 90%;
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-            cursor: default;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        ">
-            <div style="
-                background: linear-gradient(135deg, #22c55e, #16a34a);
-                padding: 12px 20px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                color: white;
-            ">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 20px;">👁️</span>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 600;">${this.escapeHtml(receiptName)}</h3>
-                </div>
-                <button id="close-viewer-btn" style="
-                    background: rgba(255,255,255,0.2);
-                    border: none;
-                    color: white;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    cursor: pointer;
-                    font-size: 20px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">×</button>
-            </div>
-            <div style="
-                padding: 20px;
-                max-height: 70vh;
-                overflow: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #f5f5f5;
-                min-height: 200px;
-            ">
-                <img src="${imageUrl}" 
-                     alt="${this.escapeHtml(receiptName)}" 
-                     style="max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px;"
-                     onerror="this.parentElement.innerHTML='<div style=\'text-align:center;color:#666;padding:40px;\'>⚠️ Image failed to load</div>'">
-            </div>
-            <div style="
-                padding: 16px 20px;
-                border-top: 1px solid #e5e7eb;
-                display: flex;
-                gap: 12px;
-                justify-content: flex-end;
-                background: white;
-            ">
-                <button id="download-receipt-btn" style="
-                    padding: 8px 20px;
-                    background: #22c55e;
-                    color: white;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                ">
-                    📥 Download
-                </button>
-                <button id="close-viewer-footer-btn" style="
-                    padding: 8px 20px;
-                    background: #f3f4f6;
-                    color: #374151;
-                    border: none;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: 600;
-                ">
-                    Close
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Close modal when clicking outside
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.remove();
-        }
-    });
-    
-    // Close button handlers
-    const closeBtn = document.getElementById('close-viewer-btn');
-    const closeFooterBtn = document.getElementById('close-viewer-footer-btn');
-    
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => modal.remove());
-    }
-    if (closeFooterBtn) {
-        closeFooterBtn.addEventListener('click', () => modal.remove());
-    }
-    
-    // Download button handler
-    const downloadBtn = document.getElementById('download-receipt-btn');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => {
-            const a = document.createElement('a');
-            a.href = imageUrl;
-            a.download = receiptName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            this.showNotification('Downloading receipt...', 'success');
         });
-    }
-},
+    },
 
     confirmAndDeleteReceipt(receiptId) {
         console.log(`🗑️ Confirming deletion for receipt: ${receiptId}`);
@@ -4224,47 +3344,35 @@ getReceiptImageUrl(receipt) {
     },
   
     // ==================== MODAL MANAGEMENT ====================
-   showImportReceiptsModal: function() {
-    console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
-    
-    this.stopCamera();
-    
-    const modal = document.getElementById('import-receipts-modal');
-    if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-        modal.style.zIndex = '10000';
-        console.log('✅ Modal shown with display: flex');
-    } else {
-        console.error('❌ Modal element not found');
-        return;
-    }
-    
-    const importReceiptsContent = document.getElementById('import-receipts-content');
-    if (importReceiptsContent) {
-        importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
-    }
-    
-    setTimeout(() => {
-        console.log('🔄 Setting up handlers...');
-        this.setupImportReceiptsHandlers();
-        this.setupFileInput();
-        this.showQuickActionsView();
+    showImportReceiptsModal() {
+        console.log('=== SHOW IMPORT RECEIPTS MODAL ===');
         
-        // Ensure camera section exists in DOM after render
-        this.ensureCameraSectionExists();
+        this.stopCamera();
         
-        console.log('✅ Modal fully initialized');
-    }, 100);
-},
-
-ensureCameraSectionExists: function() {
-    const cameraSection = document.getElementById('camera-section');
-    if (!cameraSection) {
-        console.log('🔧 Camera section missing, recreating...');
-        this.recreateCameraSection();
-    }
-},
+        const modal = document.getElementById('import-receipts-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
+            modal.style.zIndex = '10000';
+            console.log('✅ Modal shown with display: flex');
+        } else {
+            console.error('❌ Modal element not found');
+            return;
+        }
+        
+        const importReceiptsContent = document.getElementById('import-receipts-content');
+        if (importReceiptsContent) {
+            importReceiptsContent.innerHTML = this.renderImportReceiptsModal();
+        }
+        
+        setTimeout(() => {
+            console.log('🔄 Setting up handlers...');
+            this.setupImportReceiptsHandlers();
+            this.setupFileInput();
+            this.showQuickActionsView();
+            console.log('✅ Modal fully initialized');
+        }, 100);
+    },
 
     hideImportReceiptsModal() {
         console.log('❌ Closing import receipts modal');
@@ -4442,70 +3550,6 @@ ensureCameraSectionExists: function() {
     console.log('✅ Camera interface shown');
 }, */
 
-showCameraInterface: function() {
-    console.log('📷 Showing camera interface...');
-    
-    // Use the new reset method that rebuilds everything
-    this.resetAndShowCamera();
-},
-
-    recreateCameraSection: function() {
-    console.log('🔧 Recreating camera section...');
-    
-    // Find the import receipts container
-    const importReceiptsContent = document.getElementById('import-receipts-content');
-    if (!importReceiptsContent) {
-        console.error('❌ Import receipts content not found');
-        return;
-    }
-    
-    // Check if camera section already exists
-    if (document.getElementById('camera-section')) {
-        console.log('✅ Camera section already exists');
-        return;
-    }
-    
-    // Create camera section HTML
-    const cameraSectionHTML = `
-        <div class="camera-section" id="camera-section" style="display: none;">
-            <div class="glass-card">
-                <div class="card-header header-flex">
-                    <h3>📷 Camera</h3>
-                    <div class="camera-status" id="camera-status">Ready</div>
-                </div>
-                <div class="camera-preview">
-                    <video id="camera-preview" autoplay playsinline></video>
-                    <canvas id="camera-canvas" style="display: none;"></canvas>
-                </div>
-                <div class="camera-controls">
-                    <button class="btn btn-outline" id="switch-camera">
-                        <span class="btn-icon">🔄</span>
-                        <span class="btn-text">Switch Camera</span>
-                    </button>
-                    <button class="btn btn-primary" id="capture-photo">
-                        <span class="btn-icon">📸</span>
-                        <span class="btn-text">Capture</span>
-                    </button>
-                    <button class="btn btn-outline" id="cancel-camera">
-                        <span class="btn-icon">✖️</span>
-                        <span class="btn-text">Back to Upload</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Insert after recent section or at the end
-    const recentSection = document.getElementById('recent-section');
-    if (recentSection) {
-        recentSection.insertAdjacentHTML('afterend', cameraSectionHTML);
-    } else {
-        importReceiptsContent.insertAdjacentHTML('beforeend', cameraSectionHTML);
-    }
-    
-    console.log('✅ Camera section recreated');
-},
-    
     showUploadInterface: function() {
     console.log('📁 Showing upload interface...');
     
@@ -4554,7 +3598,7 @@ showCameraInterface: function() {
     },
     
     // ==================== EVENT HANDLERS ====================
-   setupImportReceiptsHandlers() {
+    setupImportReceiptsHandlers() {
         console.log('Setting up import receipt handlers');
         
         const setupModalButton = (id, handler) => {
@@ -4591,13 +3635,11 @@ showCameraInterface: function() {
 
         setupModalButton('cancel-camera', () => {
             console.log('❌ Cancel camera clicked');
-            this.stopCamera(); // Stop camera stream when canceling
             this.showQuickActionsView();
         });
 
         setupModalButton('back-to-main-view', () => {
             console.log('🔙 Back to main view clicked');
-            this.stopCamera(); // Stop camera when going back
             this.showQuickActionsView();
         });
 
@@ -4981,66 +4023,76 @@ showCameraInterface: function() {
 
     // ==================== TRANSACTION METHODS ====================
     editTransaction(transactionId) {
-    console.log('Editing transaction:', transactionId);
-    const transaction = this.transactions.find(t => t.id == transactionId);
-    if (!transaction) {
-        this.showNotification('Transaction not found', 'error');
-        return;
-    }
-    
-    const idInput = document.getElementById('transaction-id');
-    if (idInput) idInput.value = transaction.id;
-    
-    // ========== FIX DATE DISPLAY ==========
-    const dateInput = document.getElementById('transaction-date');
-    if (dateInput) {
-        // Transaction date is already in YYYY-MM-DD format, use directly
-        dateInput.value = transaction.date || this.getLocalDate();
-    }
-    
-    const typeSelect = document.getElementById('transaction-type');
-    if (typeSelect) typeSelect.value = transaction.type;
-    
-    const categorySelect = document.getElementById('transaction-category');
-    if (categorySelect) categorySelect.value = transaction.category;
-    
-    const amountInput = document.getElementById('transaction-amount');
-    if (amountInput) amountInput.value = transaction.amount;
-    
-    const descriptionInput = document.getElementById('transaction-description');
-    if (descriptionInput) descriptionInput.value = transaction.description;
-    
-    const paymentSelect = document.getElementById('transaction-payment');
-    if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
-    
-    const referenceInput = document.getElementById('transaction-reference');
-    if (referenceInput) referenceInput.value = transaction.reference || '';
-    
-    const notesInput = document.getElementById('transaction-notes');
-    if (notesInput) notesInput.value = transaction.notes || '';
-    
-    const deleteBtn = document.getElementById('delete-transaction');
-    if (deleteBtn) deleteBtn.style.display = 'block';
-    
-    const title = document.getElementById('transaction-modal-title');
-    if (title) title.textContent = 'Edit Transaction';
-    
-    if (transaction.receipt) {
-        this.receiptPreview = transaction.receipt;
-        this.showReceiptPreviewInTransactionModal(transaction.receipt);
-    } else {
-        this.receiptPreview = null;
-        this.clearReceiptPreview();
-    }
-    
-    const modal = document.getElementById('transaction-modal');
-    if (modal && modal.classList.contains('hidden')) {
-        modal.classList.remove('hidden');
-    }
-},
-    
-   async saveTransaction() {
+        console.log('Editing transaction:', transactionId);
+        const transaction = this.transactions.find(t => t.id == transactionId);
+        if (!transaction) {
+            this.showNotification('Transaction not found', 'error');
+            return;
+        }
+        
+        const idInput = document.getElementById('transaction-id');
+        if (idInput) idInput.value = transaction.id;
+        
+        const dateInput = document.getElementById('transaction-date');
+        if (dateInput) dateInput.value = transaction.date;
+        
+        const typeSelect = document.getElementById('transaction-type');
+        if (typeSelect) typeSelect.value = transaction.type;
+        
+        const categorySelect = document.getElementById('transaction-category');
+        if (categorySelect) categorySelect.value = transaction.category;
+        
+        const amountInput = document.getElementById('transaction-amount');
+        if (amountInput) amountInput.value = transaction.amount;
+        
+        const descriptionInput = document.getElementById('transaction-description');
+        if (descriptionInput) descriptionInput.value = transaction.description;
+        
+        const paymentSelect = document.getElementById('transaction-payment');
+        if (paymentSelect) paymentSelect.value = transaction.paymentMethod || 'cash';
+        
+        const referenceInput = document.getElementById('transaction-reference');
+        if (referenceInput) referenceInput.value = transaction.reference || '';
+        
+        const notesInput = document.getElementById('transaction-notes');
+        if (notesInput) notesInput.value = transaction.notes || '';
+        
+        const deleteBtn = document.getElementById('delete-transaction');
+        if (deleteBtn) deleteBtn.style.display = 'block';
+        
+        const title = document.getElementById('transaction-modal-title');
+        if (title) title.textContent = 'Edit Transaction';
+        
+        if (transaction.receipt) {
+            this.receiptPreview = transaction.receipt;
+            this.showReceiptPreviewInTransactionModal(transaction.receipt);
+        } else {
+            this.receiptPreview = null;
+            this.clearReceiptPreview();
+        }
+        
+        const modal = document.getElementById('transaction-modal');
+        if (modal && modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        }
+    },
+
+    async saveTransaction() {
         console.log('Saving transaction...');
+        
+        // Improved Firebase auth check
+        let userId = 'anonymous';
+        try {
+            if (window.firebase && window.firebase.auth) {
+                const auth = window.firebase.auth();
+                if (auth && auth.currentUser) {
+                    userId = auth.currentUser.uid;
+                    console.log('✅ User ID:', userId);
+                }
+            }
+        } catch (authError) {
+            console.warn('⚠️ Error getting user:', authError);
+        }
         
         // Get form values with validation
         const idInput = document.getElementById('transaction-id');
@@ -5109,6 +4161,7 @@ showCameraInterface: function() {
             reference,
             notes,
             receipt: receiptData,
+            userId: userId,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
@@ -5139,21 +4192,21 @@ showCameraInterface: function() {
                 console.warn('⚠️ Failed to save to localStorage:', storageError);
             }
             
-            // Save to Firebase/Unified Service
-            if (this.dataService) {
-                const result = await this.dataService.save('transactions', transactionData);
-                if (!result.success && result.offline) {
-                    this.showNotification('Transaction saved locally (will sync when online)', 'info');
-                } else {
-                    this.showNotification('Transaction saved successfully!', 'success');
-                }
-            } else if (this.isFirebaseAvailable && window.db) {
+            // Save to Firebase if available
+            if (this.isFirebaseAvailable && window.db) {
                 try {
                     const docRef = window.db.collection('transactions')
                         .doc(transactionData.id.toString());
                     
                     await docRef.set(transactionData, { merge: true });
                     console.log('✅ Transaction saved to Firebase:', transactionData.id);
+                    
+                    // Verify the save
+                    const savedDoc = await docRef.get();
+                    if (savedDoc.exists) {
+                        console.log('✅ Firebase save verified');
+                    }
+                    
                     this.showNotification('Transaction saved successfully!', 'success');
                 } catch (firebaseError) {
                     console.warn('⚠️ Firebase error:', firebaseError.message);
@@ -5165,12 +4218,14 @@ showCameraInterface: function() {
             }
             
             // Update UI
-            this.updateStats();
-            this.updateTransactionsList();
-            this.updateCategoryBreakdown();
+            if (typeof this.updateStats === 'function') this.updateStats();
+            if (typeof this.updateTransactionsList === 'function') this.updateTransactionsList();
+            if (typeof this.updateCategoryBreakdown === 'function') this.updateCategoryBreakdown();
             
             // Close modal
-            this.hideTransactionModal();
+            if (typeof this.hideTransactionModal === 'function') {
+                this.hideTransactionModal();
+            }
             
             // Clear form if needed
             this.clearTransactionForm?.();
@@ -5201,9 +4256,7 @@ showCameraInterface: function() {
         this.transactions = this.transactions.filter(t => t.id != transactionId);
         this.saveData();
         
-        if (this.dataService) {
-            await this.dataService.delete('transactions', transactionId);
-        } else if (this.isFirebaseAvailable && window.db) {
+        if (this.isFirebaseAvailable && window.db) {
             try {
                 await window.db.collection('transactions')
                     .doc(transactionId.toString())
@@ -5375,11 +4428,6 @@ showCameraInterface: function() {
 
     // ==================== SYNC METHODS ====================
     async syncLocalTransactionsToFirebase() {
-        if (this.dataService) {
-            await this.dataService.processOfflineQueue();
-            return;
-        }
-        
         if (!this.isOnline || !this.isFirebaseAvailable || !window.db) {
             console.log('Skipping sync - offline or Firebase unavailable');
             return;
@@ -5462,44 +4510,1108 @@ showCameraInterface: function() {
     },
 
     // ==================== UI RENDERING ====================
-    // YOUR ORIGINAL renderModule() METHOD - COMPLETELY UNCHANGED
-    // This method is too long to include here, but it's exactly as in your original file
-    // ... (keep your original renderModule method exactly as is)
-    
-    // NOTE: The renderModule() method should remain EXACTLY as in your original file
-    // I'm not including it here to save space, but it should be unchanged
+    renderModule() {
+        if (!this.element) return;
 
-    renderImportReceiptsModal() {
-        // Keep your original renderImportReceiptsModal method exactly as is
-        return `
-            <div class="import-receipts-container">
-                <!-- GREEN GRADIENT HEADER -->
-                <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 4px;
-                    background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-                    border-radius: 20px 20px 0 0;
-                    z-index: 1000 !important;
-                "></div>
+        const stats = this.calculateStats();
+        const recentTransactions = this.getRecentTransactions(10);
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+
+        this.element.innerHTML = `
+            <style>
+         /* ==================== CRITICAL MODAL FIXES ==================== */
+
+/* 1. MODAL CONTAINER */
+.popout-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow: auto !important;
+}
+
+.popout-modal.hidden {
+    display: none !important;
+}
+
+/* Remove the duplicate #import-receipts-modal styles - they're covered by .popout-modal above */
+#import-receipts-modal {
+    /* All styles moved to .popout-modal above */
+}
+
+/* 2. MODAL CONTENT */
+.popout-modal-content {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    width: 90%;
+    margin: auto !important;
+}
+
+/* Specific modal sizes */
+#import-receipts-modal .popout-modal-content {
+    max-width: 850px;
+    max-height: 90vh;
+}
+
+#transaction-modal .popout-modal-content {
+    max-width: 600px;
+    max-height: 85vh;
+}
+
+/* 3. GREEN GRADIENT HEADER */
+.popout-modal-header {
+    padding: 16px 24px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    min-height: 60px !important;
+    background: linear-gradient(135deg, #22c55e, #14b8a6, #16a34a) !important;
+    color: white !important;
+    position: relative !important;
+    border-radius: 16px 16px 0 0 !important;
+    overflow: hidden !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.popout-modal-title {
+    margin: 0 !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: white !important;
+}
+
+.popout-modal-close {
+    background: none !important;
+    border: none !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    color: white !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+}
+
+.popout-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 4. FOOTER WITH EVEN BUTTONS */
+.popout-modal-footer {
+    padding: 16px 24px !important;
+    border-top: 1px solid #e5e7eb !important;
+    display: flex !important;
+    gap: 12px !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 72px !important;
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+}
+
+/* Specific modal footers */
+#import-receipts-modal .popout-modal-footer {
+    justify-content: space-between !important;
+}
+
+#transaction-modal .popout-modal-footer {
+    justify-content: space-between !important;
+}
+
+/* 5. EQUAL BUTTON WIDTHS */
+.popout-modal-footer .btn {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    border: 2px solid transparent !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    height: auto !important;
+    line-height: normal !important;
+}
+
+/* 6. GREEN BUTTONS (Match header) */
+.popout-modal-footer .btn-primary {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    color: white !important;
+    border-color: transparent !important;
+}
+
+.popout-modal-footer .btn-primary:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+}
+
+/* CANCEL BUTTON - USING YOUR VARIABLES */
+.popout-modal-footer .btn-outline {
+    /* Use your theme variables */
+    background-color: var(--modal-footer-bg) !important;
+    color: var(--modal-footer-text) !important;
+    border: 1px solid var(--modal-input-border) !important;
+    
+    /* Consistent styling */
+    border-radius: var(--radius-lg) !important;
+    font-weight: 600 !important;
+    padding: 12px 26px !important;
+    transition: var(--transition-normal) !important;
+    
+    /* Remove any transform that might cause flickering */
+    transform: none !important;
+}
+
+.popout-modal-footer .btn-outline:hover {
+    background-color: var(--modal-btn-text-hover) !important;
+    border-color: var(--text-secondary) !important;
+    color: var(--modal-footer-text) !important;
+    /* Optional: subtle shadow instead of transform */
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* Process Receipts button */
+#process-receipts-btn {
+    position: relative !important; /* For the badge positioning */
+    overflow: visible !important; /* Let badge show outside */
+}
+
+/* Process Receipts count badge */
+#process-receipts-count {
+    position: absolute !important;
+    top: -8px !important;
+    right: -8px !important;
+    background: #ef4444 !important;
+    color: white !important;
+    border-radius: 12px !important;
+    padding: 3px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    border: 2px solid white !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    display: flex !important; /* ← Remove this inline display */
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+}
+
+/* Add this for hiding the badge */
+#process-receipts-count.hidden {
+    display: none !important;
+}
+
+#process-receipts-btn:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+}
+
+/* ========== Responsive adjustments ========== */
+@media (max-width: 767px) {
+    .popout-modal-footer .btn {
+        padding: 14px 16px !important; /* Slightly taller on mobile */
+        font-size: 15px !important;
+    }
+    
+    .popout-modal-content {
+        max-height: calc(90vh - 80px) !important;
+        margin-top: 0 !important;
+        width: 95% !important;
+    }
+    
+    .popout-modal-footer {
+        flex-direction: column;
+    }
+    
+    .popout-modal-footer .btn {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .popout-modal {
+        padding-top: 50px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    
+    .popout-modal-content {
+        max-height: calc(95vh - 60px) !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+    }
+    
+    .popout-modal-header {
+        padding: 12px 16px !important;
+        min-height: 56px !important;
+    }
+    
+    .popout-modal-title {
+        font-size: 16px !important;
+    }
+}
+
+/* =========== Drag & drop styles =========== */
+#receipt-upload-area.drag-over {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-style: solid !important;
+}
+
+#drop-area.drag-over {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
                 
-                <div class="quick-actions-section" style="padding-top: 8px;">
-                    <h2 class="section-title">Upload Method</h2>
-                    <div class="card-grid">
-                        <button class="card-button" id="camera-option">
-                            <div class="card-icon">📷</div>
-                            <span class="card-title">Take Photo</span>
-                            <span class="card-subtitle">Use camera</span>
+                
+                /* ==================== BASE STYLES ==================== */
+                .import-receipts-container { padding: 20px; }
+                .section-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; }
+                .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+                .card-button { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+                .card-button:hover { transform: translateY(-2px); border-color: var(--primary-color); background: var(--primary-color)10; }
+                .card-button:disabled { opacity: 0.5; cursor: not-allowed; }
+                .card-icon { font-size: 32px; margin-bottom: 4px; }
+                .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+                .card-subtitle { font-size: 12px; color: var(--text-secondary); }
+                
+                .camera-section .glass-card { margin-bottom: 24px; }
+                .camera-preview { width: 100%; height: 300px; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+                .camera-preview video { width: 100%; height: 100%; object-fit: cover; }
+                .camera-controls { display: flex; gap: 12px; justify-content: center; }
+                
+                .upload-area { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
+                .upload-area.drag-over { border-color: var(--primary-color); background: var(--primary-color)10; }
+                .upload-icon { font-size: 48px; margin-bottom: 16px; }
+                .upload-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+                .upload-formats { color: var(--text-secondary); font-size: 12px; margin-bottom: 20px; }
+                
+                .upload-progress { background: var(--glass-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+                .progress-info h4 { font-size: 14px; color: var(--text-primary); margin-bottom: 12px; }
+                .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+                .progress-bar { height: 100%; background: var(--primary-color); width: 0%; transition: width 0.3s; }
+                .progress-details { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); }
+                
+                .receipts-grid { display: flex; flex-direction: column; gap: 12px; }
+                .receipt-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; }
+                .receipt-preview img { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; }
+                .receipt-info { flex: 1; }
+                .receipt-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+                .receipt-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+                .receipt-status { font-weight: 600; }
+                .status-pending { color: #f59e0b; }
+                .status-processed { color: #10b981; }
+                .status-error { color: #ef4444; }
+                
+                .empty-state { text-align: center; padding: 40px 20px; }
+                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+                .header-flex { display: flex; justify-content: space-between; align-items: center; }
+                
+                .receipt-queue-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 6px; font-size: 12px; margin-left: 8px; }
+                .firebase-badge { background: #ffa000; color: white; border-radius: 10px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
+                
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .spinner { width: 40px; height: 40px; border: 4px solid var(--glass-border); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+                
+                #upload-receipt-btn * { pointer-events: none; }
+                .firebase-badge, .receipt-queue-badge { pointer-events: none; }
+                
+                #receipt-upload-area:hover {
+                    border-color: var(--primary-color);
+                    background: var(--primary-color)10;
+                }
+                
+                #receipt-preview-container {
+                    transition: all 0.3s ease;
+                }
+                
+                #receipt-preview-container.hidden {
+                    display: none !important;
+                }
+                
+                #image-preview.hidden {
+                    display: none !important;
+                }
+                
+                .popout-modal {
+                    z-index: 9999;
+                }
+                
+                .receipt-preview-item {
+                    background: var(--glass-bg);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-top: 8px;
+                    border: 1px solid var(--glass-border);
+                }
+
+                .camera-preview {
+                    width: 100%;
+                    height: 400px;
+                    background: #000;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    margin-bottom: 20px;
+                    position: relative;
+                    display: block !important;
+                }
+                
+                .camera-preview video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover;
+                    display: block !important;
+                    background: #000 !important;
+                }
+                
+                #camera-section {
+                    display: none;
+                }
+                
+                #camera-section[style*="display: block"],
+                #camera-section[style*="display:block"] {
+                    display: block !important;
+                    opacity: 1 !important;
+                    visibility: visible !important;
+                }
+                
+                #camera-option {
+                    border: 2px solid transparent;
+                    transition: all 0.2s;
+                }
+                
+                #camera-option:hover {
+                    border-color: var(--primary-color);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                @keyframes pulse {
+                    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+                    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+                }
+
+                .new-receipt {
+                    animation: pulse 2s infinite;
+                }
+
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translate(-50%, -40%); }
+                    to { opacity: 1; transform: translate(-50%, -50%); }
+                }
+
+                .delete-receipt-btn {
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .delete-receipt-btn:hover {
+                    background-color: #dc2626 !important;
+                    color: white !important;
+                }
+                .btn-danger {
+                    background: #fef2f2;
+                    color: #dc2626;
+                    border: 1px solid #fecaca;
+                }
+                .btn-danger:hover {
+                    background: #fee2e2;
+                    border-color: #fca5a5;
+                }
+                .btn-sm {
+                    padding: 6px 12px;
+                    font-size: 14px;
+                    border-radius: 6px;
+                }
+
+                .delete-receipt-btn.deleting {
+                    opacity: 0.7;
+                    cursor: not-allowed;
+                    background-color: #9ca3af !important;
+                }
+
+                .receipt-modal-scrollable {
+                    max-height: 70vh !important;
+                    overflow-y: auto !important;
+                    padding: 20px !important;
+                }
+
+                .receipt-content-wrapper {
+                    max-width: 800px !important;
+                    margin: 0 auto !important;
+                    white-space: pre-wrap !important;
+                    word-wrap: break-word !important;
+                    line-height: 1.5 !important;
+                    font-family: monospace !important;
+                    font-size: 14px !important;
+                }
+
+                .receipt-text-container {
+                    overflow-x: hidden !important;
+                    padding-right: 10px !important;
+                }
+
+                .receipt-modal-scrollable::-webkit-scrollbar {
+                    width: 8px !important;
+                }
+
+                .receipt-modal-scrollable::-webkit-scrollbar-track {
+                    background: rgba(0, 0, 0, 0.1) !important;
+                    border-radius: 4px !important;
+                }
+
+                .receipt-modal-scrollable::-webkit-scrollbar-thumb {
+                    background: rgba(0, 0, 0, 0.3) !important;
+                    border-radius: 4px !important;
+                }
+
+                .receipt-modal-scrollable::-webkit-scrollbar-thumb:hover {
+                    background: rgba(0, 0, 0, 0.4) !important;
+                }
+
+                @media (max-width: 768px) {
+                    .receipt-modal-scrollable {
+                        max-height: 80vh !important;
+                        padding: 15px !important;
+                    }
+                    
+                    .receipt-content-wrapper {
+                        font-size: 12px !important;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .receipt-modal-scrollable {
+                        max-height: 85vh !important;
+                        padding: 10px !important;
+                    }
+                }
+
+                .process-receipt-btn,
+                .delete-receipt-btn {
+                    display: inline-flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    position: relative !important;
+                    z-index: 10 !important;
+                }
+
+                @media (min-width: 769px) {
+                    .pending-receipt-item {
+                        position: relative;
+                        padding-right: 200px !important;
+                    }
+                    
+                    .receipt-actions {
+                        position: absolute !important;
+                        right: 16px !important;
+                        top: 50% !important;
+                        transform: translateY(-50%) !important;
+                        display: flex !important;
+                        gap: 8px !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        z-index: 100 !important;
+                    }
+                    
+                    .receipt-actions .btn {
+                        min-width: 80px !important;
+                        height: 36px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        white-space: nowrap !important;
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    .pending-receipt-item {
+                        flex-direction: column;
+                        align-items: stretch;
+                        gap: 12px;
+                    }
+                    
+                    .receipt-actions {
+                        display: flex !important;
+                        justify-content: flex-end;
+                        gap: 8px;
+                        margin-top: 12px;
+                    }
+                }
+
+                .receipt-card .receipt-actions,
+                .pending-receipt-item .receipt-actions {
+                    overflow: visible !important;
+                    clip: auto !important;
+                    clip-path: none !important;
+                    height: auto !important;
+                    width: auto !important;
+                }
+
+                .upload-area {
+                    min-height: 200px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: var(--glass-bg) !important;
+                    border: 2px dashed var(--glass-border) !important;
+                    border-radius: 12px !important;
+                    padding: 40px 20px !important;
+                    cursor: pointer !important;
+                    transition: all 0.3s ease !important;
+                }
+
+                .upload-area:hover {
+                    border-color: var(--primary-color) !important;
+                    background: var(--primary-color)10 !important;
+                }
+
+                .upload-icon {
+                    font-size: 64px !important;
+                    margin-bottom: 16px !important;
+                    color: var(--text-secondary) !important;
+                }
+
+                .upload-section, .camera-section, .recent-section {
+                    min-height: 100px !important;
+                    margin-bottom: 24px !important;
+                }
+
+                .glass-card {
+                    min-height: 150px !important;
+                }
+
+                .upload-system-container {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                    max-width: 100%;
+                    background: #ffffff;
+                    border-radius: 12px;
+                    padding: 20px;
+                    border: 1px solid #e5e7eb;
+                }
+
+                .upload-dropzone {
+                    border: 2px dashed #d1d5db;
+                    border-radius: 10px;
+                    padding: 40px 20px;
+                    text-align: center;
+                    background: #f9fafb;
+                    margin-bottom: 20px;
+                    cursor: pointer;
+                }
+
+                .upload-dropzone:hover {
+                    border-color: #4f46e5;
+                    background: #f0f1ff;
+                }
+
+                .dropzone-icon {
+                    font-size: 48px;
+                    color: #9ca3af;
+                    margin-bottom: 16px;
+                }
+
+                .dropzone-title {
+                    font-size: 18px;
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                    color: #374151;
+                }
+
+                .dropzone-subtitle {
+                    color: #6b7280;
+                    margin-bottom: 20px;
+                }
+
+                 /* ==================== ADD THIS CROPPER CSS ==================== */
+    /* Cropper touch interaction fixes */
+    #receipt-cropper-modal {
+        touch-action: none;
+    }
+    
+    #receipt-cropper-image {
+        touch-action: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .cropper-container {
+        touch-action: none !important;
+        max-height: 50vh !important;
+    }
+    
+    .cropper-crop-box,
+    .cropper-drag-box,
+    .cropper-face,
+    .cropper-line,
+    .cropper-point {
+        touch-action: none !important;
+    }
+    
+    .cropper-point {
+        width: 30px !important;
+        height: 30px !important;
+        background: #4CAF50 !important;
+        opacity: 0.8 !important;
+        border: 2px solid white !important;
+        border-radius: 50% !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    }
+    
+    /* Mobile-friendly control buttons */
+    .cropper-control-btn {
+        min-width: 60px;
+        min-height: 44px;
+        font-size: 20px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin: 4px;
+    }
+    
+    .cropper-control-btn:active {
+        background: #e0e0e0;
+        transform: scale(0.95);
+    }
+    
+    #cancel-receipt-crop, #apply-receipt-crop {
+        min-height: 48px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    #cancel-receipt-crop {
+        background: #f44336;
+        color: white;
+    }
+    
+    #apply-receipt-crop {
+        background: #4CAF50;
+        color: white;
+    }
+    
+    #cancel-receipt-crop:active, #apply-receipt-crop:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .cropper-point {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        .cropper-control-btn {
+            min-width: 70px;
+            min-height: 48px;
+            font-size: 22px;
+        }
+    }
+    
+    /* Cropper container sizing */
+    #cropper-container {
+        touch-action: none;
+        background: #f0f0f0;
+        min-height: 300px;
+        max-height: 50vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+            </style>
+
+            <div class="module-container">
+                <!-- Module Header -->
+                <div class="module-header">
+                    <h1 class="module-title">Income & Expenses</h1>
+                    <p class="module-subtitle">Track farm finances and cash flow</p>
+                    <div class="header-actions">
+                       <button class="btn btn-primary" id="add-transaction">
+                            ➕ Add Transaction
                         </button>
-                        <button class="card-button" id="upload-option">
-                            <div class="card-icon">📁</div>
-                            <span class="card-title">Upload Files</span>
-                            <span class="card-subtitle">From device</span>
+                        <button class="btn btn-primary" id="upload-receipt-btn" style="display: flex; align-items: center; gap: 8px;">
+                             📄 Import Receipts
+                            ${pendingReceipts.length > 0 ? `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>` : ''}
                         </button>
                     </div>
                 </div>
+
+                <!-- Pending Receipts Section -->
+                ${pendingReceipts.length > 0 ? `
+                    <div class="glass-card" style="padding: 24px; margin-bottom: 24px;" id="pending-receipts-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: var(--text-primary); font-size: 20px;">📋 Pending Receipts (${pendingReceipts.length})</h3>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-outline" id="refresh-receipts-btn">
+                                    <span class="btn-icon">🔄</span>
+                                    <span class="btn-text">Refresh</span>
+                                </button>
+                                <button class="btn btn-primary" id="process-all-receipts">
+                                    ⚡ Process All
+                                </button>
+                            </div>
+                        </div>
+                        <div id="pending-receipts-list">
+                            ${this.renderPendingReceiptsList(pendingReceipts)}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Financial Overview -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-income">${this.formatCurrency(stats.totalIncome)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-expenses">${this.formatCurrency(stats.totalExpenses)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Expenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📈</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="net-income">${this.formatCurrency(stats.netIncome)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Net Income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;">${stats.transactionCount}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Transactions</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-action-grid">
+                    <button class="quick-action-btn" id="add-income-btn">
+                        <div style="font-size: 32px;">💰</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Income</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm income</span>
+                    </button>
+                    <button class="quick-action-btn" id="add-expense-btn">
+                        <div style="font-size: 32px;">💸</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Add Expense</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Record farm expenses</span>
+                    </button>
+                    <button class="quick-action-btn" id="financial-report-btn">
+                        <div style="font-size: 32px;">📊</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Financial Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View financial summary</span>
+                    </button>
+                    <button class="quick-action-btn" id="category-analysis-btn">
+                        <div style="font-size: 32px;">📋</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Category Analysis</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Breakdown by category</span>
+                    </button>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Recent Transactions</h3>
+                        <div style="display: flex; gap: 12px;">
+                            <select id="transaction-filter" class="form-input" style="width: auto;">
+                                <option value="all">All Transactions</option>
+                                <option value="income">Income Only</option>
+                                <option value="expense">Expenses Only</option>
+                            </select>
+                            <button class="btn-outline" id="export-transactions">Export</button>
+                        </div>
+                    </div>
+                    <div id="transactions-list">
+                        ${this.renderTransactionsList(recentTransactions)}
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="glass-card" style="padding: 24px;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">📊 Category Breakdown</h3>
+                    <div id="category-breakdown">
+                        ${this.renderCategoryBreakdown()}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== MODALS ==================== -->
+            <!-- Import Receipts Modal -->
+            <div id="import-receipts-modal" class="popout-modal hidden">
+                <div class="popout-modal-content">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title">📥 Import Receipts</h3>
+                        <button class="popout-modal-close" id="close-import-receipts">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <div id="import-receipts-content">
+                            <!-- Content loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                        <button class="btn btn-outline" id="cancel-import-receipts">Cancel</button>
+                        <button class="btn btn-primary hidden" id="process-receipts-btn">
+                            <span class="btn-icon">⚡</span>
+                            <span class="btn-text">Process Receipts</span>
+                            <span id="process-receipts-count">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transaction Modal -->
+            <div id="transaction-modal" class="popout-modal hidden">
+                <div class="popout-modal-content" style="max-width: 600px;">
+                    <div class="popout-modal-header">
+                        <h3 class="popout-modal-title" id="transaction-modal-title">Add Transaction</h3>
+                        <button class="popout-modal-close" id="close-transaction-modal">&times;</button>
+                    </div>
+                    <div class="popout-modal-body">
+                        <form id="transaction-form">
+                            <input type="hidden" id="transaction-id" value="">
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Date *</label>
+                                    <input type="date" id="transaction-date" class="form-input" required>
+                                </div>
+                                <div>
+                                    <label class="form-label">Type *</label>
+                                    <select id="transaction-type" class="form-input" required>
+                                        <option value="income">💰 Income</option>
+                                        <option value="expense">💸 Expense</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Category *</label>
+                                    <select id="transaction-category" class="form-input" required>
+                                        <option value="">Select Category</option>
+                                        
+                                        <!-- Income Categories -->
+                                        <optgroup label="💰 Income">
+                                            <option value="broilers-income">Broilers</option>
+                                            <option value="layers-income">Layers</option>
+                                            <option value="ducks-income">Ducks</option>
+                                            <option value="sheep-income">Sheep</option>
+                                            <option value="goats-income">Goats</option>
+                                            <option value="rabbits-income">Rabbits</option>
+                                            <option value="crops">Crops/Produce</option>
+                                            <option value="eggs">Eggs</option>
+                                            <option value="milk">Milk/Dairy</option>
+                                            <option value="wool">Wool/Fiber</option>
+                                            <option value="breeding">Breeding Stock</option>
+                                            <option value="services">Services</option>
+                                            <option value="grants">Grants/Subsidies</option>
+                                            <option value="other-income">Other Income</option>
+                                        </optgroup>
+                                        
+                                        <!-- Expense Categories -->
+                                        <optgroup label="💸 Expenses">
+                                            <!-- Animal-specific feed -->
+                                            <option value="feed-broilers">Feed - Broilers</option>
+                                            <option value="feed-layers">Feed - Layers</option>
+                                            <option value="feed-ducks">Feed - Ducks</option>
+                                            <option value="feed-sheep">Feed - Sheep</option>
+                                            <option value="feed-goats">Feed - Goats</option>
+                                            <option value="feed-rabbits">Feed - Rabbits</option>
+                                            
+                                            <!-- Medical/Vet by animal -->
+                                            <option value="medical-broilers">Medical - Broilers</option>
+                                            <option value="medical-layers">Medical - Layers</option>
+                                            <option value="medical-ducks">Medical - Ducks</option>
+                                            <option value="medical-sheep">Medical - Sheep</option>
+                                            <option value="medical-goats">Medical - Goats</option>
+                                            <option value="medical-rabbits">Medical - Rabbits</option>
+                                            
+                                            <!-- General farm expenses -->
+                                            <option value="bedding">Bedding/Litter</option>
+                                            <option value="equipment">Equipment</option>
+                                            <option value="labor">Labor</option>
+                                            <option value="utilities">Utilities</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="transport">Transport</option>
+                                            <option value="marketing">Marketing</option>
+                                            <option value="fencing">Fencing</option>
+                                            <option value="buildings">Buildings/Shelter</option>
+                                            <option value="water">Water Systems</option>
+                                            <option value="electricity">Electricity</option>
+                                            <option value="other-expense">Other Expenses</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Amount ($) *</label>
+                                    <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Description *</label>
+                                <input type="text" id="transaction-description" class="form-input" required placeholder="Enter transaction description">
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label class="form-label">Payment Method</label>
+                                    <select id="transaction-payment" class="form-input">
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                        <option value="transfer">Bank Transfer</option>
+                                        <option value="check">Check</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">Reference Number</label>
+                                    <input type="text" id="transaction-reference" class="form-input" placeholder="Invoice/Receipt #">
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Notes (Optional)</label>
+                                <textarea id="transaction-notes" class="form-input" placeholder="Additional notes about this transaction" rows="3"></textarea>
+                            </div>
+
+                            <!-- Receipt Section -->
+                            <div style="margin-bottom: 16px;">
+                                <label class="form-label">Receipt (Optional)</label>
+                                <div id="receipt-upload-area" style="border: 2px dashed var(--glass-border); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 12px;">
+                                    <div style="font-size: 48px; margin-bottom: 8px;">📄</div>
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Attach Receipt</div>
+                                    <div style="color: var(--text-secondary); font-size: 14px;">Click to upload or drag & drop</div>
+                                    <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Supports JPG, PNG, PDF (Max 10MB)</div>
+                                    <input type="file" id="receipt-upload" accept="image/*,.pdf" style="display: none;">
+                                </div>
+                                
+                                <!-- Receipt Preview -->
+                                <div id="receipt-preview-container" class="hidden">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="font-size: 24px;">📄</div>
+                                            <div>
+                                                <div style="font-weight: 600; color: var(--text-primary);" id="receipt-filename">receipt.jpg</div>
+                                                <div style="font-size: 12px; color: var(--text-secondary);" id="receipt-size">2.5 MB</div>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="remove-receipt" class="btn-icon" style="color: var(--text-secondary);">🗑️</button>
+                                    </div>
+                                    
+                                    <!-- Image Preview -->
+                                    <div id="image-preview" class="hidden" style="margin-bottom: 12px;">
+                                        <img id="receipt-image-preview" src="" alt="Receipt preview" style="max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                                    </div>
+                                    
+                                    <!-- Process Button -->
+                                    <button type="button" id="process-receipt-btn" class="btn-outline" style="width: 100%; margin-top: 8px;">
+                                        🔍 Extract Information from Receipt
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- OCR Results -->
+                            <div id="ocr-results" class="hidden" style="background: #f0f9ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #bfdbfe;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <h4 style="color: #1e40af; margin: 0;">📄 Extracted from Receipt</h4>
+                                    <button type="button" id="use-ocr-data" class="btn-primary" style="font-size: 12px; padding: 4px 8px;">Apply</button>
+                                </div>
+                                <div id="ocr-details" style="font-size: 14px; color: #374151;">
+                                    <!-- OCR extracted details will appear here -->
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="popout-modal-footer" style="display: flex; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--glass-border);">
+                    <button type="button" class="btn-outline" id="cancel-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Cancel</button>
+                    <button type="button" class="btn-danger" id="delete-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600; display: none;">Delete</button>
+                    <button type="button" class="btn-primary" id="save-transaction" style="flex: 1; min-width: 0; padding: 12px; font-size: 16px; font-weight: 600;">Save Transaction</button>
+                </div>
+        `;
+
+        this.setupEventListeners();
+        this.setupReceiptFormHandlers();
+        
+        setTimeout(() => {
+            this.setupReceiptActionListeners();
+        }, 100);
+    },
+
+    renderImportReceiptsModal() {
+        return `
+               <div class="import-receipts-container">
+                    <!-- GREEN GRADIENT HEADER -->
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 4px;
+                        background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+                        border-radius: 20px 20px 0 0;
+                        z-index: 1000 !important;
+                    "></div>
+                    
+                    <div class="quick-actions-section" style="padding-top: 8px;">  <!-- ONLY KEEP THIS ONE -->
+                        <h2 class="section-title">Upload Method</h2>
+                        <div class="card-grid">
+                            <button class="card-button" id="camera-option">
+                                <div class="card-icon">📷</div>
+                                <span class="card-title">Take Photo</span>
+                                <span class="card-subtitle">Use camera</span>
+                            </button>
+                            <button class="card-button" id="upload-option">
+                                <div class="card-icon">📁</div>
+                                <span class="card-title">Upload Files</span>
+                                <span class="card-subtitle">From device</span>
+                            </button>
+                        </div>
+                    </div>
                 
                 <!-- UPLOAD SECTION -->
                 <div id="upload-section" style="display: none;">
@@ -5613,16 +5725,677 @@ showCameraInterface: function() {
         `;
     },
 
-    // Keep ALL your other original methods (renderPendingReceiptsList, renderRecentReceiptsList, 
-    // renderTransactionsList, renderCategoryBreakdown, updateReceiptQueueUI, updateModalReceiptsList,
-    // updateProcessReceiptsButton, updateStats, updateTransactionsList, updateCategoryBreakdown,
-    // calculateStats, getRecentTransactions, filterTransactions, filterTransactionsByType,
-    // isValidReceiptFile, formatCurrency, formatFileSize, formatFirebaseTimestamp, showNotification,
-    // getLocalDate, formatDateForStorage, formatDateForDisplay, compareDates,
-    // exportTransactions, generateFinancialReport, renderTextCategoryBreakdown,
-    // generateCategoryAnalysis, exportCategoryAnalysis, showModal, unload)
-    // ... all exactly as in your original file
+    renderPendingReceiptsList(receipts) {
+        if (receipts.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
+                </div>
+            `;
+        }
 
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;" id="pending-receipts-grid">
+                ${receipts.map(receipt => `
+                    <div class="pending-receipt-item" data-receipt-id="${receipt.id}" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div class="receipt-info" style="display: flex; align-items: center; gap: 12px;">
+                            <span class="receipt-icon" style="font-size: 24px;">${receipt.type?.startsWith('image/') ? '🖼️' : '📄'}</span>
+                            <div class="receipt-details">
+                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
+                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary); display: flex; gap: 8px; align-items: center;">
+                                    <span>${this.formatFileSize(receipt.size || 0)}</span>
+                                    <span>•</span>
+                                    <span class="receipt-status status-pending" style="color: #f59e0b;">Pending</span>
+                                    <span>•</span>
+                                    <span>${this.formatFirebaseTimestamp(receipt.uploadedAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="receipt-actions" style="display: flex; gap: 8px;">
+                            ${receipt.downloadURL ? `
+                                <a href="${receipt.downloadURL.startsWith('http') ? receipt.downloadURL : '#'}" 
+                                           target="_blank" 
+                                           class="btn btn-sm btn-outline" 
+                                           title="View receipt" 
+                                           style="padding: 6px 12px;"
+                                           onclick="${!receipt.downloadURL.startsWith('http') ? 'event.preventDefault(); alert(\'Receipt unavailable\');' : ''}"> 
+                                    <span class="btn-icon">👁️</span>
+                                </a>
+                            ` : ''}
+                            <button class="btn btn-sm btn-primary process-receipt-btn" 
+                                    data-receipt-id="${receipt.id}" 
+                                    style="padding: 6px 12px;">
+                                <span class="btn-icon">🔍</span>
+                                <span class="btn-text">Process</span>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                    data-receipt-id="${receipt.id}" 
+                                    style="padding: 6px 12px;" 
+                                    title="Delete receipt">
+                                <span class="btn-icon">🗑️</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    renderRecentReceiptsList() {
+        if (this.receiptQueue.length === 0) {
+            return `
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <h4>No receipts found</h4>
+                    <p>Upload receipts to get started</p>
+                </div>
+            `;
+        }
+        
+        const recentReceipts = this.receiptQueue
+            .slice(0, 5)
+            .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+        
+        return `
+            <div class="receipts-grid" id="recent-receipts-grid">
+                ${recentReceipts.map(receipt => {
+                    return `
+                        <div class="receipt-card" data-receipt-id="${receipt.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px;">
+                            <div class="receipt-preview">
+                                ${receipt.type?.startsWith('image/') && receipt.downloadURL?.startsWith('http') ? 
+                                    `<img src="${receipt.downloadURL}" alt="${receipt.name}" 
+                                          loading="lazy" 
+                                          style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">` : 
+                                    `<div class="file-icon" style="font-size: 24px;">📄</div>`
+                                }
+                            </div>
+                            <div class="receipt-info" style="flex: 1;">
+                                <div class="receipt-name" style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${receipt.name}</div>
+                                <div class="receipt-meta" style="font-size: 12px; color: var(--text-secondary);">
+                                    <span class="receipt-size">${this.formatFileSize(receipt.size || 0)}</span>
+                                    <span>•</span>
+                                    <span class="receipt-status status-${receipt.status || 'pending'}">${receipt.status || 'pending'}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-sm btn-outline process-btn" 
+                                        data-receipt-id="${receipt.id}"
+                                        style="white-space: nowrap; padding: 6px 12px;">
+                                    🔍 Process
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-receipt-btn" 
+                                        data-receipt-id="${receipt.id}"
+                                        style="padding: 6px 12px;" 
+                                        title="Delete receipt">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderTransactionsList(transactions) {
+        if (transactions.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No transactions found</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Add your first transaction to get started</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${transactions.map(transaction => {
+                    const isIncome = transaction.type === 'income';
+                    const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+                    const icon = isIncome ? '💰' : '💸';
+                    
+                    return `
+                        <div class="transaction-item" data-id="${transaction.id}" 
+                             style="display: flex; justify-content: space-between; align-items: center; 
+                                    padding: 16px; background: var(--glass-bg); border-radius: 8px; 
+                                    border: 1px solid var(--glass-border); cursor: pointer;"
+                             onclick="IncomeExpensesModule.editTransaction(${transaction.id})">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 24px;">${icon}</span>
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                                        ${transaction.description || 'No description'}
+                                    </div>
+                                    <div style="display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                        <span>${this.formatDate(transaction.date) || 'No date'}</span>
+                                        <span>•</span>
+                                        <span>${transaction.category || 'Uncategorized'}</span>
+                                        <span>•</span>
+                                        <span>${transaction.paymentMethod || 'Cash'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; font-size: 16px; color: ${isIncome ? '#10b981' : '#ef4444'};">
+                                    ${isIncome ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                                </div>
+                                ${transaction.reference ? `
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                        Ref: ${transaction.reference}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
+
+    renderCategoryBreakdown() {
+        const incomeByCategory = {};
+        const expensesByCategory = {};
+        
+        this.transactions.forEach(transaction => {
+            if (transaction.type === 'income') {
+                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
+            } else {
+                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
+            }
+        });
+        
+        const totalIncome = this.calculateStats().totalIncome;
+        const totalExpenses = this.calculateStats().totalExpenses;
+        
+        return `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💰 Income</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${Object.entries(incomeByCategory).length > 0 ? 
+                            Object.entries(incomeByCategory)
+                                .sort(([,a], [,b]) => b - a)
+                                .map(([category, amount]) => {
+                                    const percentage = totalIncome > 0 ? (amount / totalIncome * 100).toFixed(1) : 0;
+                                    return `
+                                        <div style="margin-bottom: 8px;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                                <span style="font-size: 14px; color: var(--text-primary);">${category}</span>
+                                                <span style="font-weight: 600; font-size: 14px; color: #10b981;">${this.formatCurrency(amount)}</span>
+                                            </div>
+                                            <div style="height: 6px; background: #d1fae5; border-radius: 3px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${percentage}%; background: #10b981; border-radius: 3px;"></div>
+                                            </div>
+                                            <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                                ${percentage}%
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')
+                            : `
+                                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                    No income recorded yet
+                                </div>
+                            `
+                        }
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 16px; font-size: 16px;">💸 Expenses</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${Object.entries(expensesByCategory).length > 0 ? 
+                            Object.entries(expensesByCategory)
+                                .sort(([,a], [,b]) => b - a)
+                                .map(([category, amount]) => {
+                                    const percentage = totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : 0;
+                                    return `
+                                        <div style="margin-bottom: 8px;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                                <span style="font-size: 14px; color: var(--text-primary);">${category}</span>
+                                                <span style="font-weight: 600; font-size: 14px; color: #ef4444;">${this.formatCurrency(amount)}</span>
+                                            </div>
+                                            <div style="height: 6px; background: #fee2e2; border-radius: 3px; overflow: hidden;">
+                                                <div style="height: 100%; width: ${percentage}%; background: #ef4444; border-radius: 3px;"></div>
+                                            </div>
+                                            <div style="text-align: right; font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                                                ${percentage}%
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')
+                            : `
+                                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                                    No expenses recorded yet
+                                </div>
+                            `
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    // ==================== UI UPDATES ====================
+    updateReceiptQueueUI() {
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        const badge = document.getElementById('receipt-count-badge');
+        
+        if (pendingReceipts.length > 0) {
+            if (!badge) {
+                const uploadBtn = document.getElementById('upload-receipt-btn');
+                if (uploadBtn) {
+                    uploadBtn.innerHTML += `<span class="receipt-queue-badge" id="receipt-count-badge">${pendingReceipts.length}</span>`;
+                }
+            } else {
+                badge.textContent = pendingReceipts.length;
+            }
+            
+            const pendingList = document.getElementById('pending-receipts-list');
+            if (pendingList) {
+                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+            }
+        } else {
+            if (badge) badge.remove();
+            
+            const pendingSection = document.getElementById('pending-receipts-section');
+            if (pendingSection) {
+                pendingSection.innerHTML = `
+                    <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                        <div style="font-size: 16px; margin-bottom: 8px;">No pending receipts</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Upload receipts to get started</div>
+                    </div>
+                `;
+            }
+        }
+        
+        this.updateProcessReceiptsButton();
+    },
+
+    updateModalReceiptsList() {
+        const recentList = document.getElementById('recent-receipts-list');
+        if (recentList) {
+            recentList.innerHTML = this.renderRecentReceiptsList();
+        }
+        
+        const pendingList = document.getElementById('pending-receipts-list');
+        if (pendingList) {
+            const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+            if (pendingReceipts.length > 0) {
+                pendingList.innerHTML = this.renderPendingReceiptsList(pendingReceipts);
+            }
+        }
+        
+        this.updateProcessReceiptsButton();
+    },
+
+    updateProcessReceiptsButton() {
+        const processBtn = document.getElementById('process-receipts-btn');
+        const processCount = document.getElementById('process-receipts-count');
+        
+        if (!processBtn || !processCount) return;
+        
+        const pendingReceipts = this.receiptQueue.filter(r => r.status === 'pending');
+        const pendingCount = pendingReceipts.length;
+        
+        if (pendingCount > 0) {
+            processBtn.classList.remove('hidden'); // ← Use class instead of style
+            processCount.textContent = pendingCount;
+            processCount.classList.remove('hidden'); // ← Use class for count too
+            processBtn.title = `Process ${pendingCount} pending receipt${pendingCount !== 1 ? 's' : ''}`;
+        } else {
+            processBtn.classList.add('hidden'); // ← Use class instead of style
+            processCount.classList.add('hidden');
+        }
+    },
+
+    updateStats() {
+        const stats = this.calculateStats();
+        
+        const totalIncome = document.getElementById('total-income');
+        if (totalIncome) totalIncome.textContent = this.formatCurrency(stats.totalIncome);
+        
+        const totalExpenses = document.getElementById('total-expenses');
+        if (totalExpenses) totalExpenses.textContent = this.formatCurrency(stats.totalExpenses);
+        
+        const netIncome = document.getElementById('net-income');
+        if (netIncome) netIncome.textContent = this.formatCurrency(stats.netIncome);
+    },
+
+    updateTransactionsList() {
+        const filterValue = document.getElementById('transaction-filter')?.value || 'all';
+        const filteredTransactions = this.filterTransactionsByType(filterValue);
+        const recentTransactions = filteredTransactions.slice(0, 10);
+        
+        const transactionsList = document.getElementById('transactions-list');
+        if (transactionsList) {
+            transactionsList.innerHTML = this.renderTransactionsList(recentTransactions);
+        }
+    },
+
+    updateCategoryBreakdown() {
+        const categoryBreakdown = document.getElementById('category-breakdown');
+        if (categoryBreakdown) {
+            categoryBreakdown.innerHTML = this.renderCategoryBreakdown();
+        }
+    },
+
+    // ==================== UTILITY METHODS ====================
+    calculateStats() {
+        const income = this.transactions.filter(t => t.type === 'income')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const expenses = this.transactions.filter(t => t.type === 'expense')
+            .reduce((sum, t) => sum + t.amount, 0);
+        const net = income - expenses;
+        
+        return {
+            totalIncome: income,
+            totalExpenses: expenses,
+            netIncome: net,
+            transactionCount: this.transactions.length
+        };
+    },
+
+    getRecentTransactions(limit = 10) {
+        return this.transactions.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
+    },
+
+    filterTransactions(filterType) {
+        console.log('Filtering transactions by:', filterType);
+        this.updateTransactionsList();
+    },
+
+    filterTransactionsByType(filterType) {
+        if (filterType === 'all') return this.transactions;
+        if (filterType === 'income') return this.transactions.filter(t => t.type === 'income');
+        if (filterType === 'expense') return this.transactions.filter(t => t.type === 'expense');
+        return this.transactions;
+    },
+
+    isValidReceiptFile(file) {
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        const maxSize = 10 * 1024 * 1024;
+        
+        if (!file || !validTypes.includes(file.type)) {
+            console.warn('Invalid file type:', file?.type);
+            return false;
+        }
+        
+        if (file.size > maxSize) {
+            console.warn('File too large:', file.size);
+            return false;
+        }
+        
+        return true;
+    },
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    },
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    },
+
+    formatFirebaseTimestamp(timestamp) {
+        if (!timestamp) return 'Unknown date';
+        
+        const date = typeof timestamp === 'string' ? new Date(timestamp) : 
+                    timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    },
+
+    showNotification(message, type = 'info') {
+        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
+            window.coreModule.showNotification(message, type);
+        } else {
+            console.log(`${type.toUpperCase()}: ${message}`);
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
+                color: white;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    },
+
+    // ==================== EXPORT & REPORT ====================
+    exportTransactions() {
+        console.log('Exporting transactions...');
+        
+        const data = {
+            transactions: this.transactions,
+            stats: this.calculateStats(),
+            exportDate: new Date().toISOString(),
+            receiptCount: this.receiptQueue.length
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `farm-transactions-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Transactions exported successfully', 'success');
+    },
+
+    generateFinancialReport() {
+        console.log('Generating financial report...');
+        
+        const stats = this.calculateStats();
+        const recentTransactions = this.getRecentTransactions(20);
+        
+        const report = `
+            Farm Financial Report
+            Generated: ${new Date().toLocaleDateString()}
+            
+            ======================
+            SUMMARY
+            ======================
+            Total Income: ${this.formatCurrency(stats.totalIncome)}
+            Total Expenses: ${this.formatCurrency(stats.totalExpenses)}
+            Net Income: ${this.formatCurrency(stats.netIncome)}
+            Total Transactions: ${stats.transactionCount}
+            
+            ======================
+            RECENT TRANSACTIONS (Last 20)
+            ======================
+            ${recentTransactions.map(t => 
+                `${t.date} | ${t.type.toUpperCase()} | ${t.category} | ${this.formatCurrency(t.amount)} | ${t.description}`
+            ).join('\n')}
+            
+            ======================
+            CATEGORY BREAKDOWN
+            ======================
+            ${this.renderTextCategoryBreakdown()}
+        `;
+        
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `financial-report-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Financial report generated', 'success');
+    },
+
+    renderTextCategoryBreakdown() {
+        const incomeByCategory = {};
+        const expensesByCategory = {};
+        
+        this.transactions.forEach(transaction => {
+            if (transaction.type === 'income') {
+                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
+            } else {
+                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
+            }
+        });
+        
+        let breakdown = 'INCOME:\n';
+        Object.entries(incomeByCategory).forEach(([category, amount]) => {
+            breakdown += `  ${category}: ${this.formatCurrency(amount)}\n`;
+        });
+        
+        breakdown += '\nEXPENSES:\n';
+        Object.entries(expensesByCategory).forEach(([category, amount]) => {
+            breakdown += `  ${category}: ${this.formatCurrency(amount)}\n`;
+        });
+        
+        return breakdown;
+    },
+
+    generateCategoryAnalysis() {
+        const modalContent = `
+            <div class="popout-modal-content" style="max-width: 800px;">
+                <div class="popout-modal-header">
+                    <h3 class="popout-modal-title">📊 Category Analysis</h3>
+                    <button class="popout-modal-close" id="close-category-analysis">&times;</button>
+                </div>
+                <div class="popout-modal-body">
+                    ${this.renderCategoryBreakdown()}
+                </div>
+                <div class="popout-modal-footer">
+                    <button class="btn-outline" id="export-category-analysis">Export as CSV</button>
+                    <button class="btn-primary" id="close-category-btn">Close</button>
+                </div>
+            </div>
+        `;
+        
+        this.showModal('Category Analysis', modalContent);
+        
+        setTimeout(() => {
+            const closeBtn = document.getElementById('close-category-btn');
+            const closeModalBtn = document.getElementById('close-category-analysis');
+            const exportBtn = document.getElementById('export-category-analysis');
+            
+            if (closeBtn) closeBtn.addEventListener('click', () => this.hideAllModals());
+            if (closeModalBtn) closeModalBtn.addEventListener('click', () => this.hideAllModals());
+            if (exportBtn) exportBtn.addEventListener('click', () => this.exportCategoryAnalysis());
+        }, 100);
+    },
+
+    exportCategoryAnalysis() {
+        const incomeByCategory = {};
+        const expensesByCategory = {};
+        
+        this.transactions.forEach(transaction => {
+            if (transaction.type === 'income') {
+                incomeByCategory[transaction.category] = (incomeByCategory[transaction.category] || 0) + transaction.amount;
+            } else {
+                expensesByCategory[transaction.category] = (expensesByCategory[transaction.category] || 0) + transaction.amount;
+            }
+        });
+        
+        let csv = 'Category,Type,Amount\n';
+        
+        Object.entries(incomeByCategory).forEach(([category, amount]) => {
+            csv += `"${category}",income,${amount}\n`;
+        });
+        
+        Object.entries(expensesByCategory).forEach(([category, amount]) => {
+            csv += `"${category}",expense,${amount}\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `category-analysis-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('Category analysis exported as CSV', 'success');
+    },
+
+    showModal(title, content) {
+        this.hideAllModals();
+        
+        const modal = document.createElement('div');
+        modal.className = 'popout-modal';
+        modal.id = 'custom-modal';
+        modal.innerHTML = content;
+        
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.remove('hidden'), 10);
+    },
+
+    // Add this right before the final closing brace of IncomeExpensesModule
+unload() {
+    console.log('📦 Unloading Income & Expenses module...');
+    
+    // Stop camera if active
+    this.stopCamera();
+    
+    // Remove event listeners
+    if (this._globalClickHandler) {
+        document.removeEventListener('click', this._globalClickHandler);
+        this._globalClickHandler = null;
+    }
+    if (this._globalChangeHandler) {
+        document.removeEventListener('change', this._globalChangeHandler);
+        this._globalChangeHandler = null;
+    }
+    
+    // Hide any open modals
+    this.hideAllModals();
+    
+    // Clean up file input if created
+    const fileInput = document.getElementById('receipt-upload-input');
+    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
+        fileInput.remove();
+    }
+    
+    // Reset state
+    this.initialized = false;
+    this.element = null;
+    this.currentEditingId = null;
+    this.receiptQueue = [];
+    this.cameraStream = null;
+    this.receiptPreview = null;
+    
+    console.log('✅ Income & Expenses module unloaded');
+}
 };
 
 // =============== Register with FarmModules framework ===================
@@ -5631,7 +6404,7 @@ if (window.FarmModules) {
     console.log('✅ Income & Expenses module registered');
 }
 
-// MAKE IT GLOBAL
+// MAKE IT GLOBAL - ADD THIS LINE!
 window.IncomeExpensesModule = IncomeExpensesModule;
 
 // Universal registration
@@ -5645,3 +6418,6 @@ window.IncomeExpensesModule = IncomeExpensesModule;
         console.error('❌ FarmModules framework not found');
     }
 })();
+
+
+
