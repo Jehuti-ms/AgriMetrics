@@ -413,17 +413,7 @@ setupRealtimeSync() {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Feed Type</label>
-                                    <!-- <select class="form-input" id="feed-type" required>
-                                        <option value="">Select feed type</option>
-                                        ${this.feedInventory.map(item => `
-                                            <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
-                                                ${item.feedType.charAt(0).toUpperCase() + item.feedType.slice(1)} Feed 
-                                                ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
-                                            </option>
-                                        `).join('')}
-                                    </select> -->
-
-                                    <select class="form-input" id="feed-type" required>
+                                      <select class="form-input" id="feed-type" required>
                                         <option value="">Select feed type</option>
                                         
                                         <!-- Poultry Feeds -->
