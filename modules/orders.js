@@ -25,7 +25,7 @@ const OrdersModule = {
     _customerSubmitHandler: null,
     _orderListenersAttached: false,
 
-   initialize() {
+  async initialize() {
     console.log('📋 Initializing Orders Management...');
     
     this.element = document.getElementById('content-area');
