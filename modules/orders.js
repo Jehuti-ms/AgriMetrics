@@ -387,72 +387,6 @@ async loadData() {
     }
 },
     
-/**
- * Subscribe to Central Data Service updates
- */
-subscribeToDataUpdates() {
-    if (!window.CentralDataService) return;
-    
-    // Handle customer updates
-    window.CentralDataService.on('customers-updated', (customers) => {
-        console.log('📡 Customers updated from Central Service');
-        this.customers = customers;
-        this.saveData();
-        this.renderModule();
-    });
-    
-    // Handle order updates
-    window.CentralDataService.on('orders-updated', (orders) => {
-        console.log('📡 Orders updated from Central Service');
-        this.orders = orders;
-        this.saveData();
-        this.renderModule();
-    });
-},
-
-/**
- * Save customer - uses Central Data Service
- */
-async saveCustomerToFirebase(customerData) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.save('customers', customerData);
-        if (result.success) {
-            console.log('✅ Customer saved via Central Service');
-            // No need to update local arrays - Central Service will broadcast the update
-        }
-        return result.success;
-    }
-    return false;
-},
-
-/**
- * Delete customer - uses Central Data Service
- */
-async deleteCustomerFromFirebase(customerId) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.delete('customers', customerId);
-        if (result.success) {
-            console.log('✅ Customer deleted via Central Service');
-        }
-        return result.success;
-    }
-    return false;
-},
-
-/**
- * Save order - uses Central Data Service
- */
-async saveOrderToFirebase(orderData) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.save('orders', orderData);
-        if (result.success) {
-            console.log('✅ Order saved via Central Service');
-        }
-        return result.success;
-    }
-    return false;
-},
-    
     // Theme change handler
     onThemeChange(theme) {
         console.log(`Orders Management updating for theme: ${theme}`);
@@ -902,16 +836,10 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     return digits.length >= 7 && digits.length <= 15;
 },
    
-   renderOrdersList() {
-    // Ensure all orders have an items array
-    this.orders.forEach(order => {
-        if (!order.items) {
-            order.items = [];
-        }
-    });
-
+  renderModule() {
+        if (!this.element) return;
         const stats = this.calculateStats();
-
+        
         this.element.innerHTML = `
             <div class="module-container">
                 <div class="module-header">
@@ -2103,27 +2031,7 @@ showCustomerForm() {
     this.hideOrderForm();
     this.renderModule();
 },
-    
-    /**
- * Check if Firebase is available and user is authenticated
- */
-isFirebaseAvailable() {
-    return window.firebaseDb && 
-           window.firebase.auth && 
-           firebase.auth().currentUser;
-},
-
-/**
- * Get Firebase Firestore instance
- */
-getFirebaseDb() {
-    if (this.isFirebaseAvailable()) {
-        return window.firebaseDb;
-    }
-    return null;
-},
-
-    
+       
    async deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
         if (!order) return;
