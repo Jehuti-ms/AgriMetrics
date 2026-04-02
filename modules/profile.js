@@ -32,7 +32,15 @@ initialize() {
         return false;
     }
 
-    // Check Firebase availability
+    // ✅ Set Broadcaster FIRST (use Broadcaster with capital B)
+    this.broadcaster = window.Broadcaster || null;
+    if (this.broadcaster) {
+        console.log('📡 Profile module connected to Data Broadcaster');
+    } else {
+        console.log('⚠️ Broadcaster not available, using local methods');
+    }
+
+    // Check Firebase availability (DON'T reassign broadcaster inside)
     this.checkFirebaseAvailability();
 
     // Register with StyleManager
@@ -66,15 +74,15 @@ initialize() {
         }
     });
 
-    // Setup broadcaster listeners
-    if (this.broadcaster) {
+    // Setup broadcaster listeners (with safety check)
+    if (this.broadcaster && typeof this.broadcaster.on === 'function') {
         this.setupBroadcasterListeners();
     }
 
     console.log('✅ Profile module initialized with Firebase support');
     return true;
 },
-
+    
 // ==================== BROADCASTER LISTENERS ====================
 setupBroadcasterListeners() {
     if (!this.broadcaster) return;
@@ -108,16 +116,16 @@ setupBroadcasterListeners() {
     // ==================== FIREBASE METHODS ====================
     
     checkFirebaseAvailability() {
-        this.isFirebaseAvailable = !!(window.firebase && window.db);
-        this.broadcaster = window.DataBroadcaster || window.Broadcaster || null;
-        
-        console.log('🔥 Firebase available for profile:', this.isFirebaseAvailable);
-        if (this.broadcaster) {
-            console.log('📡 Profile connected to broadcaster');
-        }
-        
-        return this.isFirebaseAvailable;
-    },
+    this.isFirebaseAvailable = !!(window.firebase && window.db);
+    // ✅ DON'T reassign broadcaster here - keep the one from initialize
+    
+    console.log('🔥 Firebase available for profile:', this.isFirebaseAvailable);
+    if (this.broadcaster) {
+        console.log('📡 Profile broadcaster already configured');
+    }
+    
+    return this.isFirebaseAvailable;
+},
 
     async saveToFirebase() {
         if (!this.isFirebaseAvailable || !window.db) {
