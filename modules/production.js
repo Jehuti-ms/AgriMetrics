@@ -1869,15 +1869,6 @@ unload() {
 
 };
 
-// REGISTER WITH FarmModules FRAMEWORK
-if (window.FarmModules) {
-    window.FarmModules.registerModule('production', ProductionModule);
-    console.log('✅ Production module registered with FarmModules');
-}
-
-// Also make it globally available
-window.ProductionModule = ProductionModule;
-console.log('✅ Production module loaded and ready with Data Broadcaster');
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
