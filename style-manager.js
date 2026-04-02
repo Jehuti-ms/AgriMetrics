@@ -613,6 +613,14 @@ button[type="submit"],
                 margin-bottom: 20px;
             }
 
+            /* ADD THIS - Modern Quick Action Grid */
+            .quick-action-grid {
+                display: grid !important;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+                gap: 16px !important;
+                margin-bottom: 24px !important;
+            }
+            
             .stat-card {
                 background: var(--card-bg);
                 backdrop-filter: var(--backdrop-blur);
