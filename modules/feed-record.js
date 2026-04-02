@@ -413,7 +413,7 @@ setupRealtimeSync() {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                                 <div>
                                     <label class="form-label">Feed Type</label>
-                                    <select class="form-input" id="feed-type" required>
+                                    <!-- <select class="form-input" id="feed-type" required>
                                         <option value="">Select feed type</option>
                                         ${this.feedInventory.map(item => `
                                             <option value="${item.feedType}" ${item.currentStock <= item.minStock ? 'disabled' : ''}>
@@ -421,6 +421,63 @@ setupRealtimeSync() {
                                                 ${item.currentStock <= item.minStock ? '(Low Stock)' : ''}
                                             </option>
                                         `).join('')}
+                                    </select> -->
+
+                                    <select class="form-input" id="feed-type" required>
+                                        <option value="">Select feed type</option>
+                                        
+                                        <!-- Poultry Feeds -->
+                                        <optgroup label="🐔 Poultry Feeds">
+                                            ${['starter', 'grower', 'finisher', 'layer', 'broiler'].map(type => {
+                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${type.charAt(0).toUpperCase() + type.slice(1)} Feed${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                            }).join('')}
+                                        </optgroup>
+                                        
+                                        <!-- Rabbit Feeds -->
+                                        <optgroup label="🐇 Rabbit Feeds">
+                                            ${['rabbit-starter', 'rabbit-grower', 'rabbit-breeder', 'rabbit-finisher'].map(type => {
+                                                const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                            }).join('')}
+                                        </optgroup>
+                                        
+                                        <!-- Sheep Feeds -->
+                                        <optgroup label="🐑 Sheep Feeds">
+                                            ${['sheep-starter', 'sheep-grower', 'sheep-finisher', 'sheep-maintenance', 'sheep-lactating'].map(type => {
+                                                const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                            }).join('')}
+                                        </optgroup>
+                                        
+                                        <!-- Goat Feeds -->
+                                        <optgroup label="🐐 Goat Feeds">
+                                            ${['goat-starter', 'goat-grower', 'goat-finisher', 'goat-maintenance', 'goat-lactating'].map(type => {
+                                                const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                            }).join('')}
+                                        </optgroup>
+                                        
+                                        <!-- Other Feeds -->
+                                        <optgroup label="📦 Other Feeds">
+                                            <option value="cattle">Cattle Feed</option>
+                                            <option value="pig">Pig Feed</option>
+                                            <option value="duck">Duck Feed</option>
+                                            <option value="turkey">Turkey Feed</option>
+                                            <option value="fish">Fish Feed</option>
+                                            <option value="other">Other Feed</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div>
