@@ -5369,20 +5369,20 @@ body.dark-mode {
 }
 
 /* Emergency fix - force quick action grid */
-.quick-action-grid {
+/* .quick-action-grid {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
-}
+} */
 
-@media (min-width: 769px) {
+/*@media (min-width: 769px) {
     .quick-action-grid {
         grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
     }
-}
+} */
 
-@media (max-width: 480px) {
+/*@media (max-width: 480px) {
     .quick-action-grid {
         grid-template-columns: 1fr !important;
     }
-}
+}*/
