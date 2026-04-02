@@ -1960,78 +1960,7 @@ showCustomerForm() {
     }
     
     const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    
-    // Helper function to save to Firebase
-    const saveOrderToFirebase = (orderData) => {
-        const db = this.getFirestore();
-        const userId = this.getCurrentUserId();
-        
-        if (db && userId) {
-            console.log('💾 Saving order to Firebase:', orderData.id);
-            return db.collection('users').doc(userId).collection('orders')
-                .doc(orderData.id.toString())
-                .set(orderData)
-                .then(() => console.log('✅ Order saved to Firebase:', orderData.id))
-                .catch(error => console.error('❌ Error saving order to Firebase:', error));
-        }
-        return Promise.resolve();
-    };
-    
-    if (isEditing) {
-        // Update existing order
-        const orderIndex = this.orders.findIndex(o => o.id == editingId);
-        if (orderIndex !== -1) {
-            const updatedOrder = {
-                ...this.orders[orderIndex],
-                customerId,
-                date,
-                items,
-                totalAmount,
-                status,
-                notes,
-                updatedAt: new Date().toISOString()
-            };
-            this.orders[orderIndex] = updatedOrder;
-            await this.saveData();
-            
-            // Save to Firebase
-            saveOrderToFirebase(updatedOrder);
-            
-            // Broadcast update
-            this.broadcastOrderUpdated(updatedOrder);
-            
-            this.showNotification(`Order #${editingId} updated!`, 'success');
-        }
-    } else {
-        // Create new order
-        const orderData = {
-            id: Date.now(),
-            customerId,
-            date,
-            items,
-            totalAmount,
-            status,
-            notes,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        this.orders.unshift(orderData);
-        this.saveData();
-        
-        // Save to Firebase
-        saveOrderToFirebase(orderData);
-        
-        // Broadcast creation
-        this.broadcastOrderCreated(orderData);
-        
-        this.showNotification('Order created successfully!', 'success');
-    }
-    
-    // Reset and hide form
-    this.hideOrderForm();
-    this.renderModule();
-},
-       
+          
    async deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
         if (!order) return;
