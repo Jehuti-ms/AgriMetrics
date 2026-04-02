@@ -1148,8 +1148,8 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                                     Order #${order.id} - ${customer?.name || 'Unknown Customer'}
                                 </div>
                                 <div style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
-                                    <span>📅 ${order.date}</span>
-                                    <span>📦 ${order.items.length} item${order.items.length > 1 ? 's' : ''}</span>
+                                    <span>📅 ${order.date || 'No date'}</span>
+                                    <span>📦 ${order.items ? order.items.length : 0} item${order.items && order.items.length !== 1 ? 's' : ''}</span>
                                 </div>
                                 ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.02); border-radius: 4px;">📝 ${order.notes}</div>` : ''}
                             </div>
