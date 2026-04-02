@@ -1642,12 +1642,22 @@ header {
     }
     
     /* Stack stats grids */
-    .stats-grid,
+  /*  .stats-grid,
     .stats-grid-pwa,
     .health-stats-grid,
     .production-stats-pwa,
     .orders-overview-pwa {
         grid-template-columns: 1fr !important;
+    } */
+
+    /* Keep stats grids in 2 columns on tablets */
+    .stats-grid,
+    .stats-grid-pwa,
+    .health-stats-grid,
+    .production-stats-pwa,
+    .orders-overview-pwa {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
     }
     
     /* Adjust headers */
@@ -1756,10 +1766,18 @@ header {
     }
     
     /* Make everything single column */
-    .quick-action-grid,
+   /* .quick-action-grid,
     .quick-grid-pwa,
     .orders-actions-grid-pwa {
         grid-template-columns: 1fr !important;
+    } */
+
+    /* Keep quick action buttons in 2 columns on small phones */
+    .quick-action-grid,
+    .quick-grid-pwa,
+    .orders-actions-grid-pwa {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
     }
     
     /* Reduce button padding */
@@ -5331,4 +5349,21 @@ body.dark-mode {
     background: #4CAF50 !important;
     border: 3px solid white !important;
     border-radius: 50% !important;
+}
+
+/* Only on very small phones (below 360px) - stack both stats and quick actions */
+@media (max-width: 360px) {
+    .stats-grid,
+    .stats-grid-pwa,
+    .health-stats-grid,
+    .production-stats-pwa,
+    .orders-overview-pwa {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .quick-action-grid,
+    .quick-grid-pwa,
+    .orders-actions-grid-pwa {
+        grid-template-columns: 1fr !important;
+    }
 }
