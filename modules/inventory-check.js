@@ -1565,7 +1565,7 @@ unload() {
     this.element = null;
     
     console.log('✅ Inventory Check module unloaded');
-}
+},
 
 // ==================== UNIVERSAL REGISTRATION ====================
 
