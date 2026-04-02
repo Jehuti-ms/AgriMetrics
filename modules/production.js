@@ -518,7 +518,7 @@ const ProductionModule = {
             this.productionData.splice(index, 1);
             await this.saveData();
             this.updateStats();
-            this.renderModule();]waw
+            this.renderModule();
             this.showNotification('Production record deleted', 'success');
             
             // ✅ Broadcast production deleted
