@@ -1328,6 +1328,41 @@ button[type="submit"],
     margin: 0 !important;
 }
 
+/* ===== FIX: Keep stats and quick actions in 2 columns on mobile ===== */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+    
+    .quick-action-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+    
+    .quick-action-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+}
+
+/* Only on very small phones (below 360px) - stack */
+@media (max-width: 360px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .quick-action-grid {
+        grid-template-columns: 1fr !important;
+    }
+
 }
         `;
         document.head.appendChild(style);
