@@ -127,43 +127,25 @@ setupBroadcasterListeners() {
     return this.isFirebaseAvailable;
 },
 
-    async saveToFirebase() {
-        if (!this.isFirebaseAvailable || !window.db) {
-            console.log('Firebase not available, skipping cloud save');
-            return false;
-        }
+async saveToFirebase() {
+    if (!this.dataService) return false;
+    
+    try {
+        const profile = window.FarmModules.appData.profile;
+        const settings = window.FarmModules.appData.settings;
         
-        try {
-            const user = window.firebase.auth().currentUser;
-            if (!user) {
-                console.log('No user logged in, skipping Firebase save');
-                return false;
-            }
-            
-            const profile = window.FarmModules.appData.profile;
-            const settings = window.FarmModules.appData.settings;
-            const preferences = window.FarmModules.appData.userPreferences;
-            
-            if (!profile) return false;
-            
-            // Save to Firebase profiles collection
-            await window.db.collection('profiles').doc(user.uid).set({
-                profile: profile,
-                settings: settings || {},
-                preferences: preferences || {},
-                lastUpdated: new Date().toISOString(),
-                userId: user.uid,
-                email: user.email
-            }, { merge: true });
-            
-            console.log('✅ Profile saved to Firebase');
-            return true;
-            
-        } catch (error) {
-            console.error('❌ Error saving profile to Firebase:', error);
-            return false;
-        }
-    },
+        await this.dataService.save('profile', {
+            profile: profile,
+            settings: settings,
+            lastUpdated: new Date().toISOString()
+        });
+        console.log('✅ Profile saved to UnifiedDataService');
+        return true;
+    } catch (error) {
+        console.error('❌ Error saving profile:', error);
+        return false;
+    }
+},
 
     async loadFromFirebase() {
         if (!this.isFirebaseAvailable || !window.db) return null;
