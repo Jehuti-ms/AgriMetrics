@@ -1142,6 +1142,30 @@ updateProductionItemsDisplay: function() {
     console.log('📊 Final sales count:', window.FarmModules.appData.sales.length);
 },
 
+    updateSalesStats() {
+    const sales = window.FarmModules.appData.sales || [];
+    const today = this.getCurrentDate();
+    const todaySales = sales.filter(sale => this.areDatesEqual(sale.date, today));
+    const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    
+    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
+    const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
+    const totalAnimalsSold = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
+    
+    const todaySalesEl = document.getElementById('today-sales');
+    if (todaySalesEl) todaySalesEl.textContent = this.formatCurrency(todayRevenue);
+    
+    const totalMeatWeightEl = document.getElementById('total-meat-weight');
+    if (totalMeatWeightEl) totalMeatWeightEl.textContent = totalMeatWeight.toFixed(2);
+    
+    const totalAnimalsEl = document.getElementById('total-animals');
+    if (totalAnimalsEl) totalAnimalsEl.textContent = totalAnimalsSold;
+    
+    const totalSalesEl = document.getElementById('total-sales');
+    if (totalSalesEl) totalSalesEl.textContent = sales.length;
+},
+
     // ✅ MODIFIED: Enhanced saveData with broadcasting
     saveData() {
         localStorage.setItem('farm-sales-data', JSON.stringify(window.FarmModules.appData.sales));
