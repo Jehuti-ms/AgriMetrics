@@ -92,44 +92,41 @@ async initialize() {
         return false;
     }
 
-    // Check for UnifiedDataService FIRST
+    // Get UnifiedDataService
     this.dataService = window.UnifiedDataService;
     
-    if (this.dataService) {
-        console.log('✅ Using UnifiedDataService');
-        this.isFirebaseAvailable = !!(this.dataService.db && this.dataService.userId);
-    } else {
-        console.log('⚠️ UnifiedDataService not available, using legacy Firebase');
-        
-        // Wait for Firebase to be ready (legacy)
-        let waitCount = 0;
-        while (!window.db && waitCount < 20) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            waitCount++;
-        }
-        this.isFirebaseAvailable = !!(window.firebase && window.db);
+    if (!this.dataService) {
+        console.error('❌ UnifiedDataService not available!');
+        return false;
     }
-    
+
+    this.isFirebaseAvailable = !!(this.dataService.db && this.dataService.userId);
     console.log('Firebase available:', this.isFirebaseAvailable);
+    console.log('UnifiedDataService online:', this.dataService.isOnline);
 
     if (window.StyleManager) {
         StyleManager.registerModule(this.name, this.element, this);
     }
 
     this.setupNetworkDetection();
+    
+    // Load data from UnifiedDataService
     await this.loadData();
 
-    // Setup real-time sync
-    if (this.isFirebaseAvailable) {
-        this.setupRealtimeSync();
-    }
+    // Setup real-time sync via UnifiedDataService
+    this.setupRealtimeSync();
     
-    await this.loadReceiptsFromFirebase();
+    // Load receipts
+    await this.loadReceipts();
+    
+    // Setup receipt action listeners
     this.setupReceiptActionListeners();
     
-    if (this.isFirebaseAvailable) {
+    // Process any pending offline operations if online
+    if (this.isFirebaseAvailable && this.dataService.offlineQueue?.length > 0) {
+        console.log(`📦 Found ${this.dataService.offlineQueue.length} pending operations, syncing...`);
         setTimeout(() => {
-            this.syncLocalTransactionsToFirebase();
+            this.dataService.processOfflineQueue();
         }, 3000);
     }
 
@@ -139,7 +136,12 @@ async initialize() {
     this.initialized = true;
     this.connectToDataBroadcaster();
     
+    // Update sync status
+    this.updateSyncStatus(this.dataService.getSyncStatus());
+    
     console.log('✅ Income & Expenses initialized with', this.transactions?.length || 0, 'transactions');
+    console.log('📊 Sync status:', this.dataService.getSyncStatus());
+    
     return true;
 },
     
@@ -627,6 +629,30 @@ setupRealtimeSync() {
         console.error('❌ Error loading transactions:', error);
     }
 },
+
+    async loadReceipts() {
+    console.log('Loading receipts...');
+    
+    try {
+        // First try to load from localStorage
+        const localReceipts = JSON.parse(localStorage.getItem('local-receipts') || '[]');
+        this.receiptQueue = localReceipts.filter(r => r.status === 'pending');
+        console.log('📁 Loaded receipts from localStorage:', this.receiptQueue.length);
+        
+        // Then try to load from Firebase and merge
+        if (this.isFirebaseAvailable && window.db) {
+            await this.loadReceiptsFromFirebase();
+        }
+        
+        this.updateReceiptQueueUI();
+        
+    } catch (error) {
+        console.warn('⚠️ Error loading receipts:', error.message);
+        this.receiptQueue = [];
+    }
+},
+
+// ==================== RECEIPT MANAGEMENT ====================
 
     async loadFromFirebaseLegacy() {
     try {
