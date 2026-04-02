@@ -335,6 +335,8 @@ async loadData() {
             this.orders = this.dataService.get('orders') || [];
             this.customers = this.dataService.get('customers') || [];
             
+            console.log('📊 Raw customers from UnifiedDataService:', this.customers);
+            
             // Migrate from localStorage if empty and data exists
             if (this.orders.length === 0) {
                 const savedOrders = localStorage.getItem('farm-orders');
@@ -348,14 +350,15 @@ async loadData() {
                 const savedCustomers = localStorage.getItem('farm-customers');
                 if (savedCustomers) {
                     this.customers = JSON.parse(savedCustomers);
+                    console.log('📁 Migrated customers from localStorage:', this.customers);
                     await this.saveToDataService();
-                    console.log(`📁 Migrated ${this.customers.length} customers from localStorage`);
                 }
             }
         } else {
             // Fallback to localStorage only
             this.orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
             this.customers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
+            console.log('📁 Loaded customers from localStorage:', this.customers);
         }
         
         console.log(`📊 Loaded: ${this.orders.length} orders, ${this.customers.length} customers`);
@@ -1126,7 +1129,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         `;
     },
 
-   renderCustomersList() {
+  renderCustomersList() {
     if (this.customers.length === 0) {
         return `
             <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
@@ -1139,36 +1142,41 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
 
     return `
         <div style="display: flex; flex-direction: column; gap: 12px;">
-            ${this.customers.map(customer => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--text-primary);">${customer.name}</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">
-                            ${customer.contact ? `📞 ${this.formatPhone(customer.contact)}` : ''}
-                        </div>
-                        ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">✉️ ${customer.email}</div>` : ''}
-                        ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">📍 ${customer.address}</div>` : ''}
-                    </div>
-                    <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
-                        <div>
+            ${this.customers.map(customer => {
+                // Debug: log the customer object to see what's there
+                console.log('Customer data:', customer);
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--text-primary);">${customer.name || 'Unknown'}</div>
                             <div style="font-size: 14px; color: var(--text-secondary);">
-                                ${this.getCustomerOrderCount(customer.id)} orders
+                                ${customer.contact ? `📞 ${this.formatPhone(customer.contact)}` : ''}
                             </div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">
-                                ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
-                            </div>
+                            ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">✉️ ${customer.email}</div>` : ''}
+                            ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">📍 ${customer.address}</div>` : ''}
                         </div>
-                        <div style="display: flex; gap: 4px;">
-                            <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
-                                ✏️
-                            </button>
-                            <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
-                                🗑️
-                            </button>
+                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                            <div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">
+                                    ${this.getCustomerOrderCount(customer.id)} orders
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">
+                                    ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
+                                    ✏️
+                                </button>
+                                <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 },
