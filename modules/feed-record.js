@@ -11,7 +11,7 @@ const FeedRecordModule = {
     broadcaster: null,
     dataService: null,
 
-  async initialize() {
+ async initialize() {
     console.log('🌾 Initializing Feed Records...');
     
     this.element = document.getElementById('content-area');
@@ -20,16 +20,17 @@ const FeedRecordModule = {
     // Get UnifiedDataService
     this.dataService = window.UnifiedDataService;
     
-    if (!this.dataService) {
-        console.error('❌ UnifiedDataService not available!');
-        // Fallback to old method
-        return this.initializeLegacy();
-    }
-
     // Get broadcaster if available (for backward compatibility)
-    if (window.Broadcaster) {
+    if (window.Broadcaster && typeof window.Broadcaster.on === 'function') {
         this.broadcaster = window.Broadcaster;
         console.log('📡 Feed module connected to Broadcaster');
+    } else {
+        // Create dummy broadcaster to prevent errors
+        this.broadcaster = {
+            on: function() {},
+            broadcast: function() {},
+            emit: function() {}
+        };
     }
 
     if (window.StyleManager) {
@@ -38,10 +39,10 @@ const FeedRecordModule = {
 
     await this.loadData();
     await this.syncWithFarmData();
+    this.setupRealtimeSync();
     this.renderModule();
     this.setupEventListeners();
     this.setupBroadcasterListeners();
-    this.setupRealtimeSync();
     this.initialized = true;
     
     console.log('✅ Feed Records initialized with UnifiedDataService');
@@ -207,8 +208,9 @@ initializeLegacy() {
     },
 
    async loadData() {
-    console.log('Loading feed data from UnifiedDataService...');
+    console.log('Loading feed data...');
     
+    // Try UnifiedDataService first
     if (this.dataService) {
         this.feedRecords = this.dataService.get('feedRecords') || [];
         this.feedInventory = this.dataService.get('feedInventory') || [];
@@ -220,12 +222,88 @@ initializeLegacy() {
             item.name?.toLowerCase().includes('broiler')
         );
         this.birdsStock = birdItem?.quantity || 0;
+        
+        console.log('📊 Loaded from UnifiedDataService:', {
+            records: this.feedRecords.length,
+            inventory: this.feedInventory.length,
+            birds: this.birdsStock
+        });
     }
     
-    // Fallback to localStorage if needed
-    if (this.feedRecords.length === 0) {
+    // If no data, try localStorage
+    if (this.feedRecords.length === 0 && this.feedInventory.length === 0) {
         this.loadDataLegacy();
     }
+    
+    // If still no inventory, add default demo data
+    if (this.feedInventory.length === 0) {
+        this.addDefaultFeedInventory();
+    }
+},
+
+loadDataLegacy() {
+    const savedRecords = localStorage.getItem('farm-feed-records');
+    const savedInventory = localStorage.getItem('farm-feed-inventory');
+    const savedBirds = localStorage.getItem('farm-birds-stock');
+    
+    this.feedRecords = savedRecords ? JSON.parse(savedRecords) : [];
+    this.feedInventory = savedInventory ? JSON.parse(savedInventory) : [];
+    this.birdsStock = savedBirds ? parseInt(savedBirds) : 0;
+    
+    console.log('📊 Loaded from localStorage:', {
+        records: this.feedRecords.length,
+        inventory: this.feedInventory.length,
+        birds: this.birdsStock
+    });
+},
+
+addDefaultFeedInventory() {
+    console.log('📦 Adding default feed inventory...');
+    
+    this.feedInventory = [
+        {
+            id: Date.now(),
+            feedType: 'starter',
+            currentStock: 100,
+            unit: 'kg',
+            costPerKg: 2.50,
+            minStock: 20
+        },
+        {
+            id: Date.now() + 1,
+            feedType: 'grower',
+            currentStock: 80,
+            unit: 'kg',
+            costPerKg: 2.30,
+            minStock: 20
+        },
+        {
+            id: Date.now() + 2,
+            feedType: 'finisher',
+            currentStock: 60,
+            unit: 'kg',
+            costPerKg: 2.20,
+            minStock: 15
+        },
+        {
+            id: Date.now() + 3,
+            feedType: 'layer',
+            currentStock: 50,
+            unit: 'kg',
+            costPerKg: 2.40,
+            minStock: 15
+        }
+    ];
+    
+    // Save to UnifiedDataService if available
+    if (this.dataService) {
+        for (const item of this.feedInventory) {
+            this.dataService.save('feedInventory', item);
+        }
+    }
+    
+    this.saveData();
+    console.log('✅ Added default feed inventory:', this.feedInventory.length, 'items');
 },
 
 loadDataLegacy() {
@@ -238,21 +316,26 @@ loadDataLegacy() {
     this.birdsStock = savedBirds ? parseInt(savedBirds) : 0;
 },
 
-    setupRealtimeSync() {
+setupRealtimeSync() {
     if (!this.dataService) return;
     
+    console.log('📡 Setting up real-time sync for feed...');
+    
+    // Listen for feed record updates
     this.dataService.on('feedRecords-updated', (records) => {
         console.log('🔄 Feed records updated from unified service:', records?.length);
         this.feedRecords = records || [];
         this.renderModule();
     });
     
+    // Listen for feed inventory updates
     this.dataService.on('feedInventory-updated', (inventory) => {
         console.log('🔄 Feed inventory updated from unified service:', inventory?.length);
         this.feedInventory = inventory || [];
         this.renderModule();
     });
     
+    // Listen for inventory updates (bird count)
     this.dataService.on('inventory-updated', (inventory) => {
         const birdItem = inventory?.find(item => 
             item.name?.toLowerCase().includes('bird') || 
@@ -883,54 +966,64 @@ loadDataLegacy() {
         this.adjustBirdCount(newCount);
     },
 
-    addToInventory(feedType, quantity) {
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        if (inventoryItem) {
-            const oldStock = inventoryItem.currentStock;
-            inventoryItem.currentStock += quantity;
-            this.saveData();
-            this.updateFarmData();
-            this.renderModule();
-            
-            // Broadcast inventory addition
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('inventory-updated', {
-                    feedType: feedType,
-                    quantity: quantity,
-                    oldStock: oldStock,
-                    newStock: inventoryItem.currentStock,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            this.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
-        } else {
-            // Create new inventory item
-            const newItem = {
-                id: Date.now(),
-                feedType: feedType,
-                currentStock: quantity,
-                unit: 'kg',
-                costPerKg: 2.5, // Default cost
-                minStock: 20
-            };
-            this.feedInventory.push(newItem);
-            this.saveData();
-            this.updateFarmData();
-            this.renderModule();
-            
-            // Broadcast new inventory creation
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('inventory-created', {
-                    feedType: feedType,
-                    quantity: quantity,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            this.showNotification(`Created new ${feedType} inventory with ${quantity}kg!`, 'success');
+   addToInventory(feedType, quantity) {
+    const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+    if (inventoryItem) {
+        const oldStock = inventoryItem.currentStock;
+        inventoryItem.currentStock += quantity;
+        this.saveData();
+        this.updateFarmData();
+        this.renderModule();
+        
+        // Save to UnifiedDataService
+        if (this.dataService) {
+            this.dataService.save('feedInventory', inventoryItem);
         }
-    },
+        
+        // Broadcast inventory addition
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-updated', {
+                feedType: feedType,
+                quantity: quantity,
+                oldStock: oldStock,
+                newStock: inventoryItem.currentStock,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        this.showNotification(`Added ${quantity}kg to ${feedType} inventory!`, 'success');
+    } else {
+        // Create new inventory item
+        const newItem = {
+            id: Date.now(),
+            feedType: feedType,
+            currentStock: quantity,
+            unit: 'kg',
+            costPerKg: 2.5,
+            minStock: 20
+        };
+        this.feedInventory.push(newItem);
+        this.saveData();
+        this.updateFarmData();
+        this.renderModule();
+        
+        // Save to UnifiedDataService
+        if (this.dataService) {
+            this.dataService.save('feedInventory', newItem);
+        }
+        
+        // Broadcast new inventory creation
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-created', {
+                feedType: feedType,
+                quantity: quantity,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        this.showNotification(`Created new ${feedType} inventory with ${quantity}kg!`, 'success');
+    }
+},
 
     adjustBirdCount(newCount) {
         const oldCount = this.birdsStock;
@@ -1066,6 +1159,15 @@ loadDataLegacy() {
         // Save feed inventory
         for (const item of this.feedInventory) {
             this.dataService.save('feedInventory', item);
+        }
+        // Update bird stock in inventory
+        const inventory = this.dataService.get('inventory') || [];
+        const birdItem = inventory.find(item => 
+            item.name?.toLowerCase().includes('bird') || 
+            item.name?.toLowerCase().includes('broiler')
+        );
+        if (birdItem) {
+            this.dataService.update('inventory', birdItem.id, { quantity: this.birdsStock });
         }
     }
 },
