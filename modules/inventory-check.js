@@ -25,13 +25,14 @@ const InventoryCheckModule = {
         console.log('⚠️ Broadcaster not available, using local methods');
     }
 
-    // ✅ Get UnifiedDataService
-    this.dataService = window.unifiedDataService || null;
-    if (this.dataService) {
-        console.log('📦 Inventory connected to UnifiedDataService');
-    } else {
-        console.log('⚠️ UnifiedDataService not available, using localStorage');
-    }
+   // ✅ Get UnifiedDataService
+        this.dataService = window.UnifiedDataService || null;
+        if (!this.dataService) {
+            console.error('❌ UnifiedDataService not available for inventory!');
+            // Continue anyway, will use localStorage only
+        } else {
+            console.log('📦 Inventory connected to UnifiedDataService');
+        }
 
     // ✅ Register with StyleManager
     if (window.StyleManager) {
@@ -406,34 +407,89 @@ getUnitForCategory(category) {
 },
     
     // ✅ MODIFIED: Enhanced loadData with broadcasting
-    loadData() {
-        const saved = localStorage.getItem('farm-inventory');
-        this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
-        
-        // Broadcast data loaded
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('inventory-data-loaded', {
-                module: 'inventory-check',
-                timestamp: new Date().toISOString(),
-                itemCount: this.inventory.length
-            });
+    async loadData() {
+    console.log('Loading inventory from UnifiedDataService...');
+    
+    try {
+        // Try UnifiedDataService first
+        if (this.dataService) {
+            const data = this.dataService.get('inventory');
+            if (data && data.items && data.items.length > 0) {
+                this.inventory = data.items;
+                console.log('📁 Loaded from UnifiedDataService:', this.inventory.length);
+            } else {
+                // Try to migrate from old localStorage
+                const saved = localStorage.getItem('farm-inventory');
+                if (saved) {
+                    this.inventory = JSON.parse(saved);
+                    console.log(`📁 Migrated ${this.inventory.length} items from localStorage`);
+                    // Save to UnifiedDataService
+                    await this.saveToDataService();
+                } else {
+                    this.inventory = this.getDemoData();
+                    await this.saveToDataService();
+                }
+            }
+        } else {
+            // Fallback to localStorage only
+            const saved = localStorage.getItem('farm-inventory');
+            this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
         }
-    },
+        
+        // Sort by name or last updated
+        this.inventory.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        
+    } catch (error) {
+        console.error('❌ Error loading inventory:', error);
+        this.inventory = this.getDemoData();
+    }
+    
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('inventory-data-loaded', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            itemCount: this.inventory.length,
+            source: this.dataService ? 'UnifiedDataService' : 'localStorage'
+        });
+    }
+},
+
+    async saveToDataService() {
+    if (!this.dataService) return;
+    
+    try {
+        await this.dataService.save('inventory', {
+            items: this.inventory,
+            lastUpdated: new Date().toISOString(),
+            totalItems: this.inventory.length,
+            totalValue: this.calculateStats().totalValue
+        });
+        console.log('✅ Saved inventory to UnifiedDataService');
+    } catch (error) {
+        console.error('❌ Error saving to UnifiedDataService:', error);
+    }
+},
 
     // ✅ MODIFIED: Enhanced saveData with broadcasting
     saveData() {
-        localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
-        
-        // Broadcast data saved
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('inventory-data-saved', {
-                module: 'inventory-check',
-                timestamp: new Date().toISOString(),
-                itemCount: this.inventory.length
-            });
-        }
-    },
-
+    // Always save to localStorage
+    localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
+    
+    // Save to UnifiedDataService if available
+    if (this.dataService) {
+        this.saveToDataService();
+    }
+    
+    // Broadcast update
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('inventory-data-saved', {
+            module: 'inventory-check',
+            timestamp: new Date().toISOString(),
+            itemCount: this.inventory.length
+        });
+    }
+},
+    
     // ✅ ADDED: Theme change handler (optional)
     onThemeChange(theme) {
         console.log(`Inventory Check updating for theme: ${theme}`);
@@ -1067,121 +1123,105 @@ getUnitForCategory(category) {
         document.getElementById('stock-update-container').classList.add('hidden');
     },
 
-    handleInventorySubmit(e) {
-        e.preventDefault();
-        
-        const formData = {
-            id: Date.now(),
-            name: document.getElementById('item-name').value,
-            category: document.getElementById('item-category').value,
-            currentStock: parseInt(document.getElementById('current-stock').value),
-            unit: document.getElementById('item-unit').value,
-            minStock: parseInt(document.getElementById('min-stock').value),
-            cost: parseFloat(document.getElementById('item-cost').value),
-            supplier: document.getElementById('item-supplier').value || '',
-            lastRestocked: new Date().toISOString().split('T')[0],
-            notes: document.getElementById('item-notes').value || ''
-        };
+   async handleInventorySubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        id: Date.now(),
+        name: document.getElementById('item-name').value,
+        category: document.getElementById('item-category').value,
+        currentStock: parseInt(document.getElementById('current-stock').value),
+        unit: document.getElementById('item-unit').value,
+        minStock: parseInt(document.getElementById('min-stock').value),
+        cost: parseFloat(document.getElementById('item-cost').value),
+        supplier: document.getElementById('item-supplier').value || '',
+        lastRestocked: new Date().toISOString().split('T')[0],
+        notes: document.getElementById('item-notes').value || ''
+    };
 
-        this.inventory.unshift(formData);
-        this.saveData();
+    this.inventory.unshift(formData);
+    await this.saveData();  // ← ADDED 'await'
+    
+    this.broadcastItemAdded(formData);
+    this.renderModule();
+    this.syncStatsWithProfile();
+    
+    if (window.coreModule) {
+        window.coreModule.showNotification('Inventory item added successfully!', 'success');
+    }
+},
+
+   async handleStockUpdate(e) {
+    e.preventDefault();
+    
+    const id = parseInt(document.getElementById('update-item-id').value);
+    const newStock = parseInt(document.getElementById('new-stock-level').value);
+    const reason = document.getElementById('stock-update-reason').value;
+
+    const item = this.inventory.find(item => item.id === id);
+    if (!item) return;
+
+    const oldStock = item.currentStock;
+    item.currentStock = newStock;
+    
+    if (reason === 'restock') {
+        item.lastRestocked = new Date().toISOString().split('T')[0];
+    }
+
+    await this.saveData();  // ← ADDED 'await'
+    
+    this.broadcastItemUpdated(item);
+    this.renderModule();
+    this.syncStatsWithProfile();
+    
+    if (window.coreModule) {
+        const change = newStock - oldStock;
+        const changeText = change > 0 ? `+${change}` : change;
+        window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
+    }
+},
+
+    async deleteItem(id) {
+    const item = this.inventory.find(item => item.id === id);
+    if (!item) return;
+
+    if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
+        this.broadcastItemDeleted(id, item.name);
         
-        // ✅ BROADCAST: Item added
-        this.broadcastItemAdded(formData);
-        
+        this.inventory = this.inventory.filter(item => item.id !== id);
+        await this.saveData();  // ← ADDED 'await'
         this.renderModule();
-        
-        // SYNC WITH PROFILE - Update inventory stats
         this.syncStatsWithProfile();
         
         if (window.coreModule) {
-            window.coreModule.showNotification('Inventory item added successfully!', 'success');
+            window.coreModule.showNotification('Item deleted successfully!', 'success');
         }
-    },
+    }
+},
 
-    handleStockUpdate(e) {
-        e.preventDefault();
+    async quickRestock(id) {
+    const item = this.inventory.find(item => item.id === id);
+    if (!item) return;
+
+    const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
+    const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
+    
+    if (restockAmount !== null && !isNaN(restockAmount)) {
+        const amount = parseInt(restockAmount);
+        item.currentStock += amount;
+        item.lastRestocked = new Date().toISOString().split('T')[0];
         
-        const id = parseInt(document.getElementById('update-item-id').value);
-        const newStock = parseInt(document.getElementById('new-stock-level').value);
-        const reason = document.getElementById('stock-update-reason').value;
-
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const oldStock = item.currentStock;
-        item.currentStock = newStock;
+        await this.saveData();  // ← ADDED 'await'
         
-        if (reason === 'restock') {
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-        }
-
-        this.saveData();
-        
-        // ✅ BROADCAST: Item updated
         this.broadcastItemUpdated(item);
-        
         this.renderModule();
-        
-        // SYNC WITH PROFILE - Update stats after stock change
         this.syncStatsWithProfile();
         
         if (window.coreModule) {
-            const change = newStock - oldStock;
-            const changeText = change > 0 ? `+${change}` : change;
-            window.coreModule.showNotification(`Stock updated: ${changeText} ${item.unit} (${reason})`, 'success');
+            window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
         }
-    },
-
-    deleteItem(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
-            // ✅ BROADCAST: Item deleted
-            this.broadcastItemDeleted(id, item.name);
-            
-            this.inventory = this.inventory.filter(item => item.id !== id);
-            this.saveData();
-            this.renderModule();
-            
-            // SYNC WITH PROFILE - Update stats after deletion
-            this.syncStatsWithProfile();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('Item deleted successfully!', 'success');
-            }
-        }
-    },
-
-    quickRestock(id) {
-        const item = this.inventory.find(item => item.id === id);
-        if (!item) return;
-
-        const suggestedRestock = Math.max(item.minStock * 2, item.currentStock + 10);
-        const restockAmount = prompt(`Restock "${item.name}"\nCurrent: ${item.currentStock} ${item.unit}\nMin: ${item.minStock} ${item.unit}\nEnter amount to add:`, suggestedRestock.toString());
-        
-        if (restockAmount !== null && !isNaN(restockAmount)) {
-            const amount = parseInt(restockAmount);
-            const oldStock = item.currentStock;
-            item.currentStock += amount;
-            item.lastRestocked = new Date().toISOString().split('T')[0];
-            
-            this.saveData();
-            
-            // ✅ BROADCAST: Item updated
-            this.broadcastItemUpdated(item);
-            
-            this.renderModule();
-            
-            // SYNC WITH PROFILE - Update stats after restock
-            this.syncStatsWithProfile();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification(`Restocked ${amount} ${item.unit} of ${item.name}`, 'success');
-            }
-        }
-    },
+    }
+},
 
     // REPORT METHODS
     showStockCheck() {
