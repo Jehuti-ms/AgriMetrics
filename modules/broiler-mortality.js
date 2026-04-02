@@ -9,30 +9,47 @@ const BroilerMortalityModule = {
     records: [],        // ← Keep for backward compatibility
     currentRecordId: null,
     broadcaster: null,
+    dataService: null,
 
-    initialize() {
-        console.log('😔 Initializing Broiler Health & Mortality...');
-        
-        // ✅ ADDED: Get the content area element
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+   async initialize() {
+    console.log('😔 Initializing Broiler Health & Mortality...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
 
-        // ✅ ADDED: Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
+    // ✅ Get Broadcaster
+    this.broadcaster = window.Broadcaster || null;
+    if (this.broadcaster) {
+        console.log('📡 Mortality module connected to Data Broadcaster');
+    }
 
-        this.loadData();
-        this.renderModule();
-        this.setupEventListeners();
-        this.initialized = true;
-        
-        console.log('✅ Broiler Health & Mortality initialized with StyleManager');
-        return true;
-    },
+    // ✅ Get UnifiedDataService
+    this.dataService = window.UnifiedDataService || null;
+    if (!this.dataService) {
+        console.error('❌ UnifiedDataService not available for mortality!');
+    } else {
+        console.log('📦 Mortality connected to UnifiedDataService');
+    }
+
+    // ✅ Register with StyleManager
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    await this.loadData();  // ← ADD 'await'
+    this.renderModule();
+    this.setupEventListeners();
+    
+    if (this.broadcaster) {
+        this.setupBroadcasterListeners();
+        this.broadcastMortalityLoaded();
+    }
+    
+    this.initialized = true;
+    
+    console.log('✅ Broiler Health & Mortality initialized with UnifiedDataService');
+    return true;
+},
 
     // ✅ ADDED: Theme change handler
     onThemeChange(theme) {
@@ -40,47 +57,82 @@ const BroilerMortalityModule = {
         // You can add theme-specific logic here if needed
     },
 
-loadData() {
-    // Initialize if undefined
-    if (!this.mortalityData) {
-        this.mortalityData = [];
-    }
+async loadData() {
+    console.log('Loading mortality records from UnifiedDataService...');
     
-    // Try FarmData first
-    if (window.FarmData && window.FarmData.mortality && window.FarmData.mortality.length > 0) {
-        console.log(`📊 Using ${window.FarmData.mortality.length} mortality records from FarmData`);
-        this.mortalityData = window.FarmData.mortality;
-    } else {
-        // Try localStorage
-        const savedData = localStorage.getItem('farm-mortality-records');
-        if (savedData) {
-            try {
-                this.mortalityData = JSON.parse(savedData);
-                console.log(`📊 Loaded ${this.mortalityData.length} records from localStorage`);
-            } catch (e) {
-                console.error('Error parsing mortality records:', e);
-                this.mortalityData = [];
+    try {
+        if (this.dataService) {
+            const data = this.dataService.get('mortality');
+            if (data && data.records && data.records.length > 0) {
+                this.mortalityRecords = data.records;
+                console.log('📁 Loaded from UnifiedDataService:', this.mortalityRecords.length);
+            } else {
+                // Try to migrate from old localStorage
+                const saved = localStorage.getItem('farm-mortality');
+                if (saved) {
+                    this.mortalityRecords = JSON.parse(saved);
+                    console.log(`📁 Migrated ${this.mortalityRecords.length} records from localStorage`);
+                    await this.saveToDataService();
+                } else {
+                    this.mortalityRecords = this.getDemoData();
+                    await this.saveToDataService();
+                }
             }
         } else {
-            // Use demo data
-            this.mortalityData = this.getDemoData();
-            console.log('📊 Using demo mortality data');
+            // Fallback to localStorage only
+            const saved = localStorage.getItem('farm-mortality');
+            this.mortalityRecords = saved ? JSON.parse(saved) : this.getDemoData();
         }
+        
+        // Sort by date (newest first)
+        this.mortalityRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+    } catch (error) {
+        console.error('❌ Error loading mortality records:', error);
+        this.mortalityRecords = this.getDemoData();
     }
     
-    console.log('✅ Final mortality data count:', this.mortalityData.length);
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('mortality-data-loaded', {
+            module: 'broiler-mortality',
+            timestamp: new Date().toISOString(),
+            recordCount: this.mortalityRecords.length
+        });
+    }
+},
+
+    async saveToDataService() {
+    if (!this.dataService) return;
+    
+    try {
+        await this.dataService.save('mortality', {
+            records: this.mortalityRecords,
+            lastUpdated: new Date().toISOString(),
+            totalRecords: this.mortalityRecords.length
+        });
+        console.log('✅ Saved mortality records to UnifiedDataService');
+    } catch (error) {
+        console.error('❌ Error saving to UnifiedDataService:', error);
+    }
 },
     
-    saveData() {
-    // Save to localStorage
-    localStorage.setItem('farm-mortality-records', JSON.stringify(this.mortalityData));
+    async saveData() {
+    // Always save to localStorage
+    localStorage.setItem('farm-mortality', JSON.stringify(this.mortalityRecords));
     
-    // Also update FarmData if available
-    if (window.FarmData) {
-        window.FarmData.mortality = this.mortalityData;
+    // Save to UnifiedDataService if available
+    if (this.dataService) {
+        await this.saveToDataService();
     }
     
-    console.log('💾 Saved mortality data:', this.mortalityData.length, 'records');
+    // Broadcast update
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('mortality-data-saved', {
+            module: 'broiler-mortality',
+            timestamp: new Date().toISOString(),
+            recordCount: this.mortalityRecords.length
+        });
+    }
 },
 
     getDemoData() {
@@ -1156,7 +1208,7 @@ handleTableClick(e) {
 },
 
     // NEW METHOD: Delete all records for a specific cause
-deleteAllCauseRecords(cause) {
+async deleteAllCauseRecords(cause) {
     const causeName = this.formatCause(cause);
     const causeRecords = this.mortalityData.filter(record => record.cause === cause);
     
@@ -1171,7 +1223,7 @@ deleteAllCauseRecords(cause) {
         // Keep records that are NOT from this cause
         this.mortalityData = this.mortalityData.filter(record => record.cause !== cause);
         
-        this.saveData();
+        await this.saveData();;
         this.updateStats();
         this.updateMortalityTable();
         this.updateCauseSummary();
@@ -1773,7 +1825,7 @@ viewCauseDetails(cause) {
 
     addMortality(mortalityData) {
         this.mortalityData.unshift(mortalityData);
-        this.saveData();
+        await this.saveData();;
         this.updateStats();
         this.updateMortalityTable();
         this.updateCauseSummary();
@@ -1801,7 +1853,7 @@ viewCauseDetails(cause) {
         this.showMortalityModal();
     },
 
-    updateMortality(mortalityId, mortalityData) {
+    async updateMortality(mortalityId, mortalityData) {
         const mortalityIndex = this.mortalityData.findIndex(m => m.id == mortalityId);
         
         if (mortalityIndex !== -1) {
@@ -1810,7 +1862,7 @@ viewCauseDetails(cause) {
                 ...mortalityData
             };
             
-            this.saveData();
+            await this.saveData();;
             this.updateStats();
             this.updateMortalityTable();
             this.updateCauseSummary();
@@ -1827,11 +1879,11 @@ viewCauseDetails(cause) {
         }
     },
 
-    deleteMortalityRecord(mortalityId) {
+    async deleteMortalityRecord(mortalityId) {
         if (confirm('Are you sure you want to delete this mortality record?')) {
             this.mortalityData = this.mortalityData.filter(m => m.id != mortalityId);
             
-            this.saveData();
+            await this.saveData();;
             this.updateStats();
             this.updateMortalityTable();
             this.updateCauseSummary();
