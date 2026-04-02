@@ -647,9 +647,24 @@ setupRealtimeSync() {
     }
 },
 
+    updateSyncStatus(status) {
+    const syncElement = document.getElementById('income-sync-status');
+    if (!syncElement) return;
+    
+    if (this.dataService && !this.dataService.isOnline) {
+        syncElement.textContent = '📴 Offline';
+        syncElement.style.color = '#f44336';
+    } else if (status.pendingRemaining > 0) {
+        syncElement.textContent = `⏳ Syncing (${status.pendingRemaining} pending)`;
+        syncElement.style.color = '#FF9800';
+    } else {
+        syncElement.textContent = '✅ Synced';
+        syncElement.style.color = '#4CAF50';
+    }
+},
+    
 // ==================== RECEIPT MANAGEMENT ====================
-
-    async loadFromFirebaseLegacy() {
+  async loadFromFirebaseLegacy() {
     try {
         const user = window.firebase.auth().currentUser;
         if (!user) {
