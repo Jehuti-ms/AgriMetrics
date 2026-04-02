@@ -1960,6 +1960,7 @@ showCustomerForm() {
     }
     
     const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  },
           
    async deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
