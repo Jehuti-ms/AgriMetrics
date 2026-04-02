@@ -22,8 +22,8 @@ const ProfileModule = {
         LAST_SYNC: 'farm-last-sync'
     },
 
-    // ==================== INITIALIZATION ====================
-   initialize() {
+   // ==================== INITIALIZATION ====================
+initialize() {
     console.log('👤 Initializing profile with enhanced persistence...');
     
     this.element = document.getElementById('content-area');
@@ -47,7 +47,7 @@ const ProfileModule = {
     
     // Load ALL saved data (async)
     setTimeout(async () => {
-        await this.loadAllPersistedData(); // This loads from Firebase/localStorage
+        await this.loadAllPersistedData();
         this.renderModule();
         this.initialized = true;
     }, 100);
@@ -66,10 +66,45 @@ const ProfileModule = {
         }
     });
 
+    // Setup broadcaster listeners
+    if (this.broadcaster) {
+        this.setupBroadcasterListeners();
+    }
+
     console.log('✅ Profile module initialized with Firebase support');
     return true;
 },
 
+// ==================== BROADCASTER LISTENERS ====================
+setupBroadcasterListeners() {
+    if (!this.broadcaster) return;
+    
+    console.log('📡 Setting up profile broadcaster listeners...');
+    
+    this.broadcaster.on('farm-data-updated', (data) => {
+        console.log('📡 Profile received data update');
+        this.updateStatsFromModules();
+    });
+    
+    this.broadcaster.on('profile-updated', (data) => {
+        console.log('📡 Profile received profile update');
+        this.loadUserData();
+        this.updateProfileDisplay();
+    });
+    
+    this.broadcaster.on('inventory-updated', () => {
+        console.log('📡 Inventory updated, refreshing stats');
+        this.updateStatsFromModules();
+    });
+    
+    this.broadcaster.on('orders-updated', () => {
+        console.log('📡 Orders updated, refreshing stats');
+        this.updateStatsFromModules();
+    });
+    
+    console.log('✅ Profile broadcaster listeners set up');
+},
+    
     // ==================== FIREBASE METHODS ====================
     
     checkFirebaseAvailability() {
@@ -1582,7 +1617,52 @@ async performLogout() {
         }, 50);
     },
 
-  
+  // ==================== PERFORM LOGOUT ====================
+async performLogout() {
+    console.log('🚪 Starting logout process...');
+    
+    try {
+        // Save current profile before logout
+        const profile = window.FarmModules.appData.profile;
+        if (profile) {
+            localStorage.setItem('farm-profile', JSON.stringify(profile));
+            if (profile.email) {
+                localStorage.setItem(`farm-profile-${profile.email}`, JSON.stringify(profile));
+            }
+            console.log('💾 Profile saved before logout');
+        }
+        
+        // Firebase logout if available
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().signOut) {
+            await firebase.auth().signOut();
+            console.log('✅ Firebase logout successful');
+        }
+        
+        // Clear only auth tokens
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.includes('firebase:auth') || 
+                key?.includes('firebaseuser') || 
+                key === 'farm-current-user' ||
+                key?.includes('session')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        this.showNotification('Logged out successfully!', 'success');
+        
+        // Redirect to login
+        setTimeout(() => {
+            window.location.href = window.location.origin + window.location.pathname;
+        }, 1500);
+        
+    } catch (error) {
+        console.error('❌ Logout error:', error);
+        this.showNotification('Logout failed: ' + error.message, 'error');
+    }
+},
 
 // 🔥 NEW: Get current profile for persistence
 getCurrentProfileForPersistence() {
@@ -2049,38 +2129,68 @@ findOldestUserData() {
     },
 
     // ==================== LOCAL STORAGE ====================
-    saveToLocalStorage() {
-        try {
-            const profile = window.FarmModules.appData.profile;
-            if (!profile) return;
-            
-            // Save to general storage
-            localStorage.setItem('farm-profile', JSON.stringify(profile));
-            console.log('💾 Profile saved to farm-profile');
-            
-            // Also save with user email as key
-            if (profile.email) {
-                const userKey = `farm-profile-${profile.email}`;
-                localStorage.setItem(userKey, JSON.stringify(profile));
-                console.log('💾 Profile saved to user key:', userKey);
-            }
-            
-        } catch (error) {
-            console.error('Error saving to local storage:', error);
+   saveToLocalStorage() {
+    try {
+        const profile = window.FarmModules.appData.profile;
+        const settings = window.FarmModules.appData.settings;
+        const preferences = window.FarmModules.appData.userPreferences;
+        
+        if (!profile) return;
+        
+        // Save profile
+        localStorage.setItem('farm-profile', JSON.stringify(profile));
+        
+        // Save settings
+        if (settings) {
+            localStorage.setItem('farm-settings', JSON.stringify(settings));
         }
-    },
-
+        
+        // Save preferences
+        if (preferences) {
+            localStorage.setItem('farm-user-preferences', JSON.stringify(preferences));
+        }
+        
+        // Save with user email
+        if (profile.email) {
+            const userKey = `farm-profile-${profile.email}`;
+            localStorage.setItem(userKey, JSON.stringify(profile));
+        }
+        
+        console.log('✅ All data saved to localStorage');
+        
+    } catch (error) {
+        console.error('Error saving to local storage:', error);
+    }
+},
+    
     // ==================== SETTINGS ====================
-    async saveSetting(setting, value) {
-        try {
+   async saveSetting(setting, value) {
+    try {
+        // Determine which object the setting belongs to
+        const settingsKeys = ['currency', 'lowStockThreshold', 'autoSync', 'localStorageEnabled', 'theme', 'notificationsEnabled', 'emailReports', 'dateFormat', 'timeFormat'];
+        const profileKeys = ['farmName', 'farmerName', 'email', 'farmType', 'farmLocation'];
+        
+        if (settingsKeys.includes(setting)) {
+            if (!window.FarmModules.appData.settings) {
+                window.FarmModules.appData.settings = {};
+            }
+            window.FarmModules.appData.settings[setting] = value;
+        } else if (profileKeys.includes(setting)) {
             window.FarmModules.appData.profile[setting] = value;
-            this.saveToLocalStorage();
-            this.showNotification('Setting updated', 'info');
-        } catch (error) {
-            console.error('Error saving setting:', error);
-            this.showNotification('Error saving setting', 'error');
+        } else {
+            if (!window.FarmModules.appData.userPreferences) {
+                window.FarmModules.appData.userPreferences = {};
+            }
+            window.FarmModules.appData.userPreferences[setting] = value;
         }
-    },
+        
+        this.saveToLocalStorage();
+        this.showNotification(`${setting} updated`, 'success');
+    } catch (error) {
+        console.error('Error saving setting:', error);
+        this.showNotification('Error saving setting', 'error');
+    }
+},
 
     changeTheme(theme) {
         // 🔥 FIX: Only allow light theme
