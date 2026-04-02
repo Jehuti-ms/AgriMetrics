@@ -64,51 +64,51 @@ async loadData() {
         if (this.dataService) {
             const data = this.dataService.get('mortality');
             if (data && data.records && data.records.length > 0) {
-                this.mortalityRecords = data.records;
-                console.log('📁 Loaded from UnifiedDataService:', this.mortalityRecords.length);
+                this.mortalityData = data.records;
+                console.log('📁 Loaded from UnifiedDataService:', this.mortalityData.length);
             } else {
                 // Try to migrate from old localStorage
                 const saved = localStorage.getItem('farm-mortality');
                 if (saved) {
-                    this.mortalityRecords = JSON.parse(saved);
-                    console.log(`📁 Migrated ${this.mortalityRecords.length} records from localStorage`);
+                    this.mortalityData = JSON.parse(saved);
+                    console.log(`📁 Migrated ${this.mortalityData.length} records from localStorage`);
                     await this.saveToDataService();
                 } else {
-                    this.mortalityRecords = this.getDemoData();
+                    this.mortalityData = this.getDemoData();
                     await this.saveToDataService();
                 }
             }
         } else {
             // Fallback to localStorage only
             const saved = localStorage.getItem('farm-mortality');
-            this.mortalityRecords = saved ? JSON.parse(saved) : this.getDemoData();
+            this.mortalityData = saved ? JSON.parse(saved) : this.getDemoData();
         }
         
         // Sort by date (newest first)
-        this.mortalityRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+        this.mortalityData.sort((a, b) => new Date(b.date) - new Date(a.date));
         
     } catch (error) {
         console.error('❌ Error loading mortality records:', error);
-        this.mortalityRecords = this.getDemoData();
+        this.mortalityData = this.getDemoData();
     }
     
     if (this.broadcaster) {
         this.broadcaster.broadcast('mortality-data-loaded', {
             module: 'broiler-mortality',
             timestamp: new Date().toISOString(),
-            recordCount: this.mortalityRecords.length
+            recordCount: this.mortalityData.length
         });
     }
 },
 
-    async saveToDataService() {
+   async saveToDataService() {
     if (!this.dataService) return;
     
     try {
         await this.dataService.save('mortality', {
-            records: this.mortalityRecords,
+            records: this.mortalityData,  // ← FIXED
             lastUpdated: new Date().toISOString(),
-            totalRecords: this.mortalityRecords.length
+            totalRecords: this.mortalityData.length  // ← FIXED
         });
         console.log('✅ Saved mortality records to UnifiedDataService');
     } catch (error) {
@@ -116,9 +116,9 @@ async loadData() {
     }
 },
     
-    async saveData() {
+   async saveData() {
     // Always save to localStorage
-    localStorage.setItem('farm-mortality', JSON.stringify(this.mortalityRecords));
+    localStorage.setItem('farm-mortality', JSON.stringify(this.mortalityData));  // ← FIXED
     
     // Save to UnifiedDataService if available
     if (this.dataService) {
@@ -130,11 +130,10 @@ async loadData() {
         this.broadcaster.broadcast('mortality-data-saved', {
             module: 'broiler-mortality',
             timestamp: new Date().toISOString(),
-            recordCount: this.mortalityRecords.length
+            recordCount: this.mortalityData.length  // ← FIXED
         });
     }
 },
-
     getDemoData() {
         return [
             { 
@@ -1823,7 +1822,7 @@ viewCauseDetails(cause) {
         this.hideMortalityModal();
     },
 
-    addMortality(mortalityData) {
+    async addMortality(mortalityData) {
         this.mortalityData.unshift(mortalityData);
         await this.saveData();;
         this.updateStats();
