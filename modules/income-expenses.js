@@ -562,74 +562,69 @@ setupRealtimeSync() {
 
     // ==================== DATA MANAGEMENT ====================
    async loadData() {
-    console.log('Loading transactions...');
+    console.log('Loading transactions from UnifiedDataService...');
     
     try {
-        // ===== ADD THIS SECTION FIRST =====
-        // 1. Try DataService first (this has your 12 transactions)
-        if (window.DataService?.data?.transactions?.length > 0) {
-            this.transactions = window.DataService.data.transactions;
-            console.log('📁 Loaded from DataService:', this.transactions.length);
-            // Save to localStorage for persistence
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-            // Sort and return
-            this.transactions.sort((a, b) => {
-                const dateA = new Date(a.date || a.createdAt);
-                const dateB = new Date(b.date || b.createdAt);
-                return dateB - dateA;
-            });
-            return;
-        }
+        // Get transactions from unified service
+        this.transactions = this.dataService.get('transactions') || [];
+        console.log('📁 Loaded from UnifiedDataService:', this.transactions.length);
         
-        // 2. Try FarmData second
-        if (window.FarmData?.transactions?.length > 0) {
-            this.transactions = window.FarmData.transactions;
-            console.log('📁 Loaded from FarmData:', this.transactions.length);
-            localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
-            this.transactions.sort((a, b) => {
-                const dateA = new Date(a.date || a.createdAt);
-                const dateB = new Date(b.date || b.createdAt);
-                return dateB - dateA;
-            });
-            return;
-        }
-        
-        // ===== END ADDED SECTION =====
-        
-        // If using UnifiedDataService, get from there
-        if (this.dataService) {
-            this.transactions = this.dataService.get('transactions') || [];
-            console.log('📁 Loaded from UnifiedDataService:', this.transactions.length);
-        } else {
-            // Legacy localStorage load
-            const saved = localStorage.getItem('farm-transactions');
-            if (saved) {
-                this.transactions = JSON.parse(saved);
-                console.log('📁 Loaded from localStorage:', this.transactions.length);
-            } else {
-                this.transactions = [];
+        // If no transactions, try to import from old sources
+        if (this.transactions.length === 0) {
+            console.log('No transactions in UnifiedDataService, checking old sources...');
+            
+            // Check DataService
+            if (window.DataService?.data?.transactions?.length > 0) {
+                console.log(`Found ${window.DataService.data.transactions.length} transactions in DataService, importing...`);
+                for (const transaction of window.DataService.data.transactions) {
+                    await this.dataService.save('transactions', transaction);
+                }
+                this.transactions = this.dataService.get('transactions') || [];
+            }
+            // Check FarmData
+            else if (window.FarmData?.transactions?.length > 0) {
+                console.log(`Found ${window.FarmData.transactions.length} transactions in FarmData, importing...`);
+                for (const transaction of window.FarmData.transactions) {
+                    await this.dataService.save('transactions', transaction);
+                }
+                this.transactions = this.dataService.get('transactions') || [];
+            }
+            // Check localStorage
+            else {
+                const saved = localStorage.getItem('farm-transactions');
+                if (saved) {
+                    const localTransactions = JSON.parse(saved);
+                    if (localTransactions.length > 0) {
+                        console.log(`Found ${localTransactions.length} transactions in localStorage, importing...`);
+                        for (const transaction of localTransactions) {
+                            await this.dataService.save('transactions', transaction);
+                        }
+                        this.transactions = this.dataService.get('transactions') || [];
+                    }
+                }
             }
         }
         
-        // Load from Firebase and merge (legacy only)
-        if (!this.dataService && this.isFirebaseAvailable && window.db && this.transactions.length === 0) {
-            await this.loadFromFirebaseLegacy();
-        }
-        
-        // Sort and save
+        // Sort by date (newest first)
         this.transactions.sort((a, b) => {
             const dateA = new Date(a.date || a.createdAt);
             const dateB = new Date(b.date || b.createdAt);
             return dateB - dateA;
         });
         
-        localStorage.setItem('farm-transactions', JSON.stringify(this.transactions));
+        console.log(`✅ Final transactions count: ${this.transactions.length}`);
+        
+        // Update sync status
+        if (this.dataService.getSyncStatus) {
+            this.updateSyncStatus(this.dataService.getSyncStatus());
+        }
         
     } catch (error) {
         console.error('❌ Error loading transactions:', error);
+        this.transactions = [];
     }
 },
-
+    
     async loadReceipts() {
     console.log('Loading receipts...');
     
