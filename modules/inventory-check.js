@@ -8,45 +8,54 @@ const InventoryCheckModule = {
     categories: ['feed', 'medical', 'packaging', 'equipment', 'cleaning', 'other'],
     element: null,
     broadcaster: null,
+    dataService: null,   
 
-    initialize() {
-        console.log('📦 Initializing Inventory Check...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+   initialize() {
+    console.log('📦 Initializing Inventory Check...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
 
-        // ✅ Get Broadcaster from global scope
-        this.broadcaster = window.Broadcaster || null;
-        
-        if (this.broadcaster) {
-            console.log('📡 Inventory module connected to Data Broadcaster');
-        } else {
-            console.log('⚠️ Broadcaster not available, using local methods');
-        }
+    // ✅ Get Broadcaster from global scope
+    this.broadcaster = window.Broadcaster || null;
+    
+    if (this.broadcaster) {
+        console.log('📡 Inventory module connected to Data Broadcaster');
+    } else {
+        console.log('⚠️ Broadcaster not available, using local methods');
+    }
 
-        // ✅ Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
+    // ✅ Get UnifiedDataService
+    this.dataService = window.unifiedDataService || null;
+    if (this.dataService) {
+        console.log('📦 Inventory connected to UnifiedDataService');
+    } else {
+        console.log('⚠️ UnifiedDataService not available, using localStorage');
+    }
 
-        this.loadData();
-        this.renderModule();
-        this.setupEventListeners();
-        
-        if (this.broadcaster) {
-            this.setupBroadcasterListeners();
-            this.broadcastInventoryLoaded();
-        }
-        
-        this.initialized = true;
-        
-        // Sync initial stats with profile
-        this.syncStatsWithProfile();
-        
-        console.log('✅ Inventory Check initialized with StyleManager & Data Broadcaster');
-        return true;
-    },
+    // ✅ Register with StyleManager
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
 
+    this.loadData();
+    this.renderModule();
+    this.setupEventListeners();
+    
+    if (this.broadcaster) {
+        this.setupBroadcasterListeners();
+        this.broadcastInventoryLoaded();
+    }
+    
+    this.initialized = true;
+    
+    // Sync initial stats with profile
+    this.syncStatsWithProfile();
+    
+    console.log('✅ Inventory Check initialized with StyleManager, Data Broadcaster & UnifiedDataService');
+    return true;
+},
+    
     // ✅ NEW: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
