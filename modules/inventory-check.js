@@ -239,7 +239,7 @@ const InventoryCheckModule = {
     },
 
     // ✅ NEW: Update feed inventory based on feed records
-    updateFeedInventory(feedData) {
+    async updateFeedInventory(feedData) {
         if (!feedData) return;
         
         console.log('🔄 Updating feed inventory from feed record:', feedData);
@@ -328,7 +328,7 @@ setupExpenseListener() {
 },
 
 // NEW: Convert expense to inventory purchase
-handleExpenseAsPurchase(expenseData) {
+async handleExpenseAsPurchase(expenseData) {
     console.log('🔄 Converting expense to inventory purchase:', expenseData);
     
     // Determine what was purchased from description/category
@@ -471,7 +471,7 @@ getUnitForCategory(category) {
 },
 
     // ✅ MODIFIED: Enhanced saveData with broadcasting
-    saveData() {
+    async saveData() {
     // Always save to localStorage
     localStorage.setItem('farm-inventory', JSON.stringify(this.inventory));
     
