@@ -1484,17 +1484,21 @@ async performLogout() {
         document.getElementById('import-data')?.addEventListener('click', () => this.importData());
         document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
         
-        // 🔥 FIX 4: Logout button - SINGLE robust handler
-        const logoutBtn = document.getElementById('logout-btn');
-        console.log('🔍 Logout button found:', !!logoutBtn);
+        // 🔥 FIX 4: Logout button - SINGLE robust handler (try multiple IDs)
+        let logoutBtn = document.getElementById('profile-logout-btn');
+        if (!logoutBtn) {
+            logoutBtn = document.getElementById('logout-btn');
+        }
+        console.log('🔍 Logout button found:', !!logoutBtn, logoutBtn?.id);
         
         if (logoutBtn) {
+            const buttonId = logoutBtn.id;
             // Remove any existing listeners
             const newLogoutBtn = logoutBtn.cloneNode(true);
             logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
             
             // Get fresh reference
-            const freshLogoutBtn = document.getElementById('logout-btn');
+            const freshLogoutBtn = document.getElementById(buttonId);
             
             // SINGLE onclick handler
             freshLogoutBtn.onclick = (e) => {
@@ -1504,9 +1508,9 @@ async performLogout() {
                 this.showLogoutConfirmation();
             };
             
-            console.log('✅ Logout button listener added');
+            console.log(`✅ Logout button (${buttonId}) listener added`);
         } else {
-            console.error('❌ Logout button NOT FOUND');
+            console.error('❌ Logout button NOT FOUND - tried profile-logout-btn and logout-btn');
         }
         
         // Mobile installation
