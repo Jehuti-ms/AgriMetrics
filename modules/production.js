@@ -7,44 +7,50 @@ const ProductionModule = {
     element: null,
     productionData: [],
     currentRecordId: null,
-    broadcaster: null, // ✅ ADDED: Data Broadcaster reference
+    broadcaster: null, 
+    dataService: null, 
 
-    initialize() {
-        console.log('🚜 Initializing Production Records...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) {
-            console.error('Content area element not found');
-            return false;
-        }
+    async initialize() {
+    console.log('🏭 Initializing Production Module...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
 
-        // ✅ ADDED: Get Broadcaster instance
-        this.broadcaster = window.Broadcaster || null;
-        if (this.broadcaster) {
-            console.log('📡 Production module connected to Data Broadcaster');
-        } else {
-            console.log('⚠️ Broadcaster not available, using local methods');
-        }
+    // ✅ Get Broadcaster
+    this.broadcaster = window.Broadcaster || null;
+    if (this.broadcaster) {
+        console.log('📡 Production module connected to Data Broadcaster');
+    }
 
-        if (window.StyleManager) {
-            window.StyleManager.registerComponent(this.name);
-        }
+    // ✅ Get UnifiedDataService
+    this.dataService = window.UnifiedDataService || null;
+    if (!this.dataService) {
+        console.error('❌ UnifiedDataService not available for production!');
+        // Continue anyway, will use localStorage only
+    } else {
+        console.log('📦 Production connected to UnifiedDataService');
+    }
 
-        this.loadData();
-        this.renderModule();
-        this.setupEventListeners();
-        
-        if (this.broadcaster) {
-            this.setupBroadcasterListeners();
-            this.broadcastProductionLoaded();
-        }
-        
-        this.initialized = true;
-        
-        console.log('✅ Production Records initialized');
-        return true;
-    },
+    // ✅ Register with StyleManager
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
 
+    await this.loadData();  // ← ADD 'await'
+    this.renderModule();
+    this.setupEventListeners();
+    
+    if (this.broadcaster) {
+        this.setupBroadcasterListeners();
+        this.broadcastProductionLoaded();
+    }
+    
+    this.initialized = true;
+    
+    console.log('✅ Production Module initialized with UnifiedDataService');
+    return true;
+},
+    
     // ✅ ADDED: Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
@@ -332,42 +338,89 @@ const ProductionModule = {
     },
 
     // ✅ MODIFIED: Enhanced loadData with broadcasting
-    loadData() {
-        const savedData = localStorage.getItem('farm-production-data');
-        if (savedData) {
-            this.productionData = JSON.parse(savedData);
+   async loadData() {
+    console.log('Loading production records from UnifiedDataService...');
+    
+    try {
+        // Try UnifiedDataService first
+        if (this.dataService) {
+            const data = this.dataService.get('production');
+            if (data && data.records && data.records.length > 0) {
+                this.productionRecords = data.records;
+                console.log('📁 Loaded from UnifiedDataService:', this.productionRecords.length);
+            } else {
+                // Try to migrate from old localStorage
+                const saved = localStorage.getItem('farm-production');
+                if (saved) {
+                    this.productionRecords = JSON.parse(saved);
+                    console.log(`📁 Migrated ${this.productionRecords.length} records from localStorage`);
+                    await this.saveToDataService();
+                } else {
+                    this.productionRecords = this.getDemoData();
+                    await this.saveToDataService();
+                }
+            }
         } else {
-            this.productionData = [];
-            this.saveData();
+            // Fallback to localStorage only
+            const saved = localStorage.getItem('farm-production');
+            this.productionRecords = saved ? JSON.parse(saved) : this.getDemoData();
         }
-        console.log('📊 Loaded production data:', this.productionData.length, 'records');
         
-        // Broadcast data loaded
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('production-data-loaded', {
-                module: 'production',
-                timestamp: new Date().toISOString(),
-                recordsCount: this.productionData.length
-            });
-        }
-    },
+        // Sort by date (newest first)
+        this.productionRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+    } catch (error) {
+        console.error('❌ Error loading production records:', error);
+        this.productionRecords = this.getDemoData();
+    }
+    
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('production-data-loaded', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            recordCount: this.productionRecords.length,
+            source: this.dataService ? 'UnifiedDataService' : 'localStorage'
+        });
+    }
+},
 
+    async saveToDataService() {
+    if (!this.dataService) return;
+    
+    try {
+        await this.dataService.save('production', {
+            records: this.productionRecords,
+            lastUpdated: new Date().toISOString(),
+            totalRecords: this.productionRecords.length
+        });
+        console.log('✅ Saved production records to UnifiedDataService');
+    } catch (error) {
+        console.error('❌ Error saving to UnifiedDataService:', error);
+    }
+},
+    
     // ✅ MODIFIED: Enhanced saveData with broadcasting
-    saveData() {
-        localStorage.setItem('farm-production-data', JSON.stringify(this.productionData));
-        
-        // Broadcast data saved
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('production-data-saved', {
-                module: 'production',
-                timestamp: new Date().toISOString(),
-                recordsCount: this.productionData.length
-            });
-        }
-    },
+   async saveData() {
+    // Always save to localStorage
+    localStorage.setItem('farm-production', JSON.stringify(this.productionRecords));
+    
+    // Save to UnifiedDataService if available
+    if (this.dataService) {
+        await this.saveToDataService();
+    }
+    
+    // Broadcast update
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('production-data-saved', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            recordCount: this.productionRecords.length
+        });
+    }
+},
 
     // ✅ MODIFIED: Enhanced saveProduction with broadcasting
-    saveProduction() {
+   async saveProduction() {
         const form = document.getElementById('production-form');
         if (!form) {
             console.error('❌ Production form not found');
@@ -448,7 +501,7 @@ const ProductionModule = {
             }
         }
 
-        this.saveData();
+        await this.saveData();
         this.updateStats();
         this.hideProductionModal();
         this.renderModule();
@@ -463,7 +516,7 @@ const ProductionModule = {
         if (index !== -1) {
             const deletedRecord = this.productionData[index];
             this.productionData.splice(index, 1);
-            this.saveData();
+            await this.saveData();
             this.updateStats();
             this.renderModule();
             this.showNotification('Production record deleted', 'success');
@@ -1332,9 +1385,9 @@ const ProductionModule = {
         this.showNotification('Production recorded successfully!', 'success');
     },
 
-    addProduction(productionData) {
+       async addProduction(productionData) {
         this.productionData.unshift(productionData);
-        this.saveData();
+        await this.saveData();   
         this.updateStats();
         this.renderModule();
     },
