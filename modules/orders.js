@@ -842,6 +842,30 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
   renderModule() {
         if (!this.element) return;
         const stats = this.calculateStats();
+      
+      <style>
+          .delete-order {
+                background: #ef4444;
+                border: none;
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 8px;
+                color: white;
+                font-size: 16px;
+                transition: all 0.2s;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .delete-order:hover {
+                background: #dc2626 !important;
+                transform: translateY(-1px);
+            }
+
+          </style>
         
         this.element.innerHTML = `
             <div class="module-container">
@@ -2121,53 +2145,62 @@ async handleOrderSubmit(e) {
         }, 100);
     },
 
-    async deleteCustomer(id) {
-        console.log('🗑️ deleteCustomer function CALLED with:', id);
+   async deleteCustomer(id) {
+    console.log('🗑️ deleteCustomer function CALLED with:', id);
+    
+    // Convert id to number for comparison (handles both string and number IDs)
+    const numericId = parseInt(id);
+    
+    // Find the customer - try both number and string comparison
+    let customer = this.customers.find(c => c.id == numericId || c.id == id);
+    
+    // Also check if customer has a valid name
+    if (!customer || !customer.name || customer.name === 'undefined') {
+        console.error('❌ Customer not found or invalid for ID:', id);
         
-        // Find the customer
-        let customer = this.customers.find(c => c.id == id);
+        // If customer is invalid, remove it directly
+        this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
+        await this.saveData();
+        this.renderModule();
+        this.showNotification('Invalid customer record removed', 'info');
+        return;
+    }
 
-        if (!customer) {
-            console.error('❌ Customer not found for ID:', id);
-            this.showNotification('Customer not found', 'error');
-            return;
+    console.log('✅ Found customer:', customer);
+
+    // Check if customer has orders
+    const customerOrders = this.orders.filter(o => o.customerId == numericId || o.customerId == id);
+    console.log('📦 Customer orders:', customerOrders.length);
+
+    if (customerOrders.length > 0) {
+        const message = `Cannot delete "${customer.name}" because they have ${customerOrders.length} order(s). Delete their orders first.`;
+        console.warn('⚠️', message);
+        this.showNotification(message, 'error');
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete customer "${customer.name}"?`)) {
+        console.log('✅ Deleting customer:', customer.name);
+        
+        // Filter out the customer (handle both string and number)
+        this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
+        
+        // Save to localStorage
+        await this.saveData();
+        
+        // Broadcast deletion
+        if (this.broadcastCustomerDeleted) {
+            this.broadcastCustomerDeleted(customer.id, customer.name);
         }
-
-        console.log('✅ Found customer:', customer);
-
-        // Check if customer has orders
-        const customerOrders = this.orders.filter(o => o.customerId == customer.id);
-        console.log('📦 Customer orders:', customerOrders.length);
-
-        if (customerOrders.length > 0) {
-            const message = `Cannot delete "${customer.name}" because they have ${customerOrders.length} order(s). Delete their orders first.`;
-            console.warn('⚠️', message);
-            this.showNotification(message, 'error');
-            return;
-        }
-
-        if (confirm(`Are you sure you want to delete customer "${customer.name}"?`)) {
-            console.log('✅ Deleting customer:', customer.name);
-            
-            // Filter out the customer
-            this.customers = this.customers.filter(c => c.id != customer.id);
-            
-            // Save to localStorage
-            await this.saveData();
-            
-            // Broadcast deletion
-            if (this.broadcastCustomerDeleted) {
-                this.broadcastCustomerDeleted(customer.id, customer.name);
-            }
-            
-            // Re-render
-            this.renderModule();
-            
-            // Show success message
-            this.showNotification(`Customer "${customer.name}" deleted successfully!`, 'success');
-        }
-    },
-
+        
+        // Re-render
+        this.renderModule();
+        
+        // Show success message
+        this.showNotification(`Customer "${customer.name}" deleted successfully!`, 'success');
+    }
+},
+    
     editCustomer(id) {
         // For now, just show a message - full edit functionality can be added later
         if (window.coreModule) {
@@ -2270,3 +2303,5 @@ if (window.FarmModules) {
 } else {
     console.error('❌ FarmModules framework not found');
 }
+// Make OrdersModule globally accessible
+window.OrdersModule = OrdersModule;
