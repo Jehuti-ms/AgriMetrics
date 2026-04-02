@@ -256,7 +256,7 @@ const InventoryCheckModule = {
             
             // Update stock
             feedItem.currentStock = Math.max(0, feedItem.currentStock - quantityUsed);
-            this.saveData();
+           await this.saveData();
             
             // Broadcast update
             this.broadcastItemUpdated(feedItem);
@@ -389,7 +389,7 @@ handleExpenseAsPurchase(expenseData) {
         console.log('✅ Created new inventory item from expense:', newItem);
     }
     
-    this.saveData();
+    await this.saveData();
     this.renderModule();
     this.broadcastInventoryUpdated();
 },
@@ -1549,45 +1549,22 @@ getUnitForCategory(category) {
 
     // Add this right before the final closing brace of IncomeExpensesModule
 unload() {
-    console.log('📦 Unloading Income & Expenses module...');
-    
-    // Stop camera if active
-    this.stopCamera();
+    console.log('📦 Unloading Inventory Check module...');
     
     // Remove event listeners
     if (this._globalClickHandler) {
         document.removeEventListener('click', this._globalClickHandler);
         this._globalClickHandler = null;
     }
-    if (this._globalChangeHandler) {
-        document.removeEventListener('change', this._globalChangeHandler);
-        this._globalChangeHandler = null;
-    }
     
     // Hide any open modals
     this.hideAllModals();
     
-    // Clean up file input if created
-    const fileInput = document.getElementById('receipt-upload-input');
-    if (fileInput && fileInput.hasAttribute('data-dynamic')) {
-        fileInput.remove();
-    }
-    
     // Reset state
     this.initialized = false;
     this.element = null;
-    this.currentEditingId = null;
-    this.receiptQueue = [];
-    this.cameraStream = null;
-    this.receiptPreview = null;
     
-    console.log('✅ Income & Expenses module unloaded');
-}
-};
-
-if (window.FarmModules) {
-    window.FarmModules.registerModule('inventory-check', InventoryCheckModule);
-    console.log('✅ Inventory Check module registered');
+    console.log('✅ Inventory Check module unloaded');
 }
 
 // ==================== UNIVERSAL REGISTRATION ====================
