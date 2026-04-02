@@ -901,51 +901,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     const digits = phoneNumber.replace(/\D/g, '');
     return digits.length >= 7 && digits.length <= 15;
 },
-
-getFirestore() {
-    return window.CentralDataService?.db || null;
-},
-
-getCurrentUserId() {
-    return window.CentralDataService?.userId || null;
-},
-
-// SIMPLIFIED saveCustomerToFirebase - now just calls central service
-async saveCustomerToFirebase(customerData) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.save('customers', customerData);
-        return result.success;
-    }
-    return false;
-},
-
-// SIMPLIFIED deleteCustomerFromFirebase
-async deleteCustomerFromFirebase(customerId) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.delete('customers', customerId);
-        return result.success;
-    }
-    return false;
-},
-
-// SIMPLIFIED saveOrderToFirebase
-async saveOrderToFirebase(orderData) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.save('orders', orderData);
-        return result.success;
-    }
-    return false;
-},
-
-// SIMPLIFIED deleteOrderFromFirebase
-async deleteOrderFromFirebase(orderId) {
-    if (window.CentralDataService) {
-        const result = await window.CentralDataService.delete('orders', orderId);
-        return result.success;
-    }
-    return false;
-},
-    
+   
     renderModule() {
         if (!this.element) return;
 
@@ -1790,30 +1746,8 @@ showCustomerForm() {
     await this.saveData();
     
     // ========== SAVE TO FIREBASE ==========
-    const db = this.getFirestore();
-    const userId = this.getCurrentUserId();
-    
-    if (db && userId) {
-        console.log('💾 Saving customer to Firebase:', customerData.name);
-        
-        // Save to Firestore
-        db.collection('users').doc(userId).collection('customers')
-            .doc(customerData.id.toString())
-            .set(customerData)
-            .then(() => {
-                console.log('✅ Customer saved to Firebase successfully!');
-                console.log('   Customer ID:', customerData.id);
-                console.log('   Name:', customerData.name);
-                console.log('   Phone:', customerData.contact);
-            })
-            .catch(error => {
-                console.error('❌ Error saving customer to Firebase:', error);
-            });
-    } else {
-        console.warn('⚠️ Cannot save to Firebase. Using localStorage only.');
-        if (!db) console.warn('   Firestore not available');
-        if (!userId) console.warn('   User not authenticated');
-    }
+    // Save to UnifiedDataService (handled by saveData)
+    await this.saveData();
     // =====================================
     
     // Broadcast customer added
