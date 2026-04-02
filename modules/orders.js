@@ -902,8 +902,13 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     return digits.length >= 7 && digits.length <= 15;
 },
    
-    renderModule() {
-        if (!this.element) return;
+   renderOrdersList() {
+    // Ensure all orders have an items array
+    this.orders.forEach(order => {
+        if (!order.items) {
+            order.items = [];
+        }
+    });
 
         const stats = this.calculateStats();
 
