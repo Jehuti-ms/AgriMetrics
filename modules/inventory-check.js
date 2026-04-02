@@ -1571,7 +1571,7 @@ unload() {
 // ==================== UNIVERSAL REGISTRATION ====================
 
 (function() {
-    const MODULE_NAME = 'inventory-check.js';
+    const MODULE_NAME = 'inventory-check';
     const MODULE_OBJECT = InventoryCheckModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
