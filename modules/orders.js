@@ -1130,6 +1130,9 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     },
 
   renderCustomersList() {
+    console.log('🔍 Rendering customers list, count:', this.customers.length);
+    console.log('📋 First customer sample:', this.customers[0]);
+    
     if (this.customers.length === 0) {
         return `
             <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
@@ -1143,13 +1146,16 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     return `
         <div style="display: flex; flex-direction: column; gap: 12px;">
             ${this.customers.map(customer => {
-                // Debug: log the customer object to see what's there
-                console.log('Customer data:', customer);
+                // Log each customer to see the structure
+                console.log('Customer:', customer);
+                
+                // Get the name safely
+                const customerName = customer.name || customer.customerName || 'Unknown';
                 
                 return `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
                         <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary);">${customer.name || 'Unknown'}</div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${customerName}</div>
                             <div style="font-size: 14px; color: var(--text-secondary);">
                                 ${customer.contact ? `📞 ${this.formatPhone(customer.contact)}` : ''}
                             </div>
@@ -1737,9 +1743,11 @@ showCustomerForm() {
         }
     },
 
-    refreshCustomerDropdown() {
+   refreshCustomerDropdown() {
     const customerSelect = document.getElementById('order-customer');
     if (!customerSelect) return;
+    
+    console.log('🔄 Refreshing customer dropdown with:', this.customers);
     
     // Clear current options
     customerSelect.innerHTML = '';
@@ -1765,16 +1773,19 @@ showCustomerForm() {
         addCustomerOption.style.fontWeight = 'bold';
         customerSelect.appendChild(addCustomerOption);
     } else {
-        // Add existing customers with formatted phone
+        // Add existing customers
         this.customers.forEach(customer => {
             const option = document.createElement('option');
             option.value = customer.id;
-            let displayText = customer.name;
+            // Make sure we're using the correct property name
+            const customerName = customer.name || customer.customerName || 'Unknown';
+            let displayText = customerName;
             if (customer.contact) {
                 displayText += ` (${this.formatPhone(customer.contact)})`;
             }
             option.textContent = displayText;
             customerSelect.appendChild(option);
+            console.log(`✅ Added customer to dropdown: ${displayText}`);
         });
         
         const separator = document.createElement('option');
