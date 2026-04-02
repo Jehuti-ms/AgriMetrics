@@ -1365,11 +1365,13 @@ button[type="submit"],
 
 /* ===== FIX: Keep stats and quick actions in 2 columns on mobile ===== */
 @media (max-width: 768px) {
+    .module-container .stats-grid,
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px !important;
     }
     
+    .module-container .quick-action-grid,
     .quick-action-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px !important;
@@ -1377,11 +1379,13 @@ button[type="submit"],
 }
 
 @media (max-width: 480px) {
+    .module-container .stats-grid,
     .stats-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px !important;
     }
     
+    .module-container .quick-action-grid,
     .quick-action-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px !important;
@@ -1390,13 +1394,16 @@ button[type="submit"],
 
 /* Only on very small phones (below 360px) - stack */
 @media (max-width: 360px) {
+    .module-container .stats-grid,
     .stats-grid {
         grid-template-columns: 1fr !important;
     }
     
+    .module-container .quick-action-grid,
     .quick-action-grid {
         grid-template-columns: 1fr !important;
     }
+}
 
 }
         `;
