@@ -1853,38 +1853,39 @@ loadUserData() {
         const email = this.getCurrentUserEmail();
         console.log('📧 Current user email:', email);
         
-        // TRY IN THIS ORDER:
-        
-        // 1. Try user-specific storage (by email) - MOST COMPLETE
+        // 🔥 CRITICAL: Try user-specific storage FIRST (by email)
         if (email) {
             const userKey = `farm-profile-${email}`;
+            console.log('🔍 Looking for user key:', userKey);
             const userData = localStorage.getItem(userKey);
             if (userData) {
                 try {
                     loadedProfile = JSON.parse(userData);
                     source = `user-specific: ${userKey}`;
-                    console.log(`✅ Loaded COMPLETE profile from ${source}`, loadedProfile);
+                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
                 } catch (e) {
                     console.warn('⚠️ Failed to parse user-specific profile:', e);
                 }
-            }
-        }
-        
-        // 2. Try general farm-profile
-        if (!loadedProfile) {
-            const mainData = localStorage.getItem('farm-profile');
-            if (mainData) {
-                try {
-                    loadedProfile = JSON.parse(mainData);
-                    source = 'farm-profile';
-                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
-                } catch (e) {
-                    console.warn('⚠️ Failed to parse farm-profile:', e);
+            } else {
+                console.log(`ℹ️ No profile found for key: ${userKey}`);
+                
+                // Also try with different email format (just in case)
+                const emailNoDomain = email.split('@')[0];
+                const altUserKey = `farm-profile-${emailNoDomain}`;
+                const altUserData = localStorage.getItem(altUserKey);
+                if (altUserData) {
+                    try {
+                        loadedProfile = JSON.parse(altUserData);
+                        source = `user-specific (alt): ${altUserKey}`;
+                        console.log(`✅ Loaded profile from ${source}`, loadedProfile);
+                    } catch (e) {
+                        console.warn('⚠️ Failed to parse alt user profile:', e);
+                    }
                 }
             }
         }
         
-        // 3. Try last-known-profile
+        // 2. Try last-known-profile (from previous session)
         if (!loadedProfile) {
             const lastData = localStorage.getItem('farm-last-known-profile');
             if (lastData) {
@@ -1894,6 +1895,20 @@ loadUserData() {
                     console.log(`✅ Loaded profile from ${source}`, loadedProfile);
                 } catch (e) {
                     console.warn('⚠️ Failed to parse last-known-profile:', e);
+                }
+            }
+        }
+        
+        // 3. Try general farm-profile
+        if (!loadedProfile) {
+            const mainData = localStorage.getItem('farm-profile');
+            if (mainData) {
+                try {
+                    loadedProfile = JSON.parse(mainData);
+                    source = 'farm-profile';
+                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
+                } catch (e) {
+                    console.warn('⚠️ Failed to parse farm-profile:', e);
                 }
             }
         }
@@ -1920,9 +1935,27 @@ loadUserData() {
             }
         }
         
-        // Create default profile if nothing loaded
-        if (!loadedProfile) {
-            console.log('🆕 Creating new profile from defaults');
+        // 🔥 If we found a profile, use it and ensure it has the current email
+        if (loadedProfile) {
+            console.log('📋 Using existing profile from:', source);
+            
+            // Update email to current user if different
+            if (email && loadedProfile.email !== email) {
+                console.log(`📧 Updating profile email from ${loadedProfile.email} to ${email}`);
+                loadedProfile.email = email;
+            }
+            
+            // Ensure memberSince exists
+            if (!loadedProfile.memberSince) {
+                loadedProfile.memberSince = new Date().toISOString();
+            }
+            
+            // Ensure lastUpdated is set
+            loadedProfile.lastUpdated = new Date().toISOString();
+            
+        } else {
+            // Only create new profile if absolutely nothing exists
+            console.log('🆕 No existing profile found, creating new profile from defaults');
             loadedProfile = {
                 farmName: 'My Farm',
                 farmerName: 'Farm Manager',
@@ -1934,22 +1967,10 @@ loadUserData() {
                 autoSync: true,
                 localStorageEnabled: true,
                 theme: 'light',
-                memberSince: new Date().toISOString(), // 🔥 Set to NOW for new users
+                memberSince: new Date().toISOString(),
                 lastUpdated: new Date().toISOString()
             };
             source = 'new default';
-            console.log('📅 New user - member since set to:', loadedProfile.memberSince);
-        } else {
-            // 🔥 Check if memberSince exists, if not set it to a reasonable default
-            if (!loadedProfile.memberSince) {
-                // Try to find when they first appeared in your system
-                // Look at oldest transaction or just set to account creation date
-                const oldestData = this.findOldestUserData();
-                loadedProfile.memberSince = oldestData || new Date().toISOString();
-                console.log('📅 Added missing memberSince:', loadedProfile.memberSince);
-            } else {
-                console.log('📅 Existing member since:', loadedProfile.memberSince);
-            }
         }
         
         // Set default settings if none loaded
@@ -1967,17 +1988,6 @@ loadUserData() {
             };
         }
         
-        // Ensure email is set in profile
-        if (!loadedProfile.email && email) {
-            loadedProfile.email = email;
-        }
-        
-        // Ensure farm name is set
-        if (!loadedProfile.farmName) {
-            const savedFarmName = localStorage.getItem('farm-last-name');
-            loadedProfile.farmName = savedFarmName || 'My Farm';
-        }
-        
         // Update app data
         if (!window.FarmModules) window.FarmModules = {};
         if (!window.FarmModules.appData) window.FarmModules.appData = {};
@@ -1993,17 +2003,24 @@ loadUserData() {
             farmLocation: loadedProfile.farmLocation,
             email: loadedProfile.email,
             memberSince: loadedProfile.memberSince,
-            settings: loadedSettings
+            source: source
         });
         
         // Update the UI
         this.updateProfileDisplay();
         
+        // 🔥 If we loaded from somewhere other than user-specific, save to user-specific for next time
+        if (email && source !== `user-specific: farm-profile-${email}` && loadedProfile.farmName !== 'My Farm') {
+            console.log('💾 Saving profile to user-specific key for next login');
+            const userKey = `farm-profile-${email}`;
+            localStorage.setItem(userKey, JSON.stringify(loadedProfile));
+        }
+        
     } catch (error) {
         console.error('❌ Error loading user data:', error);
     }
 },
-
+    
 // 🔥 Add this helper method to find oldest user data
 findOldestUserData() {
     try {
