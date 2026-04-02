@@ -477,7 +477,7 @@ getUnitForCategory(category) {
     
     // Save to UnifiedDataService if available
     if (this.dataService) {
-        this.saveToDataService();
+       await this.saveToDataService();
     }
     
     // Broadcast update
@@ -1565,7 +1565,7 @@ unload() {
     this.element = null;
     
     console.log('✅ Inventory Check module unloaded');
-},
+}
 
 // ==================== UNIVERSAL REGISTRATION ====================
 
