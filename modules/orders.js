@@ -1944,7 +1944,7 @@ showCustomerForm() {
         });
     },
 
-  async handleOrderSubmit(e) {
+async handleOrderSubmit(e) {
     e.preventDefault();
     
     const editingId = document.getElementById('editing-order-id')?.value;
@@ -1955,6 +1955,13 @@ showCustomerForm() {
     const date = document.getElementById('order-date').value;
     const status = document.getElementById('order-status').value;
     const notes = document.getElementById('order-notes').value;
+    
+    // Validate customer exists
+    const customer = this.customers.find(c => c.id === customerId);
+    if (!customer) {
+        this.showNotification('Please select a valid customer', 'error');
+        return;
+    }
     
     // Collect items
     const items = [];
@@ -1979,7 +1986,60 @@ showCustomerForm() {
     }
     
     const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-  },
+    
+    if (totalAmount <= 0) {
+        this.showNotification('Total amount must be greater than 0', 'error');
+        return;
+    }
+    
+    if (isEditing) {
+        // Update existing order
+        const orderIndex = this.orders.findIndex(o => o.id == editingId);
+        if (orderIndex !== -1) {
+            const updatedOrder = {
+                ...this.orders[orderIndex],
+                customerId,
+                customerName: customer.name,
+                date,
+                items,
+                totalAmount,
+                status,
+                notes,
+                updatedAt: new Date().toISOString()
+            };
+            this.orders[orderIndex] = updatedOrder;
+            await this.saveData();
+            
+            // Broadcast update
+            this.broadcastOrderUpdated(updatedOrder);
+            this.showNotification(`Order #${editingId} updated!`, 'success');
+        }
+    } else {
+        // Create new order
+        const orderData = {
+            id: Date.now(),
+            customerId,
+            customerName: customer.name,
+            date,
+            items,
+            totalAmount,
+            status,
+            notes: notes || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        this.orders.unshift(orderData);
+        await this.saveData();
+        
+        // Broadcast creation
+        this.broadcastOrderCreated(orderData);
+        this.showNotification('Order created successfully!', 'success');
+    }
+    
+    // Reset and hide form
+    this.hideOrderForm();
+    this.renderModule();
+},
           
    async deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
