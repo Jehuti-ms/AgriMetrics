@@ -1760,7 +1760,7 @@ showCustomerForm() {
     }
 },
 
-  handleCustomerSubmit(e) {
+ async handleCustomerSubmit(e) {
     e.preventDefault();
     
     const phoneInput = document.getElementById('customer-phone');
@@ -2058,7 +2058,7 @@ showCustomerForm() {
         });
     },
 
-  handleOrderSubmit(e) {
+  async handleOrderSubmit(e) {
     e.preventDefault();
     
     const editingId = document.getElementById('editing-order-id')?.value;
@@ -2185,7 +2185,7 @@ getFirebaseDb() {
 },
 
     
-    deleteOrder(id) {
+   async deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
         if (!order) return;
 
@@ -2263,7 +2263,7 @@ getFirebaseDb() {
         }, 100);
     },
 
-    deleteCustomer(id) {
+    async deleteCustomer(id) {
         console.log('🗑️ deleteCustomer function CALLED with:', id);
         
         // Find the customer
