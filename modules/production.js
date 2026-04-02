@@ -1872,7 +1872,7 @@ unload() {
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
-    const MODULE_NAME = 'production.js';
+    const MODULE_NAME = 'production';
     const MODULE_OBJECT = ProductionModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
