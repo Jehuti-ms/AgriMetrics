@@ -511,14 +511,14 @@ const ProductionModule = {
     },
 
     // ✅ MODIFIED: Enhanced deleteProductionRecord with broadcasting
-    deleteProductionRecord(recordId) {
+    async deleteProductionRecord(recordId) {
         const index = this.productionData.findIndex(r => r.id === parseInt(recordId));
         if (index !== -1) {
             const deletedRecord = this.productionData[index];
             this.productionData.splice(index, 1);
             await this.saveData();
             this.updateStats();
-            this.renderModule();
+            this.renderModule();]waw
             this.showNotification('Production record deleted', 'success');
             
             // ✅ Broadcast production deleted
@@ -1881,7 +1881,7 @@ console.log('✅ Production module loaded and ready with Data Broadcaster');
 
 // ==================== UNIVERSAL REGISTRATION ====================
 (function() {
-    const MODULE_NAME = 'production.js';
+    const MODULE_NAME = 'production';
     const MODULE_OBJECT = ProductionModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
