@@ -15,6 +15,7 @@ const OrdersModule = {
     ],
     element: null,
     broadcaster: null,
+    dataService: null,
     
     // Event handler properties
     _captureHandler: null,
@@ -24,41 +25,47 @@ const OrdersModule = {
     _customerSubmitHandler: null,
     _orderListenersAttached: false,
 
-    initialize() {
-        console.log('📋 Initializing Orders Management...');
-        
-        // Get the content area element
-        this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+   initialize() {
+    console.log('📋 Initializing Orders Management...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
 
-        // Get Broadcaster instance
-        this.broadcaster = window.Broadcaster || null;
-        if (this.broadcaster) {
-            console.log('📡 Orders module connected to Data Broadcaster');
-        } else {
-            console.log('⚠️ Broadcaster not available, using local methods');
-        }
+    this.broadcaster = window.Broadcaster || null;
+    if (this.broadcaster) {
+        console.log('📡 Orders module connected to Data Broadcaster');
+    } else {
+        console.log('⚠️ Broadcaster not available, using local methods');
+    }
+    
+    // ✅ Get UnifiedDataService
+    this.dataService = window.UnifiedDataService || null;
+    if (!this.dataService) {
+        console.error('❌ UnifiedDataService not available for orders!');
+    } else {
+        console.log('📦 Orders connected to UnifiedDataService');
+    }
 
-        // Register with StyleManager
-        if (window.StyleManager) {
-            StyleManager.registerModule('orders', this.element, this);
-        }
+    // Register with StyleManager
+    if (window.StyleManager) {
+        StyleManager.registerModule('orders', this.element, this);
+    }
 
-        this.loadData();
-        this.renderModule();
-        this.setupEventListeners();
-        
-        if (this.broadcaster) {
-            this.setupBroadcasterListeners();
-            this.broadcastOrdersLoaded();
-        }
-        
-        this.initialized = true;
-        
-        console.log('✅ Orders Management initialized with StyleManager & Data Broadcaster');
-        return true;
-    },
-
+    await this.loadData();
+    this.renderModule();
+    this.setupEventListeners();
+    
+    if (this.broadcaster) {
+        this.setupBroadcasterListeners();
+        this.broadcastOrdersLoaded();
+    }
+    
+    this.initialized = true;
+    
+    console.log('✅ Orders Management initialized with UnifiedDataService');
+    return true;
+},
+    
     // Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
@@ -298,52 +305,67 @@ const OrdersModule = {
     },
 
     // Enhanced saveData with broadcasting
-    saveData() {
-        localStorage.setItem('farm-orders', JSON.stringify(this.orders));
-        localStorage.setItem('farm-customers', JSON.stringify(this.customers));
-        
-        // Broadcast data saved
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('orders-data-saved', {
-                module: 'orders',
-                timestamp: new Date().toISOString(),
-                ordersCount: this.orders.length,
-                customersCount: this.customers.length
-            });
-        }
-    },
+    async saveData() {
+    localStorage.setItem('farm-orders', JSON.stringify(this.orders));
+    localStorage.setItem('farm-customers', JSON.stringify(this.customers));
+    
+    if (this.dataService) {
+        await this.saveToDataService();
+    }
+    
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('orders-data-saved', {
+            module: 'orders',
+            timestamp: new Date().toISOString(),
+            ordersCount: this.orders.length,
+            customersCount: this.customers.length
+        });
+    }
+},
 
     // Enhanced loadData
    // In your OrdersModule
 
-loadData() {
-    // Load from localStorage first (fast)
-    const savedOrders = localStorage.getItem('farm-orders');
-    const savedCustomers = localStorage.getItem('farm-customers');
+async loadData() {
+    console.log('Loading orders from UnifiedDataService...');
     
-    this.orders = savedOrders ? JSON.parse(savedOrders) : [];
-    this.customers = savedCustomers ? JSON.parse(savedCustomers) : [];
-    
-    // Sync with Central Data Service (Firebase)
-    if (window.CentralDataService) {
-        const firebaseCustomers = window.CentralDataService.get('customers');
-        const firebaseOrders = window.CentralDataService.get('orders');
-        
-        if (firebaseCustomers && firebaseCustomers.length > 0) {
-            this.customers = firebaseCustomers;
+    try {
+        if (this.dataService) {
+            // Get from UnifiedDataService
+            this.orders = this.dataService.get('orders') || [];
+            this.customers = this.dataService.get('customers') || [];
+            
+            // Migrate from localStorage if empty and data exists
+            if (this.orders.length === 0) {
+                const savedOrders = localStorage.getItem('farm-orders');
+                if (savedOrders) {
+                    this.orders = JSON.parse(savedOrders);
+                    await this.saveToDataService();
+                    console.log(`📁 Migrated ${this.orders.length} orders from localStorage`);
+                }
+            }
+            if (this.customers.length === 0) {
+                const savedCustomers = localStorage.getItem('farm-customers');
+                if (savedCustomers) {
+                    this.customers = JSON.parse(savedCustomers);
+                    await this.saveToDataService();
+                    console.log(`📁 Migrated ${this.customers.length} customers from localStorage`);
+                }
+            }
+        } else {
+            // Fallback to localStorage only
+            this.orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+            this.customers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
         }
-        if (firebaseOrders && firebaseOrders.length > 0) {
-            this.orders = firebaseOrders;
-        }
         
-        // Subscribe to future updates
-        this.subscribeToDataUpdates();
+        console.log(`📊 Loaded: ${this.orders.length} orders, ${this.customers.length} customers`);
+        
+    } catch (error) {
+        console.error('❌ Error loading orders:', error);
+        this.orders = [];
+        this.customers = [];
     }
     
-    // Save to localStorage to ensure consistency
-    this.saveData();
-    
-    // Broadcast
     if (this.broadcaster) {
         this.broadcaster.broadcast('orders-data-loaded', {
             module: 'orders',
@@ -353,6 +375,18 @@ loadData() {
     }
 },
 
+    async saveToDataService() {
+    if (!this.dataService) return;
+    
+    try {
+        await this.dataService.save('orders', this.orders);
+        await this.dataService.save('customers', this.customers);
+        console.log('✅ Saved orders and customers to UnifiedDataService');
+    } catch (error) {
+        console.error('❌ Error saving to UnifiedDataService:', error);
+    }
+},
+    
 /**
  * Subscribe to Central Data Service updates
  */
@@ -1753,7 +1787,7 @@ showCustomerForm() {
 
     // Save to localStorage
     this.customers.push(customerData);
-    this.saveData();
+    await this.saveData();
     
     // ========== SAVE TO FIREBASE ==========
     const db = this.getFirestore();
@@ -2091,7 +2125,7 @@ showCustomerForm() {
                 updatedAt: new Date().toISOString()
             };
             this.orders[orderIndex] = updatedOrder;
-            this.saveData();
+            await this.saveData();
             
             // Save to Firebase
             saveOrderToFirebase(updatedOrder);
@@ -2157,7 +2191,7 @@ getFirebaseDb() {
 
         if (confirm(`Are you sure you want to delete order #${id}? This cannot be undone.`)) {
             this.orders = this.orders.filter(o => o.id !== id);
-            this.saveData();
+            await this.saveData();
             
             // Broadcast order deleted
             this.broadcastOrderDeleted(id);
@@ -2261,7 +2295,7 @@ getFirebaseDb() {
             this.customers = this.customers.filter(c => c.id != customer.id);
             
             // Save to localStorage
-            this.saveData();
+            await this.saveData();
             
             // Broadcast deletion
             if (this.broadcastCustomerDeleted) {
@@ -2377,13 +2411,4 @@ if (window.FarmModules) {
     console.log('✅ Orders Management module registered');
 } else {
     console.error('❌ FarmModules framework not found');
-}
-
-// Also add to modules Map
-if (window.FarmModules) {
-    window.FarmModules.modules.set('orders', OrdersModule);
-    window.FarmModules.modules.set('orders.js', OrdersModule);
-    window.FarmModules.orders = OrdersModule;
-    window.FarmModules.Orders = OrdersModule;
-    console.log('✅ Orders module added to FarmModules object');
 }
