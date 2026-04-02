@@ -1363,48 +1363,55 @@ button[type="submit"],
         grid-template-columns: 1fr !important;
     }
 
-/* ===== FIX: Keep stats and quick actions in 2 columns on mobile ===== */
+/* ===== FORCE QUICK ACTION GRID DISPLAY ===== */
+.quick-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+    width: 100% !important;
+}
+
+/* Ensure no other rules override display */
+div.quick-action-grid {
+    display: grid !important;
+}
+
+.quick-action-grid[class*="quick-action"] {
+    display: grid !important;
+}
+
+/* Make buttons fill their grid cells */
+.quick-action-btn {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Tablet and larger - auto-fit */
+@media (min-width: 769px) {
+    .quick-action-grid {
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+        gap: 16px !important;
+    }
+}
+
+/* Mobile - keep 2 columns */
 @media (max-width: 768px) {
-    .module-container .stats-grid,
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
-    }
-    
-    .module-container .quick-action-grid,
     .quick-action-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 12px !important;
+        display: grid !important;
     }
 }
 
+/* Very small - stack to 1 column */
 @media (max-width: 480px) {
-    .module-container .stats-grid,
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-    }
-    
-    .module-container .quick-action-grid,
-    .quick-action-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
-    }
-}
-
-/* Only on very small phones (below 360px) - stack */
-@media (max-width: 360px) {
-    .module-container .stats-grid,
-    .stats-grid {
-        grid-template-columns: 1fr !important;
-    }
-    
-    .module-container .quick-action-grid,
     .quick-action-grid {
         grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        display: grid !important;
     }
 }
-
 }
         `;
         document.head.appendChild(style);
