@@ -9,34 +9,69 @@ const FeedRecordModule = {
     birdsStock: 0, // Start at 0, will get from FarmData
     element: null,
     broadcaster: null,
+    dataService: null,
 
-    initialize() {
-        console.log('🌾 Initializing Feed Records...');
-        
-        this.element = document.getElementById('content-area');
-        if (!this.element) return false;
+  async initialize() {
+    console.log('🌾 Initializing Feed Records...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
 
-        // Get broadcaster if available
-        if (window.Broadcaster) {
-            this.broadcaster = window.Broadcaster;
-            console.log('📡 Feed module connected to Broadcaster');
-        }
+    // Get UnifiedDataService
+    this.dataService = window.UnifiedDataService;
+    
+    if (!this.dataService) {
+        console.error('❌ UnifiedDataService not available!');
+        // Fallback to old method
+        return this.initializeLegacy();
+    }
 
-        if (window.StyleManager) {
-            StyleManager.registerModule(this.name, this.element, this);
-        }
+    // Get broadcaster if available (for backward compatibility)
+    if (window.Broadcaster) {
+        this.broadcaster = window.Broadcaster;
+        console.log('📡 Feed module connected to Broadcaster');
+    }
 
-        this.loadData();
-        this.syncWithFarmData(); // Get real bird count from FarmData
-        this.renderModule();
-        this.setupEventListeners();
-        this.setupBroadcasterListeners();
-        this.initialized = true;
-        
-        console.log('✅ Feed Records initialized with StyleManager');
-        return true;
-    },
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
 
+    await this.loadData();
+    await this.syncWithFarmData();
+    this.renderModule();
+    this.setupEventListeners();
+    this.setupBroadcasterListeners();
+    this.setupRealtimeSync();
+    this.initialized = true;
+    
+    console.log('✅ Feed Records initialized with UnifiedDataService');
+    return true;
+},
+
+initializeLegacy() {
+    console.log('⚠️ Using legacy initialization for Feed Records...');
+    
+    this.element = document.getElementById('content-area');
+    if (!this.element) return false;
+
+    if (window.Broadcaster) {
+        this.broadcaster = window.Broadcaster;
+    }
+
+    if (window.StyleManager) {
+        StyleManager.registerModule(this.name, this.element, this);
+    }
+
+    this.loadDataLegacy();
+    this.syncWithFarmDataLegacy();
+    this.renderModule();
+    this.setupEventListeners();
+    this.setupBroadcasterListeners();
+    this.initialized = true;
+    
+    return true;
+},
+    
     // ===== NEW: Setup broadcaster listeners =====
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
@@ -171,22 +206,65 @@ const FeedRecordModule = {
         console.log(`Feed Records updating for theme: ${theme}`);
     },
 
-    loadData() {
-        const savedRecords = localStorage.getItem('farm-feed-records');
-        const savedInventory = localStorage.getItem('farm-feed-inventory');
-        const savedBirds = localStorage.getItem('farm-birds-stock');
+   async loadData() {
+    console.log('Loading feed data from UnifiedDataService...');
+    
+    if (this.dataService) {
+        this.feedRecords = this.dataService.get('feedRecords') || [];
+        this.feedInventory = this.dataService.get('feedInventory') || [];
         
-       this.feedRecords = savedRecords ? JSON.parse(savedRecords) : [];
-       this.feedInventory = savedInventory ? JSON.parse(savedInventory) : [];
-        
-        // Don't default to 1000 - use FarmData or saved value
-        if (savedBirds) {
-            this.birdsStock = parseInt(savedBirds);
-        } else {
-            this.birdsStock = 0; // Will be updated by syncWithFarmData
-        }
-    },
+        // Get birds stock from inventory
+        const inventory = this.dataService.get('inventory') || [];
+        const birdItem = inventory.find(item => 
+            item.name?.toLowerCase().includes('bird') || 
+            item.name?.toLowerCase().includes('broiler')
+        );
+        this.birdsStock = birdItem?.quantity || 0;
+    }
+    
+    // Fallback to localStorage if needed
+    if (this.feedRecords.length === 0) {
+        this.loadDataLegacy();
+    }
+},
 
+loadDataLegacy() {
+    const savedRecords = localStorage.getItem('farm-feed-records');
+    const savedInventory = localStorage.getItem('farm-feed-inventory');
+    const savedBirds = localStorage.getItem('farm-birds-stock');
+    
+    this.feedRecords = savedRecords ? JSON.parse(savedRecords) : [];
+    this.feedInventory = savedInventory ? JSON.parse(savedInventory) : [];
+    this.birdsStock = savedBirds ? parseInt(savedBirds) : 0;
+},
+
+    setupRealtimeSync() {
+    if (!this.dataService) return;
+    
+    this.dataService.on('feedRecords-updated', (records) => {
+        console.log('🔄 Feed records updated from unified service:', records?.length);
+        this.feedRecords = records || [];
+        this.renderModule();
+    });
+    
+    this.dataService.on('feedInventory-updated', (inventory) => {
+        console.log('🔄 Feed inventory updated from unified service:', inventory?.length);
+        this.feedInventory = inventory || [];
+        this.renderModule();
+    });
+    
+    this.dataService.on('inventory-updated', (inventory) => {
+        const birdItem = inventory?.find(item => 
+            item.name?.toLowerCase().includes('bird') || 
+            item.name?.toLowerCase().includes('broiler')
+        );
+        if (birdItem && birdItem.quantity !== this.birdsStock) {
+            this.birdsStock = birdItem.quantity;
+            this.updateBirdCountDisplay();
+        }
+    });
+},
+    
       renderModule() {
         if (!this.element) return;
 
@@ -975,10 +1053,22 @@ const FeedRecordModule = {
     },
 
     saveData() {
-        localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
-        localStorage.setItem('farm-feed-inventory', JSON.stringify(this.feedInventory));
-        localStorage.setItem('farm-birds-stock', this.birdsStock.toString());
-    },
+    localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
+    localStorage.setItem('farm-feed-inventory', JSON.stringify(this.feedInventory));
+    localStorage.setItem('farm-birds-stock', this.birdsStock.toString());
+    
+    // Save to UnifiedDataService
+    if (this.dataService) {
+        // Save feed records
+        for (const record of this.feedRecords) {
+            this.dataService.save('feedRecords', record);
+        }
+        // Save feed inventory
+        for (const item of this.feedInventory) {
+            this.dataService.save('feedInventory', item);
+        }
+    }
+},
 
     unload() {
         console.log('📦 Unloading Feed module...');
