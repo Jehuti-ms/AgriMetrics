@@ -2922,6 +2922,24 @@ if (window.FarmModules) {
     console.log('✅ Profile module registered with Firebase persistence');
 }
 
+// 🔥 MAKE GLOBAL
+window.ProfileModule = ProfileModule;
+
+// ==================== UNIVERSAL REGISTRATION ====================
+(function() {
+    const MODULE_NAME = 'profile';
+    const MODULE_OBJECT = ProfileModule;
+    
+    console.log(`📦 Registering ${MODULE_NAME} module...`);
+    
+    if (window.FarmModules) {
+        FarmModules.registerModule(MODULE_NAME, MODULE_OBJECT);
+        console.log(`✅ ${MODULE_NAME} module registered successfully!`);
+    } else {
+        console.error('❌ FarmModules framework not found');
+    }
+})();
+
 // 🔥 QUICK FIX FOR LOGOUT BUTTON - Run this in console if needed
 function forceLogoutFix() {
     console.log('🔧 Forcing logout button fix...');
