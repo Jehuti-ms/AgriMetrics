@@ -651,7 +651,7 @@ renderSocialLoginButtons() {
         const email = document.getElementById('signup-email')?.value || '';
         const password = document.getElementById('signup-password')?.value || '';
         const confirmPassword = document.getElementById('signup-confirm-password')?.value || '';
-        const farmName = document.getElementById('farm-name')?.value || '';
+        
     
         // Validate inputs
         if (!email || !password || !confirmPassword || !farmName) {
