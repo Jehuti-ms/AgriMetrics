@@ -2170,65 +2170,74 @@ findOldestUserData() {
     },
 
     updateProfileDisplay(forceUpdate = false) {
-        console.log('🔄 Updating profile display...');
-        
-        const profile = window.FarmModules.appData.profile;
-        if (!profile) return;
-        
-        console.log('📊 Displaying profile name:', profile.farmName);
-        
-        // Update profile card
-        const farmNameCard = document.getElementById('profile-farm-name');
-        const farmerNameCard = document.getElementById('profile-farmer-name');
-        const emailCard = document.getElementById('profile-email');
-        
-        if (farmNameCard) {
-            farmNameCard.textContent = profile.farmName || 'My Farm';
-            console.log(`✅ Updated profile card to: "${profile.farmName}"`);
-        }
-        if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
-        if (emailCard) emailCard.textContent = profile.email || 'No email';
-        
-        // Update member since display
-            const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            }) : 'Today';
-            const memberSinceEl = document.getElementById('member-since');
-            if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
-        
-        // Update form inputs
-        const farmNameInput = document.getElementById('farm-name');
-        const farmerNameInput = document.getElementById('farmer-name');
-        const emailInput = document.getElementById('farm-email');
-        const farmTypeInput = document.getElementById('farm-type');
-        const farmLocationInput = document.getElementById('farm-location');
-        
-        if (farmNameInput) {
-            farmNameInput.value = profile.farmName || '';
-            console.log(`✅ Set form input to: "${profile.farmName}"`);
-        }
-        if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
-        if (emailInput) emailInput.value = profile.email || '';
-        if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
-        if (farmLocationInput) farmLocationInput.value = profile.farmLocation || '';
-        
-        // Update settings - ensure light theme
-        document.getElementById('default-currency').value = profile.currency || 'USD';
-        document.getElementById('low-stock-threshold').value = profile.lowStockThreshold || 10;
-        document.getElementById('auto-sync').checked = profile.autoSync !== false;
-        document.getElementById('local-storage').checked = profile.localStorageEnabled !== false;
-        
-        // 🔥 FIX: Force light theme in selector
-        const themeSelector = document.getElementById('theme-selector');
-        if (themeSelector) {
-            themeSelector.value = 'light'; // Always set to light
-            console.log('🌞 Forced theme selector to light');
-        }
-        
-        console.log('✅ Profile display updated');
-    },
+    console.log('🔄 Updating profile display...');
+    
+    const profile = window.FarmModules.appData.profile;
+    if (!profile) {
+        console.log('⚠️ No profile found in appData');
+        return;
+    }
+    
+    console.log('📊 Displaying profile:', {
+        farmName: profile.farmName,
+        farmerName: profile.farmerName
+    });
+    
+    // Update profile card elements (use let, not const if reassigning)
+    let farmNameCard = document.getElementById('profile-farm-name');
+    let farmerNameCard = document.getElementById('profile-farmer-name');
+    let emailCard = document.getElementById('profile-email');
+    
+    if (farmNameCard) {
+        farmNameCard.textContent = profile.farmName || 'My Farm';
+        console.log(`✅ Updated profile card to: "${profile.farmName || 'My Farm'}"`);
+    }
+    
+    if (farmerNameCard) {
+        farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
+    }
+    
+    if (emailCard) {
+        emailCard.textContent = profile.email || 'No email';
+    }
+    
+    // Update member since display
+    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }) : 'Today';
+    const memberSinceEl = document.getElementById('member-since');
+    if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
+    
+    // Update form inputs
+    let farmNameInput = document.getElementById('farm-name');
+    let farmerNameInput = document.getElementById('farmer-name');
+    let emailInput = document.getElementById('farm-email');
+    let farmTypeInput = document.getElementById('farm-type');
+    let farmLocationInput = document.getElementById('farm-location');
+    
+    if (farmNameInput) farmNameInput.value = profile.farmName || '';
+    if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
+    if (emailInput) emailInput.value = profile.email || '';
+    if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
+    if (farmLocationInput) farmLocationInput.value = profile.farmLocation || '';
+    
+    // Update settings
+    let currencySelect = document.getElementById('default-currency');
+    let thresholdInput = document.getElementById('low-stock-threshold');
+    let autoSyncCheck = document.getElementById('auto-sync');
+    let localStorageCheck = document.getElementById('local-storage');
+    let themeSelector = document.getElementById('theme-selector');
+    
+    if (currencySelect) currencySelect.value = profile.currency || 'USD';
+    if (thresholdInput) thresholdInput.value = profile.lowStockThreshold || 10;
+    if (autoSyncCheck) autoSyncCheck.checked = profile.autoSync !== false;
+    if (localStorageCheck) localStorageCheck.checked = profile.localStorageEnabled !== false;
+    if (themeSelector) themeSelector.value = profile.theme || 'light';
+    
+    console.log('✅ Profile display updated');
+},
 
     // ==================== LOCAL STORAGE ====================
   saveToLocalStorage() {
