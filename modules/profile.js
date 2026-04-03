@@ -437,82 +437,110 @@ async saveToFirebase() {
 },
 
     // ==================== SAVE PROFILE ====================
-    async handleSaveProfile() {
-        console.log('💾 Starting profile save - SINGLE ENTRY POINT');
+   async handleSaveProfile() {
+    console.log('💾 Starting profile save - SINGLE ENTRY POINT');
+    
+    try {
+        // Small delay to ensure any paste/typing completes
+        await new Promise(resolve => setTimeout(resolve, 50));
         
-        try {
-            // Small delay to ensure any paste/typing completes
-            await new Promise(resolve => setTimeout(resolve, 50));
-            
-            // Get current values directly
-            const farmNameInput = document.getElementById('farm-name');
-            const farmerNameInput = document.getElementById('farmer-name');
-            const emailInput = document.getElementById('farm-email');
-            const farmTypeInput = document.getElementById('farm-type');
-            const farmLocationInput = document.getElementById('farm-location');
-            
-            if (!farmNameInput) {
-                throw new Error('Farm name input not found');
-            }
-            
-            // Get CURRENT values
-            const farmName = farmNameInput.value.trim();
-            const farmerName = farmerNameInput?.value.trim();
-            const email = emailInput?.value.trim();
-            const farmType = farmTypeInput?.value;
-            const farmLocation = farmLocationInput?.value.trim();
-            
-            console.log('📝 SAVING farm name:', farmName);
-            
-            // Ensure profile exists
-            if (!window.FarmModules.appData.profile) {
-                window.FarmModules.appData.profile = {};
-            }
-            
-            const profile = window.FarmModules.appData.profile;
-            
-            // Update profile
-            profile.farmName = farmName || 'My Farm';
-            profile.farmerName = farmerName || 'Farm Manager';
-            profile.email = email || '';
-            profile.farmType = farmType || '';
-            profile.farmLocation = farmLocation || '';
-            profile.lastUpdated = new Date().toISOString();
-            
-            // Ensure persistence
-            profile.currency = profile.currency || 'USD';
-            profile.lowStockThreshold = profile.lowStockThreshold || 10;
-            profile.autoSync = profile.autoSync !== false;
-            profile.localStorageEnabled = profile.localStorageEnabled !== false;
-            profile.theme = profile.theme || 'light';
-            profile.memberSince = profile.memberSince || new Date().toISOString();
-            
-            // Update app data
-            window.FarmModules.appData.farmName = profile.farmName;
-            
-            console.log('📊 Profile to save:', profile);
-            
-            // Save to all persistence layers
-            await this.saveAllPersistedData();
-            
-            // Force immediate UI update
-            this.updateProfileDisplay(true);
-            
-            // Show success
-            this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
-            
-            // Notify other modules
-            window.dispatchEvent(new CustomEvent('farm-data-updated', {
-                detail: { farmName: profile.farmName }
-            }));
-            
-            console.log('✅ Profile saved successfully');
-            
-        } catch (error) {
-            console.error('❌ Error saving profile:', error);
-            this.showNotification('Error saving profile: ' + error.message, 'error');
+        // Get current values directly
+        const farmNameInput = document.getElementById('farm-name');
+        const farmerNameInput = document.getElementById('farmer-name');
+        const emailInput = document.getElementById('farm-email');
+        const farmTypeInput = document.getElementById('farm-type');
+        const farmLocationInput = document.getElementById('farm-location');
+        
+        if (!farmNameInput) {
+            throw new Error('Farm name input not found');
         }
-    },
+        
+        // Get CURRENT values
+        const farmName = farmNameInput.value.trim();
+        const farmerName = farmerNameInput?.value.trim();
+        const email = emailInput?.value.trim();
+        const farmType = farmTypeInput?.value;
+        const farmLocation = farmLocationInput?.value.trim();
+        
+        console.log('📝 SAVING farm name:', farmName);
+        console.log('📝 SAVING farm type:', farmType);
+        console.log('📝 SAVING farm location:', farmLocation);
+        
+        // Ensure profile exists
+        if (!window.FarmModules.appData.profile) {
+            window.FarmModules.appData.profile = {};
+        }
+        
+        const profile = window.FarmModules.appData.profile;
+        
+        // Update ALL profile fields
+        profile.farmName = farmName || 'My Farm';
+        profile.farmerName = farmerName || 'Farm Manager';
+        profile.email = email || '';
+        profile.farmType = farmType || '';
+        profile.farmLocation = farmLocation || '';
+        profile.lastUpdated = new Date().toISOString();
+        
+        // Ensure other fields persist
+        profile.currency = profile.currency || 'USD';
+        profile.lowStockThreshold = profile.lowStockThreshold || 10;
+        profile.autoSync = profile.autoSync !== false;
+        profile.localStorageEnabled = profile.localStorageEnabled !== false;
+        profile.theme = profile.theme || 'light';
+        profile.memberSince = profile.memberSince || new Date().toISOString();
+        
+        console.log('📊 Profile to save:', {
+            farmName: profile.farmName,
+            farmType: profile.farmType,
+            farmLocation: profile.farmLocation,
+            email: profile.email
+        });
+        
+        // 🔥 CRITICAL: Save to localStorage with multiple keys
+        // 1. Main storage
+        localStorage.setItem('farm-profile', JSON.stringify(profile));
+        console.log('✅ Saved to farm-profile');
+        
+        // 2. User-specific key
+        if (profile.email) {
+            const userKey = `farm-profile-${profile.email}`;
+            localStorage.setItem(userKey, JSON.stringify(profile));
+            console.log(`✅ Saved to ${userKey}`);
+        }
+        
+        // 3. Last known profile
+        localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
+        
+        // 4. Farm name separately
+        localStorage.setItem('farm-last-name', profile.farmName);
+        
+        // 🔥 Save to UnifiedDataService if available
+        if (this.dataService) {
+            await this.dataService.save('profile', profile);
+            console.log('✅ Saved to UnifiedDataService');
+        }
+        
+        // Force immediate UI update
+        this.updateProfileDisplay(true);
+        
+        // Update appData farmName
+        window.FarmModules.appData.farmName = profile.farmName;
+        
+        // Show success
+        this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
+        
+        // Notify other modules
+        window.dispatchEvent(new CustomEvent('farm-data-updated', {
+            detail: { farmName: profile.farmName }
+        }));
+        
+        console.log('✅ Profile saved successfully');
+        
+    } catch (error) {
+        console.error('❌ Error saving profile:', error);
+        this.showNotification('Error saving profile: ' + error.message, 'error');
+    }
+},
 
     // ==================== USER DATA MANAGEMENT ====================
 
