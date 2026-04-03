@@ -52,10 +52,17 @@ initialize() {
     // Initialize data structure if needed
     this.initializeDataStructure();
     
-    // Load ALL saved data (async)
+   // Load ALL saved data (async)
     setTimeout(async () => {
         await this.loadAllPersistedData();
         this.renderModule();
+        
+        // 🔥 FORCE profile display update AFTER render
+        setTimeout(() => {
+            this.updateProfileDisplay();
+            console.log('📊 Profile display forced update after render');
+        }, 50);
+        
         this.initialized = true;
     }, 100);
 
@@ -497,29 +504,44 @@ async saveToFirebase() {
     console.log('🔄 Updating profile display...');
     
     const profile = window.FarmModules.appData.profile;
-    const settings = window.FarmModules.appData.settings;
-    
     if (!profile) {
         console.log('⚠️ No profile found in appData');
         return;
     }
     
-    console.log('📊 Displaying profile name:', profile.farmName);
-    console.log('📊 Settings:', settings);
+    console.log('📊 Displaying profile:', {
+        farmName: profile.farmName,
+        farmerName: profile.farmerName,
+        farmType: profile.farmType,
+        farmLocation: profile.farmLocation
+    });
     
-    // Update profile card
+    // Update profile card elements
     const farmNameCard = document.getElementById('profile-farm-name');
     const farmerNameCard = document.getElementById('profile-farmer-name');
     const emailCard = document.getElementById('profile-email');
     
     if (farmNameCard) {
         farmNameCard.textContent = profile.farmName || 'My Farm';
+        console.log(`✅ Updated profile card to: "${profile.farmName || 'My Farm'}"`);
+    } else {
+        console.warn('⚠️ Element #profile-farm-name not found');
     }
-    if (farmerNameCard) farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
-    if (emailCard) emailCard.textContent = profile.email || 'No email';
     
-    // Update member since
-    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString() : 'Today';
+    if (farmerNameCard) {
+        farmerNameCard.textContent = profile.farmerName || 'Farm Manager';
+    }
+    
+    if (emailCard) {
+        emailCard.textContent = profile.email || 'No email';
+    }
+    
+    // Update member since display
+    const memberSince = profile.memberSince ? new Date(profile.memberSince).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }) : 'Today';
     const memberSinceEl = document.getElementById('member-since');
     if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
     
@@ -530,7 +552,10 @@ async saveToFirebase() {
     const farmTypeInput = document.getElementById('farm-type');
     const farmLocationInput = document.getElementById('farm-location');
     
-    if (farmNameInput) farmNameInput.value = profile.farmName || '';
+    if (farmNameInput) {
+        farmNameInput.value = profile.farmName || '';
+        console.log(`✅ Set form input to: "${profile.farmName || ''}"`);
+    }
     if (farmerNameInput) farmerNameInput.value = profile.farmerName || '';
     if (emailInput) emailInput.value = profile.email || '';
     if (farmTypeInput) farmTypeInput.value = profile.farmType || '';
@@ -543,11 +568,11 @@ async saveToFirebase() {
     const localStorageCheck = document.getElementById('local-storage');
     const themeSelector = document.getElementById('theme-selector');
     
-    if (currencySelect) currencySelect.value = settings?.currency || 'USD';
-    if (thresholdInput) thresholdInput.value = settings?.lowStockThreshold || 10;
-    if (autoSyncCheck) autoSyncCheck.checked = settings?.autoSync !== false;
-    if (localStorageCheck) localStorageCheck.checked = settings?.localStorageEnabled !== false;
-    if (themeSelector) themeSelector.value = settings?.theme || 'light';
+    if (currencySelect) currencySelect.value = profile.currency || 'USD';
+    if (thresholdInput) thresholdInput.value = profile.lowStockThreshold || 10;
+    if (autoSyncCheck) autoSyncCheck.checked = profile.autoSync !== false;
+    if (localStorageCheck) localStorageCheck.checked = profile.localStorageEnabled !== false;
+    if (themeSelector) themeSelector.value = profile.theme || 'light';
     
     console.log('✅ Profile display updated');
 },
@@ -1991,6 +2016,9 @@ loadUserData() {
     } catch (error) {
         console.error('❌ Error loading user data:', error);
     }
+    
+    // Update the UI
+    this.updateProfileDisplay();
 },
     
 // 🔥 Add this helper method to find oldest user data
