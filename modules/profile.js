@@ -88,6 +88,48 @@ initialize() {
     console.log('✅ Profile module initialized with Firebase support');
     return true;
 },
+
+    debugProfileStorage() {
+    console.log('🔍 === PROFILE STORAGE DEBUG ===');
+    
+    // Check all farm-profile keys
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes('farm-profile')) {
+            try {
+                const value = JSON.parse(localStorage.getItem(key));
+                console.log(`📁 ${key}:`, {
+                    farmName: value.farmName,
+                    farmType: value.farmType,
+                    farmLocation: value.farmLocation,
+                    email: value.email
+                });
+            } catch(e) {
+                console.log(`📁 ${key}:`, localStorage.getItem(key));
+            }
+        }
+    }
+    
+    // Check appData
+    if (window.FarmModules?.appData?.profile) {
+        console.log('📊 appData.profile:', {
+            farmName: window.FarmModules.appData.profile.farmName,
+            farmType: window.FarmModules.appData.profile.farmType,
+            farmLocation: window.FarmModules.appData.profile.farmLocation,
+            email: window.FarmModules.appData.profile.email
+        });
+    } else {
+        console.log('❌ appData.profile is null or undefined');
+    }
+    
+    // Check DOM elements
+    const farmNameCard = document.getElementById('profile-farm-name');
+    const farmNameInput = document.getElementById('farm-name');
+    console.log('📄 DOM elements:', {
+        'profile-farm-name': farmNameCard?.textContent,
+        'farm-name input': farmNameInput?.value
+    });
+},
     
 // ==================== BROADCASTER LISTENERS ====================
 setupBroadcasterListeners() {
