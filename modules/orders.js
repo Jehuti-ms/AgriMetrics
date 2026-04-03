@@ -846,26 +846,76 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         this.element.innerHTML = `
 
             <style>
-          .delete-order {
-                background: #ef4444;
-                border: none;
-                cursor: pointer;
-                padding: 8px;
-                border-radius: 8px;
-                color: white;
-                font-size: 16px;
-                transition: all 0.2s;
-                width: 36px;
-                height: 36px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .delete-order:hover {
-                background: #dc2626 !important;
-                transform: translateY(-1px);
-            }
+          .order-card {
+         transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        }
+        
+        .complete-order-btn {
+            background: #10b981;
+            border: none;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        
+        .complete-order-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+        
+        .edit-order {
+            background: #10b981;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.2s;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .edit-order:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+        
+        .delete-order {
+            background: #ef4444;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.2s;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .delete-order:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
 
           </style>
           
@@ -1084,7 +1134,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         this.calculateTotal(); // Initialize total
     },
 
-    renderOrdersList() {
+   renderOrdersList() {
     if (this.orders.length === 0) {
         return `
             <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
@@ -1098,14 +1148,11 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     return `
         <div style="display: flex; flex-direction: column; gap: 12px;">
             ${this.orders.map(order => {
-                // 🔥 FIX: Try to find customer by ID, fallback to stored customerName
                 const customer = this.customers.find(c => c.id === order.customerId);
                 const customerName = customer?.name || order.customerName || 'Unknown Customer';
                 const isPending = order.status === 'pending' || order.status === 'draft';
                 return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"
-                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'"
-                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'">
+                    <div class="order-card" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: var(--text-primary); font-size: 16px; margin-bottom: 4px;">
                                 Order #${order.id} - ${customerName}
@@ -1125,26 +1172,14 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                             </div>
                             <div style="display: flex; gap: 8px;">
                                 ${isPending ? `
-                                    <button class="complete-order-btn" data-order-id="${order.id}" 
-                                            style="background: var(--success-color, #10b981); border: none; cursor: pointer; padding: 8px 12px; border-radius: 8px; color: white; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);" 
-                                            title="Complete Order"
-                                            onmouseover="this.style.background='var(--success-hover, #059669)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'"
-                                            onmouseout="this.style.background='var(--success-color, #10b981)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
-                                        <span style="font-size: 16px;">✅</span> Complete
+                                    <button class="complete-order-btn" data-order-id="${order.id}" title="Complete Order">
+                                        ✅ Complete
                                     </button>
                                 ` : ''}
-                                <button class="edit-order" data-id="${order.id}" 
-                                        style="background: var(--primary-color, #10b981); border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: white; font-size: 16px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"
-                                        title="Edit Order"
-                                        onmouseover="this.style.background='var(--primary-hover, #059669)'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.3)'"
-                                        onmouseout="this.style.background='var(--primary-color, #10b981)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.2)'">
+                                <button class="edit-order" data-id="${order.id}" title="Edit Order">
                                     ✏️
                                 </button>
-                                <button class="delete-order" data-id="${order.id}" 
-                                        style="background: #ef4444; border: none; cursor: pointer; padding: 8px; border-radius: 8px; color: white; font-size: 16px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;"
-                                        title="Delete Order"
-                                        onmouseover="this.style.background='#dc2626'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(239, 68, 68, 0.3)'"
-                                        onmouseout="this.style.background='#ef4444'; this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(239, 68, 68, 0.2)'">
+                                <button class="delete-order" data-id="${order.id}" title="Delete Order">
                                     🗑️
                                 </button>
                             </div>
