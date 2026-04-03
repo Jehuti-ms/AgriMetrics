@@ -1,4 +1,4 @@
-// modules/orders.js - COMPLETE VERSION WITH DATA BROADCASTER
+// modules/orders.js - COMPLETE VERSION WITH DATA BROADCASTER & VALIDATION
 console.log('Loading orders module...');
 
 const OrdersModule = {
@@ -25,64 +25,61 @@ const OrdersModule = {
     _customerSubmitHandler: null,
     _orderListenersAttached: false,
 
-  async initialize() {
-    console.log('📋 Initializing Orders Management...');
-    
-    this.element = document.getElementById('content-area');
-    if (!this.element) return false;
+    async initialize() {
+        console.log('📋 Initializing Orders Management...');
+        
+        this.element = document.getElementById('content-area');
+        if (!this.element) return false;
 
-    this.broadcaster = window.Broadcaster || null;
-    if (this.broadcaster) {
-        console.log('📡 Orders module connected to Data Broadcaster');
-    } else {
-        console.log('⚠️ Broadcaster not available, using local methods');
-    }
-    
-    // ✅ Get UnifiedDataService
-    this.dataService = window.UnifiedDataService || null;
-    if (!this.dataService) {
-        console.error('❌ UnifiedDataService not available for orders!');
-    } else {
-        console.log('📦 Orders connected to UnifiedDataService');
-    }
+        this.broadcaster = window.Broadcaster || null;
+        if (this.broadcaster) {
+            console.log('📡 Orders module connected to Data Broadcaster');
+        } else {
+            console.log('⚠️ Broadcaster not available, using local methods');
+        }
+        
+        // ✅ Get UnifiedDataService
+        this.dataService = window.UnifiedDataService || null;
+        if (!this.dataService) {
+            console.error('❌ UnifiedDataService not available for orders!');
+        } else {
+            console.log('📦 Orders connected to UnifiedDataService');
+        }
 
-    // Register with StyleManager
-    if (window.StyleManager) {
-        StyleManager.registerModule('orders', this.element, this);
-    }
+        // Register with StyleManager
+        if (window.StyleManager) {
+            StyleManager.registerModule('orders', this.element, this);
+        }
 
-    await this.loadData();
-    this.renderModule();
-    this.setupEventListeners();
-    
-    if (this.broadcaster) {
-        this.setupBroadcasterListeners();
-        this.broadcastOrdersLoaded();
-    }
-    
-    this.initialized = true;
-    
-    console.log('✅ Orders Management initialized with UnifiedDataService');
-    return true;
-},
+        await this.loadData();
+        this.renderModule();
+        this.setupEventListeners();
+        
+        if (this.broadcaster) {
+            this.setupBroadcasterListeners();
+            this.broadcastOrdersLoaded();
+        }
+        
+        this.initialized = true;
+        
+        console.log('✅ Orders Management initialized with UnifiedDataService');
+        return true;
+    },
     
     // Setup broadcaster listeners
     setupBroadcasterListeners() {
         if (!this.broadcaster) return;
         
-        // Listen for inventory updates that might affect orders
         this.broadcaster.on('inventory-updated', (data) => {
             console.log('📡 Orders received inventory update:', data);
             this.checkInventoryForOrders(data);
         });
         
-        // Listen for production updates
         this.broadcaster.on('production-updated', (data) => {
             console.log('📡 Orders received production update:', data);
             this.checkProductionForOrders(data);
         });
         
-        // Listen for sales records
         this.broadcaster.on('sale-recorded', (data) => {
             console.log('📡 Orders received sale record:', data);
             this.syncWithSale(data);
@@ -124,7 +121,6 @@ const OrdersModule = {
             date: order.date
         });
         
-        // Also broadcast sales update if order is completed
         if (order.status === 'completed') {
             this.broadcaster.broadcast('sale-completed', {
                 module: 'orders',
@@ -149,7 +145,6 @@ const OrdersModule = {
             totalAmount: order.totalAmount
         });
         
-        // If status changed to completed, broadcast sale
         if (order.status === 'completed') {
             const customer = this.customers.find(c => c.id === order.customerId);
             this.broadcaster.broadcast('sale-completed', {
@@ -166,7 +161,6 @@ const OrdersModule = {
     broadcastSaleCompleted(saleData) {
         if (!this.broadcaster) {
             console.log('⚠️ Broadcaster not available for sale event');
-            // Fallback: use custom event
             const event = new CustomEvent('sale-completed', { detail: saleData });
             window.dispatchEvent(event);
             return;
@@ -238,13 +232,11 @@ const OrdersModule = {
     checkInventoryForOrders(inventoryData) {
         if (!inventoryData || !inventoryData.items) return;
         
-        // Check if pending orders can be fulfilled with current inventory
         const pendingOrders = this.orders.filter(o => o.status === 'pending');
         let canFulfillOrders = false;
         
         pendingOrders.forEach(order => {
             order.items.forEach(item => {
-                // Check if we have enough inventory for this item
                 const inventoryItem = inventoryData.items.find(
                     inv => inv.productId === item.productId
                 );
@@ -268,8 +260,6 @@ const OrdersModule = {
     // Check production for order fulfillment
     checkProductionForOrders(productionData) {
         if (!productionData) return;
-        
-        // You can add logic here to check if new production affects pending orders
         console.log('Production data received for orders:', productionData);
     },
 
@@ -277,14 +267,12 @@ const OrdersModule = {
     syncWithSale(saleData) {
         if (!saleData) return;
         
-        // Check if this sale corresponds to an order
         const existingOrder = this.orders.find(order => 
             order.totalAmount === saleData.amount && 
             order.status === 'completed'
         );
         
         if (!existingOrder) {
-            // Could be a cash sale, not from an order
             console.log('Sales record not linked to existing order');
         }
     },
@@ -306,159 +294,189 @@ const OrdersModule = {
 
     // Enhanced saveData with broadcasting
     async saveData() {
-    localStorage.setItem('farm-orders', JSON.stringify(this.orders));
-    localStorage.setItem('farm-customers', JSON.stringify(this.customers));
-    
-    if (this.dataService) {
-        await this.saveToDataService();
-    }
-    
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('orders-data-saved', {
-            module: 'orders',
-            timestamp: new Date().toISOString(),
-            ordersCount: this.orders.length,
-            customersCount: this.customers.length
-        });
-    }
-},
-
-    // Enhanced loadData
-   // In your OrdersModule
-
-async loadData() {
-    console.log('Loading orders from UnifiedDataService...');
-    
-    try {
+        localStorage.setItem('farm-orders', JSON.stringify(this.orders));
+        localStorage.setItem('farm-customers', JSON.stringify(this.customers));
+        
         if (this.dataService) {
-            // Get from UnifiedDataService
-            this.orders = this.dataService.get('orders') || [];
-            this.customers = this.dataService.get('customers') || [];
-            
-            console.log('📊 Raw customers from UnifiedDataService:', this.customers);
-            
-            // Migrate from localStorage if empty and data exists
-            if (this.orders.length === 0) {
-                const savedOrders = localStorage.getItem('farm-orders');
-                if (savedOrders) {
-                    this.orders = JSON.parse(savedOrders);
-                    await this.saveToDataService();
-                    console.log(`📁 Migrated ${this.orders.length} orders from localStorage`);
-                }
-            }
-            if (this.customers.length === 0) {
-                const savedCustomers = localStorage.getItem('farm-customers');
-                if (savedCustomers) {
-                    this.customers = JSON.parse(savedCustomers);
-                    console.log('📁 Migrated customers from localStorage:', this.customers);
-                    await this.saveToDataService();
-                }
-            }
-        } else {
-            // Fallback to localStorage only
-            this.orders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
-            this.customers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
-            console.log('📁 Loaded customers from localStorage:', this.customers);
+            await this.saveToDataService();
         }
         
-        console.log(`📊 Loaded: ${this.orders.length} orders, ${this.customers.length} customers`);
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('orders-data-saved', {
+                module: 'orders',
+                timestamp: new Date().toISOString(),
+                ordersCount: this.orders.length,
+                customersCount: this.customers.length
+            });
+        }
+    },
+
+    // 🔥 VALIDATION FUNCTION - Checks if customer data is valid
+    isValidCustomer(customer) {
+        return customer && 
+               typeof customer === 'object' &&
+               customer.name && 
+               typeof customer.name === 'string' &&
+               customer.name !== 'undefined' &&
+               customer.name.trim() !== '' &&
+               typeof customer.id !== 'undefined' &&
+               !customer.hasOwnProperty('0') &&  // ← Excludes corrupted objects
+               !Array.isArray(customer);
+    },
+
+    // 🔥 VALIDATION FUNCTION - Checks if order data is valid
+    isValidOrder(order) {
+        return order && 
+               typeof order === 'object' &&
+               typeof order.totalAmount === 'number' &&
+               !isNaN(order.totalAmount) &&
+               order.totalAmount > 0 &&
+               order.customerId &&
+               Array.isArray(order.items) &&
+               order.items.length > 0 &&
+               !order.hasOwnProperty('0');
+    },
+
+    // Enhanced loadData with VALIDATION
+    async loadData() {
+        console.log('Loading orders from UnifiedDataService...');
         
-    } catch (error) {
-        console.error('❌ Error loading orders:', error);
-        this.orders = [];
-        this.customers = [];
-    }
-    
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('orders-data-loaded', {
-            module: 'orders',
-            ordersCount: this.orders.length,
-            customersCount: this.customers.length
-        });
-    }
-},
+        try {
+            if (this.dataService) {
+                // Get from UnifiedDataService
+                let rawCustomers = this.dataService.get('customers') || [];
+                let rawOrders = this.dataService.get('orders') || [];
+                
+                // 🔥 FILTER OUT CORRUPTED CUSTOMERS
+                this.customers = rawCustomers.filter(c => this.isValidCustomer(c));
+                
+                // 🔥 FILTER OUT CORRUPTED ORDERS
+                this.orders = rawOrders.filter(o => this.isValidOrder(o));
+                
+                const filteredCustomersCount = rawCustomers.length - this.customers.length;
+                const filteredOrdersCount = rawOrders.length - this.orders.length;
+                
+                if (filteredCustomersCount > 0 || filteredOrdersCount > 0) {
+                    console.log(`🧹 Filtered out ${filteredCustomersCount} corrupted customers and ${filteredOrdersCount} corrupted orders`);
+                    // Save cleaned data back
+                    await this.saveToDataService();
+                }
+                
+                // 🔥 ONLY MIGRATE VALID DATA from localStorage
+                if (this.customers.length === 0) {
+                    const savedCustomers = localStorage.getItem('farm-customers');
+                    if (savedCustomers) {
+                        try {
+                            const parsedCustomers = JSON.parse(savedCustomers);
+                            const validCustomers = parsedCustomers.filter(c => this.isValidCustomer(c));
+                            
+                            if (validCustomers.length > 0) {
+                                this.customers = validCustomers;
+                                await this.saveToDataService();
+                                console.log(`📁 Migrated ${validCustomers.length} valid customers (filtered out ${parsedCustomers.length - validCustomers.length} corrupted)`);
+                            } else {
+                                console.log('📁 No valid customers to migrate, starting fresh');
+                                this.customers = [];
+                            }
+                        } catch (e) {
+                            console.warn('⚠️ Failed to parse localStorage customers:', e);
+                        }
+                    }
+                }
+                
+                if (this.orders.length === 0) {
+                    const savedOrders = localStorage.getItem('farm-orders');
+                    if (savedOrders) {
+                        try {
+                            const parsedOrders = JSON.parse(savedOrders);
+                            const validOrders = parsedOrders.filter(o => this.isValidOrder(o));
+                            
+                            if (validOrders.length > 0) {
+                                this.orders = validOrders;
+                                await this.saveToDataService();
+                                console.log(`📁 Migrated ${validOrders.length} valid orders (filtered out ${parsedOrders.length - validOrders.length} corrupted)`);
+                            }
+                        } catch (e) {
+                            console.warn('⚠️ Failed to parse localStorage orders:', e);
+                        }
+                    }
+                }
+            } else {
+                // Fallback to localStorage only
+                const rawCustomers = JSON.parse(localStorage.getItem('farm-customers') || '[]');
+                const rawOrders = JSON.parse(localStorage.getItem('farm-orders') || '[]');
+                
+                this.customers = rawCustomers.filter(c => this.isValidCustomer(c));
+                this.orders = rawOrders.filter(o => this.isValidOrder(o));
+            }
+            
+            console.log(`📊 Loaded: ${this.orders.length} valid orders, ${this.customers.length} valid customers`);
+            
+        } catch (error) {
+            console.error('❌ Error loading orders:', error);
+            this.orders = [];
+            this.customers = [];
+        }
+        
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('orders-data-loaded', {
+                module: 'orders',
+                ordersCount: this.orders.length,
+                customersCount: this.customers.length
+            });
+        }
+    },
 
     async saveToDataService() {
-    if (!this.dataService) return;
-    
-    try {
-        await this.dataService.save('orders', this.orders);
-        await this.dataService.save('customers', this.customers);
-        console.log('✅ Saved orders and customers to UnifiedDataService');
-    } catch (error) {
-        console.error('❌ Error saving to UnifiedDataService:', error);
-    }
-},
+        if (!this.dataService) return;
+        
+        try {
+            // Only save valid data
+            const validCustomers = this.customers.filter(c => this.isValidCustomer(c));
+            const validOrders = this.orders.filter(o => this.isValidOrder(o));
+            
+            await this.dataService.save('orders', validOrders);
+            await this.dataService.save('customers', validCustomers);
+            console.log('✅ Saved orders and customers to UnifiedDataService');
+        } catch (error) {
+            console.error('❌ Error saving to UnifiedDataService:', error);
+        }
+    },
     
     // Theme change handler
     onThemeChange(theme) {
         console.log(`Orders Management updating for theme: ${theme}`);
-        // You can add theme-specific logic here if needed
     },
 
     // Complete order method
     completeOrder(orderId) {
         console.log(`✅ Completing order: ${orderId}`);
         
-        // Find the order
         const order = this.orders.find(o => o.id == orderId);
         if (!order) {
             this.showNotification('Order not found', 'error');
             return;
         }
         
-        // Mark order as completed
         order.status = 'completed';
         order.completedAt = new Date().toISOString();
-        
-        // Save to localStorage
         this.saveData();
         
-        // Show notification
         this.showNotification(`Order #${orderId} completed!`, 'success');
         
-        // Create sale data from order
         const customer = this.customers.find(c => c.id === order.customerId);
-        const saleId = 'SALE-' + Date.now().toString().slice(-6);
-        
-        const saleData = {
-            id: saleId,
-            date: new Date().toISOString().split('T')[0],
-            customer: customer?.name || 'Walk-in',
-            product: this.mapOrderItemsToProduct(order.items),
-            unit: 'items',
-            quantity: this.calculateOrderQuantity(order.items),
-            unitPrice: order.totalAmount / this.calculateOrderQuantity(order.items),
-            totalAmount: order.totalAmount,
-            paymentMethod: 'cash',
-            paymentStatus: 'paid',
-            notes: `From order #${orderId}`,
-            orderSource: true,
-            orderId: orderId,
-            items: order.items,
-            customerName: customer?.name || 'Unknown'
-        };
-        
-        console.log('🔄 Creating sale from order:', saleData);
         
         // Broadcast order completed event
         this.broadcastOrderAsSale(order);
-        
-        // Update UI
         this.renderModule();
         
         console.log('✅ Order completed and communicated to all modules');
-        return saleId;
     },
 
     // Helper functions
     mapOrderItemsToProduct(items) {
         if (!items || items.length === 0) return 'other';
-        
-        // If there are multiple items, use the first one for categorization
         const firstItem = items[0];
-        
-        // Map common products
         const productMap = {
             'eggs': 'eggs',
             'broilers': 'broilers-live',
@@ -468,7 +486,6 @@ async loadData() {
             'medication': 'medical',
             'equipment': 'equipment'
         };
-        
         return productMap[firstItem.productId] || 'other';
     },
 
@@ -482,7 +499,6 @@ async loadData() {
         
         const customer = this.customers.find(c => c.id === order.customerId);
         
-        // Create sale data
         const saleData = {
             id: order.id,
             date: order.date,
@@ -500,18 +516,14 @@ async loadData() {
             orderId: order.id
         };
         
-        // Broadcast via Data Broadcaster
         if (this.broadcaster) {
             console.log('📡 Broadcasting sale-completed event');
             this.broadcaster.broadcast('sale-completed', saleData);
         } else {
-            console.log('⚠️ Broadcaster not available, using direct window event');
-            // Fallback: use custom event
             const event = new CustomEvent('sale-completed', { detail: saleData });
             window.dispatchEvent(event);
         }
         
-        // Also use the existing broadcast method
         if (this.broadcastSaleCompleted) {
             this.broadcastSaleCompleted(saleData);
         }
@@ -533,399 +545,301 @@ async loadData() {
         return this.orders.reduce((sum, order) => sum + order.totalAmount, 0);
     },
 
-// ========== PHONE NUMBER HANDLING WITH libphonenumber-js ==========
-
-/**
- * Normalize and format phone number using libphonenumber-js
- * @param {string} rawInput - Raw phone input
- * @param {string} defaultCountry - Default country code (default: 'BB' for Barbados)
- * @returns {object} - { formatted, e164, isValid }
- */
-normalizePhoneNumber(rawInput, defaultCountry = 'BB') {
-    if (!rawInput) return { formatted: '', e164: '', isValid: false };
-    
-    // Check if libphonenumber is available
-    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
-    
-    if (typeof parsePhone === 'undefined') {
-        console.warn('libphonenumber-js not loaded, using fallback');
-        return this.fallbackPhoneFormat(rawInput);
-    }
-    
-    try {
-        // Extract digits
-        const digits = rawInput.replace(/\D/g, '');
+    // ========== PHONE NUMBER HANDLING ==========
+    normalizePhoneNumber(rawInput, defaultCountry = 'BB') {
+        if (!rawInput) return { formatted: '', e164: '', isValid: false };
         
-        // Parse the phone number
-        const phoneNumber = parsePhone(digits, defaultCountry);
+        const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
         
-        if (phoneNumber && phoneNumber.isValid()) {
-            return {
-                formatted: phoneNumber.formatInternational(),
-                e164: phoneNumber.format('E.164'),
-                isValid: true,
-                national: phoneNumber.formatNational(),
-                countryCode: phoneNumber.country
-            };
+        if (typeof parsePhone === 'undefined') {
+            return this.fallbackPhoneFormat(rawInput);
         }
         
-        // If not valid, return raw digits
-        return {
-            formatted: digits,
-            e164: digits ? `+${digits}` : '',
-            isValid: false
-        };
-    } catch (error) {
-        console.error('Error parsing phone number:', error);
-        return this.fallbackPhoneFormat(rawInput);
-    }
-},
-
-/**
- * Fallback phone formatting when libphonenumber is not available
- */
-fallbackPhoneFormat(rawInput) {
-    const digits = rawInput.replace(/\D/g, '');
-    
-    // Fix duplicate leading 1s
-    let cleanDigits = digits;
-    if (cleanDigits.startsWith('11')) {
-        cleanDigits = cleanDigits.substring(1);
-    }
-    
-    // Basic formatting for Barbados/US numbers
-    if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
-        const formatted = `+1 (${cleanDigits.slice(1,4)}) ${cleanDigits.slice(4,7)}-${cleanDigits.slice(7,11)}`;
-        return { formatted, e164: `+${cleanDigits}`, isValid: true };
-    } else if (cleanDigits.length === 10) {
-        const formatted = `(${cleanDigits.slice(0,3)}) ${cleanDigits.slice(3,6)}-${cleanDigits.slice(6,10)}`;
-        return { formatted, e164: `+1${cleanDigits}`, isValid: true };
-    } else if (cleanDigits.length === 7) {
-        const formatted = `${cleanDigits.slice(0,3)}-${cleanDigits.slice(3,7)}`;
-        return { formatted, e164: `+1246${cleanDigits}`, isValid: true };
-    }
-    
-    return { formatted: cleanDigits, e164: cleanDigits ? `+${cleanDigits}` : '', isValid: cleanDigits.length >= 7 };
-},
-
-/**
- * Format phone number for display (from E.164)
- * @param {string} e164Number - E.164 formatted number
- * @returns {string} - User-friendly formatted number
- */
-formatPhoneForDisplay(e164Number) {
-    if (!e164Number) return '';
-    
-    // Clean the input
-    const cleanNumber = e164Number.trim();
-    
-    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
-    
-    if (typeof parsePhone !== 'undefined') {
         try {
-            // Try to parse as E.164 or any format
-            const phoneNumber = parsePhone(cleanNumber);
+            const digits = rawInput.replace(/\D/g, '');
+            const phoneNumber = parsePhone(digits, defaultCountry);
+            
             if (phoneNumber && phoneNumber.isValid()) {
-                // Return international format for display
-                return phoneNumber.formatInternational();
+                return {
+                    formatted: phoneNumber.formatInternational(),
+                    e164: phoneNumber.format('E.164'),
+                    isValid: true,
+                    national: phoneNumber.formatNational(),
+                    countryCode: phoneNumber.country
+                };
             }
-        } catch (error) {
-            console.error('Error formatting phone number:', error);
-        }
-    }
-    
-    // Fallback formatting for Barbados/US numbers
-    const digits = cleanNumber.replace(/\D/g, '');
-    
-    // Handle duplicate leading 1s (fix for duplication bug)
-    let cleanDigits = digits;
-    if (cleanDigits.startsWith('11')) {
-        cleanDigits = cleanDigits.substring(1);
-    }
-    
-    // Format based on length
-    if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
-        const countryCode = cleanDigits[0];
-        const areaCode = cleanDigits.slice(1, 4);
-        const firstPart = cleanDigits.slice(4, 7);
-        const secondPart = cleanDigits.slice(7, 11);
-        return `+${countryCode} (${areaCode}) ${firstPart}-${secondPart}`;
-    } else if (cleanDigits.length === 10) {
-        const areaCode = cleanDigits.slice(0, 3);
-        const firstPart = cleanDigits.slice(3, 6);
-        const secondPart = cleanDigits.slice(6, 10);
-        return `(${areaCode}) ${firstPart}-${secondPart}`;
-    } else if (cleanDigits.length === 7) {
-        const firstPart = cleanDigits.slice(0, 3);
-        const secondPart = cleanDigits.slice(3, 7);
-        return `${firstPart}-${secondPart}`;
-    }
-    
-    return cleanDigits.length > 0 ? `+${cleanDigits}` : cleanNumber;
-},
-
-/**
- * Format phone number for display (public method)
- * @param {string} phoneNumber - Phone number in any format
- * @returns {string} - Formatted phone number
- */
-formatPhone(phoneNumber) {
-    if (!phoneNumber) return '';
-    
-    // If it's already in E.164 format with +
-    if (phoneNumber.startsWith('+')) {
-        return this.formatPhoneForDisplay(phoneNumber);
-    }
-    
-    // If it's just digits
-    const digits = phoneNumber.replace(/\D/g, '');
-    
-    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
-    
-    if (typeof parsePhone !== 'undefined') {
-        try {
-            // Try to parse with default country (Barbados)
-            const parsed = parsePhone(digits, 'BB');
-            if (parsed && parsed.isValid()) {
-                return parsed.formatInternational();
-            }
+            
+            return { formatted: digits, e164: digits ? `+${digits}` : '', isValid: false };
         } catch (error) {
             console.error('Error parsing phone number:', error);
+            return this.fallbackPhoneFormat(rawInput);
         }
-    }
-    
-    // Fallback formatting
-    if (digits.length === 10) {
-        return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
-    } else if (digits.length === 11 && digits.startsWith('1')) {
-        return `+${digits.slice(0,1)} (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7,11)}`;
-    } else if (digits.length === 7) {
-        return `${digits.slice(0,3)}-${digits.slice(3,7)}`;
-    }
-    
-    return digits || phoneNumber;
-},
+    },
 
-/**
- * Setup phone input with libphonenumber-js
- * @param {HTMLElement} phoneInput - The phone input element
- * @param {string} defaultCountry - Default country code (default: 'BB' for Barbados)
- */
-setupPhoneField(phoneInput, defaultCountry = 'BB') {
-    if (!phoneInput) return;
-    
-    // Store the E.164 value separately
-    let storedE164 = '';
-    
-    // Remove existing event listeners by cloning
-    const newInput = phoneInput.cloneNode(true);
-    phoneInput.parentNode.replaceChild(newInput, phoneInput);
-    
-    // Set attributes
-    newInput.placeholder = 'Enter phone number';
-    newInput.setAttribute('maxlength', '20');
-    
-    // Input event - only allow digits
-    newInput.addEventListener('input', (e) => {
-        // Store raw digits for editing
-        const digits = e.target.value.replace(/\D/g, '');
-        
-        // Fix duplicate leading 1s
+    fallbackPhoneFormat(rawInput) {
+        const digits = rawInput.replace(/\D/g, '');
         let cleanDigits = digits;
         if (cleanDigits.startsWith('11')) {
             cleanDigits = cleanDigits.substring(1);
         }
         
-        e.target.dataset.rawDigits = cleanDigits;
+        if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
+            const formatted = `+1 (${cleanDigits.slice(1,4)}) ${cleanDigits.slice(4,7)}-${cleanDigits.slice(7,11)}`;
+            return { formatted, e164: `+${cleanDigits}`, isValid: true };
+        } else if (cleanDigits.length === 10) {
+            const formatted = `(${cleanDigits.slice(0,3)}) ${cleanDigits.slice(3,6)}-${cleanDigits.slice(6,10)}`;
+            return { formatted, e164: `+1${cleanDigits}`, isValid: true };
+        } else if (cleanDigits.length === 7) {
+            const formatted = `${cleanDigits.slice(0,3)}-${cleanDigits.slice(3,7)}`;
+            return { formatted, e164: `+1246${cleanDigits}`, isValid: true };
+        }
         
-        // Show raw digits while typing (no formatting to avoid cursor jumps)
-        e.target.value = cleanDigits;
-    });
-    
-    // Blur event - format the number
-    newInput.addEventListener('blur', (e) => {
-        const digits = e.target.dataset.rawDigits || e.target.value.replace(/\D/g, '');
+        return { formatted: cleanDigits, e164: cleanDigits ? `+${cleanDigits}` : '', isValid: cleanDigits.length >= 7 };
+    },
+
+    formatPhoneForDisplay(e164Number) {
+        if (!e164Number) return '';
+        const cleanNumber = e164Number.trim();
+        const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
         
-        if (digits) {
-            // Fix duplicate leading 1s
+        if (typeof parsePhone !== 'undefined') {
+            try {
+                const phoneNumber = parsePhone(cleanNumber);
+                if (phoneNumber && phoneNumber.isValid()) {
+                    return phoneNumber.formatInternational();
+                }
+            } catch (error) {
+                console.error('Error formatting phone number:', error);
+            }
+        }
+        
+        const digits = cleanNumber.replace(/\D/g, '');
+        let cleanDigits = digits;
+        if (cleanDigits.startsWith('11')) {
+            cleanDigits = cleanDigits.substring(1);
+        }
+        
+        if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
+            const countryCode = cleanDigits[0];
+            const areaCode = cleanDigits.slice(1, 4);
+            const firstPart = cleanDigits.slice(4, 7);
+            const secondPart = cleanDigits.slice(7, 11);
+            return `+${countryCode} (${areaCode}) ${firstPart}-${secondPart}`;
+        } else if (cleanDigits.length === 10) {
+            const areaCode = cleanDigits.slice(0, 3);
+            const firstPart = cleanDigits.slice(3, 6);
+            const secondPart = cleanDigits.slice(6, 10);
+            return `(${areaCode}) ${firstPart}-${secondPart}`;
+        } else if (cleanDigits.length === 7) {
+            const firstPart = cleanDigits.slice(0, 3);
+            const secondPart = cleanDigits.slice(3, 7);
+            return `${firstPart}-${secondPart}`;
+        }
+        
+        return cleanDigits.length > 0 ? `+${cleanDigits}` : cleanNumber;
+    },
+
+    formatPhone(phoneNumber) {
+        if (!phoneNumber) return '';
+        
+        if (phoneNumber.startsWith('+')) {
+            return this.formatPhoneForDisplay(phoneNumber);
+        }
+        
+        const digits = phoneNumber.replace(/\D/g, '');
+        const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
+        
+        if (typeof parsePhone !== 'undefined') {
+            try {
+                const parsed = parsePhone(digits, 'BB');
+                if (parsed && parsed.isValid()) {
+                    return parsed.formatInternational();
+                }
+            } catch (error) {
+                console.error('Error parsing phone number:', error);
+            }
+        }
+        
+        if (digits.length === 10) {
+            return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6,10)}`;
+        } else if (digits.length === 11 && digits.startsWith('1')) {
+            return `+${digits.slice(0,1)} (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7,11)}`;
+        } else if (digits.length === 7) {
+            return `${digits.slice(0,3)}-${digits.slice(3,7)}`;
+        }
+        
+        return digits || phoneNumber;
+    },
+
+    setupPhoneField(phoneInput, defaultCountry = 'BB') {
+        if (!phoneInput) return;
+        
+        let storedE164 = '';
+        const newInput = phoneInput.cloneNode(true);
+        phoneInput.parentNode.replaceChild(newInput, phoneInput);
+        
+        newInput.placeholder = 'Enter phone number';
+        newInput.setAttribute('maxlength', '20');
+        
+        newInput.addEventListener('input', (e) => {
+            const digits = e.target.value.replace(/\D/g, '');
             let cleanDigits = digits;
             if (cleanDigits.startsWith('11')) {
                 cleanDigits = cleanDigits.substring(1);
-                e.target.dataset.rawDigits = cleanDigits;
             }
+            e.target.dataset.rawDigits = cleanDigits;
+            e.target.value = cleanDigits;
+        });
+        
+        newInput.addEventListener('blur', (e) => {
+            const digits = e.target.dataset.rawDigits || e.target.value.replace(/\D/g, '');
             
-            const result = this.normalizePhoneNumber(cleanDigits, defaultCountry);
-            
-            if (result.isValid) {
-                // Store E.164 format
-                storedE164 = result.e164;
-                e.target.dataset.e164 = storedE164;
-                
-                // Display formatted version
-                e.target.value = result.formatted;
-                
-                // Visual feedback for valid number
-                e.target.style.borderColor = '#10b981';
-                e.target.style.transition = 'border-color 0.3s ease';
-                setTimeout(() => {
-                    e.target.style.borderColor = '';
-                }, 2000);
-            } else {
-                // Invalid number - show raw digits
-                e.target.value = cleanDigits;
-                e.target.dataset.e164 = '';
-                e.target.style.borderColor = '#ef4444';
-                
-                // Show warning for longer numbers
-                if (cleanDigits.length >= 5) {
-                    this.showNotification('Please enter a valid phone number', 'warning');
+            if (digits) {
+                let cleanDigits = digits;
+                if (cleanDigits.startsWith('11')) {
+                    cleanDigits = cleanDigits.substring(1);
+                    e.target.dataset.rawDigits = cleanDigits;
                 }
+                
+                const result = this.normalizePhoneNumber(cleanDigits, defaultCountry);
+                
+                if (result.isValid) {
+                    storedE164 = result.e164;
+                    e.target.dataset.e164 = storedE164;
+                    e.target.value = result.formatted;
+                    e.target.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        e.target.style.borderColor = '';
+                    }, 2000);
+                } else {
+                    e.target.value = cleanDigits;
+                    e.target.dataset.e164 = '';
+                    e.target.style.borderColor = '#ef4444';
+                    if (cleanDigits.length >= 5) {
+                        this.showNotification('Please enter a valid phone number', 'warning');
+                    }
+                }
+            } else {
+                e.target.value = '';
+                e.target.dataset.e164 = '';
+                storedE164 = '';
+                e.target.style.borderColor = '';
             }
-        } else {
-            e.target.value = '';
-            e.target.dataset.e164 = '';
-            storedE164 = '';
+        });
+        
+        newInput.addEventListener('focus', (e) => {
+            const digits = e.target.dataset.rawDigits || '';
+            if (digits) {
+                e.target.value = digits;
+                e.target.setSelectionRange(digits.length, digits.length);
+            }
             e.target.style.borderColor = '';
-        }
-    });
-    
-    // Focus event - show raw digits for editing
-    newInput.addEventListener('focus', (e) => {
-        const digits = e.target.dataset.rawDigits || '';
-        if (digits) {
-            e.target.value = digits;
-            // Place cursor at the end
-            e.target.setSelectionRange(digits.length, digits.length);
-        }
-        e.target.style.borderColor = '';
-    });
-    
-    return newInput;
-},
+        });
+        
+        return newInput;
+    },
 
-/**
- * Get the stored E.164 phone number from input
- * @param {HTMLElement} phoneInput - The phone input element
- * @returns {string} - E.164 formatted number (e.g., +12465551234)
- */
-getPhoneNumberE164(phoneInput) {
-    if (!phoneInput) return '';
-    return phoneInput.dataset.e164 || '';
-},
+    getPhoneNumberE164(phoneInput) {
+        if (!phoneInput) return '';
+        return phoneInput.dataset.e164 || '';
+    },
 
-/**
- * Validate a phone number
- * @param {string} phoneNumber - Phone number to validate
- * @param {string} defaultCountry - Default country code
- * @returns {boolean} - True if valid
- */
-validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
-    if (!phoneNumber) return false;
-    
-    const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
-    
-    if (typeof parsePhone !== 'undefined') {
-        try {
-            const digits = phoneNumber.replace(/\D/g, '');
-            const parsed = parsePhone(digits, defaultCountry);
-            return parsed ? parsed.isValid() : false;
-        } catch (error) {
-            return false;
+    validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
+        if (!phoneNumber) return false;
+        
+        const parsePhone = window.libphonenumber?.parsePhoneNumberFromString;
+        
+        if (typeof parsePhone !== 'undefined') {
+            try {
+                const digits = phoneNumber.replace(/\D/g, '');
+                const parsed = parsePhone(digits, defaultCountry);
+                return parsed ? parsed.isValid() : false;
+            } catch (error) {
+                return false;
+            }
         }
-    }
-    
-    // Fallback validation
-    const digits = phoneNumber.replace(/\D/g, '');
-    return digits.length >= 7 && digits.length <= 15;
-},
+        
+        const digits = phoneNumber.replace(/\D/g, '');
+        return digits.length >= 7 && digits.length <= 15;
+    },
    
-  renderModule() {
+    renderModule() {
         if (!this.element) return;
         const stats = this.calculateStats();
-             
+        
         this.element.innerHTML = `
-
             <style>
-          .order-card {
-         transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .order-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-        }
-        
-        .complete-order-btn {
-            background: #10b981;
-            border: none;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 8px;
-            color: white;
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-        
-        .complete-order-btn:hover {
-            background: #059669;
-            transform: translateY(-1px);
-        }
-        
-        .edit-order {
-            background: #10b981;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-            transition: all 0.2s;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .edit-order:hover {
-            background: #059669;
-            transform: translateY(-1px);
-        }
-        
-        .delete-order {
-            background: #ef4444;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            color: white;
-            font-size: 16px;
-            transition: all 0.2s;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .delete-order:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-        }
-
-          </style>
-          
+                .order-card {
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .order-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                .complete-order-btn {
+                    background: #10b981;
+                    border: none;
+                    cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    color: white;
+                    font-size: 13px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    transition: all 0.2s;
+                }
+                .complete-order-btn:hover {
+                    background: #059669;
+                    transform: translateY(-1px);
+                }
+                .edit-order {
+                    background: #10b981;
+                    border: none;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    color: white;
+                    font-size: 16px;
+                    transition: all 0.2s;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .edit-order:hover {
+                    background: #059669;
+                    transform: translateY(-1px);
+                }
+                .delete-order {
+                    background: #ef4444;
+                    border: none;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 8px;
+                    color: white;
+                    font-size: 16px;
+                    transition: all 0.2s;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .delete-order:hover {
+                    background: #dc2626;
+                    transform: translateY(-1px);
+                }
+            </style>
+            
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Orders Management</h1>
                     <p class="module-subtitle">Manage customer orders and deliveries</p>
                 </div>
                
-                <!-- Order Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
@@ -949,7 +863,6 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                     </div>
                 </div>
 
-                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="create-order-btn">
                         <div style="font-size: 32px;">➕</div>
@@ -973,13 +886,11 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                     </button>
                 </div>
 
-                <!-- Create Order Form -->
                 <div id="order-form-container" class="hidden">
                     <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
                         <h3 id="order-form-title" style="color: var(--text-primary); margin-bottom: 20px;">Create New Order</h3>
                         <form id="order-form">
                             <input type="hidden" id="editing-order-id" value="">
-                            
                             <div style="margin-bottom: 16px;">
                                 <div style="display: flex; gap: 8px; align-items: flex-end;">
                                     <div style="flex: 1;">
@@ -999,9 +910,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                                             ` : ''}
                                         </select>
                                     </div>
-                                    <button type="button" class="btn-outline" id="quick-add-customer" 
-                                            style="padding: 10px 16px; margin-bottom: ${this.customers.length === 0 ? '0' : '2px'}; white-space: nowrap; display: flex; align-items: center; gap: 4px;" 
-                                            title="Add New Customer">
+                                    <button type="button" class="btn-outline" id="quick-add-customer" style="padding: 10px 16px; white-space: nowrap; display: flex; align-items: center; gap: 4px;" title="Add New Customer">
                                         <span style="font-size: 16px;">➕</span>
                                         <span style="font-size: 13px;">Add</span>
                                     </button>
@@ -1072,7 +981,6 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                     </div>
                 </div>
 
-                <!-- Add Customer Form -->
                 <div id="customer-form-container" class="hidden">
                     <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
                         <h3 style="color: var(--text-primary); margin-bottom: 20px;">Add New Customer</h3>
@@ -1103,7 +1011,6 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                     </div>
                 </div>
 
-                <!-- Recent Orders -->
                 <div class="glass-card" style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--text-primary); font-size: 20px;">Recent Orders</h3>
@@ -1117,7 +1024,6 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                     </div>
                 </div>
 
-                <!-- Customers List -->
                 <div class="glass-card" id="customers-section" style="padding: 24px; margin-top: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--text-primary); font-size: 20px;">Customers</h3>
@@ -1131,123 +1037,117 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         `;
 
         this.setupEventListeners();
-        this.calculateTotal(); // Initialize total
+        this.calculateTotal();
     },
 
-   renderOrdersList() {
-    if (this.orders.length === 0) {
-        return `
-            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
-                <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
-                <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
-            </div>
-        `;
-    }
+    renderOrdersList() {
+        if (this.orders.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                    <div style="font-size: 16px; margin-bottom: 8px;">No orders yet</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Create your first order to get started</div>
+                </div>
+            `;
+        }
 
-    return `
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            ${this.orders.map(order => {
-                const customer = this.customers.find(c => c.id === order.customerId);
-                const customerName = customer?.name || order.customerName || 'Unknown Customer';
-                const isPending = order.status === 'pending' || order.status === 'draft';
-                return `
-                    <div class="order-card" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary); font-size: 16px; margin-bottom: 4px;">
-                                Order #${order.id} - ${customerName}
-                            </div>
-                            <div style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
-                                <span>📅 ${order.date || 'No date'}</span>
-                                <span>📦 ${order.items ? order.items.length : 0} item${order.items && order.items.length !== 1 ? 's' : ''}</span>
-                            </div>
-                            ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.02); border-radius: 4px;">📝 ${order.notes}</div>` : ''}
-                        </div>
-                        <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
-                            <div>
-                                <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">${this.formatCurrency(order.totalAmount)}</div>
-                                <div style="font-size: 12px; padding: 4px 12px; border-radius: 20px; background: ${this.getStatusColor(order.status)}15; color: ${this.getStatusColor(order.status)}; margin-top: 4px; font-weight: 500; display: inline-block;">
-                                    ${this.formatStatus(order.status)}
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.orders.map(order => {
+                    const customer = this.customers.find(c => c.id === order.customerId);
+                    const customerName = customer?.name || order.customerName || 'Unknown Customer';
+                    const isPending = order.status === 'pending' || order.status === 'draft';
+                    return `
+                        <div class="order-card" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary); font-size: 16px; margin-bottom: 4px;">
+                                    Order #${order.id} - ${customerName}
                                 </div>
+                                <div style="font-size: 14px; color: var(--text-secondary); display: flex; gap: 16px; align-items: center;">
+                                    <span>📅 ${order.date || 'No date'}</span>
+                                    <span>📦 ${order.items ? order.items.length : 0} item${order.items && order.items.length !== 1 ? 's' : ''}</span>
+                                </div>
+                                ${order.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px; padding: 4px 8px; background: rgba(0,0,0,0.02); border-radius: 4px;">📝 ${order.notes}</div>` : ''}
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                ${isPending ? `
-                                    <button class="complete-order-btn" data-order-id="${order.id}" title="Complete Order">
-                                        ✅ Complete
+                            <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
+                                <div>
+                                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">${this.formatCurrency(order.totalAmount)}</div>
+                                    <div style="font-size: 12px; padding: 4px 12px; border-radius: 20px; background: ${this.getStatusColor(order.status)}15; color: ${this.getStatusColor(order.status)}; margin-top: 4px; font-weight: 500; display: inline-block;">
+                                        ${this.formatStatus(order.status)}
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    ${isPending ? `
+                                        <button class="complete-order-btn" data-order-id="${order.id}" title="Complete Order">
+                                            ✅ Complete
+                                        </button>
+                                    ` : ''}
+                                    <button class="edit-order" data-id="${order.id}" title="Edit Order">
+                                        ✏️
                                     </button>
-                                ` : ''}
-                                <button class="edit-order" data-id="${order.id}" title="Edit Order">
-                                    ✏️
-                                </button>
-                                <button class="delete-order" data-id="${order.id}" title="Delete Order">
-                                    🗑️
-                                </button>
+                                    <button class="delete-order" data-id="${order.id}" title="Delete Order">
+                                        🗑️
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-},
-
-  renderCustomersList() {
-    console.log('🔍 Rendering customers list, count:', this.customers.length);
-    console.log('📋 First customer sample:', this.customers[0]);
-    
-    if (this.customers.length === 0) {
-        return `
-            <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
-                <div style="font-size: 32px; margin-bottom: 12px;">👥</div>
-                <div style="font-size: 14px;">No customers</div>
-                <div style="font-size: 12px; color: var(--text-secondary);">Add your first customer</div>
+                    `;
+                }).join('')}
             </div>
         `;
-    }
+    },
 
-    return `
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            ${this.customers.map(customer => {
-                // Log each customer to see the structure
-                console.log('Customer:', customer);
-                
-                // Get the name safely
-                const customerName = customer.name || customer.customerName || 'Unknown';
-                
-                return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: var(--text-primary);">${customerName}</div>
-                            <div style="font-size: 14px; color: var(--text-secondary);">
-                                ${customer.contact ? `📞 ${this.formatPhone(customer.contact)}` : ''}
-                            </div>
-                            ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">✉️ ${customer.email}</div>` : ''}
-                            ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">📍 ${customer.address}</div>` : ''}
-                        </div>
-                        <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
-                            <div>
+    renderCustomersList() {
+        console.log('🔍 Rendering customers list, count:', this.customers.length);
+        
+        if (this.customers.length === 0) {
+            return `
+                <div style="text-align: center; color: var(--text-secondary); padding: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">👥</div>
+                    <div style="font-size: 14px;">No customers</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">Add your first customer</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${this.customers.map(customer => {
+                    const customerName = customer.name || 'Unknown';
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${customerName}</div>
                                 <div style="font-size: 14px; color: var(--text-secondary);">
-                                    ${this.getCustomerOrderCount(customer.id)} orders
+                                    ${customer.contact ? `📞 ${this.formatPhone(customer.contact)}` : ''}
                                 </div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">
-                                    ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
-                                </div>
+                                ${customer.email ? `<div style="font-size: 12px; color: var(--text-secondary);">✉️ ${customer.email}</div>` : ''}
+                                ${customer.address ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">📍 ${customer.address}</div>` : ''}
                             </div>
-                            <div style="display: flex; gap: 4px;">
-                                <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
-                                    ✏️
-                                </button>
-                                <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
-                                    🗑️
-                                </button>
+                            <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                                <div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        ${this.getCustomerOrderCount(customer.id)} orders
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        ${this.formatCurrency(this.getCustomerTotal(customer.id))} total
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 4px;">
+                                    <button class="btn-icon edit-customer" data-action="edit-customer" data-id="${customer.id}" title="Edit Customer">
+                                        ✏️
+                                    </button>
+                                    <button class="btn-icon delete-customer" data-action="delete-customer" data-id="${customer.id}" title="Delete Customer">
+                                        🗑️
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-},
+                    `;
+                }).join('')}
+            </div>
+        `;
+    },
 
     getCustomerOrderCount(customerId) {
         return this.orders.filter(order => order.customerId === customerId).length;
@@ -1284,10 +1184,8 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
     setupEventListeners() {
         console.log('🔧 Setting up Orders module event listeners...');
         
-        // Store reference to this module for use in handlers
         const self = this;
         
-        // Remove existing listeners
         if (this._clickHandler) {
             document.removeEventListener('click', this._clickHandler);
         }
@@ -1301,11 +1199,9 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             }
         }
         
-        // ===== CAPTURE PHASE HANDLER =====
         this._captureHandler = (e) => {
             const target = e.target;
             
-            // Check if this is an order/customer action
             if (target.closest('.edit-order') || 
                 target.closest('.delete-order') || 
                 target.closest('.edit-customer') || 
@@ -1313,12 +1209,9 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                 target.closest('.complete-order-btn')) {
                 
                 console.log('🛑 CAPTURE PHASE: Intercepting order/customer action');
-                
-                // Mark this as handled by orders module
                 e.stopPropagation();
                 e.preventDefault();
                 
-                // Handle the action immediately in capture phase
                 const completeBtn = target.closest('.complete-order-btn');
                 if (completeBtn) {
                     const orderId = completeBtn.getAttribute('data-order-id');
@@ -1375,11 +1268,8 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             }
         };
         
-        // ===== BUBBLE PHASE HANDLER =====
         this._clickHandler = (e) => {
             const target = e.target;
-            
-            // ===== BUTTON HANDLERS (by ID) =====
             const button = target.closest('button');
             if (!button) return;
             
@@ -1418,7 +1308,6 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                 case 'quick-add-customer':
                 case 'quick-add-customer-empty':
                     self.showCustomerForm();
-                    // Ensure we scroll to the form and focus
                     setTimeout(() => {
                         self.ensureCustomerFormVisible();
                     }, 100);
@@ -1426,16 +1315,11 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             }
         };
         
-        // Attach capture phase handler
         document.addEventListener('click', this._captureHandler, true);
-        
-        // Attach bubble phase handler
         document.addEventListener('click', this._clickHandler);
         
-        // Form submissions
         const orderForm = document.getElementById('order-form');
         if (orderForm) {
-            // Remove old listener to avoid duplicates
             orderForm.removeEventListener('submit', this._orderSubmitHandler);
             this._orderSubmitHandler = (e) => self.handleOrderSubmit(e);
             orderForm.addEventListener('submit', this._orderSubmitHandler);
@@ -1448,39 +1332,30 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             customerForm.addEventListener('submit', this._customerSubmitHandler);
         }
         
-        // Customer select change handler for "Add New" option
         const customerSelect = document.getElementById('order-customer');
         if (customerSelect) {
-            // Remove existing listener to avoid duplicates
             if (this._customerSelectHandler) {
                 customerSelect.removeEventListener('change', this._customerSelectHandler);
             }
             
-            // Create new handler
             this._customerSelectHandler = (e) => {
                 if (e.target.value === 'add-new') {
                     console.log('➕ Add new customer selected from dropdown');
                     self.showCustomerForm();
-                    // Reset the select to default
                     setTimeout(() => {
                         e.target.value = '';
                     }, 100);
                 }
             };
             
-            // Add the listener
             customerSelect.addEventListener('change', this._customerSelectHandler);
         }
         
-        // Set today's date
         const today = new Date().toISOString().split('T')[0];
         const orderDate = document.getElementById('order-date');
         if (orderDate) orderDate.value = today;
         
-        // Calculate total when items change
         this.setupTotalCalculation();
-        
-        // Hover effects
         this.setupHoverEffects();
         
         this._orderListenersAttached = true;
@@ -1492,32 +1367,19 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         const customerContainer = document.getElementById('customer-form-container');
         if (!customerContainer) return;
         
-        // Check if the form is in the viewport
         const rect = customerContainer.getBoundingClientRect();
-        const isInViewport = rect.top >= 0 && 
-                            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+        const isInViewport = rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
         
         if (!isInViewport) {
-            // Scroll to the form
-            customerContainer.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
-            });
-            
-            // Add a slight delay and then focus
+            customerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             setTimeout(() => {
                 const nameInput = document.getElementById('customer-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
+                if (nameInput) nameInput.focus();
             }, 500);
         } else {
-            // Already in viewport, just focus
             setTimeout(() => {
                 const nameInput = document.getElementById('customer-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
+                if (nameInput) nameInput.focus();
             }, 100);
         }
     },
@@ -1526,22 +1388,16 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
         console.log('📝 Showing order form');
         
         try {
-            // Check if there are any customers
             if (this.customers.length === 0) {
-                console.log('⚠️ No customers found');
-                
-                // Ask user if they want to add a customer first
                 if (confirm('No customers found. Would you like to add a customer first?')) {
                     this.showCustomerForm();
                     return;
                 } else {
-                    // If they decline, still show the form but with a message
                     this.showNotification('Please add a customer first', 'warning');
                     return;
                 }
             }
             
-            // Get the order form container
             const orderFormContainer = document.getElementById('order-form-container');
             if (!orderFormContainer) {
                 console.error('❌ Order form container not found');
@@ -1549,73 +1405,45 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
                 return;
             }
             
-            // Hide customers section temporarily
             const customersSection = document.getElementById('customers-section');
             if (customersSection) {
                 customersSection.style.display = 'none';
             }
             
-            // Show the form container
             orderFormContainer.classList.remove('hidden');
             orderFormContainer.style.display = 'block';
-            
-            // Scroll to the form
-            orderFormContainer.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start'
-            });
-            
-            // Refresh customer dropdown
+            orderFormContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             this.refreshCustomerDropdown();
             
-            // Set today's date
             const dateInput = document.getElementById('order-date');
             if (dateInput) {
                 const today = new Date().toISOString().split('T')[0];
                 dateInput.value = today;
             }
             
-            // Reset the form
             const form = document.getElementById('order-form');
-            if (form) {
-                form.reset();
-                
-                // Clear editing ID if it exists
-                const editingId = document.getElementById('editing-order-id');
-                if (editingId) {
-                    editingId.value = '';
-                }
-            }
+            if (form) form.reset();
             
-            // Clear and add first item
+            const editingId = document.getElementById('editing-order-id');
+            if (editingId) editingId.value = '';
+            
             const itemsContainer = document.getElementById('order-items');
             if (itemsContainer) {
                 itemsContainer.innerHTML = '';
                 this.addOrderItem();
             }
             
-            // Reset total
             const totalInput = document.getElementById('order-total');
-            if (totalInput) {
-                totalInput.value = '0.00';
-            }
+            if (totalInput) totalInput.value = '0.00';
             
-            // Update form title
             const title = document.querySelector('#order-form-container h3');
-            if (title) {
-                title.textContent = 'Create New Order';
-            }
+            if (title) title.textContent = 'Create New Order';
             
-            // Update submit button
             const submitBtn = document.querySelector('#order-form button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'Create Order';
-            }
+            if (submitBtn) submitBtn.textContent = 'Create Order';
             
-            // Add visual highlight
             orderFormContainer.style.transition = 'all 0.3s ease';
             orderFormContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
-            
             setTimeout(() => {
                 orderFormContainer.style.boxShadow = 'none';
             }, 2000);
@@ -1635,161 +1463,136 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             orderFormContainer.classList.add('hidden');
         }
         
-        // Show customers section again
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
             customersSection.style.display = 'block';
         }
     },
 
-showCustomerForm() {
-    console.log('👤 Showing customer form');
-    
-    try {
-        const customerContainer = document.getElementById('customer-form-container');
-        if (!customerContainer) {
-            console.error('❌ Customer form container not found');
-            this.showNotification('Customer form not found', 'error');
+    showCustomerForm() {
+        console.log('👤 Showing customer form');
+        
+        try {
+            const customerContainer = document.getElementById('customer-form-container');
+            if (!customerContainer) {
+                console.error('❌ Customer form container not found');
+                this.showNotification('Customer form not found', 'error');
+                return;
+            }
+            
+            const orderContainer = document.getElementById('order-form-container');
+            if (orderContainer) {
+                orderContainer.classList.add('hidden');
+            }
+            
+            const customersSection = document.getElementById('customers-section');
+            if (customersSection) {
+                customersSection.style.display = 'none';
+            }
+            
+            customerContainer.classList.remove('hidden');
+            customerContainer.style.display = 'block';
+            customerContainer.offsetHeight;
+            customerContainer.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+            
+            const form = document.getElementById('customer-form');
+            if (form) {
+                form.reset();
+                setTimeout(() => {
+                    const phoneInput = document.getElementById('customer-phone');
+                    if (phoneInput) {
+                        this.setupPhoneField(phoneInput, 'BB');
+                        console.log('📞 Phone field setup with libphonenumber-js');
+                    }
+                }, 100);
+                setTimeout(() => {
+                    const nameInput = document.getElementById('customer-name');
+                    if (nameInput) nameInput.focus();
+                }, 500);
+            }
+            
+            const title = document.querySelector('#customer-form-container h3');
+            if (title) title.textContent = 'Add New Customer';
+            
+            const submitBtn = document.querySelector('#customer-form button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = 'Add Customer';
+            
+            document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
+            
+            customerContainer.style.transition = 'all 0.3s ease';
+            customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
+            setTimeout(() => {
+                customerContainer.style.boxShadow = 'none';
+            }, 2000);
+            
+            console.log('✅ Customer form shown with libphonenumber-js');
+            
+        } catch (error) {
+            console.error('❌ Error in showCustomerForm:', error);
+            this.showNotification('Error showing customer form', 'error');
+        }
+    },
+
+    async handleCustomerSubmit(e) {
+        e.preventDefault();
+        
+        const nameValue = document.getElementById('customer-name').value.trim();
+        
+        if (!nameValue) {
+            this.showNotification('Customer name is required', 'error');
             return;
         }
         
-        const orderContainer = document.getElementById('order-form-container');
-        if (orderContainer) {
-            orderContainer.classList.add('hidden');
-        }
-        
-        const customersSection = document.getElementById('customers-section');
-        if (customersSection) {
-            customersSection.style.display = 'none';
-        }
-        
-        customerContainer.classList.remove('hidden');
-        customerContainer.style.display = 'block';
-        customerContainer.offsetHeight;
-        
-        customerContainer.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-        });
-        
-        const form = document.getElementById('customer-form');
-        if (form) {
-            form.reset();
-            
-            // Setup phone input with libphonenumber
-            setTimeout(() => {
-                const phoneInput = document.getElementById('customer-phone');
-                if (phoneInput) {
-                    this.setupPhoneField(phoneInput, 'BB');
-                    console.log('📞 Phone field setup with libphonenumber-js');
-                }
-            }, 100);
-            
-            setTimeout(() => {
-                const nameInput = document.getElementById('customer-name');
-                if (nameInput) {
-                    nameInput.focus();
-                }
-            }, 500);
-        }
-        
-        // Update title
-        const title = document.querySelector('#customer-form-container h3');
-        if (title) {
-            title.textContent = 'Add New Customer';
-        }
-        
-        // Update submit button
-        const submitBtn = document.querySelector('#customer-form button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.textContent = 'Add Customer';
-        }
-        
-        // Remove any cancel edit buttons
-        document.querySelectorAll('.cancel-edit-btn').forEach(btn => btn.remove());
-        
-        // Add visual highlight
-        customerContainer.style.transition = 'all 0.3s ease';
-        customerContainer.style.boxShadow = '0 0 0 3px var(--primary-color, #10b981)';
-        
-        setTimeout(() => {
-            customerContainer.style.boxShadow = 'none';
-        }, 2000);
-        
-        console.log('✅ Customer form shown with libphonenumber-js');
-        
-    } catch (error) {
-        console.error('❌ Error in showCustomerForm:', error);
-        this.showNotification('Error showing customer form', 'error');
-    }
-},
-
- async handleCustomerSubmit(e) {
-    e.preventDefault();
-    
-    const phoneInput = document.getElementById('customer-phone');
-    
-    // Get the E.164 formatted number
-    let phoneNumber = '';
-    if (phoneInput) {
-        phoneNumber = this.getPhoneNumberE164(phoneInput);
-        if (!phoneNumber && phoneInput.value) {
-            const result = this.normalizePhoneNumber(phoneInput.value, 'BB');
-            phoneNumber = result.e164;
-        }
-    }
-    
-    const customerData = {
-        id: Date.now(),
-        name: document.getElementById('customer-name').value,
-        contact: phoneNumber,
-        email: document.getElementById('customer-email').value,
-        address: document.getElementById('customer-address').value,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-
-    // Save to localStorage
-    this.customers.push(customerData);
-    await this.saveData();
-    
-    // ========== SAVE TO FIREBASE ==========
-    // Save to UnifiedDataService (handled by saveData)
-    await this.saveData();
-    // =====================================
-    
-    // Broadcast customer added
-    this.broadcastCustomerAdded(customerData);
-    
-    // Refresh the customer dropdown if the order form is visible
-    const orderFormContainer = document.getElementById('order-form-container');
-    const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
-    
-    if (wasOrderFormVisible) {
-        this.refreshCustomerDropdown();
-    }
-    
-    this.renderModule();
-    this.hideCustomerForm();
-    
-    // Show success message
-    this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
-    
-    // If order form was visible, show it again and select the new customer
-    if (wasOrderFormVisible) {
-        setTimeout(() => {
-            this.showOrderForm();
-            const customerSelect = document.getElementById('order-customer');
-            if (customerSelect) {
-                customerSelect.value = customerData.id;
-                const event = new Event('change', { bubbles: true });
-                customerSelect.dispatchEvent(event);
+        const phoneInput = document.getElementById('customer-phone');
+        let phoneNumber = '';
+        if (phoneInput) {
+            phoneNumber = this.getPhoneNumberE164(phoneInput);
+            if (!phoneNumber && phoneInput.value) {
+                const result = this.normalizePhoneNumber(phoneInput.value, 'BB');
+                phoneNumber = result.e164;
             }
-            this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
-        }, 300);
-    }
-},
+        }
+        
+        const customerData = {
+            id: Date.now(),
+            name: nameValue,
+            contact: phoneNumber || '',
+            email: document.getElementById('customer-email').value.trim() || '',
+            address: document.getElementById('customer-address').value.trim() || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        this.customers.push(customerData);
+        await this.saveData();
+        
+        this.broadcastCustomerAdded(customerData);
+        
+        const orderFormContainer = document.getElementById('order-form-container');
+        const wasOrderFormVisible = orderFormContainer && !orderFormContainer.classList.contains('hidden');
+        
+        if (wasOrderFormVisible) {
+            this.refreshCustomerDropdown();
+        }
+        
+        this.renderModule();
+        this.hideCustomerForm();
+        
+        this.showNotification(`Customer "${customerData.name}" added successfully!`, 'success');
+        
+        if (wasOrderFormVisible) {
+            setTimeout(() => {
+                this.showOrderForm();
+                const customerSelect = document.getElementById('order-customer');
+                if (customerSelect) {
+                    customerSelect.value = customerData.id;
+                    const event = new Event('change', { bubbles: true });
+                    customerSelect.dispatchEvent(event);
+                }
+                this.showNotification(`Selected "${customerData.name}" for your order`, 'success');
+            }, 300);
+        }
+    },
     
     hideCustomerForm() {
         console.log('🙈 Hiding customer form');
@@ -1798,84 +1601,69 @@ showCustomerForm() {
             customerContainer.classList.add('hidden');
         }
         
-        // Show customers section again
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
             customersSection.style.display = 'block';
         }
     },
 
-   refreshCustomerDropdown() {
-    const customerSelect = document.getElementById('order-customer');
-    if (!customerSelect) return;
-    
-    console.log('🔄 Refreshing customer dropdown with:', this.customers);
-    
-    // Clear current options
-    customerSelect.innerHTML = '';
-    
-    // Add default option
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = 'Select Customer';
-    customerSelect.appendChild(defaultOption);
-    
-    // Add customers
-    if (this.customers.length === 0) {
-        const noCustomerOption = document.createElement('option');
-        noCustomerOption.value = '';
-        noCustomerOption.textContent = '⚠️ No customers found';
-        noCustomerOption.disabled = true;
-        customerSelect.appendChild(noCustomerOption);
+    refreshCustomerDropdown() {
+        const customerSelect = document.getElementById('order-customer');
+        if (!customerSelect) return;
         
-        const addCustomerOption = document.createElement('option');
-        addCustomerOption.value = 'add-new';
-        addCustomerOption.textContent = '➕ Add New Customer...';
-        addCustomerOption.style.color = '#10b981';
-        addCustomerOption.style.fontWeight = 'bold';
-        customerSelect.appendChild(addCustomerOption);
-    } else {
-        // Add existing customers
-        this.customers.forEach(customer => {
-            const option = document.createElement('option');
-            option.value = customer.id;
-            // Make sure we're using the correct property name
-            const customerName = customer.name || customer.customerName || 'Unknown';
-            let displayText = customerName;
-            if (customer.contact) {
-                displayText += ` (${this.formatPhone(customer.contact)})`;
-            }
-            option.textContent = displayText;
-            customerSelect.appendChild(option);
-            console.log(`✅ Added customer to dropdown: ${displayText}`);
-        });
+        customerSelect.innerHTML = '';
         
-        const separator = document.createElement('option');
-        separator.disabled = true;
-        separator.textContent = '──────────';
-        customerSelect.appendChild(separator);
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Select Customer';
+        customerSelect.appendChild(defaultOption);
         
-        const addCustomerOption = document.createElement('option');
-        addCustomerOption.value = 'add-new';
-        addCustomerOption.textContent = '➕ Add New Customer...';
-        addCustomerOption.style.color = '#10b981';
-        addCustomerOption.style.fontWeight = 'bold';
-        customerSelect.appendChild(addCustomerOption);
-    }
-},
+        if (this.customers.length === 0) {
+            const noCustomerOption = document.createElement('option');
+            noCustomerOption.value = '';
+            noCustomerOption.textContent = '⚠️ No customers found';
+            noCustomerOption.disabled = true;
+            customerSelect.appendChild(noCustomerOption);
+            
+            const addCustomerOption = document.createElement('option');
+            addCustomerOption.value = 'add-new';
+            addCustomerOption.textContent = '➕ Add New Customer...';
+            addCustomerOption.style.color = '#10b981';
+            addCustomerOption.style.fontWeight = 'bold';
+            customerSelect.appendChild(addCustomerOption);
+        } else {
+            this.customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                const customerName = customer.name || 'Unknown';
+                let displayText = customerName;
+                if (customer.contact) {
+                    displayText += ` (${this.formatPhone(customer.contact)})`;
+                }
+                option.textContent = displayText;
+                customerSelect.appendChild(option);
+            });
+            
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '──────────';
+            customerSelect.appendChild(separator);
+            
+            const addCustomerOption = document.createElement('option');
+            addCustomerOption.value = 'add-new';
+            addCustomerOption.textContent = '➕ Add New Customer...';
+            addCustomerOption.style.color = '#10b981';
+            addCustomerOption.style.fontWeight = 'bold';
+            customerSelect.appendChild(addCustomerOption);
+        }
+    },
     
     showCustomersSection() {
         const customersSection = document.getElementById('customers-section');
         if (customersSection) {
-            customersSection.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start'
-            });
-            
-            // Add visual highlight
+            customersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             customersSection.style.transition = 'all 0.3s ease';
             customersSection.style.boxShadow = '0 0 0 3px #3b82f6';
-            
             setTimeout(() => {
                 customersSection.style.boxShadow = 'none';
             }, 2000);
@@ -1906,7 +1694,6 @@ showCustomerForm() {
         const newItem = document.createElement('div');
         newItem.className = 'order-item';
         
-        // Set default values based on whether we're editing
         const quantity = itemData ? itemData.quantity : 1;
         const price = itemData ? itemData.price : '';
         const selectedProductId = itemData ? itemData.productId : '';
@@ -1928,7 +1715,6 @@ showCustomerForm() {
         `;
         itemsContainer.appendChild(newItem);
         
-        // Add event listeners to new item
         const removeBtn = newItem.querySelector('.remove-item');
         const quantityInput = newItem.querySelector('.quantity-input');
         const priceInput = newItem.querySelector('.price-input');
@@ -1953,12 +1739,10 @@ showCustomerForm() {
     },
     
     setupTotalCalculation() {
-        // Add event listeners to existing inputs
         document.querySelectorAll('.quantity-input, .price-input').forEach(input => {
             input.addEventListener('input', () => this.calculateTotal());
         });
         
-        // Add product selection listeners
         document.querySelectorAll('.product-select').forEach(select => {
             select.addEventListener('change', (e) => {
                 const selectedOption = e.target.options[e.target.selectedIndex];
@@ -1971,7 +1755,6 @@ showCustomerForm() {
             });
         });
         
-        // Add event listeners for remove buttons
         document.querySelectorAll('.remove-item').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.target.closest('.order-item').remove();
@@ -2006,104 +1789,96 @@ showCustomerForm() {
         });
     },
 
-async handleOrderSubmit(e) {
-    e.preventDefault();
-    
-    const editingId = document.getElementById('editing-order-id')?.value;
-    const isEditing = editingId && editingId !== '';
-    
-    // Get form values
-    const customerId = parseInt(document.getElementById('order-customer').value);
-    const date = document.getElementById('order-date').value;
-    const status = document.getElementById('order-status').value;
-    const notes = document.getElementById('order-notes').value;
-    
-    // Validate customer exists
-    const customer = this.customers.find(c => c.id === customerId);
-    if (!customer) {
-        this.showNotification('Please select a valid customer', 'error');
-        return;
-    }
-    
-    // Collect items
-    const items = [];
-    document.querySelectorAll('.order-item').forEach(item => {
-        const productSelect = item.querySelector('.product-select');
-        const quantityInput = item.querySelector('.quantity-input');
-        const priceInput = item.querySelector('.price-input');
+    async handleOrderSubmit(e) {
+        e.preventDefault();
         
-        if (productSelect.value && quantityInput.value && priceInput.value) {
-            items.push({
-                productId: productSelect.value,
-                productName: productSelect.options[productSelect.selectedIndex].text.split(' - ')[0],
-                quantity: parseFloat(quantityInput.value),
-                price: parseFloat(priceInput.value)
-            });
+        const editingId = document.getElementById('editing-order-id')?.value;
+        const isEditing = editingId && editingId !== '';
+        
+        const customerId = parseInt(document.getElementById('order-customer').value);
+        const date = document.getElementById('order-date').value;
+        const status = document.getElementById('order-status').value;
+        const notes = document.getElementById('order-notes').value;
+        
+        const customer = this.customers.find(c => c.id === customerId);
+        if (!customer) {
+            this.showNotification('Please select a valid customer', 'error');
+            return;
         }
-    });
-    
-    if (items.length === 0) {
-        this.showNotification('Please add at least one item', 'error');
-        return;
-    }
-    
-    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    
-    if (totalAmount <= 0) {
-        this.showNotification('Total amount must be greater than 0', 'error');
-        return;
-    }
-    
-    if (isEditing) {
-        // Update existing order
-        const orderIndex = this.orders.findIndex(o => o.id == editingId);
-        if (orderIndex !== -1) {
-            const updatedOrder = {
-                ...this.orders[orderIndex],
+        
+        const items = [];
+        document.querySelectorAll('.order-item').forEach(item => {
+            const productSelect = item.querySelector('.product-select');
+            const quantityInput = item.querySelector('.quantity-input');
+            const priceInput = item.querySelector('.price-input');
+            
+            if (productSelect.value && quantityInput.value && priceInput.value) {
+                items.push({
+                    productId: productSelect.value,
+                    productName: productSelect.options[productSelect.selectedIndex].text.split(' - ')[0],
+                    quantity: parseFloat(quantityInput.value),
+                    price: parseFloat(priceInput.value)
+                });
+            }
+        });
+        
+        if (items.length === 0) {
+            this.showNotification('Please add at least one item', 'error');
+            return;
+        }
+        
+        const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+        
+        if (totalAmount <= 0) {
+            this.showNotification('Total amount must be greater than 0', 'error');
+            return;
+        }
+        
+        if (isEditing) {
+            const orderIndex = this.orders.findIndex(o => o.id == editingId);
+            if (orderIndex !== -1) {
+                const updatedOrder = {
+                    ...this.orders[orderIndex],
+                    customerId,
+                    customerName: customer.name,
+                    date,
+                    items,
+                    totalAmount,
+                    status,
+                    notes,
+                    updatedAt: new Date().toISOString()
+                };
+                this.orders[orderIndex] = updatedOrder;
+                await this.saveData();
+                
+                this.broadcastOrderUpdated(updatedOrder);
+                this.showNotification(`Order #${editingId} updated!`, 'success');
+            }
+        } else {
+            const orderData = {
+                id: Date.now(),
                 customerId,
                 customerName: customer.name,
                 date,
                 items,
                 totalAmount,
                 status,
-                notes,
+                notes: notes || '',
+                createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
-            this.orders[orderIndex] = updatedOrder;
+            this.orders.unshift(orderData);
             await this.saveData();
             
-            // Broadcast update
-            this.broadcastOrderUpdated(updatedOrder);
-            this.showNotification(`Order #${editingId} updated!`, 'success');
+            this.broadcastOrderCreated(orderData);
+            this.showNotification('Order created successfully!', 'success');
         }
-    } else {
-        // Create new order
-        const orderData = {
-            id: Date.now(),
-            customerId,
-            customerName: customer.name,
-            date,
-            items,
-            totalAmount,
-            status,
-            notes: notes || '',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        this.orders.unshift(orderData);
-        await this.saveData();
         
-        // Broadcast creation
-        this.broadcastOrderCreated(orderData);
-        this.showNotification('Order created successfully!', 'success');
-    }
-    
-    // Reset and hide form
-    this.hideOrderForm();
-    this.renderModule();
-},
+        this.hideOrderForm();
+        this.renderModule();
+    },
           
-   async deleteOrder(id) {
+    async deleteOrder(id) {
         const order = this.orders.find(o => o.id === id);
         if (!order) return;
 
@@ -2111,9 +1886,7 @@ async handleOrderSubmit(e) {
             this.orders = this.orders.filter(o => o.id !== id);
             await this.saveData();
             
-            // Broadcast order deleted
             this.broadcastOrderDeleted(id);
-            
             this.renderModule();
             
             if (window.coreModule) {
@@ -2125,19 +1898,15 @@ async handleOrderSubmit(e) {
     editOrder(orderId) {
         console.log('✏️ Editing order:', orderId);
         
-        // Find the order
         const order = this.orders.find(o => o.id == orderId);
         if (!order) {
             this.showNotification('Order not found', 'error');
             return;
         }
         
-        // Show the order form
         this.showOrderForm();
         
-        // Wait for form to be visible then populate
         setTimeout(() => {
-            // Set editing ID
             let editingIdField = document.getElementById('editing-order-id');
             if (!editingIdField) {
                 editingIdField = document.createElement('input');
@@ -2147,23 +1916,17 @@ async handleOrderSubmit(e) {
             }
             editingIdField.value = order.id;
             
-            // Change title
             const title = document.querySelector('#order-form-container h3');
             if (title) title.textContent = 'Edit Order';
             
-            // Change submit button
             const submitBtn = document.querySelector('#order-form button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.textContent = 'Update Order';
-            }
+            if (submitBtn) submitBtn.textContent = 'Update Order';
             
-            // Populate basic fields
             document.getElementById('order-customer').value = order.customerId;
             document.getElementById('order-date').value = order.date;
             document.getElementById('order-status').value = order.status;
             document.getElementById('order-notes').value = order.notes || '';
             
-            // Clear and repopulate items
             const itemsContainer = document.getElementById('order-items');
             itemsContainer.innerHTML = '';
             
@@ -2175,70 +1938,46 @@ async handleOrderSubmit(e) {
                 });
             });
             
-            // Recalculate total
             this.calculateTotal();
-            
         }, 100);
     },
 
-   async deleteCustomer(id) {
-    console.log('🗑️ deleteCustomer function CALLED with:', id);
-    
-    // Convert id to number for comparison (handles both string and number IDs)
-    const numericId = parseInt(id);
-    
-    // Find the customer - try both number and string comparison
-    let customer = this.customers.find(c => c.id == numericId || c.id == id);
-    
-    // Also check if customer has a valid name
-    if (!customer || !customer.name || customer.name === 'undefined') {
-        console.error('❌ Customer not found or invalid for ID:', id);
+    async deleteCustomer(id) {
+        console.log('🗑️ deleteCustomer function CALLED with:', id);
         
-        // If customer is invalid, remove it directly
-        this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
-        await this.saveData();
-        this.renderModule();
-        this.showNotification('Invalid customer record removed', 'info');
-        return;
-    }
-
-    console.log('✅ Found customer:', customer);
-
-    // Check if customer has orders
-    const customerOrders = this.orders.filter(o => o.customerId == numericId || o.customerId == id);
-    console.log('📦 Customer orders:', customerOrders.length);
-
-    if (customerOrders.length > 0) {
-        const message = `Cannot delete "${customer.name}" because they have ${customerOrders.length} order(s). Delete their orders first.`;
-        console.warn('⚠️', message);
-        this.showNotification(message, 'error');
-        return;
-    }
-
-    if (confirm(`Are you sure you want to delete customer "${customer.name}"?`)) {
-        console.log('✅ Deleting customer:', customer.name);
+        const numericId = parseInt(id);
+        let customer = this.customers.find(c => c.id == numericId || c.id == id);
         
-        // Filter out the customer (handle both string and number)
-        this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
-        
-        // Save to localStorage
-        await this.saveData();
-        
-        // Broadcast deletion
-        if (this.broadcastCustomerDeleted) {
-            this.broadcastCustomerDeleted(customer.id, customer.name);
+        if (!customer || !customer.name || customer.name === 'undefined') {
+            console.error('❌ Customer not found or invalid for ID:', id);
+            this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
+            await this.saveData();
+            this.renderModule();
+            this.showNotification('Invalid customer record removed', 'info');
+            return;
         }
+
+        const customerOrders = this.orders.filter(o => o.customerId == numericId || o.customerId == id);
         
-        // Re-render
-        this.renderModule();
-        
-        // Show success message
-        this.showNotification(`Customer "${customer.name}" deleted successfully!`, 'success');
-    }
-},
-    
+        if (customerOrders.length > 0) {
+            this.showNotification(`Cannot delete "${customer.name}" - they have ${customerOrders.length} order(s)`, 'error');
+            return;
+        }
+
+        if (confirm(`Delete customer "${customer.name}"?`)) {
+            this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
+            await this.saveData();
+            
+            if (this.broadcastCustomerDeleted) {
+                this.broadcastCustomerDeleted(customer.id, customer.name);
+            }
+            
+            this.renderModule();
+            this.showNotification(`Customer "${customer.name}" deleted`, 'success');
+        }
+    },
+
     editCustomer(id) {
-        // For now, just show a message - full edit functionality can be added later
         if (window.coreModule) {
             window.coreModule.showNotification('Edit customer functionality coming soon!', 'info');
         }
@@ -2266,7 +2005,6 @@ async handleOrderSubmit(e) {
         if (window.coreModule && window.coreModule.showNotification) {
             window.coreModule.showNotification(message, type);
         } else {
-            // Fallback
             console.log(`${type.toUpperCase()}: ${message}`);
             if (type === 'error') {
                 alert(`Error: ${message}`);
@@ -2285,11 +2023,9 @@ async handleOrderSubmit(e) {
         }).format(amount);
     },
 
-    // Add the unload method
     unload() {
         console.log('📦 Unloading Orders module...');
         
-        // Remove event listeners
         if (this._clickHandler) {
             document.removeEventListener('click', this._clickHandler);
             this._clickHandler = null;
@@ -2299,7 +2035,6 @@ async handleOrderSubmit(e) {
             this._captureHandler = null;
         }
         
-        // Remove form submit handlers
         const orderForm = document.getElementById('order-form');
         if (orderForm && this._orderSubmitHandler) {
             orderForm.removeEventListener('submit', this._orderSubmitHandler);
@@ -2312,18 +2047,15 @@ async handleOrderSubmit(e) {
             this._customerSubmitHandler = null;
         }
         
-        // Remove customer select handler
         const customerSelect = document.getElementById('order-customer');
         if (customerSelect && this._customerSelectHandler) {
             customerSelect.removeEventListener('change', this._customerSelectHandler);
             this._customerSelectHandler = null;
         }
         
-        // Hide any open forms
         this.hideOrderForm();
         this.hideCustomerForm();
         
-        // Reset state
         this.initialized = false;
         this.element = null;
         this._orderListenersAttached = false;
@@ -2339,5 +2071,3 @@ if (window.FarmModules) {
 } else {
     console.error('❌ FarmModules framework not found');
 }
-// Make OrdersModule globally accessible
-window.OrdersModule = OrdersModule;
