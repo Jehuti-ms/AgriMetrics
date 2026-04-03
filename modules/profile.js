@@ -561,7 +561,21 @@ async saveToFirebase() {
 
     updateProfileDisplay(forceUpdate = false) {
     console.log('🔄 Updating profile display...');
+
+     // 🔥 Check if elements exist
+    const farmNameCard = document.getElementById('profile-farm-name');
+    const farmNameInput = document.getElementById('farm-name');
     
+    console.log('🔍 Elements found:', {
+        'profile-farm-name': !!farmNameCard,
+        'farm-name input': !!farmNameInput
+    });
+    
+    if (!farmNameCard) {
+        console.warn('⚠️ profile-farm-name element not found in DOM!');
+        return;
+    }
+        
     const profile = window.FarmModules.appData.profile;
     if (!profile) {
         console.log('⚠️ No profile found in appData');
