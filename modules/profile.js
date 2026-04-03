@@ -564,7 +564,7 @@ async saveToFirebase() {
 
      // 🔥 Check if elements exist
    // const farmNameCard = document.getElementById('profile-farm-name');
-    const farmNameInput = document.getElementById('farm-name');
+    //const farmNameInput = document.getElementById('farm-name');
     
     console.log('🔍 Elements found:', {
         'profile-farm-name': !!farmNameCard,
@@ -619,7 +619,7 @@ async saveToFirebase() {
     if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
     
     // Update form inputs
-    const farmNameInput = document.getElementById('farm-name');
+    //const farmNameInput = document.getElementById('farm-name');
     const farmerNameInput = document.getElementById('farmer-name');
     const emailInput = document.getElementById('farm-email');
     const farmTypeInput = document.getElementById('farm-type');
@@ -1494,7 +1494,7 @@ async performLogout() {
         }
         
         // 🔥 FIX 3: Farm name tracking with SINGLE listener
-        const farmNameInput = document.getElementById('farm-name');
+        //const farmNameInput = document.getElementById('farm-name');
         if (farmNameInput) {
             // Only track changes, don't save automatically
             farmNameInput.oninput = (e) => {
@@ -1842,7 +1842,7 @@ backupProfileForPersistence(profile) {
             await new Promise(resolve => setTimeout(resolve, 50));
             
             // Get current values directly
-            const farmNameInput = document.getElementById('farm-name');
+           // const farmNameInput = document.getElementById('farm-name');
             const farmerNameInput = document.getElementById('farmer-name');
             const emailInput = document.getElementById('farm-email');
             const farmTypeInput = document.getElementById('farm-type');
