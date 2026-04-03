@@ -1,4 +1,3 @@
-
 // modules/profile.js - ENHANCED PERSISTENCE WITH FIREBASE
 console.log('👤 Loading profile module with ENHANCED persistence + Firebase...');
 
@@ -1835,39 +1834,40 @@ loadUserData() {
         const email = this.getCurrentUserEmail();
         console.log('📧 Current user email:', email);
         
-        // 🔥 CRITICAL: Try user-specific storage FIRST (by email)
+        // 🔥 TRY IN THIS ORDER (MOST SPECIFIC FIRST):
+        
+        // 1. Try user-specific storage (by email) - MOST IMPORTANT
         if (email) {
             const userKey = `farm-profile-${email}`;
-            console.log('🔍 Looking for user key:', userKey);
             const userData = localStorage.getItem(userKey);
             if (userData) {
                 try {
                     loadedProfile = JSON.parse(userData);
                     source = `user-specific: ${userKey}`;
-                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
+                    console.log(`✅ Loaded COMPLETE profile from ${source}`, loadedProfile);
                 } catch (e) {
                     console.warn('⚠️ Failed to parse user-specific profile:', e);
                 }
             } else {
                 console.log(`ℹ️ No profile found for key: ${userKey}`);
-                
-                // Also try with different email format (just in case)
-                const emailNoDomain = email.split('@')[0];
-                const altUserKey = `farm-profile-${emailNoDomain}`;
-                const altUserData = localStorage.getItem(altUserKey);
-                if (altUserData) {
-                    try {
-                        loadedProfile = JSON.parse(altUserData);
-                        source = `user-specific (alt): ${altUserKey}`;
-                        console.log(`✅ Loaded profile from ${source}`, loadedProfile);
-                    } catch (e) {
-                        console.warn('⚠️ Failed to parse alt user profile:', e);
-                    }
+            }
+        }
+        
+        // 2. Try farm-profile (general storage)
+        if (!loadedProfile) {
+            const mainData = localStorage.getItem('farm-profile');
+            if (mainData) {
+                try {
+                    loadedProfile = JSON.parse(mainData);
+                    source = 'farm-profile';
+                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
+                } catch (e) {
+                    console.warn('⚠️ Failed to parse farm-profile:', e);
                 }
             }
         }
         
-        // 2. Try last-known-profile (from previous session)
+        // 3. Try last-known-profile
         if (!loadedProfile) {
             const lastData = localStorage.getItem('farm-last-known-profile');
             if (lastData) {
@@ -1881,18 +1881,46 @@ loadUserData() {
             }
         }
         
-        // 3. Try general farm-profile
-        if (!loadedProfile) {
-            const mainData = localStorage.getItem('farm-profile');
-            if (mainData) {
-                try {
-                    loadedProfile = JSON.parse(mainData);
-                    source = 'farm-profile';
-                    console.log(`✅ Loaded profile from ${source}`, loadedProfile);
-                } catch (e) {
-                    console.warn('⚠️ Failed to parse farm-profile:', e);
-                }
+        // 🔥 If we found a profile, use it
+        if (loadedProfile) {
+            console.log('📋 Using existing profile from:', source);
+            
+            // Ensure email is set correctly
+            if (!loadedProfile.email && email) {
+                loadedProfile.email = email;
             }
+            
+            // Preserve memberSince if it exists
+            if (!loadedProfile.memberSince) {
+                loadedProfile.memberSince = new Date().toISOString();
+            }
+            
+            // 🔥 CRITICAL: Make sure all fields are preserved
+            console.log('📊 Loaded profile data:', {
+                farmName: loadedProfile.farmName,
+                farmType: loadedProfile.farmType,
+                farmLocation: loadedProfile.farmLocation,
+                email: loadedProfile.email
+            });
+            
+        } else {
+            // Only create new profile if absolutely nothing exists
+            console.log('🆕 No existing profile found, creating new profile from defaults');
+            loadedProfile = {
+                farmName: 'My Farm',
+                farmerName: 'Farm Manager',
+                email: email || '',
+                farmType: '',
+                farmLocation: '',
+                currency: 'USD',
+                lowStockThreshold: 10,
+                autoSync: true,
+                localStorageEnabled: true,
+                theme: 'light',
+                memberSince: new Date().toISOString(),
+                lastUpdated: new Date().toISOString()
+            };
+            source = 'new default';
         }
         
         // Load settings separately
@@ -1915,44 +1943,6 @@ loadUserData() {
             } catch (e) {
                 console.warn('⚠️ Failed to parse preferences:', e);
             }
-        }
-        
-        // 🔥 If we found a profile, use it and ensure it has the current email
-        if (loadedProfile) {
-            console.log('📋 Using existing profile from:', source);
-            
-            // Update email to current user if different
-            if (email && loadedProfile.email !== email) {
-                console.log(`📧 Updating profile email from ${loadedProfile.email} to ${email}`);
-                loadedProfile.email = email;
-            }
-            
-            // Ensure memberSince exists
-            if (!loadedProfile.memberSince) {
-                loadedProfile.memberSince = new Date().toISOString();
-            }
-            
-            // Ensure lastUpdated is set
-            loadedProfile.lastUpdated = new Date().toISOString();
-            
-        } else {
-            // Only create new profile if absolutely nothing exists
-            console.log('🆕 No existing profile found, creating new profile from defaults');
-            loadedProfile = {
-                farmName: 'My Farm',
-                farmerName: 'Farm Manager',
-                email: email || '',
-                farmType: '',
-                farmLocation: '',
-                currency: 'USD',
-                lowStockThreshold: 10,
-                autoSync: true,
-                localStorageEnabled: true,
-                theme: 'light',
-                memberSince: new Date().toISOString(),
-                lastUpdated: new Date().toISOString()
-            };
-            source = 'new default';
         }
         
         // Set default settings if none loaded
@@ -1991,7 +1981,7 @@ loadUserData() {
         // Update the UI
         this.updateProfileDisplay();
         
-        // 🔥 If we loaded from somewhere other than user-specific, save to user-specific for next time
+        // 🔥 If we loaded from general storage but have an email, save to user-specific for next time
         if (email && source !== `user-specific: farm-profile-${email}` && loadedProfile.farmName !== 'My Farm') {
             console.log('💾 Saving profile to user-specific key for next login');
             const userKey = `farm-profile-${email}`;
@@ -2140,7 +2130,7 @@ findOldestUserData() {
     },
 
     // ==================== LOCAL STORAGE ====================
-   saveToLocalStorage() {
+  saveToLocalStorage() {
     try {
         const profile = window.FarmModules.appData.profile;
         const settings = window.FarmModules.appData.settings;
@@ -2148,8 +2138,16 @@ findOldestUserData() {
         
         if (!profile) return;
         
-        // Save profile
+        // Save to general storage
         localStorage.setItem('farm-profile', JSON.stringify(profile));
+        console.log('💾 Profile saved to farm-profile:', profile);
+        
+        // Also save with user email as key
+        if (profile.email) {
+            const userKey = `farm-profile-${profile.email}`;
+            localStorage.setItem(userKey, JSON.stringify(profile));
+            console.log('💾 Profile saved to user key:', userKey);
+        }
         
         // Save settings
         if (settings) {
@@ -2161,10 +2159,9 @@ findOldestUserData() {
             localStorage.setItem('farm-user-preferences', JSON.stringify(preferences));
         }
         
-        // Save with user email
-        if (profile.email) {
-            const userKey = `farm-profile-${profile.email}`;
-            localStorage.setItem(userKey, JSON.stringify(profile));
+        // Save farm name separately for quick access
+        if (profile.farmName) {
+            localStorage.setItem('farm-last-name', profile.farmName);
         }
         
         console.log('✅ All data saved to localStorage');
