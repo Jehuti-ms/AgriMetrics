@@ -563,7 +563,7 @@ async saveToFirebase() {
     console.log('🔄 Updating profile display...');
 
      // 🔥 Check if elements exist
-    const farmNameCard = document.getElementById('profile-farm-name');
+   // const farmNameCard = document.getElementById('profile-farm-name');
     const farmNameInput = document.getElementById('farm-name');
     
     console.log('🔍 Elements found:', {
@@ -590,7 +590,7 @@ async saveToFirebase() {
     });
     
     // Update profile card elements
-    const farmNameCard = document.getElementById('profile-farm-name');
+   // const farmNameCard = document.getElementById('profile-farm-name');
     const farmerNameCard = document.getElementById('profile-farmer-name');
     const emailCard = document.getElementById('profile-email');
     
