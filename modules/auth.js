@@ -691,7 +691,6 @@ renderSocialLoginButtons() {
             await this.saveUserData(user.uid, {
                 name: name,
                 email: email,
-                farmName: farmName,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp()
             });
