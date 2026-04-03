@@ -842,8 +842,10 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
   renderModule() {
         if (!this.element) return;
         const stats = this.calculateStats();
-      
-      <style>
+             
+        this.element.innerHTML = `
+
+            <style>
           .delete-order {
                 background: #ef4444;
                 border: none;
@@ -866,8 +868,7 @@ validatePhoneNumber(phoneNumber, defaultCountry = 'BB') {
             }
 
           </style>
-        
-        this.element.innerHTML = `
+          
             <div class="module-container">
                 <div class="module-header">
                     <h1 class="module-title">Orders Management</h1>
