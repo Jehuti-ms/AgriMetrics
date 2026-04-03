@@ -1465,166 +1465,154 @@ async performLogout() {
 
     // ==================== EVENT LISTENERS - ULTIMATE FIX ====================
     setupEventListeners() {
-        console.log('🔧 Setting up profile event listeners - DEBUG MODE');
-        
-        // Clear any existing listeners first
-        this.removeAllEventListeners();
-        
-        // 🔥 FIX 1: Direct save button handler with ONE listener
-        const saveBtn = document.getElementById('save-profile-btn');
-        console.log('🔍 Save button found:', !!saveBtn);
-        
-        if (saveBtn) {
-            saveBtn.onclick = (e) => {
-                e.preventDefault();
-                console.log('💾 Save button clicked - SINGLE HANDLER');
-                this.handleSaveProfile();
-            };
-            console.log('✅ Save button listener added');
-        }
-        
-        // 🔥 FIX 2: Form submit prevention
-        const profileForm = document.getElementById('profile-form');
-        if (profileForm) {
-            profileForm.onsubmit = (e) => {
-                e.preventDefault();
-                console.log('📋 Form submission prevented');
-                return false;
-            };
-        }
-        
-        // 🔥 FIX 3: Farm name tracking with SINGLE listener
-        //const farmNameInput = document.getElementById('farm-name');
-        if (farmNameInput) {
-            // Only track changes, don't save automatically
-            farmNameInput.oninput = (e) => {
-                console.log('🏷️ Farm name changed to:', e.target.value);
-            };
-        }
-        
-        // Other buttons - SINGLE handlers
-        const syncBtn = document.getElementById('sync-now-btn');
-        if (syncBtn) {
-            syncBtn.onclick = () => this.syncNow();
-        }
-        
-        const resetBtn = document.getElementById('reset-profile');
-        if (resetBtn) {
-            resetBtn.onclick = () => {
-                this.loadUserData();
-                this.showNotification('Form reset to saved values', 'info');
-            };
-        }
-        
-        // Settings - SINGLE handlers
-        const currencySelect = document.getElementById('default-currency');
-        if (currencySelect) {
-            currencySelect.onchange = (e) => {
-                this.saveSetting('currency', e.target.value);
-            };
-        }
-        
-        const thresholdInput = document.getElementById('low-stock-threshold');
-        if (thresholdInput) {
-            thresholdInput.onchange = (e) => {
-                this.saveSetting('lowStockThreshold', parseInt(e.target.value));
-            };
-        }
-        
-        const autoSyncCheck = document.getElementById('auto-sync');
-        if (autoSyncCheck) {
-            autoSyncCheck.onchange = (e) => {
-                this.saveSetting('autoSync', e.target.checked);
-            };
-        }
-        
-        const localStorageCheck = document.getElementById('local-storage');
-        if (localStorageCheck) {
-            localStorageCheck.onchange = (e) => {
-                this.saveSetting('localStorageEnabled', e.target.checked);
-            };
-        }
-        
-        const themeSelect = document.getElementById('theme-selector');
-        if (themeSelect) {
-            themeSelect.onchange = (e) => {
-                this.changeTheme(e.target.value);
-            };
-        }
-        
-        // PDF Export - SINGLE handlers
-        document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
-        document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
-        document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
-        document.getElementById('export-all-pdf')?.addEventListener('click', () => this.exportAllPDF());
-        
-        // Data management - SINGLE handlers
-        document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
-        document.getElementById('import-data')?.addEventListener('click', () => this.importData());
-        document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
-        
-        // 🔥 FIX 4: Logout button - SINGLE robust handler (try multiple IDs)
-        let logoutBtn = document.getElementById('profile-logout-btn');
-        if (!logoutBtn) {
-            logoutBtn = document.getElementById('logout-btn');
-        }
-        console.log('🔍 Logout button found:', !!logoutBtn, logoutBtn?.id);
-        
-        if (logoutBtn) {
-            const buttonId = logoutBtn.id;
-            // Remove any existing listeners
-            const newLogoutBtn = logoutBtn.cloneNode(true);
-            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
-            
-            // Get fresh reference
-            const freshLogoutBtn = document.getElementById(buttonId);
-            
-            // SINGLE onclick handler
-            freshLogoutBtn.onclick = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🚪 Logout button clicked - DIRECT HANDLER');
-                this.showLogoutConfirmation();
-            };
-            
-            console.log(`✅ Logout button (${buttonId}) listener added`);
-        } else {
-            console.error('❌ Logout button NOT FOUND - tried profile-logout-btn and logout-btn');
-        }
-        
-        // Mobile installation
-        document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
-        document.getElementById('show-qr-code')?.addEventListener('click', () => this.showQRCode());
-        
-        // Support section - event delegation (single listener)
-        this.element.addEventListener('click', (e) => {
-            const button = e.target.closest('button[data-action]');
-            if (!button) return;
-            
+    console.log('🔧 Setting up profile event listeners - DEBUG MODE');
+    
+    // Clear any existing listeners first
+    this.removeAllEventListeners();
+    
+    // 🔥 FIX 1: Direct save button handler with ONE listener
+    const saveBtn = document.getElementById('save-profile-btn');
+    console.log('🔍 Save button found:', !!saveBtn);
+    
+    if (saveBtn) {
+        saveBtn.onclick = (e) => {
             e.preventDefault();
-            const action = button.getAttribute('data-action');
-            
-            switch(action) {
-                case 'copy-email':
-                    this.copyToClipboard('farm-support@example.com');
-                    break;
-                case 'open-slack':
-                    this.openSlackChannel();
-                    break;
-                case 'open-guide':
-                    this.openQuickGuide();
-                    break;
-                case 'download-guide':
-                    this.downloadQuickGuide();
-                    break;
-                case 'watch-tutorials':
-                    this.openYouTubeTutorials();
-                    break;
-            }
-        });
+            console.log('💾 Save button clicked - SINGLE HANDLER');
+            this.handleSaveProfile();
+        };
+        console.log('✅ Save button listener added');
+    }
+    
+    // 🔥 FIX 2: Form submit prevention
+    const profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+        profileForm.onsubmit = (e) => {
+            e.preventDefault();
+            console.log('📋 Form submission prevented');
+            return false;
+        };
+    }
+    
+    // Other buttons - SINGLE handlers
+    const syncBtn = document.getElementById('sync-now-btn');
+    if (syncBtn) {
+        syncBtn.onclick = () => this.syncNow();
+    }
+    
+    const resetBtn = document.getElementById('reset-profile');
+    if (resetBtn) {
+        resetBtn.onclick = () => {
+            this.loadUserData();
+            this.showNotification('Form reset to saved values', 'info');
+        };
+    }
+    
+    // Settings - SINGLE handlers
+    const currencySelect = document.getElementById('default-currency');
+    if (currencySelect) {
+        currencySelect.onchange = (e) => {
+            this.saveSetting('currency', e.target.value);
+        };
+    }
+    
+    const thresholdInput = document.getElementById('low-stock-threshold');
+    if (thresholdInput) {
+        thresholdInput.onchange = (e) => {
+            this.saveSetting('lowStockThreshold', parseInt(e.target.value));
+        };
+    }
+    
+    const autoSyncCheck = document.getElementById('auto-sync');
+    if (autoSyncCheck) {
+        autoSyncCheck.onchange = (e) => {
+            this.saveSetting('autoSync', e.target.checked);
+        };
+    }
+    
+    const localStorageCheck = document.getElementById('local-storage');
+    if (localStorageCheck) {
+        localStorageCheck.onchange = (e) => {
+            this.saveSetting('localStorageEnabled', e.target.checked);
+        };
+    }
+    
+    const themeSelect = document.getElementById('theme-selector');
+    if (themeSelect) {
+        themeSelect.onchange = (e) => {
+            this.changeTheme(e.target.value);
+        };
+    }
+    
+    // PDF Export - SINGLE handlers
+    document.getElementById('export-profile-pdf')?.addEventListener('click', () => this.exportProfilePDF());
+    document.getElementById('export-inventory-pdf')?.addEventListener('click', () => this.exportInventoryPDF());
+    document.getElementById('export-sales-pdf')?.addEventListener('click', () => this.exportSalesPDF());
+    document.getElementById('export-all-pdf')?.addEventListener('click', () => this.exportAllPDF());
+    
+    // Data management - SINGLE handlers
+    document.getElementById('export-data')?.addEventListener('click', () => this.exportData());
+    document.getElementById('import-data')?.addEventListener('click', () => this.importData());
+    document.getElementById('clear-all-data')?.addEventListener('click', () => this.clearAllData());
+    
+    // 🔥 FIX 4: Logout button - SINGLE robust handler (try multiple IDs)
+    let logoutBtn = document.getElementById('profile-logout-btn');
+    if (!logoutBtn) {
+        logoutBtn = document.getElementById('logout-btn');
+    }
+    console.log('🔍 Logout button found:', !!logoutBtn, logoutBtn?.id);
+    
+    if (logoutBtn) {
+        const buttonId = logoutBtn.id;
+        const newLogoutBtn = logoutBtn.cloneNode(true);
+        logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
         
-        console.log('✅ All event listeners set up with SINGLE handlers');
-    },
+        const freshLogoutBtn = document.getElementById(buttonId);
+        
+        freshLogoutBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🚪 Logout button clicked - DIRECT HANDLER');
+            this.showLogoutConfirmation();
+        };
+        
+        console.log(`✅ Logout button (${buttonId}) listener added`);
+    } else {
+        console.error('❌ Logout button NOT FOUND - tried profile-logout-btn and logout-btn');
+    }
+    
+    // Mobile installation
+    document.getElementById('send-install-link')?.addEventListener('click', () => this.sendInstallationLink());
+    document.getElementById('show-qr-code')?.addEventListener('click', () => this.showQRCode());
+    
+    // Support section - event delegation (single listener)
+    this.element.addEventListener('click', (e) => {
+        const button = e.target.closest('button[data-action]');
+        if (!button) return;
+        
+        e.preventDefault();
+        const action = button.getAttribute('data-action');
+        
+        switch(action) {
+            case 'copy-email':
+                this.copyToClipboard('farm-support@example.com');
+                break;
+            case 'open-slack':
+                this.openSlackChannel();
+                break;
+            case 'open-guide':
+                this.openQuickGuide();
+                break;
+            case 'download-guide':
+                this.downloadQuickGuide();
+                break;
+            case 'watch-tutorials':
+                this.openYouTubeTutorials();
+                break;
+        }
+    });
+    
+    console.log('✅ All event listeners set up with SINGLE handlers');
+},
     
     // 🔥 NEW: Remove all existing event listeners
     removeAllEventListeners() {
