@@ -441,10 +441,8 @@ async saveToFirebase() {
     console.log('💾 Starting profile save - SINGLE ENTRY POINT');
     
     try {
-        // Small delay to ensure any paste/typing completes
         await new Promise(resolve => setTimeout(resolve, 50));
         
-        // Get current values directly
         const farmNameInput = document.getElementById('farm-name');
         const farmerNameInput = document.getElementById('farmer-name');
         const emailInput = document.getElementById('farm-email');
@@ -455,7 +453,6 @@ async saveToFirebase() {
             throw new Error('Farm name input not found');
         }
         
-        // Get CURRENT values
         const farmName = farmNameInput.value.trim();
         const farmerName = farmerNameInput?.value.trim();
         const email = emailInput?.value.trim();
@@ -463,17 +460,13 @@ async saveToFirebase() {
         const farmLocation = farmLocationInput?.value.trim();
         
         console.log('📝 SAVING farm name:', farmName);
-        console.log('📝 SAVING farm type:', farmType);
-        console.log('📝 SAVING farm location:', farmLocation);
         
-        // Ensure profile exists
         if (!window.FarmModules.appData.profile) {
             window.FarmModules.appData.profile = {};
         }
         
         const profile = window.FarmModules.appData.profile;
         
-        // Update ALL profile fields
         profile.farmName = farmName || 'My Farm';
         profile.farmerName = farmerName || 'Farm Manager';
         profile.email = email || '';
@@ -481,60 +474,56 @@ async saveToFirebase() {
         profile.farmLocation = farmLocation || '';
         profile.lastUpdated = new Date().toISOString();
         
-        // Ensure other fields persist
-        profile.currency = profile.currency || 'USD';
-        profile.lowStockThreshold = profile.lowStockThreshold || 10;
-        profile.autoSync = profile.autoSync !== false;
-        profile.localStorageEnabled = profile.localStorageEnabled !== false;
-        profile.theme = profile.theme || 'light';
-        profile.memberSince = profile.memberSince || new Date().toISOString();
+        // 🔥 CRITICAL: Get the current user email (from Firebase or profile)
+        let currentEmail = email;
+        if (!currentEmail && typeof firebase !== 'undefined' && firebase.auth()?.currentUser) {
+            currentEmail = firebase.auth().currentUser.email;
+            profile.email = currentEmail;
+        }
         
-        console.log('📊 Profile to save:', {
-            farmName: profile.farmName,
-            farmType: profile.farmType,
-            farmLocation: profile.farmLocation,
-            email: profile.email
-        });
+        console.log('📊 Saving with email:', currentEmail);
         
-        // 🔥 CRITICAL: Save to localStorage with multiple keys
+        // 🔥 Save to ALL possible keys
         // 1. Main storage
         localStorage.setItem('farm-profile', JSON.stringify(profile));
-        console.log('✅ Saved to farm-profile');
         
-        // 2. User-specific key
-        if (profile.email) {
-            const userKey = `farm-profile-${profile.email}`;
+        // 2. User-specific key with current email
+        if (currentEmail) {
+            const userKey = `farm-profile-${currentEmail}`;
             localStorage.setItem(userKey, JSON.stringify(profile));
             console.log(`✅ Saved to ${userKey}`);
         }
         
-        // 3. Last known profile
-        localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
-        
-        // 4. Farm name separately
-        localStorage.setItem('farm-last-name', profile.farmName);
-        
-        // 🔥 Save to UnifiedDataService if available
-        if (this.dataService) {
-            await this.dataService.save('profile', profile);
-            console.log('✅ Saved to UnifiedDataService');
+        // 3. Also try the old email key (clean up old)
+        const oldUserKey = `farm-profile-dmoseley@gams.edu.bb`;
+        if (oldUserKey !== `farm-profile-${currentEmail}`) {
+            localStorage.removeItem(oldUserKey);
+            console.log(`🧹 Removed old key: ${oldUserKey}`);
         }
         
-        // Force immediate UI update
-        this.updateProfileDisplay(true);
+        // 4. Last known profile
+        localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
         
-        // Update appData farmName
+        // 5. Farm name separately
+        localStorage.setItem('farm-last-name', profile.farmName);
+        
+        // Force update appData
+        window.FarmModules.appData.profile = profile;
         window.FarmModules.appData.farmName = profile.farmName;
         
-        // Show success
+        // Update display immediately
+        this.updateProfileDisplay(true);
+        
         this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
         
-        // Notify other modules
         window.dispatchEvent(new CustomEvent('farm-data-updated', {
             detail: { farmName: profile.farmName }
         }));
         
         console.log('✅ Profile saved successfully');
+        
+        // 🔥 Force reload user data to verify
+        await this.loadUserData();
         
     } catch (error) {
         console.error('❌ Error saving profile:', error);
