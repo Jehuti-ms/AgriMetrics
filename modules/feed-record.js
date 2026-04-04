@@ -257,7 +257,7 @@ loadDataLegacy() {
     });
 },
 
-addDefaultFeedInventory() {
+/*addDefaultFeedInventory() {
     console.log('📦 Adding default feed inventory...');
     
     this.feedInventory = [
@@ -304,7 +304,7 @@ addDefaultFeedInventory() {
     
     this.saveData();
     console.log('✅ Added default feed inventory:', this.feedInventory.length, 'items');
-},
+}, */
 
 loadDataLegacy() {
     const savedRecords = localStorage.getItem('farm-feed-records');
