@@ -407,6 +407,60 @@ class UnifiedDataService {
             return { success: false, offline: true, error: error.message };
         }
     }
+
+    // Add this method to UnifiedDataService class
+async deleteArrayItem(collection, itemId, arrayPath = null) {
+    console.log(`🗑️ Deleting ${itemId} from ${collection}`);
+    
+    try {
+        // Get current data
+        let currentData = this.get(collection);
+        
+        // Handle different data structures
+        let updatedData;
+        if (arrayPath && currentData[arrayPath]) {
+            // For nested arrays like { items: [...] }
+            updatedData = { ...currentData };
+            updatedData[arrayPath] = updatedData[arrayPath].filter(item => item.id !== itemId);
+        } else if (Array.isArray(currentData)) {
+            // For simple arrays like [...]
+            updatedData = currentData.filter(item => item.id !== itemId);
+        } else {
+            console.error('Cannot delete: data structure not recognized');
+            return false;
+        }
+        
+        // Save back to Firebase and localStorage
+        await this.save(collection, updatedData);
+        console.log(`✅ Deleted ${itemId} from ${collection}`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error in deleteArrayItem:', error);
+        return false;
+    }
+}
+
+    // Add this method to force sync an entire array
+async syncArray(collection, data) {
+    console.log(`🔄 Syncing ${collection} with`, data.length, 'items');
+    
+    try {
+        // Save the entire array to Firebase (overwrites)
+        await this.save(collection, data);
+        
+        // Update local cache
+        this.updateLocalCache(collection, data);
+        
+        // Broadcast update
+        this.broadcast(`${collection}-updated`, data);
+        
+        return true;
+    } catch (error) {
+        console.error('Error syncing array:', error);
+        return false;
+    }
+}
     
     /**
      * Update ANY data with offline support
