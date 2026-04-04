@@ -443,21 +443,11 @@ async saveToFirebase() {
     try {
         await new Promise(resolve => setTimeout(resolve, 50));
         
-        const farmNameInput = document.getElementById('farm-name');
-        const farmerNameInput = document.getElementById('farmer-name');
-        const emailInput = document.getElementById('farm-email');
-        const farmTypeInput = document.getElementById('farm-type');
-        const farmLocationInput = document.getElementById('farm-location');
-        
-        if (!farmNameInput) {
-            throw new Error('Farm name input not found');
-        }
-        
         const farmName = document.getElementById('farm-name')?.value.trim() || '';
-        const farmerName = farmerNameInput?.value.trim();
-        const email = emailInput?.value.trim();
-        const farmType = farmTypeInput?.value;
-        const farmLocation = farmLocationInput?.value.trim();
+        const farmerName = document.getElementById('farmer-name')?.value.trim() || '';
+        const email = document.getElementById('farm-email')?.value.trim() || '';
+        const farmType = document.getElementById('farm-type')?.value || '';
+        const farmLocation = document.getElementById('farm-location')?.value.trim() || '';
         
         console.log('📝 SAVING farm name:', farmName);
         
@@ -474,44 +464,19 @@ async saveToFirebase() {
         profile.farmLocation = farmLocation || '';
         profile.lastUpdated = new Date().toISOString();
         
-        // 🔥 CRITICAL: Get the current user email (from Firebase or profile)
-        let currentEmail = email;
-        if (!currentEmail && typeof firebase !== 'undefined' && firebase.auth()?.currentUser) {
-            currentEmail = firebase.auth().currentUser.email;
-            profile.email = currentEmail;
-        }
-        
-        console.log('📊 Saving with email:', currentEmail);
-        
-        // 🔥 Save to ALL possible keys
-        // 1. Main storage
         localStorage.setItem('farm-profile', JSON.stringify(profile));
         
-        // 2. User-specific key with current email
-        if (currentEmail) {
-            const userKey = `farm-profile-${currentEmail}`;
+        if (profile.email) {
+            const userKey = `farm-profile-${profile.email}`;
             localStorage.setItem(userKey, JSON.stringify(profile));
-            console.log(`✅ Saved to ${userKey}`);
         }
         
-        // 3. Also try the old email key (clean up old)
-        const oldUserKey = `farm-profile-dmoseley@gams.edu.bb`;
-        if (oldUserKey !== `farm-profile-${currentEmail}`) {
-            localStorage.removeItem(oldUserKey);
-            console.log(`🧹 Removed old key: ${oldUserKey}`);
-        }
-        
-        // 4. Last known profile
         localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
-        
-        // 5. Farm name separately
         localStorage.setItem('farm-last-name', profile.farmName);
         
-        // Force update appData
         window.FarmModules.appData.profile = profile;
         window.FarmModules.appData.farmName = profile.farmName;
         
-        // Update display immediately
         this.updateProfileDisplay(true);
         
         this.showNotification(`✅ Profile saved! Farm: ${profile.farmName}`, 'success');
@@ -521,9 +486,6 @@ async saveToFirebase() {
         }));
         
         console.log('✅ Profile saved successfully');
-        
-        // 🔥 Force reload user data to verify
-        await this.loadUserData();
         
     } catch (error) {
         console.error('❌ Error saving profile:', error);
