@@ -745,35 +745,18 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
 },
 
 async deleteFeedRecord(recordId) {
-    console.log('🗑️ Deleting feed record:', recordId);
-    
     const record = this.feedRecords.find(r => r.id === recordId);
-    if (!record) {
-        this.showNotification('Record not found', 'error');
-        return;
+    if (!record) return;
+    
+    if (confirm(`Delete feed record?`)) {
+        // Use central method
+        await this.dataService.deleteArrayItem('feedRecords', recordId);
+        
+        // Update local array
+        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
+        this.renderModule();
+        this.showNotification('Deleted!', 'success');
     }
-    
-    if (!confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
-        return;
-    }
-    
-    // Remove from local array
-    this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-    
-    // 🔥 CRITICAL: Save empty array if this was the last record, or save filtered array
-    if (this.dataService) {
-        // Save the filtered array to Firebase (this overwrites)
-        await this.dataService.save('feedRecords', this.feedRecords);
-        console.log('✅ Saved to Firebase - remaining records:', this.feedRecords.length);
-    }
-    
-    // Save to localStorage
-    this.saveData();
-    
-    // Re-render
-    this.renderModule();
-    
-    this.showNotification('Feed record deleted!', 'success');
 },
 
 editFeedRecord(recordId) {
