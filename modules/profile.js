@@ -1836,9 +1836,9 @@ backupProfileForPersistence(profile) {
             const farmTypeInput = document.getElementById('farm-type');
             const farmLocationInput = document.getElementById('farm-location');
             
-            if (!farmNameInput) {
-                throw new Error('Farm name input not found');
-            }
+            //if (!farmNameInput) {
+            //    throw new Error('Farm name input not found');
+           // }
             
             // Get CURRENT values
             const farmName = farmNameInput.value.trim();
