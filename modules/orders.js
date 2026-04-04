@@ -1789,112 +1789,236 @@ const OrdersModule = {
         });
     },
 
-    async handleOrderSubmit(e) {
-        e.preventDefault();
+   async handleOrderSubmit(e) {
+    e.preventDefault();
+    
+    const editingId = document.getElementById('editing-order-id')?.value;
+    const isEditing = editingId && editingId !== '';
+    
+    const customerId = parseInt(document.getElementById('order-customer').value);
+    const date = document.getElementById('order-date').value;
+    const status = document.getElementById('order-status').value;
+    const notes = document.getElementById('order-notes').value;
+    
+    const customer = this.customers.find(c => c.id === customerId);
+    if (!customer) {
+        this.showNotification('Please select a valid customer', 'error');
+        return;
+    }
+    
+    const items = [];
+    document.querySelectorAll('.order-item').forEach(item => {
+        const productSelect = item.querySelector('.product-select');
+        const quantityInput = item.querySelector('.quantity-input');
+        const priceInput = item.querySelector('.price-input');
         
-        const editingId = document.getElementById('editing-order-id')?.value;
-        const isEditing = editingId && editingId !== '';
-        
-        const customerId = parseInt(document.getElementById('order-customer').value);
-        const date = document.getElementById('order-date').value;
-        const status = document.getElementById('order-status').value;
-        const notes = document.getElementById('order-notes').value;
-        
-        const customer = this.customers.find(c => c.id === customerId);
-        if (!customer) {
-            this.showNotification('Please select a valid customer', 'error');
-            return;
+        if (productSelect.value && quantityInput.value && priceInput.value) {
+            items.push({
+                productId: productSelect.value,
+                productName: productSelect.options[productSelect.selectedIndex].text.split(' - ')[0],
+                quantity: parseFloat(quantityInput.value),
+                price: parseFloat(priceInput.value)
+            });
         }
-        
-        const items = [];
-        document.querySelectorAll('.order-item').forEach(item => {
-            const productSelect = item.querySelector('.product-select');
-            const quantityInput = item.querySelector('.quantity-input');
-            const priceInput = item.querySelector('.price-input');
-            
-            if (productSelect.value && quantityInput.value && priceInput.value) {
-                items.push({
-                    productId: productSelect.value,
-                    productName: productSelect.options[productSelect.selectedIndex].text.split(' - ')[0],
-                    quantity: parseFloat(quantityInput.value),
-                    price: parseFloat(priceInput.value)
-                });
-            }
-        });
-        
-        if (items.length === 0) {
-            this.showNotification('Please add at least one item', 'error');
-            return;
-        }
-        
-        const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        
-        if (totalAmount <= 0) {
-            this.showNotification('Total amount must be greater than 0', 'error');
-            return;
-        }
-        
-        if (isEditing) {
-            const orderIndex = this.orders.findIndex(o => o.id == editingId);
-            if (orderIndex !== -1) {
-                const updatedOrder = {
-                    ...this.orders[orderIndex],
-                    customerId,
-                    customerName: customer.name,
-                    date,
-                    items,
-                    totalAmount,
-                    status,
-                    notes,
-                    updatedAt: new Date().toISOString()
-                };
-                this.orders[orderIndex] = updatedOrder;
-                await this.saveData();
-                
-                this.broadcastOrderUpdated(updatedOrder);
-                this.showNotification(`Order #${editingId} updated!`, 'success');
-            }
-        } else {
-            const orderData = {
-                id: Date.now(),
+    });
+    
+    if (items.length === 0) {
+        this.showNotification('Please add at least one item', 'error');
+        return;
+    }
+    
+    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+    
+    if (totalAmount <= 0) {
+        this.showNotification('Total amount must be greater than 0', 'error');
+        return;
+    }
+    
+    if (isEditing) {
+        const orderIndex = this.orders.findIndex(o => o.id == editingId);
+        if (orderIndex !== -1) {
+            const updatedOrder = {
+                ...this.orders[orderIndex],
                 customerId,
                 customerName: customer.name,
                 date,
                 items,
                 totalAmount,
                 status,
-                notes: notes || '',
-                createdAt: new Date().toISOString(),
+                notes,
                 updatedAt: new Date().toISOString()
             };
-            this.orders.unshift(orderData);
+            this.orders[orderIndex] = updatedOrder;
             await this.saveData();
             
-            this.broadcastOrderCreated(orderData);
-            this.showNotification('Order created successfully!', 'success');
+            this.broadcastOrderUpdated(updatedOrder);
+            this.showNotification(`Order #${editingId} updated!`, 'success');
         }
-        
-        this.hideOrderForm();
-        this.renderModule();
-    },
-          
-    async deleteOrder(id) {
-        const order = this.orders.find(o => o.id === id);
-        if (!order) return;
-
-        if (confirm(`Are you sure you want to delete order #${id}? This cannot be undone.`)) {
-            this.orders = this.orders.filter(o => o.id !== id);
-            await this.saveData();
-            
-            this.broadcastOrderDeleted(id);
-            this.renderModule();
-            
-            if (window.coreModule) {
-                window.coreModule.showNotification('Order deleted successfully!', 'success');
+    } else {
+        // ===== RESERVE ITEMS FROM PRODUCTION =====
+        let reservationSuccess = true;
+        for (const item of items) {
+            const reserved = await this.reserveProductionItem(item);
+            if (!reserved) {
+                reservationSuccess = false;
+                break;
             }
         }
-    },
+        
+        if (!reservationSuccess) {
+            this.showNotification('Could not reserve all items. Please check production stock.', 'error');
+            return;
+        }
+        
+        // ===== CREATE ORDER WITH RESERVATION =====
+        const orderData = {
+            id: Date.now(),
+            customerId,
+            customerName: customer.name,
+            date,
+            items,
+            totalAmount,
+            status: status || 'pending',
+            reserved: true,           // ← ADD THIS - indicates items are reserved
+            notes: notes || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        this.orders.unshift(orderData);
+        await this.saveData();
+        
+        this.broadcastOrderCreated(orderData);
+        this.showNotification('Order created successfully! Items reserved from production.', 'success');
+    }
+    
+    this.hideOrderForm();
+    this.renderModule();
+},
 
+    async reserveProductionItem(orderItem) {
+    console.log('📦 Reserving production item for order:', orderItem);
+    
+    try {
+        let productionRecords = [];
+        
+        // Get production data from ProductionModule
+        if (window.ProductionModule && window.ProductionModule.productionData) {
+            productionRecords = window.ProductionModule.productionData;
+        }
+        
+        // Also check UnifiedDataService
+        if (window.UnifiedDataService && productionRecords.length === 0) {
+            const prodData = window.UnifiedDataService.get('production');
+            productionRecords = prodData?.records || [];
+        }
+        
+        // Find matching production item (FIFO - oldest first)
+        const productionItem = productionRecords
+            .filter(p => p.product === orderItem.productId && 
+                         p.status !== 'sold' &&
+                         (p.availableQuantity > 0 || (p.quantity - (p.soldQuantity || 0) > 0)))
+            .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+        
+        if (!productionItem) {
+            console.log(`⚠️ No production item found for: ${orderItem.productId}`);
+            this.showNotification(`Not enough ${orderItem.productName} in production`, 'warning');
+            return false;
+        }
+        
+        const available = productionItem.availableQuantity !== undefined 
+            ? productionItem.availableQuantity 
+            : (productionItem.quantity - (productionItem.soldQuantity || 0));
+        
+        if (available >= orderItem.quantity) {
+            // Reserve the quantity
+            productionItem.reservedQuantity = (productionItem.reservedQuantity || 0) + orderItem.quantity;
+            productionItem.availableQuantity = productionItem.quantity - (productionItem.soldQuantity || 0) - productionItem.reservedQuantity;
+            
+            if (productionItem.availableQuantity <= 0 && productionItem.reservedQuantity > 0) {
+                productionItem.status = 'reserved';
+            } else if (productionItem.availableQuantity > 0) {
+                productionItem.status = 'partial';
+            }
+            
+            // Save back to ProductionModule
+            if (window.ProductionModule && typeof window.ProductionModule.saveData === 'function') {
+                await window.ProductionModule.saveData();
+            }
+            
+            // Also save to UnifiedDataService
+            if (window.UnifiedDataService) {
+                await window.UnifiedDataService.save('production', { records: productionRecords });
+            }
+            
+            console.log(`✅ Reserved ${orderItem.quantity} of ${orderItem.productId} from production`);
+            return true;
+        } else {
+            console.log(`⚠️ Not enough stock: need ${orderItem.quantity}, available ${available}`);
+            this.showNotification(`Only ${available} ${orderItem.productName} available in production`, 'warning');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error reserving production item:', error);
+        return false;
+    }
+},
+          
+   async deleteOrder(id) {
+    const order = this.orders.find(o => o.id === id);
+    if (!order) return;
+
+    if (confirm(`Are you sure you want to delete order #${id}? This cannot be undone.`)) {
+        // If order had reservations, release them back to production
+        if (order.reserved) {
+            await this.releaseProductionReservation(order);
+        }
+        
+        this.orders = this.orders.filter(o => o.id !== id);
+        await this.saveData();
+        
+        this.broadcastOrderDeleted(id);
+        this.renderModule();
+        
+        if (window.coreModule) {
+            window.coreModule.showNotification('Order deleted successfully!', 'success');
+        }
+    }
+},
+
+async releaseProductionReservation(order) {
+    console.log('🔄 Releasing production reservation for cancelled order:', order.id);
+    
+    try {
+        let productionRecords = [];
+        if (window.ProductionModule && window.ProductionModule.productionData) {
+            productionRecords = window.ProductionModule.productionData;
+        }
+        
+        for (const item of order.items) {
+            const productionItem = productionRecords.find(p => p.product === item.productId && (p.reservedQuantity || 0) > 0);
+            if (productionItem) {
+                productionItem.reservedQuantity = Math.max(0, (productionItem.reservedQuantity || 0) - item.quantity);
+                productionItem.availableQuantity = productionItem.quantity - (productionItem.soldQuantity || 0) - productionItem.reservedQuantity;
+                
+                if (productionItem.availableQuantity > 0 && productionItem.status === 'reserved') {
+                    productionItem.status = 'available';
+                } else if (productionItem.availableQuantity > 0) {
+                    productionItem.status = 'partial';
+                }
+            }
+        }
+        
+        if (window.ProductionModule && typeof window.ProductionModule.saveData === 'function') {
+            await window.ProductionModule.saveData();
+        }
+        
+        console.log('✅ Production reservation released');
+    } catch (error) {
+        console.error('❌ Error releasing production reservation:', error);
+    }
+},
+   
     editOrder(orderId) {
         console.log('✏️ Editing order:', orderId);
         
