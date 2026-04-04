@@ -306,16 +306,6 @@ loadDataLegacy() {
     console.log('✅ Added default feed inventory:', this.feedInventory.length, 'items');
 }, */
 
-loadDataLegacy() {
-    const savedRecords = localStorage.getItem('farm-feed-records');
-    const savedInventory = localStorage.getItem('farm-feed-inventory');
-    const savedBirds = localStorage.getItem('farm-birds-stock');
-    
-    this.feedRecords = savedRecords ? JSON.parse(savedRecords) : [];
-    this.feedInventory = savedInventory ? JSON.parse(savedInventory) : [];
-    this.birdsStock = savedBirds ? parseInt(savedBirds) : 0;
-},
-
 setupRealtimeSync() {
     if (!this.dataService) return;
     
@@ -407,97 +397,99 @@ setupRealtimeSync() {
                 </div>
 
                 <!-- Simple Form -->
-                    <div class="glass-card" style="padding: 24px; margin: 24px 0;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="feed-form-title">Record Feed Usage</h3>
-                        <form id="feed-record-form">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Feed Type</label>
-                                      <select class="form-input" id="feed-type" required>
-                                        <option value="">Select feed type</option>
-                                        
-                                        <!-- Poultry Feeds -->
-                                        <optgroup label="🐔 Poultry Feeds">
-                                            ${['starter', 'grower', 'finisher', 'layer', 'broiler'].map(type => {
-                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
-                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
-                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
-                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${type.charAt(0).toUpperCase() + type.slice(1)} Feed${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
-                                            }).join('')}
-                                        </optgroup>
-                                        
-                                        <!-- Rabbit Feeds -->
-                                        <optgroup label="🐇 Rabbit Feeds">
-                                            ${['rabbit-starter', 'rabbit-grower', 'rabbit-breeder', 'rabbit-finisher'].map(type => {
-                                                const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
-                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
-                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
-                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
-                                            }).join('')}
-                                        </optgroup>
-                                        
-                                        <!-- Sheep Feeds -->
-                                        <optgroup label="🐑 Sheep Feeds">
-                                            ${['sheep-starter', 'sheep-grower', 'sheep-finisher', 'sheep-maintenance', 'sheep-lactating'].map(type => {
-                                                const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
-                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
-                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
-                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
-                                            }).join('')}
-                                        </optgroup>
-                                        
-                                        <!-- Goat Feeds -->
-                                        <optgroup label="🐐 Goat Feeds">
-                                            ${['goat-starter', 'goat-grower', 'goat-finisher', 'goat-maintenance', 'goat-lactating'].map(type => {
-                                                const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                                                const inventoryItem = this.feedInventory.find(item => item.feedType === type);
-                                                const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
-                                                const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
-                                                return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
-                                            }).join('')}
-                                        </optgroup>
-                                        
-                                        <!-- Other Feeds -->
-                                        <optgroup label="📦 Other Feeds">
-                                            <option value="cattle">Cattle Feed</option>
-                                            <option value="pig">Pig Feed</option>
-                                            <option value="duck">Duck Feed</option>
-                                            <option value="turkey">Turkey Feed</option>
-                                            <option value="fish">Fish Feed</option>
-                                            <option value="other">Other Feed</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Quantity (kg)</label>
-                                    <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
-                                </div>
+                <div class="glass-card" style="padding: 24px; margin: 24px 0;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 20px;" id="feed-form-title">Record Feed Usage</h3>
+                    <form id="feed-record-form">
+                        <input type="hidden" id="feed-record-id" value="">
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Feed Type</label>
+                                <select class="form-input" id="feed-type" required>
+                                    <option value="">Select feed type</option>
+                                    
+                                    <!-- Poultry Feeds -->
+                                    <optgroup label="🐔 Poultry Feeds">
+                                        ${['starter', 'grower', 'finisher', 'layer', 'broiler'].map(type => {
+                                            const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                            const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                            const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                            return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${type.charAt(0).toUpperCase() + type.slice(1)} Feed${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                        }).join('')}
+                                    </optgroup>
+                                    
+                                    <!-- Rabbit Feeds -->
+                                    <optgroup label="🐇 Rabbit Feeds">
+                                        ${['rabbit-starter', 'rabbit-grower', 'rabbit-breeder', 'rabbit-finisher'].map(type => {
+                                            const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                            const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                            const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                            const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                            return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                        }).join('')}
+                                    </optgroup>
+                                    
+                                    <!-- Sheep Feeds -->
+                                    <optgroup label="🐑 Sheep Feeds">
+                                        ${['sheep-starter', 'sheep-grower', 'sheep-finisher', 'sheep-maintenance', 'sheep-lactating'].map(type => {
+                                            const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                            const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                            const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                            const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                            return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                        }).join('')}
+                                    </optgroup>
+                                    
+                                    <!-- Goat Feeds -->
+                                    <optgroup label="🐐 Goat Feeds">
+                                        ${['goat-starter', 'goat-grower', 'goat-finisher', 'goat-maintenance', 'goat-lactating'].map(type => {
+                                            const displayName = type.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                                            const inventoryItem = this.feedInventory.find(item => item.feedType === type);
+                                            const isLowStock = inventoryItem && inventoryItem.currentStock <= inventoryItem.minStock;
+                                            const stockText = inventoryItem ? ` (${inventoryItem.currentStock}kg available)` : '';
+                                            return `<option value="${type}" ${isLowStock ? 'disabled' : ''}>${displayName}${stockText}${isLowStock ? ' - LOW STOCK' : ''}</option>`;
+                                        }).join('')}
+                                    </optgroup>
+                                    
+                                    <!-- Other Feeds -->
+                                    <optgroup label="📦 Other Feeds">
+                                        <option value="cattle">Cattle Feed</option>
+                                        <option value="pig">Pig Feed</option>
+                                        <option value="duck">Duck Feed</option>
+                                        <option value="turkey">Turkey Feed</option>
+                                        <option value="fish">Fish Feed</option>
+                                        <option value="other">Other Feed</option>
+                                    </optgroup>
+                                </select>
                             </div>
-                            <div style="margin-bottom: 20px;">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
+                            <div>
+                                <label class="form-label">Quantity (kg)</label>
+                                <input type="number" class="form-input" id="feed-quantity" step="0.1" min="0.1" required>
                             </div>
-                            <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                                <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
-                                <button type="button" class="btn-outline" id="cancel-feed-form">Cancel</button>
-                                <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                <!-- Recent Records -->
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-input" id="feed-notes" rows="2" placeholder="Feeding details..."></textarea>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
+                            <button type="button" class="btn-outline" id="cancel-feed-form">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Feed Records List with Edit/Delete -->
                 <div class="glass-card" style="padding: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="color: var(--text-primary); font-size: 20px;">Recent Feed Records</h3>
+                        <h3 style="color: var(--text-primary); font-size: 20px;">📋 Feed Usage Records</h3>
                         <button class="btn-outline" id="export-feed-records">Export</button>
                     </div>
                     <div id="feed-records-list">
                         ${this.renderFeedRecordsList()}
                     </div>
                 </div>
-            </div>
         `;
 
         this.setupEventListeners();
@@ -536,50 +528,61 @@ setupRealtimeSync() {
         }).join('');
     },
 
-    renderFeedRecordsList() {
-        if (this.feedRecords.length === 0) {
-            return `
-                <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">🌾</div>
-                    <div style="font-size: 16px; margin-bottom: 8px;">No feed records yet</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Record your first feed usage</div>
-                </div>
-            `;
-        }
+   renderFeedRecordsList() {
+    if (this.feedRecords.length === 0) {
+        return `
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px 20px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🌾</div>
+                <div style="font-size: 16px; margin-bottom: 8px;">No feed records yet</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">Record your first feed usage above</div>
+            </div>
+        `;
+    }
 
-        return this.feedRecords.slice(0, 5).map(record => `
+    // Sort by date (newest first) and take last 5
+    const sortedRecords = [...this.feedRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const recentRecords = sortedRecords.slice(0, 5);
+
+    return recentRecords.map(record => {
+        // Calculate cost if available, otherwise show N/A
+        const costDisplay = record.cost ? this.formatCurrency(record.cost) : 'N/A';
+        const costPerKg = record.cost && record.quantity ? (record.cost / record.quantity).toFixed(2) : 'N/A';
+        
+        return `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--glass-bg); border-radius: 8px; border: 1px solid var(--glass-border); margin-bottom: 12px;">
                 <div style="flex: 1;">
                     <div style="font-weight: 600; color: var(--text-primary); text-transform: capitalize;">
-                        ${record.feedType} Feed
+                        ${this.formatFeedType(record.feedType)}
                     </div>
                     <div style="font-size: 14px; color: var(--text-secondary);">
-                        ${record.date} • ${record.quantity}kg • ${record.birdsFed} birds
+                        ${this.formatDate(record.date)} • ${record.quantity} kg
+                        ${record.birdsFed ? ` • ${record.birdsFed} birds` : ''}
                     </div>
-                    ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${record.notes}</div>` : ''}
+                    ${record.notes ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">📝 ${record.notes}</div>` : ''}
                 </div>
-                <div style="text-align: right; display: flex; align-items: center; gap: 16px;">
-                    <div>
-                        <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
-                            ${this.formatCurrency(record.cost)}
-                        </div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">
-                            ${(record.cost / record.quantity).toFixed(2)}/kg
-                        </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: bold; color: var(--text-primary); font-size: 18px;">
+                        ${costDisplay}
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon edit-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Edit Record">
-                            ✏️
-                        </button>
-                        <button class="btn-icon delete-feed-record" data-id="${record.id}" style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: var(--text-secondary);" title="Delete Record">
-                            🗑️
-                        </button>
-                    </div>
+                    ${costPerKg !== 'N/A' ? `<div style="font-size: 12px; color: var(--text-secondary);">${costPerKg}/kg</div>` : ''}
+                </div>
+                <div style="display: flex; gap: 8px; margin-left: 16px;">
+                    <button class="edit-feed-record" data-id="${record.id}" 
+                            style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: #3b82f6; font-size: 16px;" 
+                            title="Edit Record">
+                        ✏️
+                    </button>
+                    <button class="delete-feed-record" data-id="${record.id}" 
+                            style="background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; color: #ef4444; font-size: 16px;" 
+                            title="Delete Record">
+                        🗑️
+                    </button>
                 </div>
             </div>
-        `).join('');
-    },
-
+        `;
+    }).join('');
+},
+    
    setupEventListeners() {
     // Form submission
     document.getElementById('feed-record-form')?.addEventListener('submit', (e) => this.handleFeedRecordSubmit(e));
@@ -625,7 +628,11 @@ setupRealtimeSync() {
         }
     },
 
-   createFeedRecord(feedType, quantity, notes) {
+   // ==================== FEED RECORD CRUD ====================
+
+createFeedRecord(feedType, quantity, notes) {
+    console.log('📝 Creating feed record:', { feedType, quantity, notes });
+    
     // Check if feed type has sufficient stock
     const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
     if (!inventoryItem) {
@@ -634,32 +641,228 @@ setupRealtimeSync() {
     }
     
     if (inventoryItem.currentStock < quantity) {
-        this.showNotification(`Insufficient stock! Only ${inventoryItem.currentStock}kg available.`, 'error');
+        this.showNotification(`Insufficient ${feedType} feed. Available: ${inventoryItem.currentStock}kg`, 'error');
         return;
     }
-
+    
+    const date = new Date().toISOString().split('T')[0];
+    const oldStock = inventoryItem.currentStock;
+    
+    // Create record
     const formData = {
         id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
+        date: date,
         feedType: feedType,
         quantity: quantity,
         cost: this.calculateCost(feedType, quantity),
         notes: notes,
-        birdsFed: this.birdsStock
+        createdAt: new Date().toISOString()
     };
-
+    
     // Update inventory
-    const oldStock = inventoryItem.currentStock;
     inventoryItem.currentStock -= quantity;
     
+    // Add to records
     this.feedRecords.unshift(formData);
     this.saveData();
-    this.updateFarmData();
+    
+    // Broadcast to other modules
+    this.broadcastFeedRecorded(formData, feedType, quantity, inventoryItem, oldStock);
+    
+    // Update UI
+    this.updateFeedInventoryDisplay();
     this.renderModule();
+    this.resetFeedForm();
+    
+    this.showNotification(`Recorded ${quantity}kg ${feedType} feed usage!`, 'success');
+},
+
+async updateFeedRecord(recordId, feedType, quantity, notes) {
+    console.log('✏️ Updating feed record:', recordId, { feedType, quantity, notes });
+    
+    const originalRecord = this.feedRecords.find(r => r.id === recordId);
+    if (!originalRecord) {
+        this.showNotification('Record not found', 'error');
+        return;
+    }
+    
+    const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+    if (!inventoryItem) {
+        this.showNotification('Invalid feed type selected!', 'error');
+        return;
+    }
+    
+    // Calculate stock adjustment
+    const stockAdjustment = originalRecord.quantity - quantity;
+    const newStock = inventoryItem.currentStock + stockAdjustment;
+    
+    if (newStock < 0) {
+        this.showNotification('Cannot adjust stock below zero!', 'error');
+        return;
+    }
+    
+    // Update inventory
+    inventoryItem.currentStock = newStock;
+    
+    // Update record
+    const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
+    if (recordIndex !== -1) {
+        const updatedRecord = {
+            ...originalRecord,
+            feedType,
+            quantity,
+            notes,
+            updatedAt: new Date().toISOString()
+        };
+        
+        this.feedRecords[recordIndex] = updatedRecord;
+        this.saveData();
+        
+        // Broadcast update
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('feed-updated', {
+                id: recordId,
+                oldData: originalRecord,
+                newData: updatedRecord,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // Update UI
+        this.updateFeedInventoryDisplay();
+        this.renderModule();
+        this.resetFeedForm();
+        
+        this.showNotification(`Feed record updated!`, 'success');
+    }
+},
+
+deleteFeedRecord(recordId) {
+    console.log('🗑️ Deleting feed record:', recordId);
+    
+    const record = this.feedRecords.find(r => r.id === recordId);
+    if (!record) {
+        this.showNotification('Record not found', 'error');
+        return;
+    }
+    
+    if (confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
+        // Add quantity back to inventory
+        const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
+        if (inventoryItem) {
+            inventoryItem.currentStock += record.quantity;
+        }
+        
+        // Remove record
+        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
+        this.saveData();
+        
+        // Broadcast deletion
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('feed-deleted', {
+                id: recordId,
+                data: record,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        // Update UI
+        this.updateFeedInventoryDisplay();
+        this.renderModule();
+        
+        this.showNotification('Feed record deleted!', 'success');
+    }
+},
+
+editFeedRecord(recordId) {
+    console.log('✏️ Editing feed record:', recordId);
+    
+    const record = this.feedRecords.find(r => r.id === recordId);
+    if (!record) {
+        this.showNotification('Record not found', 'error');
+        return;
+    }
+    
+    // Populate form
+    document.getElementById('feed-type').value = record.feedType;
+    document.getElementById('feed-quantity').value = record.quantity;
+    document.getElementById('feed-notes').value = record.notes || '';
+    
+    // Change form title and button
+    document.getElementById('feed-form-title').textContent = 'Edit Feed Record';
+    
+    const submitBtn = document.getElementById('feed-submit-btn');
+    submitBtn.textContent = 'Update Record';
+    submitBtn.dataset.editingId = recordId;
+    
+    const cancelEditBtn = document.getElementById('cancel-feed-edit');
+    if (cancelEditBtn) cancelEditBtn.style.display = 'inline-block';
+    
+    // Scroll to form
+    document.querySelector('.glass-card').scrollIntoView({ behavior: 'smooth' });
+    
+    this.showNotification('Edit mode: Update the fields and click Update Record', 'info');
+},
+
+cancelFeedEdit() {
+    this.resetFeedForm();
+    this.showNotification('Edit cancelled', 'info');
+},
+
+calculateCost(feedType, quantity) {
+    // Get cost from inventory or use default pricing
+    const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+    if (inventoryItem && inventoryItem.costPerKg) {
+        return inventoryItem.costPerKg * quantity;
+    }
+    
+    // Default pricing if not available
+    const defaultPrices = {
+        'starter': 2.50,
+        'grower': 2.30,
+        'finisher': 2.20,
+        'layer': 2.40,
+        'broiler': 2.35
+    };
+    
+    const pricePerKg = defaultPrices[feedType] || 2.50;
+    return pricePerKg * quantity;
+},
+
+formatFeedType(feedType) {
+    const formats = {
+        'starter': 'Starter Feed',
+        'grower': 'Grower Feed',
+        'finisher': 'Finisher Feed',
+        'layer': 'Layer Feed',
+        'broiler': 'Broiler Feed',
+        'rabbit-starter': 'Rabbit Starter',
+        'rabbit-grower': 'Rabbit Grower',
+        'rabbit-breeder': 'Rabbit Breeder',
+        'rabbit-finisher': 'Rabbit Finisher',
+        'sheep-starter': 'Sheep Starter',
+        'sheep-grower': 'Sheep Grower',
+        'sheep-finisher': 'Sheep Finisher',
+        'sheep-maintenance': 'Sheep Maintenance',
+        'sheep-lactating': 'Sheep Lactating',
+        'goat-starter': 'Goat Starter',
+        'goat-grower': 'Goat Grower',
+        'goat-finisher': 'Goat Finisher',
+        'goat-maintenance': 'Goat Maintenance',
+        'goat-lactating': 'Goat Lactating',
+        'cattle': 'Cattle Feed',
+        'pig': 'Pig Feed',
+        'duck': 'Duck Feed',
+        'turkey': 'Turkey Feed',
+        'fish': 'Fish Feed',
+        'other': 'Other Feed'
+    };
+    return formats[feedType] || feedType.charAt(0).toUpperCase() + feedType.slice(1).replace('-', ' ');
+},
     
     // ==================== INTEGRATION BROADCASTS ====================
-    
-    // 1. Broadcast feed recorded (existing)
+async broadcastFeedRecorded(formData, feedType, quantity, inventoryItem, oldStock) {
+    // 1. Broadcast feed recorded
     if (this.broadcaster) {
         this.broadcaster.broadcast('feed-recorded', {
             id: formData.id,
@@ -670,7 +873,7 @@ setupRealtimeSync() {
         });
     }
     
-    // Also dispatch custom event (existing)
+    // 2. Dispatch custom event
     window.dispatchEvent(new CustomEvent('feed-recorded', {
         detail: {
             feedType: feedType,
@@ -680,17 +883,17 @@ setupRealtimeSync() {
         }
     }));
     
-    // ===== NEW: Create EXPENSE record for feed usage =====
+    // 3. Create and broadcast expense record
     const expenseData = {
-        id: Date.now() + 1, // Slightly different ID
+        id: Date.now() + 1,
         date: formData.date,
         type: 'expense',
         category: 'feed',
         description: `Feed: ${feedType} - ${quantity}kg`,
-        amount: formData.cost,
+        amount: formData.cost || 0,
         paymentMethod: 'cash',
         reference: `FEED-${formData.id.toString().slice(-6)}`,
-        notes: notes || `Feed usage record #${formData.id}`,
+        notes: formData.notes || `Feed usage record #${formData.id}`,
         source: 'feed-module',
         feedRecordId: formData.id,
         feedType: feedType,
@@ -698,94 +901,86 @@ setupRealtimeSync() {
         birdsFed: this.birdsStock
     };
     
-    // Broadcast expense to Income module
     if (this.broadcaster) {
         this.broadcaster.broadcast('expense-recorded', expenseData);
-        console.log('📢 Broadcast expense-recorded to Income module');
     }
     
-    // Direct update to Income module if available (immediate sync)
+    // 4. Direct update to Income module
     if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
-        console.log('💰 Directly updating IncomeExpensesModule with feed expense');
         window.IncomeExpensesModule.transactions.unshift(expenseData);
         window.IncomeExpensesModule.saveData();
-        
-        // Refresh income display if active
         if (window.app?.currentSection === 'income-expenses') {
             window.IncomeExpensesModule.renderModule();
         }
     }
     
-    // ===== NEW: Update main INVENTORY module =====
-    if (window.InventoryCheckModule && window.InventoryCheckModule.inventory) {
-        console.log('📦 Updating main Inventory module feed stock');
-        
-        // Find matching inventory item
-        const mainInventoryItem = window.InventoryCheckModule.inventory.find(item => 
-            item.category === 'feed' && 
-            item.name?.toLowerCase().includes(feedType.toLowerCase())
-        );
-        
-        if (mainInventoryItem) {
-            const mainOldStock = mainInventoryItem.currentStock;
-            mainInventoryItem.currentStock -= quantity;
-            mainInventoryItem.lastRestocked = formData.date;
-            
-            console.log(`✅ Updated main inventory: ${mainInventoryItem.name} ${mainOldStock} → ${mainInventoryItem.currentStock}`);
-            
-            // Save inventory module
-            if (typeof window.InventoryCheckModule.saveData === 'function') {
-                window.InventoryCheckModule.saveData();
-            }
-            
-            // Broadcast inventory update
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('inventory-updated', {
-                    module: 'feed-record',
-                    itemId: mainInventoryItem.id,
-                    itemName: mainInventoryItem.name,
-                    oldStock: mainOldStock,
-                    newStock: mainInventoryItem.currentStock,
-                    timestamp: new Date().toISOString()
-                });
-            }
-        } else {
-            console.log('⚠️ No matching feed item found in main inventory');
-        }
-    }
+    // 5. Update main inventory module
+    await this.updateMainInventory(feedType, quantity, formData.date);
     
-    // ===== NEW: Update FarmData =====
-    if (window.FarmData) {
-        if (!window.FarmData.feed) {
-            window.FarmData.feed = {
-                records: [],
-                usage: []
-            };
+    // 6. Update FarmData
+    this.updateFarmDataFeed(formData, feedType, quantity);
+    
+    // 7. Check low stock alert
+    this.checkLowStockAlert(inventoryItem, feedType);
+    
+    // 8. Broadcast cost analytics
+    this.broadcastCostAnalytics(formData, feedType, quantity);
+},
+
+async updateMainInventory(feedType, quantity, date) {
+    if (!window.InventoryCheckModule?.inventory) return;
+    
+    const mainInventoryItem = window.InventoryCheckModule.inventory.find(item => 
+        item.category === 'feed' && 
+        item.name?.toLowerCase().includes(feedType.toLowerCase())
+    );
+    
+    if (mainInventoryItem) {
+        const mainOldStock = mainInventoryItem.currentStock;
+        mainInventoryItem.currentStock -= quantity;
+        mainInventoryItem.lastRestocked = date;
+        
+        if (typeof window.InventoryCheckModule.saveData === 'function') {
+            await window.InventoryCheckModule.saveData();
         }
         
-        // Add feed usage record
-        window.FarmData.feed.usage = window.FarmData.feed.usage || [];
-        window.FarmData.feed.usage.push({
-            id: formData.id,
-            date: formData.date,
-            feedType: feedType,
-            quantity: quantity,
-            cost: formData.cost,
-            birdsFed: this.birdsStock,
-            notes: notes
-        });
-        
-        // Dispatch farm data updated event
-        window.dispatchEvent(new CustomEvent('farm-data-updated', {
-            detail: { module: 'feed-record', action: 'feed-used' }
-        }));
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('inventory-updated', {
+                module: 'feed-record',
+                itemId: mainInventoryItem.id,
+                itemName: mainInventoryItem.name,
+                oldStock: mainOldStock,
+                newStock: mainInventoryItem.currentStock
+            });
+        }
     }
+},
+
+updateFarmDataFeed(formData, feedType, quantity) {
+    if (!window.FarmData) return;
     
-    // ===== NEW: Check if we need to reorder (low stock alert) =====
+    window.FarmData.feed = window.FarmData.feed || { records: [], usage: [] };
+    window.FarmData.feed.usage = window.FarmData.feed.usage || [];
+    
+    window.FarmData.feed.usage.push({
+        id: formData.id,
+        date: formData.date,
+        feedType: feedType,
+        quantity: quantity,
+        cost: formData.cost,
+        birdsFed: this.birdsStock,
+        notes: formData.notes
+    });
+    
+    window.dispatchEvent(new CustomEvent('farm-data-updated', {
+        detail: { module: 'feed-record', action: 'feed-used' }
+    }));
+},
+
+checkLowStockAlert(inventoryItem, feedType) {
     if (inventoryItem.currentStock <= inventoryItem.minStock) {
-        this.showNotification(`⚠️ Low stock: ${inventoryItem.feedType} feed (${inventoryItem.currentStock}kg remaining)`, 'warning');
+        this.showNotification(`⚠️ Low stock: ${feedType} feed (${inventoryItem.currentStock}kg remaining)`, 'warning');
         
-        // Broadcast low stock alert
         if (this.broadcaster) {
             this.broadcaster.broadcast('low-stock-alert', {
                 module: 'feed-record',
@@ -793,17 +988,15 @@ setupRealtimeSync() {
                 feedType: feedType,
                 currentStock: inventoryItem.currentStock,
                 minStock: inventoryItem.minStock,
-                suggestedOrder: inventoryItem.minStock * 2,
-                timestamp: new Date().toISOString()
+                suggestedOrder: inventoryItem.minStock * 2
             });
         }
     }
+},
+
+broadcastCostAnalytics(formData, feedType, quantity) {
+    const costPerBird = this.birdsStock > 0 ? (formData.cost || 0) / this.birdsStock : 0;
     
-    // ===== NEW: Calculate cost per bird for analytics =====
-    const costPerBird = this.birdsStock > 0 ? formData.cost / this.birdsStock : 0;
-    console.log(`📊 Feed cost analytics: $${costPerBird.toFixed(2)} per bird for this feeding`);
-    
-    // Broadcast feed cost analytics
     if (this.broadcaster && this.birdsStock > 0) {
         this.broadcaster.broadcast('feed-cost-analytics', {
             module: 'feed-record',
@@ -812,184 +1005,143 @@ setupRealtimeSync() {
             birdsFed: this.birdsStock,
             costPerBird: costPerBird,
             quantity: quantity,
-            date: formData.date,
-            timestamp: new Date().toISOString()
+            date: formData.date
         });
     }
-    
-    this.showNotification(`Recorded ${formData.quantity}kg ${feedType} feed usage!`, 'success');
-    
-    // Return the created record for any further processing
-    return formData;
 },
+
+// ==================== FORM METHODS ====================
+
+resetFeedForm() {
+    const form = document.getElementById('feed-record-form');
+    if (form) form.reset();
     
-    cancelFeedForm() {
-    console.log('❌ Cancelling feed form');
-    
-    // Reset form
-    document.getElementById('feed-record-form').reset();
-    
-    // Reset form title and button
+    document.getElementById('feed-record-id').value = '';
     document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
+    
     const submitBtn = document.getElementById('feed-submit-btn');
-    submitBtn.textContent = 'Save Record';
-    delete submitBtn.dataset.editingId;
+    if (submitBtn) submitBtn.textContent = 'Save Record';
     
-    // Hide edit cancel button
-    document.getElementById('cancel-feed-edit').style.display = 'none';
-    
-    // Scroll back to top of form or hide it? Usually just reset
+    const cancelEditBtn = document.getElementById('cancel-feed-edit');
+    if (cancelEditBtn) cancelEditBtn.style.display = 'none';
+},
+
+cancelFeedForm() {
+    this.resetFeedForm();
     this.showNotification('Form cleared', 'info');
 },
-    
-    editFeedRecord(recordId) {
-        console.log('🌾 EDITING FEED RECORD:', recordId);
-        
-        const record = this.feedRecords.find(r => r.id === recordId);
-        if (!record) {
-            this.showNotification('Feed record not found', 'error');
-            return;
-        }
-        
-        // Scroll to form
-        this.showFeedForm();
-        
-        // Wait for form to render, then populate
-        setTimeout(() => {
-            // Populate form
-            document.getElementById('feed-type').value = record.feedType;
-            document.getElementById('feed-quantity').value = record.quantity;
-            document.getElementById('feed-notes').value = record.notes || '';
-            
-            // Change form title and button
-            document.getElementById('feed-form-title').textContent = 'Edit Feed Record';
-            const submitBtn = document.getElementById('feed-submit-btn');
-            submitBtn.textContent = 'Update Record';
-            submitBtn.dataset.editingId = recordId;
-            
-            // Show cancel button
-            document.getElementById('cancel-feed-edit').style.display = 'inline-block';
-            
-            console.log('✅ Feed record form populated for editing');
-            
-        }, 100);
-    },
 
-    updateFeedRecord(recordId, feedType, quantity, notes) {
-        console.log('💾 UPDATING FEED RECORD:', recordId);
+showFeedForm() {
+    document.getElementById('feed-record-form').scrollIntoView({ behavior: 'smooth' });
+},
+
+// ==================== EDIT/DELETE METHODS ====================
+
+editFeedRecord(recordId) {
+    console.log('✏️ Editing feed record:', recordId);
+    
+    const record = this.feedRecords.find(r => r.id == recordId);
+    if (!record) {
+        this.showNotification('Record not found', 'error');
+        return;
+    }
+    
+    // Populate form
+    document.getElementById('feed-record-id').value = record.id;
+    document.getElementById('feed-type').value = record.feedType;
+    document.getElementById('feed-quantity').value = record.quantity;
+    document.getElementById('feed-notes').value = record.notes || '';
+    
+    // Change form title and button
+    document.getElementById('feed-form-title').textContent = 'Edit Feed Record';
+    document.getElementById('feed-submit-btn').textContent = 'Update Record';
+    document.getElementById('cancel-feed-edit').style.display = 'inline-block';
+    
+    this.showFeedForm();
+},
+
+async deleteFeedRecord(recordId) {
+    console.log('🗑️ Deleting feed record:', recordId);
+    
+    const record = this.feedRecords.find(r => r.id == recordId);
+    if (!record) {
+        this.showNotification('Record not found', 'error');
+        return;
+    }
+    
+    if (confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg) on ${record.date}?`)) {
+        // Remove record
+        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
         
-        // Check if feed type has sufficient stock (considering we're editing, not adding new)
-        const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
-        if (!inventoryItem) {
-            this.showNotification('Invalid feed type selected!', 'error');
-            return;
+        // Add quantity back to inventory
+        const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
+        if (inventoryItem) {
+            inventoryItem.currentStock += record.quantity;
         }
         
-        // Find the original record to check stock adjustments
-        const originalRecord = this.feedRecords.find(r => r.id === recordId);
-        if (!originalRecord) return;
+        await this.saveData();
+        this.renderModule();
+        this.showNotification('Feed record deleted successfully!', 'success');
         
-        // Calculate stock adjustment
-        const stockAdjustment = originalRecord.quantity - quantity;
-        const newStock = inventoryItem.currentStock + stockAdjustment;
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('feed-deleted', {
+                id: recordId,
+                data: record
+            });
+        }
+    }
+},
+
+async updateFeedRecord(recordId, feedType, quantity, notes) {
+    const originalRecord = this.feedRecords.find(r => r.id === recordId);
+    if (!originalRecord) return;
+    
+    const inventoryItem = this.feedInventory.find(item => item.feedType === feedType);
+    if (!inventoryItem) {
+        this.showNotification('Invalid feed type selected!', 'error');
+        return;
+    }
+    
+    // Calculate stock adjustment
+    const stockAdjustment = originalRecord.quantity - quantity;
+    const newStock = inventoryItem.currentStock + stockAdjustment;
+    
+    if (newStock < 0) {
+        this.showNotification('Cannot adjust stock below zero!', 'error');
+        return;
+    }
+    
+    // Update inventory
+    inventoryItem.currentStock = newStock;
+    
+    // Update record
+    const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
+    if (recordIndex !== -1) {
+        const updatedRecord = {
+            ...originalRecord,
+            feedType,
+            quantity,
+            notes,
+            updatedAt: new Date().toISOString()
+        };
         
-        if (newStock < 0) {
-            this.showNotification(`Cannot adjust stock below zero!`, 'error');
-            return;
+        this.feedRecords[recordIndex] = updatedRecord;
+        await this.saveData();
+        this.renderModule();
+        this.resetFeedForm();
+        
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('feed-updated', {
+                id: recordId,
+                oldData: originalRecord,
+                newData: updatedRecord
+            });
         }
         
-        // Update inventory
-        inventoryItem.currentStock = newStock;
-        
-        // Update record
-        const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
-        if (recordIndex !== -1) {
-            const oldRecord = this.feedRecords[recordIndex];
-            const updatedRecord = {
-                ...oldRecord,
-                feedType,
-                quantity,
-                cost: this.calculateCost(feedType, quantity),
-                notes
-            };
-            
-            this.feedRecords[recordIndex] = updatedRecord;
-            this.saveData();
-            this.updateFarmData();
-            this.renderModule();
-            this.cancelFeedEdit();
-            
-            // Broadcast update
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('feed-updated', {
-                    id: recordId,
-                    oldData: oldRecord,
-                    newData: updatedRecord,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            this.showNotification(`Feed record updated!`, 'success');
-        }
-    },
-   
-    cancelFeedEdit() {
-    console.log('❌ Cancelling feed edit');
-    
-    // Reset form
-    document.getElementById('feed-record-form').reset();
-    
-    // Reset form title and button
-    document.getElementById('feed-form-title').textContent = 'Record Feed Usage';
-    const submitBtn = document.getElementById('feed-submit-btn');
-    submitBtn.textContent = 'Save Record';
-    delete submitBtn.dataset.editingId;
-    
-    // Hide edit cancel button
-    document.getElementById('cancel-feed-edit').style.display = 'none';
-    
-    this.showNotification('Edit cancelled', 'info');
+        this.showNotification('Feed record updated!', 'success');
+    }
 },
     
-    deleteFeedRecord(recordId) {
-        const record = this.feedRecords.find(r => r.id === recordId);
-        if (!record) return;
-        
-        if (confirm(`Delete feed record for ${record.quantity}kg of ${record.feedType} feed?`)) {
-            // Return stock to inventory when deleting
-            const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
-            let stockReturned = 0;
-            let newStock = 0;
-            
-            if (inventoryItem) {
-                stockReturned = record.quantity;
-                inventoryItem.currentStock += record.quantity;
-                newStock = inventoryItem.currentStock;
-            }
-            
-            // Remove record
-            this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-            this.saveData();
-            this.updateFarmData();
-            this.renderModule();
-            
-            // Broadcast deletion
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('feed-deleted', {
-                    id: recordId,
-                    data: record,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            this.showNotification('Feed record deleted!', 'success');
-        }
-    },
-
-    showFeedForm() {
-        document.getElementById('feed-record-form').scrollIntoView({ behavior: 'smooth' });
-    },
-
     showAddStockForm() {
         const feedType = prompt('Enter feed type (starter/grower/finisher/layer):');
         if (!feedType) return;
@@ -1252,7 +1404,7 @@ if (window.FarmModules) {
 // ==================== UNIVERSAL REGISTRATION ====================
 
 (function() {
-    const MODULE_NAME = 'feed-record.js';
+    const MODULE_NAME = 'feed-record';
     const MODULE_OBJECT = FeedRecordModule;
     
     console.log(`📦 Registering ${MODULE_NAME} module...`);
