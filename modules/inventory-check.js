@@ -473,22 +473,25 @@ isValidInventoryItem(item) {
     }
 },
 
-    async saveToDataService() {
+   async saveToDataService() {
     if (!this.dataService) return;
     
     try {
+        // Only save valid items
+        const validItems = this.inventory.filter(item => this.isValidInventoryItem(item));
+        
         await this.dataService.save('inventory', {
-            items: this.inventory,
+            items: validItems,
             lastUpdated: new Date().toISOString(),
-            totalItems: this.inventory.length,
+            totalItems: validItems.length,
             totalValue: this.calculateStats().totalValue
         });
-        console.log('✅ Saved inventory to UnifiedDataService');
+        console.log('✅ Saved valid inventory to UnifiedDataService');
     } catch (error) {
         console.error('❌ Error saving to UnifiedDataService:', error);
     }
 },
-
+    
     // ✅ MODIFIED: Enhanced saveData with broadcasting
     async saveData() {
     // Always save to localStorage
