@@ -2402,6 +2402,7 @@ updateProductionItemsDisplay: function() {
             newElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation(); // ← ADD THIS
                 handler();
             });
             console.log(`✅ ${logName || id} button attached`);
@@ -2412,50 +2413,38 @@ updateProductionItemsDisplay: function() {
         }
     };
     
-    // Modal buttons
-    attachListener('add-sale', () => this.showSaleModal(), 'Add Sale');
-    attachListener('add-sale-btn', () => this.showSaleModal(), 'Add Sale Btn');
-    
-    // ===== CRITICAL: From Production button =====
-    attachListener('from-production-btn', () => {
-        console.log('🔄 From Production button clicked!');
-        this.showProductionItems();
-    }, 'From Production');
-    
-    attachListener('from-production-btn-2', () => this.showProductionItems(), 'From Production 2');
-    
-    // Report buttons
-    attachListener('meat-sales-btn', () => this.generateMeatSalesReport(), 'Meat Sales');
-    attachListener('daily-report-btn', () => this.generateDailyReport(), 'Daily Report');
-    
-    // Sale modal handlers
-    attachListener('save-sale', () => this.saveSale(), 'Save Sale');
-    attachListener('delete-sale', () => this.deleteSale(), 'Delete Sale');
-    attachListener('cancel-sale', () => this.hideSaleModal(), 'Cancel Sale');
-    attachListener('close-sale-modal', () => this.hideSaleModal(), 'Close Sale Modal');
-    
-    // Report modal handlers
-    attachListener('close-daily-report', () => this.hideDailyReportModal(), 'Close Daily Report');
-    attachListener('close-daily-report-btn', () => this.hideDailyReportModal(), 'Close Daily Report Btn');
-    attachListener('print-daily-report', () => this.printDailyReport(), 'Print Daily Report');
-    
-    attachListener('close-meat-sales', () => this.hideMeatSalesModal(), 'Close Meat Sales');
-    attachListener('close-meat-sales-btn', () => this.hideMeatSalesModal(), 'Close Meat Sales Btn');
-    attachListener('print-meat-sales', () => this.printMeatSalesReport(), 'Print Meat Sales');
-    
-    // Production items modal
-    attachListener('close-production-items', () => this.hideProductionItemsModal(), 'Close Production Items');
-    attachListener('close-production-items-btn', () => this.hideProductionItemsModal(), 'Close Production Items Btn');
-    
-    // ===== ALSO handle any data-action buttons (for dynamically created content) =====
-    const productionNavBtns = document.querySelectorAll('[data-action="show-production-items"], [data-action="navigate-to-production"]');
-    productionNavBtns.forEach((btn, index) => {
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
+    // ===== SPECIFIC HANDLER for from-production-btn =====
+    const productionBtn = document.getElementById('from-production-btn');
+    if (productionBtn) {
+        // Remove all existing listeners by cloning
+        const newBtn = productionBtn.cloneNode(true);
+        productionBtn.parentNode.replaceChild(newBtn, productionBtn);
+        
+        // Add the correct handler
         newBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const action = newBtn.getAttribute('data-action');
+            e.stopImmediatePropagation();
+            console.log('🔄 From Production button clicked - SHOWING PRODUCTION ITEMS');
+            this.showProductionItems();
+        });
+        console.log('✅ from-production-btn attached with showProductionItems');
+    }
+    
+    // ===== Handle ALL production-nav-btn buttons but with priority =====
+    const allNavBtns = document.querySelectorAll('.production-nav-btn');
+    allNavBtns.forEach((btn, index) => {
+        // Skip the from-production-btn since we already handled it
+        if (btn.id === 'from-production-btn') return;
+        
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        const action = newBtn.getAttribute('data-action');
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             console.log(`🔄 Production nav button ${index} clicked:`, action);
             if (action === 'show-production-items') {
                 this.showProductionItems();
@@ -2463,8 +2452,26 @@ updateProductionItemsDisplay: function() {
                 this.navigateToProduction();
             }
         });
-        console.log(`✅ Production nav button ${index} attached`);
+        console.log(`✅ Production nav button ${index} (${action}) attached`);
     });
+    
+    // Rest of your existing button listeners...
+    attachListener('add-sale', () => this.showSaleModal(), 'Add Sale');
+    attachListener('add-sale-btn', () => this.showSaleModal(), 'Add Sale Btn');
+    attachListener('meat-sales-btn', () => this.generateMeatSalesReport(), 'Meat Sales');
+    attachListener('daily-report-btn', () => this.generateDailyReport(), 'Daily Report');
+    attachListener('save-sale', () => this.saveSale(), 'Save Sale');
+    attachListener('delete-sale', () => this.deleteSale(), 'Delete Sale');
+    attachListener('cancel-sale', () => this.hideSaleModal(), 'Cancel Sale');
+    attachListener('close-sale-modal', () => this.hideSaleModal(), 'Close Sale Modal');
+    attachListener('close-daily-report', () => this.hideDailyReportModal(), 'Close Daily Report');
+    attachListener('close-daily-report-btn', () => this.hideDailyReportModal(), 'Close Daily Report Btn');
+    attachListener('print-daily-report', () => this.printDailyReport(), 'Print Daily Report');
+    attachListener('close-meat-sales', () => this.hideMeatSalesModal(), 'Close Meat Sales');
+    attachListener('close-meat-sales-btn', () => this.hideMeatSalesModal(), 'Close Meat Sales Btn');
+    attachListener('print-meat-sales', () => this.printMeatSalesReport(), 'Print Meat Sales');
+    attachListener('close-production-items', () => this.hideProductionItemsModal(), 'Close Production Items');
+    attachListener('close-production-items-btn', () => this.hideProductionItemsModal(), 'Close Production Items Btn');
     
     console.log('✅ All button listeners set up');
 },
@@ -2506,6 +2513,8 @@ updateProductionItemsDisplay: function() {
     },
 
     showProductionItems() {
+    console.log('🔄 showProductionItems() called - opening production items modal');
+        
         console.log('🔄 Showing production items for sale...');
         this.hideAllModals();
         
