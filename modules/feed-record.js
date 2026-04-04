@@ -744,36 +744,40 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
 },
 
 async deleteFeedRecord(recordId) {
-    console.log('🗑️ deleteFeedRecord called for ID:', recordId);
+    console.log('🗑️ Deleting feed record:', recordId);
     
-    // Find the record
-    const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
-    if (recordIndex === -1) {
-        console.log('❌ Record not found:', recordId);
+    const record = this.feedRecords.find(r => r.id === recordId);
+    if (!record) {
         this.showNotification('Record not found', 'error');
         return;
     }
     
-    const record = this.feedRecords[recordIndex];
-    console.log('Found record to delete:', record);
-    
     if (!confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
-        console.log('Delete cancelled');
         return;
     }
     
-    // Remove from local array
-    this.feedRecords.splice(recordIndex, 1);
-    console.log('Removed from array. Remaining records:', this.feedRecords.length);
+    // Filter out the record
+    const newRecords = this.feedRecords.filter(r => r.id !== recordId);
+    
+    // Update local
+    this.feedRecords = newRecords;
     
     // Save to localStorage
     localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
     
-    // 🔥 CRITICAL: Update Firebase/UnifiedDataService
+    // 🔥 CRITICAL: Save filtered array to Firebase
     if (this.dataService) {
-        // Save the updated array to Firebase (overwrite)
         await this.dataService.save('feedRecords', this.feedRecords);
         console.log('✅ Saved updated array to UnifiedDataService');
+    }
+    
+    // Add quantity back to inventory
+    const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
+    if (inventoryItem) {
+        inventoryItem.currentStock += record.quantity;
+        if (this.dataService) {
+            await this.dataService.save('feedInventory', inventoryItem);
+        }
     }
     
     // Re-render
@@ -781,7 +785,6 @@ async deleteFeedRecord(recordId) {
     
     this.showNotification('Feed record deleted!', 'success');
     
-    // Broadcast deletion
     if (this.broadcaster) {
         this.broadcaster.broadcast('feed-deleted', {
             id: recordId,
