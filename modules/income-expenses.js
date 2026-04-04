@@ -1026,6 +1026,7 @@ updateInventoryFromExpense: async function(expenseData) {
     // Only process if expense is for inventory items
     const inventoryCategories = ['feed', 'medical', 'equipment', 'packaging', 'cleaning'];
     if (!inventoryCategories.includes(expenseData.category)) {
+        console.log('ℹ️ Not an inventory expense, skipping inventory update');
         return;
     }
     
@@ -1034,7 +1035,7 @@ updateInventoryFromExpense: async function(expenseData) {
     let quantity = this.estimateQuantityFromExpense(expenseData);
     let unit = this.getUnitForCategory(expenseData.category);
     
-    // Update InventoryCheckModule if available
+    // ===== UPDATE INVENTORY CHECK MODULE =====
     if (window.InventoryCheckModule && window.InventoryCheckModule.inventory) {
         console.log('📦 Updating InventoryCheckModule');
         
@@ -1050,8 +1051,12 @@ updateInventoryFromExpense: async function(expenseData) {
             const oldStock = inventoryItem.currentStock;
             inventoryItem.currentStock += quantity;
             inventoryItem.lastRestocked = expenseData.date;
+            // Update cost if needed
+            if (expenseData.amount) {
+                inventoryItem.cost = (inventoryItem.cost || 0) + expenseData.amount;
+            }
             
-            console.log(`✅ Updated ${inventoryItem.name}: ${oldStock} → ${inventoryItem.currentStock}`);
+            console.log(`✅ Updated ${inventoryItem.name}: ${oldStock} → ${inventoryItem.currentStock} (+${quantity} ${unit})`);
         } else {
             // Create new inventory item
             const newItem = {
@@ -1061,19 +1066,20 @@ updateInventoryFromExpense: async function(expenseData) {
                 currentStock: quantity,
                 unit: unit,
                 minStock: this.getMinStockForCategory(expenseData.category),
-                costPerKg: expenseData.amount / quantity,
+                cost: expenseData.amount,
+                costPerUnit: expenseData.amount / quantity,
                 supplier: this.extractSupplier(expenseData.notes),
                 lastRestocked: expenseData.date,
                 notes: `Purchased: ${expenseData.description}`
             };
             
             window.InventoryCheckModule.inventory.push(newItem);
-            console.log('✅ Created new inventory item:', newItem);
+            console.log('✅ Created new inventory item:', newItem.name);
         }
         
         // Save inventory module
         if (typeof window.InventoryCheckModule.saveData === 'function') {
-            window.InventoryCheckModule.saveData();
+            await window.InventoryCheckModule.saveData();
         }
         
         // Broadcast inventory update
@@ -1081,12 +1087,18 @@ updateInventoryFromExpense: async function(expenseData) {
             window.DataBroadcaster.emit('inventory-updated', {
                 module: 'income-expenses',
                 category: expenseData.category,
+                quantity: quantity,
                 timestamp: new Date().toISOString()
             });
         }
     }
     
-    // Also update FarmData
+    // ===== UPDATE FEED MODULE (if feed expense) =====
+    if (expenseData.category === 'feed') {
+        await this.updateFeedInventoryFromExpense(expenseData);
+    }
+    
+    // ===== ALSO UPDATE FARM DATA =====
     if (window.FarmData) {
         if (!window.FarmData.inventory) {
             window.FarmData.inventory = [];
@@ -1117,8 +1129,64 @@ updateInventoryFromExpense: async function(expenseData) {
             detail: { module: 'income-expenses', action: 'inventory-updated' }
         }));
     }
+    
+    console.log(`✅ Inventory updated: ${quantity} ${unit} of ${expenseData.category} added`);
 },
 
+// Add this new method for feed-specific updates
+updateFeedInventoryFromExpense: async function(expenseData) {
+    console.log('🌾 Updating feed inventory from expense:', expenseData);
+    
+    if (!window.FeedRecordModule || !window.FeedRecordModule.feedInventory) {
+        console.log('⚠️ Feed module not available');
+        return;
+    }
+    
+    // Determine feed type from description
+    let feedType = 'layer';
+    const desc = expenseData.description?.toLowerCase() || '';
+    if (desc.includes('starter')) feedType = 'starter';
+    else if (desc.includes('grower')) feedType = 'grower';
+    else if (desc.includes('finisher')) feedType = 'finisher';
+    else if (desc.includes('broiler')) feedType = 'broiler';
+    else if (desc.includes('layer')) feedType = 'layer';
+    
+    const quantity = this.estimateFeedQuantity(expenseData);
+    
+    // Find feed item
+    let feedItem = window.FeedRecordModule.feedInventory.find(item => 
+        item.feedType === feedType
+    );
+    
+    if (feedItem) {
+        feedItem.currentStock = (feedItem.currentStock || 0) + quantity;
+        feedItem.lastRestocked = expenseData.date;
+        feedItem.lastCost = expenseData.amount;
+        
+        console.log(`✅ Feed inventory updated: ${feedType} +${quantity}kg (${feedItem.currentStock}kg total)`);
+    } else {
+        // Create new feed item
+        const newFeedItem = {
+            id: Date.now(),
+            feedType: feedType,
+            currentStock: quantity,
+            unit: 'kg',
+            minStock: 50,
+            cost: expenseData.amount,
+            lastRestocked: expenseData.date,
+            notes: `Initial stock from expense: ${expenseData.description}`
+        };
+        
+        window.FeedRecordModule.feedInventory.push(newFeedItem);
+        console.log(`✅ Created new feed inventory: ${feedType} with ${quantity}kg`);
+    }
+    
+    // Save feed module
+    if (typeof window.FeedRecordModule.saveData === 'function') {
+        await window.FeedRecordModule.saveData();
+    }
+},
+    
 handleFeedExpense: async function(expenseData) {
     console.log('🌾 Handling feed expense:', expenseData);
     
