@@ -449,29 +449,196 @@ const OrdersModule = {
     },
 
     // Complete order method
-    completeOrder(orderId) {
-        console.log(`✅ Completing order: ${orderId}`);
+   async completeOrder(orderId) {
+    console.log(`✅ Completing order: ${orderId}`);
+    
+    const order = this.orders.find(o => o.id == orderId);
+    if (!order) {
+        this.showNotification('Order not found', 'error');
+        return;
+    }
+    
+    // Prevent double completion
+    if (order.status === 'completed') {
+        this.showNotification('Order already completed', 'info');
+        return;
+    }
+    
+    const customer = this.customers.find(c => c.id === order.customerId);
+    
+    // ===== 1. UPDATE PRODUCTION (convert reserved to sold) =====
+    try {
+        if (window.ProductionModule && window.ProductionModule.productionData) {
+            const production = window.ProductionModule.productionData;
+            let productionUpdated = false;
+            
+            for (const item of order.items) {
+                // Find matching production item (FIFO)
+                const productionItem = production.find(p => 
+                    p.product === item.productId && 
+                    ((p.reservedQuantity || 0) > 0 || (p.availableQuantity || p.quantity - (p.soldQuantity || 0)) >= item.quantity)
+                );
+                
+                if (productionItem) {
+                    const sellQuantity = Math.min(item.quantity, (productionItem.reservedQuantity || productionItem.quantity - (productionItem.soldQuantity || 0)));
+                    productionItem.soldQuantity = (productionItem.soldQuantity || 0) + sellQuantity;
+                    productionItem.reservedQuantity = Math.max(0, (productionItem.reservedQuantity || 0) - sellQuantity);
+                    productionItem.availableQuantity = productionItem.quantity - productionItem.soldQuantity - productionItem.reservedQuantity;
+                    
+                    if (productionItem.availableQuantity <= 0 && productionItem.reservedQuantity <= 0) {
+                        productionItem.status = 'sold';
+                    } else if (productionItem.reservedQuantity > 0) {
+                        productionItem.status = 'reserved';
+                    } else if (productionItem.soldQuantity > 0) {
+                        productionItem.status = 'partial';
+                    }
+                    productionUpdated = true;
+                    console.log(`✅ Production updated for ${item.productId}: sold ${sellQuantity}`);
+                }
+            }
+            
+            if (productionUpdated && typeof window.ProductionModule.saveData === 'function') {
+                await window.ProductionModule.saveData();
+            }
+        }
+    } catch (error) {
+        console.warn('Production update error:', error);
+    }
+    
+    // ===== 2. UPDATE INVENTORY =====
+    try {
+        if (window.InventoryCheckModule && window.InventoryCheckModule.inventory) {
+            let inventoryUpdated = false;
+            
+            for (const item of order.items) {
+                const inventoryItem = window.InventoryCheckModule.inventory.find(i => 
+                    i.name?.toLowerCase().includes(item.productId?.toLowerCase()) ||
+                    i.category?.toLowerCase().includes(item.productId?.toLowerCase())
+                );
+                
+                if (inventoryItem && inventoryItem.currentStock >= item.quantity) {
+                    inventoryItem.currentStock -= item.quantity;
+                    inventoryItem.lastSold = new Date().toISOString();
+                    inventoryUpdated = true;
+                    console.log(`✅ Inventory updated for ${inventoryItem.name}: now ${inventoryItem.currentStock}`);
+                }
+            }
+            
+            if (inventoryUpdated && typeof window.InventoryCheckModule.saveData === 'function') {
+                await window.InventoryCheckModule.saveData();
+            }
+        }
+    } catch (error) {
+        console.warn('Inventory update error:', error);
+    }
+    
+    // ===== 3. CREATE SALE RECORD =====
+    let saleId = null;
+    try {
+        const saleData = {
+            id: 'SALE-' + Date.now().toString().slice(-6),
+            date: new Date().toISOString().split('T')[0],
+            customer: customer?.name || 'Walk-in',
+            product: this.mapOrderItemsToProduct(order.items),
+            unit: 'items',
+            quantity: this.calculateOrderQuantity(order.items),
+            unitPrice: order.totalAmount / this.calculateOrderQuantity(order.items),
+            totalAmount: order.totalAmount,
+            paymentMethod: order.paymentMethod || 'cash',
+            paymentStatus: 'paid',
+            notes: `From order #${orderId}. ${order.notes || ''}`,
+            productionSource: true,
+            productionSourceId: orderId,
+            orderId: orderId,
+            items: order.items,
+            customerName: customer?.name || 'Unknown'
+        };
         
-        const order = this.orders.find(o => o.id == orderId);
-        if (!order) {
-            this.showNotification('Order not found', 'error');
-            return;
+        if (window.SalesRecordModule && typeof window.SalesRecordModule.addSale === 'function') {
+            saleId = window.SalesRecordModule.addSale(saleData);
+            console.log('✅ Sale record created in Sales module');
+        } else {
+            // Fallback: save to localStorage
+            let sales = JSON.parse(localStorage.getItem('farm-sales') || '[]');
+            sales.unshift(saleData);
+            localStorage.setItem('farm-sales', JSON.stringify(sales));
+            console.log('✅ Sale record saved to localStorage');
+        }
+    } catch (error) {
+        console.warn('Sale creation error:', error);
+    }
+    
+    // ===== 4. CREATE INCOME TRANSACTION =====
+    try {
+        const incomeTransaction = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            type: 'income',
+            category: 'sales',
+            amount: order.totalAmount,
+            description: `Order #${orderId} - ${customer?.name || 'Unknown Customer'}`,
+            paymentMethod: order.paymentMethod || 'cash',
+            reference: `ORDER-${orderId}`,
+            notes: `Auto-generated from completed order. ${order.notes || ''}`,
+            source: 'orders-module',
+            orderId: orderId,
+            customerName: customer?.name
+        };
+        
+        // Save to UnifiedDataService
+        if (window.UnifiedDataService) {
+            await window.UnifiedDataService.save('transactions', incomeTransaction);
+            console.log('✅ Income transaction saved to UnifiedDataService');
         }
         
-        order.status = 'completed';
-        order.completedAt = new Date().toISOString();
-        this.saveData();
-        
-        this.showNotification(`Order #${orderId} completed!`, 'success');
-        
-        const customer = this.customers.find(c => c.id === order.customerId);
-        
-        // Broadcast order completed event
-        this.broadcastOrderAsSale(order);
-        this.renderModule();
-        
-        console.log('✅ Order completed and communicated to all modules');
-    },
+        // Update income module directly if available
+        if (window.IncomeExpensesModule && typeof window.IncomeExpensesModule.addTransaction === 'function') {
+            window.IncomeExpensesModule.addTransaction(incomeTransaction);
+        } else if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+            window.IncomeExpensesModule.transactions.unshift(incomeTransaction);
+            if (typeof window.IncomeExpensesModule.saveData === 'function') {
+                window.IncomeExpensesModule.saveData();
+            }
+            console.log('✅ Income transaction added to Income module');
+        }
+    } catch (error) {
+        console.warn('Income transaction error:', error);
+    }
+    
+    // ===== 5. UPDATE ORDER STATUS =====
+    order.status = 'completed';
+    order.completedAt = new Date().toISOString();
+    order.paidAt = new Date().toISOString();
+    
+    await this.saveData();
+    
+    // ===== 6. BROADCAST EVENTS =====
+    if (window.Broadcaster) {
+        window.Broadcaster.broadcast('order-completed', {
+            orderId: order.id,
+            amount: order.totalAmount,
+            customer: customer?.name,
+            date: new Date().toISOString()
+        });
+    }
+    
+    // ===== 7. UPDATE UI =====
+    this.renderModule();
+    
+    // ===== 8. UPDATE DASHBOARD =====
+    if (window.dashboardModule && typeof window.dashboardModule.updateStats === 'function') {
+        window.dashboardModule.updateStats();
+    }
+    
+    // Dispatch event for dashboard
+    window.dispatchEvent(new CustomEvent('dashboard-update', {
+        detail: { type: 'order-completed', amount: order.totalAmount }
+    }));
+    
+    this.showNotification(`Order #${orderId} completed! Sale and income recorded.`, 'success');
+    
+    return saleId;
+},
 
     // Helper functions
     mapOrderItemsToProduct(items) {
