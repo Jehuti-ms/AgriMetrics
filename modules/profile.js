@@ -581,7 +581,7 @@ async saveToFirebase() {
     if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
     
     // Update form inputs
-    //const farmNameInput = document.getElementById('farm-name');
+    const farmNameInput = document.getElementById('farm-name');
     const farmerNameInput = document.getElementById('farmer-name');
     const emailInput = document.getElementById('farm-email');
     const farmTypeInput = document.getElementById('farm-type');
@@ -1792,7 +1792,7 @@ backupProfileForPersistence(profile) {
             await new Promise(resolve => setTimeout(resolve, 50));
             
             // Get current values directly
-           // const farmNameInput = document.getElementById('farm-name');
+            const farmNameInput = document.getElementById('farm-name');
             const farmerNameInput = document.getElementById('farmer-name');
             const emailInput = document.getElementById('farm-email');
             const farmTypeInput = document.getElementById('farm-type');
