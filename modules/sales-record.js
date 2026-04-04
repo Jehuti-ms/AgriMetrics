@@ -2266,101 +2266,98 @@ updateProductionItemsDisplay: function() {
     },
    
     // ==================== FIXED: CSP COMPLIANT EVENT LISTENERS ====================
-    setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
-        
-        // Remove any existing event listeners first
-        this.removeEventListeners();
-        
-        // Quick sale form
-        const quickSaleForm = document.getElementById('quick-sale-form');
-        if (quickSaleForm) {
-            quickSaleForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.handleQuickSale();
-            });
-        }
+   setupEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+    
+    // Remove any existing event listeners first
+    this.removeEventListeners();
+    
+    // Quick sale form
+    const quickSaleForm = document.getElementById('quick-sale-form');
+    if (quickSaleForm) {
+        const newForm = quickSaleForm.cloneNode(true);
+        quickSaleForm.parentNode.replaceChild(newForm, quickSaleForm);
+        newForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleQuickSale();
+        });
+    }
 
-        // Setup all button listeners
-        this.setupButtonListeners();
-        
-        // Form field event listeners
-        this.setupFormFieldListeners();
-        
-        // Quick product change
-        const quickProduct = document.getElementById('quick-product');
-        if (quickProduct) {
-            quickProduct.addEventListener('change', () => this.handleQuickProductChange());
-        }
+    // Setup all button listeners
+    this.setupButtonListeners();
+    
+    // Form field event listeners
+    this.setupFormFieldListeners();
+    
+    // Quick product change
+    const quickProduct = document.getElementById('quick-product');
+    if (quickProduct) {
+        const newProduct = quickProduct.cloneNode(true);
+        quickProduct.parentNode.replaceChild(newProduct, quickProduct);
+        newProduct.addEventListener('change', () => this.handleQuickProductChange());
+    }
 
-        // Filter
-        const periodFilter = document.getElementById('period-filter');
-        if (periodFilter) {
-            periodFilter.addEventListener('change', (e) => {
-                const salesTable = document.getElementById('sales-table');
-                if (salesTable) {
-                    salesTable.innerHTML = this.renderSalesTable(e.target.value);
-                    // No need to reattach listeners - event delegation handles it!
-                }
-            });
-        }
-
-        // Handle modal close buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('popout-modal-close')) {
-                const modal = e.target.closest('.popout-modal');
-                if (modal) {
-                    modal.classList.add('hidden');
-                }
+    // Filter
+    const periodFilter = document.getElementById('period-filter');
+    if (periodFilter) {
+        const newFilter = periodFilter.cloneNode(true);
+        periodFilter.parentNode.replaceChild(newFilter, periodFilter);
+        newFilter.addEventListener('change', (e) => {
+            const salesTable = document.getElementById('sales-table');
+            if (salesTable) {
+                salesTable.innerHTML = this.renderSalesTable(e.target.value);
             }
         });
-        
-        // Close modals when clicking outside
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('popout-modal')) {
-                this.hideAllModals();
-            }
-        });
+    }
 
-        // EVENT DELEGATION - This is the key fix!
-        // Use a single event listener on document to handle all edit/delete clicks
-        document.addEventListener('click', (e) => {
-            // Check if click is on or inside an edit button
-            const editButton = e.target.closest('.edit-sale-btn');
-            if (editButton) {
-                e.preventDefault();
-                e.stopPropagation();
-                const saleId = editButton.getAttribute('data-id');
-                if (!saleId) {
-                    console.error('❌ No sale ID found on edit button');
-                    return;
-                }
-                console.log('✏️ Edit button clicked for sale:', saleId);
+    // Handle modal close buttons - use event delegation
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('popout-modal-close')) {
+            const modal = e.target.closest('.popout-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+    });
+    
+    // Close modals when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('popout-modal')) {
+            this.hideAllModals();
+        }
+    });
+
+    // EVENT DELEGATION for edit/delete buttons
+    document.addEventListener('click', (e) => {
+        const editButton = e.target.closest('.edit-sale-btn');
+        if (editButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = editButton.getAttribute('data-id');
+            if (saleId) {
+                console.log('✏️ Edit sale:', saleId);
                 this.editSale(saleId);
-                return; // Stop processing
             }
-            
-            // Check if click is on or inside a delete button
-            const deleteButton = e.target.closest('.delete-sale-btn');
-            if (deleteButton) {
-                e.preventDefault();
-                e.stopPropagation();
-                const saleId = deleteButton.getAttribute('data-id');
-                if (!saleId) {
-                    console.error('❌ No sale ID found on delete button');
-                    return;
-                }
-                console.log('🗑️ Delete button clicked for sale:', saleId);
-                
+            return;
+        }
+        
+        const deleteButton = e.target.closest('.delete-sale-btn');
+        if (deleteButton) {
+            e.preventDefault();
+            e.stopPropagation();
+            const saleId = deleteButton.getAttribute('data-id');
+            if (saleId) {
+                console.log('🗑️ Delete sale:', saleId);
                 if (confirm('Are you sure you want to delete this sale?')) {
                     this.deleteSaleRecord(saleId);
                 }
-                return; // Stop processing
             }
-        });
-        
-        console.log('✅ Event listeners set up with delegation');
-    },
+            return;
+        }
+    });
+    
+    console.log('✅ Event listeners set up with delegation');
+},
     
     // ✅ NEW METHOD: Attach direct listeners to ALL production buttons
     attachDirectProductionButtonListeners() {
@@ -2392,66 +2389,85 @@ updateProductionItemsDisplay: function() {
         });
     },
     
-    setupButtonListeners() {
-        // Modal buttons
-        const addSaleBtn = document.getElementById('add-sale');
-        if (addSaleBtn) addSaleBtn.addEventListener('click', () => this.showSaleModal());
-        
-        const addSaleBtn2 = document.getElementById('add-sale-btn');
-        if (addSaleBtn2) addSaleBtn2.addEventListener('click', () => this.showSaleModal());
-        
-        const fromProductionBtn = document.getElementById('from-production-btn');
-        if (fromProductionBtn) fromProductionBtn.addEventListener('click', () => this.showProductionItems());
-        
-        const fromProductionBtn2 = document.getElementById('from-production-btn-2');
-        if (fromProductionBtn2) fromProductionBtn2.addEventListener('click', () => this.showProductionItems());
-        
-        const meatSalesBtn = document.getElementById('meat-sales-btn');
-        if (meatSalesBtn) meatSalesBtn.addEventListener('click', () => this.generateMeatSalesReport());
-        
-        const dailyReportBtn = document.getElementById('daily-report-btn');
-        if (dailyReportBtn) dailyReportBtn.addEventListener('click', () => this.generateDailyReport());
-        
-        // Sale modal handlers
-        const saveSaleBtn = document.getElementById('save-sale');
-        if (saveSaleBtn) saveSaleBtn.addEventListener('click', () => this.saveSale());
-        
-        const deleteSaleBtn = document.getElementById('delete-sale');
-        if (deleteSaleBtn) deleteSaleBtn.addEventListener('click', () => this.deleteSale());
-        
-        const cancelSaleBtn = document.getElementById('cancel-sale');
-        if (cancelSaleBtn) cancelSaleBtn.addEventListener('click', () => this.hideSaleModal());
-        
-        const closeSaleModalBtn = document.getElementById('close-sale-modal');
-        if (closeSaleModalBtn) closeSaleModalBtn.addEventListener('click', () => this.hideSaleModal());
-        
-        // Report modal handlers
-        const closeDailyReportBtn = document.getElementById('close-daily-report');
-        if (closeDailyReportBtn) closeDailyReportBtn.addEventListener('click', () => this.hideDailyReportModal());
-        
-        const closeDailyReportBtn2 = document.getElementById('close-daily-report-btn');
-        if (closeDailyReportBtn2) closeDailyReportBtn2.addEventListener('click', () => this.hideDailyReportModal());
-        
-        const printDailyReportBtn = document.getElementById('print-daily-report');
-        if (printDailyReportBtn) printDailyReportBtn.addEventListener('click', () => this.printDailyReport());
-        
-        const closeMeatSalesBtn = document.getElementById('close-meat-sales');
-        if (closeMeatSalesBtn) closeMeatSalesBtn.addEventListener('click', () => this.hideMeatSalesModal());
-        
-        const closeMeatSalesBtn2 = document.getElementById('close-meat-sales-btn');
-        if (closeMeatSalesBtn2) closeMeatSalesBtn2.addEventListener('click', () => this.hideMeatSalesModal());
-        
-        const printMeatSalesBtn = document.getElementById('print-meat-sales');
-        if (printMeatSalesBtn) printMeatSalesBtn.addEventListener('click', () => this.printMeatSalesReport());
-        
-        // Production items modal
-        const closeProductionItemsBtn = document.getElementById('close-production-items');
-        if (closeProductionItemsBtn) closeProductionItemsBtn.addEventListener('click', () => this.hideProductionItemsModal());
-        
-        const closeProductionItemsBtn2 = document.getElementById('close-production-items-btn');
-        if (closeProductionItemsBtn2) closeProductionItemsBtn2.addEventListener('click', () => this.hideProductionItemsModal());
-    },
-
+  setupButtonListeners() {
+    console.log('🔧 Setting up button listeners...');
+    
+    // Helper function to safely attach listener
+    const attachListener = (id, handler, logName) => {
+        const element = document.getElementById(id);
+        if (element) {
+            // Clone to remove existing listeners
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+            newElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handler();
+            });
+            console.log(`✅ ${logName || id} button attached`);
+            return newElement;
+        } else {
+            console.log(`⚠️ ${id} button not found`);
+            return null;
+        }
+    };
+    
+    // Modal buttons
+    attachListener('add-sale', () => this.showSaleModal(), 'Add Sale');
+    attachListener('add-sale-btn', () => this.showSaleModal(), 'Add Sale Btn');
+    
+    // ===== CRITICAL: From Production button =====
+    attachListener('from-production-btn', () => {
+        console.log('🔄 From Production button clicked!');
+        this.showProductionItems();
+    }, 'From Production');
+    
+    attachListener('from-production-btn-2', () => this.showProductionItems(), 'From Production 2');
+    
+    // Report buttons
+    attachListener('meat-sales-btn', () => this.generateMeatSalesReport(), 'Meat Sales');
+    attachListener('daily-report-btn', () => this.generateDailyReport(), 'Daily Report');
+    
+    // Sale modal handlers
+    attachListener('save-sale', () => this.saveSale(), 'Save Sale');
+    attachListener('delete-sale', () => this.deleteSale(), 'Delete Sale');
+    attachListener('cancel-sale', () => this.hideSaleModal(), 'Cancel Sale');
+    attachListener('close-sale-modal', () => this.hideSaleModal(), 'Close Sale Modal');
+    
+    // Report modal handlers
+    attachListener('close-daily-report', () => this.hideDailyReportModal(), 'Close Daily Report');
+    attachListener('close-daily-report-btn', () => this.hideDailyReportModal(), 'Close Daily Report Btn');
+    attachListener('print-daily-report', () => this.printDailyReport(), 'Print Daily Report');
+    
+    attachListener('close-meat-sales', () => this.hideMeatSalesModal(), 'Close Meat Sales');
+    attachListener('close-meat-sales-btn', () => this.hideMeatSalesModal(), 'Close Meat Sales Btn');
+    attachListener('print-meat-sales', () => this.printMeatSalesReport(), 'Print Meat Sales');
+    
+    // Production items modal
+    attachListener('close-production-items', () => this.hideProductionItemsModal(), 'Close Production Items');
+    attachListener('close-production-items-btn', () => this.hideProductionItemsModal(), 'Close Production Items Btn');
+    
+    // ===== ALSO handle any data-action buttons (for dynamically created content) =====
+    const productionNavBtns = document.querySelectorAll('[data-action="show-production-items"], [data-action="navigate-to-production"]');
+    productionNavBtns.forEach((btn, index) => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const action = newBtn.getAttribute('data-action');
+            console.log(`🔄 Production nav button ${index} clicked:`, action);
+            if (action === 'show-production-items') {
+                this.showProductionItems();
+            } else if (action === 'navigate-to-production') {
+                this.navigateToProduction();
+            }
+        });
+        console.log(`✅ Production nav button ${index} attached`);
+    });
+    
+    console.log('✅ All button listeners set up');
+},
      
     setupProductionItemsListeners() {
         // This is called after showing production items modal to set up listeners for dynamic content
