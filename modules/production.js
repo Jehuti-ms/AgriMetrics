@@ -420,96 +420,30 @@ const ProductionModule = {
 },
 
     // ✅ MODIFIED: Enhanced saveProduction with broadcasting
-   async saveProduction() {
-        const form = document.getElementById('production-form');
-        if (!form) {
-            console.error('❌ Production form not found');
-            return;
-        }
-
-        const productionId = document.getElementById('production-id').value;
-        const dateInput = document.getElementById('production-date').value;
-        const productSelect = document.getElementById('production-product').value;
-        const customProductName = document.getElementById('custom-product-name').value.trim();
-        const quantity = parseInt(document.getElementById('production-quantity').value) || 0;
-        const unit = document.getElementById('production-unit').value;
-        const quality = document.getElementById('production-quality').value;
-        const batch = document.getElementById('production-batch').value.trim();
-        const notes = document.getElementById('production-notes').value.trim();
-        const forSale = document.getElementById('production-for-sale').checked;
-        const salePrice = parseFloat(document.getElementById('sale-price').value) || 0;
-        const salePriceUnit = document.getElementById('sale-price-unit').value;
-        const customer = document.getElementById('customer-name').value.trim();
-        const avgWeight = parseFloat(document.getElementById('animal-weight').value) || 0;
-        const weightUnit = document.getElementById('animal-weight-unit').value;
-
-        // Validate required fields
-        if (!dateInput || !productSelect || !quantity || !unit || !quality) {
-            this.showNotification('Please fill in all required fields', 'error');
-            return;
-        }
-
-        // For "Other" product, require custom name
-        if (productSelect === 'other' && !customProductName) {
-            this.showNotification('Please specify the product name for "Other" category', 'error');
-            return;
-        }
-
-        // Determine product name
-        const product = productSelect === 'other' ? customProductName.toLowerCase().replace(/\s+/g, '-') : productSelect;
-
-        const productionData = {
-            id: productionId ? parseInt(productionId) : Date.now(),
-            date: dateInput,
-            product: product,
-            productCategory: productSelect,
-            quantity: quantity,
-            unit: unit,
-            quality: quality,
-            batch: batch || '',
-            notes: notes || '',
-            forSale: forSale
+   async updateProduction(productionId, productionData) {
+    const index = this.productionData.findIndex(p => p.id == productionId);
+    
+    if (index !== -1) {
+        const existingRecord = this.productionData[index];
+        
+        // Preserve sold/available data when updating
+        productionData.soldQuantity = existingRecord.soldQuantity || 0;
+        productionData.reservedQuantity = existingRecord.reservedQuantity || 0;
+        productionData.availableQuantity = productionData.quantity - (existingRecord.soldQuantity || 0);
+        productionData.status = existingRecord.status || 'available';
+        
+        this.productionData[index] = {
+            ...existingRecord,
+            ...productionData
         };
-
-        // Add optional weight data for animals
-        if (avgWeight > 0) {
-            productionData.weight = avgWeight;
-            productionData.weightUnit = weightUnit;
-        }
-
-        if (productionId) {
-            // Update existing record
-            const index = this.productionData.findIndex(record => record.id === parseInt(productionId));
-            if (index !== -1) {
-                this.productionData[index] = productionData;
-                this.showNotification('Production record updated!', 'success');
-                
-                // ✅ Broadcast production updated
-                this.broadcastProductionUpdated(productionData);
-            }
-        } else {
-            // Add new record
-            this.productionData.unshift(productionData);
-            this.showNotification('Production record added!', 'success');
-            
-            // ✅ Broadcast production created
-            this.broadcastProductionCreated(productionData);
-            
-            // Handle sale if marked for sale
-            if (forSale && salePrice > 0) {
-                this.createSaleRecord(productionData, salePrice, salePriceUnit, customer);
-            }
-        }
-
+        
         await this.saveData();
         this.updateStats();
-        this.hideProductionModal();
         this.renderModule();
-        
-        // Broadcast monthly stats update
-        this.broadcastMonthlyStats();
-    },
-
+        this.showNotification('Production record updated successfully!', 'success');
+    }
+},
+    
     // ✅ MODIFIED: Enhanced deleteProductionRecord with broadcasting
     async deleteProductionRecord(recordId) {
         const index = this.productionData.findIndex(r => r.id === parseInt(recordId));
