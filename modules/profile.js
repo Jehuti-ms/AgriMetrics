@@ -636,32 +636,50 @@ debugStorage() {
     
     // ==================== SETTINGS ====================
     async saveSetting(setting, value) {
-        try {
-            // Determine which category the setting belongs to
-            const settingsKeys = ['currency', 'lowStockThreshold', 'autoSync', 'localStorageEnabled', 'theme', 'notificationsEnabled', 'emailReports', 'dateFormat', 'timeFormat'];
-            const profileKeys = ['farmName', 'farmerName', 'email', 'farmType', 'farmLocation'];
-            
-            if (settingsKeys.includes(setting)) {
-                if (!window.FarmModules.appData.settings) {
-                    window.FarmModules.appData.settings = {};
-                }
-                window.FarmModules.appData.settings[setting] = value;
-            } else if (profileKeys.includes(setting)) {
-                window.FarmModules.appData.profile[setting] = value;
-            } else {
-                if (!window.FarmModules.appData.userPreferences) {
-                    window.FarmModules.appData.userPreferences = {};
-                }
-                window.FarmModules.appData.userPreferences[setting] = value;
-            }
-            
-            await this.saveAllPersistedData();
-            this.showNotification(`${setting} updated`, 'success');
-        } catch (error) {
-            console.error('Error saving setting:', error);
-            this.showNotification('Error saving setting', 'error');
+    console.log(`💾 Saving setting: ${setting} = ${value}`);
+    
+    try {
+        // Ensure profile exists
+        if (!window.FarmModules.appData.profile) {
+            window.FarmModules.appData.profile = {};
         }
-    },
+        
+        // Save to profile object
+        window.FarmModules.appData.profile[setting] = value;
+        
+        // Also save to settings object for compatibility
+        if (!window.FarmModules.appData.settings) {
+            window.FarmModules.appData.settings = {};
+        }
+        window.FarmModules.appData.settings[setting] = value;
+        
+        const profile = window.FarmModules.appData.profile;
+        
+        // Save to main localStorage
+        localStorage.setItem('farm-profile', JSON.stringify(profile));
+        
+        // Save settings separately
+        localStorage.setItem('farm-settings', JSON.stringify(window.FarmModules.appData.settings));
+        
+        // Save to user-specific key
+        const email = profile.email || this.getCurrentUserEmail();
+        if (email) {
+            const userKey = `farm-profile-${email}`;
+            const userProfile = JSON.parse(localStorage.getItem(userKey) || '{}');
+            userProfile[setting] = value;
+            localStorage.setItem(userKey, JSON.stringify(userProfile));
+        }
+        
+        // Also update the displayed value in UI
+        this.updateProfileDisplay();
+        
+        this.showNotification(`${setting} updated to ${value}`, 'success');
+        
+    } catch (error) {
+        console.error('Error saving setting:', error);
+        this.showNotification('Error saving setting', 'error');
+    }
+},
 
     changeTheme(theme) {
         // Force light theme
@@ -2242,27 +2260,51 @@ findOldestUserData() {
     
     // ==================== SETTINGS ====================
    async saveSetting(setting, value) {
+    console.log(`💾 Saving setting: ${setting} = ${value}`);
+    
     try {
-        // Determine which object the setting belongs to
-        const settingsKeys = ['currency', 'lowStockThreshold', 'autoSync', 'localStorageEnabled', 'theme', 'notificationsEnabled', 'emailReports', 'dateFormat', 'timeFormat'];
-        const profileKeys = ['farmName', 'farmerName', 'email', 'farmType', 'farmLocation'];
-        
-        if (settingsKeys.includes(setting)) {
-            if (!window.FarmModules.appData.settings) {
-                window.FarmModules.appData.settings = {};
-            }
-            window.FarmModules.appData.settings[setting] = value;
-        } else if (profileKeys.includes(setting)) {
-            window.FarmModules.appData.profile[setting] = value;
-        } else {
-            if (!window.FarmModules.appData.userPreferences) {
-                window.FarmModules.appData.userPreferences = {};
-            }
-            window.FarmModules.appData.userPreferences[setting] = value;
+        // Ensure profile exists
+        if (!window.FarmModules.appData.profile) {
+            window.FarmModules.appData.profile = {};
         }
         
-        this.saveToLocalStorage();
-        this.showNotification(`${setting} updated`, 'success');
+        // Save to profile object
+        window.FarmModules.appData.profile[setting] = value;
+        
+        // Also save to settings object
+        if (!window.FarmModules.appData.settings) {
+            window.FarmModules.appData.settings = {};
+        }
+        window.FarmModules.appData.settings[setting] = value;
+        
+        const profile = window.FarmModules.appData.profile;
+        const email = profile.email || this.getCurrentUserEmail();
+        
+        // 1. Save to main localStorage
+        localStorage.setItem('farm-profile', JSON.stringify(profile));
+        console.log(`✅ Saved to farm-profile: ${setting}=${value}`);
+        
+        // 2. Save settings separately
+        localStorage.setItem('farm-settings', JSON.stringify(window.FarmModules.appData.settings));
+        console.log(`✅ Saved to farm-settings: ${setting}=${value}`);
+        
+        // 3. Save to user-specific key
+        if (email) {
+            const userKey = `farm-profile-${email}`;
+            let userProfile = {};
+            try {
+                userProfile = JSON.parse(localStorage.getItem(userKey) || '{}');
+            } catch(e) {}
+            userProfile[setting] = value;
+            localStorage.setItem(userKey, JSON.stringify(userProfile));
+            console.log(`✅ Saved to ${userKey}: ${setting}=${value}`);
+        }
+        
+        // 4. Update the UI display to reflect the change
+        this.updateProfileDisplay();
+        
+        this.showNotification(`${setting} updated to ${value}`, 'success');
+        
     } catch (error) {
         console.error('Error saving setting:', error);
         this.showNotification('Error saving setting', 'error');
