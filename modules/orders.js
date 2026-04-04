@@ -2234,39 +2234,17 @@ async releaseProductionReservation(order) {
     },
 
     async deleteCustomer(id) {
-        console.log('🗑️ deleteCustomer function CALLED with:', id);
+    const customer = this.customers.find(c => c.id == id);
+    if (!customer) return;
+    
+    if (confirm(`Delete "${customer.name}"?`)) {
+        await this.dataService.deleteArrayItem('customers', id);
         
-        const numericId = parseInt(id);
-        let customer = this.customers.find(c => c.id == numericId || c.id == id);
-        
-        if (!customer || !customer.name || customer.name === 'undefined') {
-            console.error('❌ Customer not found or invalid for ID:', id);
-            this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
-            await this.saveData();
-            this.renderModule();
-            this.showNotification('Invalid customer record removed', 'info');
-            return;
-        }
-
-        const customerOrders = this.orders.filter(o => o.customerId == numericId || o.customerId == id);
-        
-        if (customerOrders.length > 0) {
-            this.showNotification(`Cannot delete "${customer.name}" - they have ${customerOrders.length} order(s)`, 'error');
-            return;
-        }
-
-        if (confirm(`Delete customer "${customer.name}"?`)) {
-            this.customers = this.customers.filter(c => c.id != numericId && c.id != id);
-            await this.saveData();
-            
-            if (this.broadcastCustomerDeleted) {
-                this.broadcastCustomerDeleted(customer.id, customer.name);
-            }
-            
-            this.renderModule();
-            this.showNotification(`Customer "${customer.name}" deleted`, 'success');
-        }
-    },
+        this.customers = this.customers.filter(c => c.id != id);
+        this.renderModule();
+        this.showNotification('Deleted!', 'success');
+    }
+},
 
     editCustomer(id) {
         if (window.coreModule) {
