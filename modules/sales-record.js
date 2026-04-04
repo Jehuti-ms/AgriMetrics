@@ -412,10 +412,28 @@ async saveSale() {
             sourceDeviceId: this.getDeviceId()
         });
     }
+
+     // ===== PRESERVE CURRENT FILTER =====
+    const periodFilter = document.getElementById('period-filter');
+    const currentFilter = periodFilter ? periodFilter.value : 'today';
+    
+    // Update UI with current filter
+    const salesTable = document.getElementById('sales-table');
+    if (salesTable) {
+        salesTable.innerHTML = this.renderSalesTable(currentFilter);
+    }
+    this.updateSalesStats();
     
     // Update UI
-    this.renderSalesList();
+    //this.renderSalesList();
+    this.renderSalesTable();
     this.updateSalesStats();
+
+    // ===== UPDATE INVENTORY FROM SALE =====
+    this.updateInventoryFromSale(saleData);
+
+    // ===== UPDATE PRODUCTION FROM SALE =====
+    this.updateProductionFromSale(saleData);
     
     // Close modal
     this.hideSaleModal();
@@ -425,6 +443,141 @@ async saveSale() {
     return saleData;
 },
 
+    // ===== UPDATE INVENTORY FROM SALE =====
+updateInventoryFromSale(saleData) {
+    console.log('📦 Updating inventory from sale:', saleData);
+    
+    if (!saleData.product) return;
+    
+    const soldQty = saleData.quantity || saleData.animalCount || 0;
+    if (soldQty <= 0) return;
+    
+    // Update InventoryCheckModule directly
+    if (window.InventoryCheckModule && window.InventoryCheckModule.inventory) {
+        const productLower = saleData.product.toLowerCase();
+        const inventoryItem = window.InventoryCheckModule.inventory.find(item => 
+            item.name?.toLowerCase().includes(productLower) ||
+            item.category?.toLowerCase().includes(productLower)
+        );
+        
+        if (inventoryItem) {
+            const oldStock = inventoryItem.currentStock;
+            inventoryItem.currentStock = Math.max(0, (inventoryItem.currentStock || 0) - soldQty);
+            inventoryItem.lastUpdated = new Date().toISOString();
+            
+            if (typeof window.InventoryCheckModule.saveData === 'function') {
+                window.InventoryCheckModule.saveData();
+            }
+            
+            console.log(`✅ Inventory updated: ${inventoryItem.name} from ${oldStock} to ${inventoryItem.currentStock}`);
+        }
+    }
+    
+    // Update localStorage as backup
+    try {
+        const inventory = JSON.parse(localStorage.getItem('farm-inventory') || '[]');
+        const productLower = saleData.product.toLowerCase();
+        
+        const updatedInventory = inventory.map(item => {
+            if (item.name?.toLowerCase().includes(productLower) ||
+                item.category?.toLowerCase().includes(productLower)) {
+                item.currentStock = Math.max(0, (item.currentStock || 0) - soldQty);
+            }
+            return item;
+        });
+        
+        localStorage.setItem('farm-inventory', JSON.stringify(updatedInventory));
+    } catch(e) {
+        console.warn('Error updating localStorage inventory:', e);
+    }
+},
+
+// ===== UPDATE PRODUCTION FROM SALE =====
+updateProductionFromSale(saleData) {
+    console.log('🚜 Updating production from sale:', saleData);
+    
+    const meatProducts = ['broilers-dressed', 'broilers-live', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    if (!meatProducts.includes(saleData.product)) {
+        console.log('ℹ️ Not a meat product, skipping production update');
+        return;
+    }
+    
+    const soldQty = saleData.animalCount || saleData.quantity || 0;
+    if (soldQty <= 0) return;
+    
+    // Update ProductionModule
+    if (window.ProductionModule && window.ProductionModule.productionData) {
+        const productionRecords = window.ProductionModule.productionData;
+        let remainingToSell = soldQty;
+        
+        // Sort by date (oldest first for FIFO)
+        const sortedRecords = [...productionRecords]
+            .filter(r => r.product === saleData.product && !r.fullySold)
+            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        
+        for (const record of sortedRecords) {
+            if (remainingToSell <= 0) break;
+            
+            const available = record.quantity || 0;
+            const soldSoFar = record.soldQuantity || 0;
+            const canSell = available - soldSoFar;
+            
+            if (canSell > 0) {
+                const sellNow = Math.min(canSell, remainingToSell);
+                record.soldQuantity = (record.soldQuantity || 0) + sellNow;
+                record.availableQuantity = available - record.soldQuantity;
+                remainingToSell -= sellNow;
+                
+                if (record.soldQuantity >= available) {
+                    record.fullySold = true;
+                    record.status = 'sold';
+                } else {
+                    record.status = 'partial';
+                }
+                
+                console.log(`✅ Production record ${record.id}: sold ${sellNow}, remaining: ${record.availableQuantity}`);
+            }
+        }
+        
+        // Save production module
+        if (typeof window.ProductionModule.saveData === 'function') {
+            window.ProductionModule.saveData();
+        }
+    }
+    
+    // Update localStorage as backup
+    try {
+        const production = JSON.parse(localStorage.getItem('farm-production') || '[]');
+        let remainingToSell = soldQty;
+        
+        const sortedProduction = [...production]
+            .filter(r => r.product === saleData.product && !r.fullySold)
+            .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        
+        for (const record of sortedProduction) {
+            if (remainingToSell <= 0) break;
+            
+            const available = record.quantity || 0;
+            const soldSoFar = record.soldQuantity || 0;
+            const canSell = available - soldSoFar;
+            
+            if (canSell > 0) {
+                const sellNow = Math.min(canSell, remainingToSell);
+                record.soldQuantity = (record.soldQuantity || 0) + sellNow;
+                remainingToSell -= sellNow;
+                
+                if (record.soldQuantity >= available) {
+                    record.fullySold = true;
+                }
+            }
+        }
+        
+        localStorage.setItem('farm-production', JSON.stringify(production));
+    } catch(e) {
+        console.warn('Error updating localStorage production:', e);
+    }
+},
+    
 // Helper to get local date
 getLocalDate() {
     const now = new Date();
