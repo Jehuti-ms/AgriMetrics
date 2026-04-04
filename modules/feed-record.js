@@ -105,6 +105,12 @@ initializeLegacy() {
         });
     },
 
+    syncWithFarmDataLegacy() {
+    console.log('🔄 Syncing Feed module with FarmData (legacy)...');
+    // This is a fallback - just call the main sync method
+    this.syncWithFarmData();
+},
+    
     // ===== NEW: Sync with FarmData =====
     syncWithFarmData() {
         console.log('🔄 Syncing Feed module with FarmData...');
@@ -236,9 +242,9 @@ initializeLegacy() {
     }
     
     // If still no inventory, add default demo data
-    if (this.feedInventory.length === 0) {
-        this.addDefaultFeedInventory();
-    }
+   // if (this.feedInventory.length === 0) {
+    //    this.addDefaultFeedInventory();
+   // }
 },
 
 loadDataLegacy() {
@@ -1337,6 +1343,38 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
         }
     },
 
+    formatDate(dateString) {
+    if (!dateString) return 'Unknown date';
+    
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            // Try to parse as YYYY-MM-DD
+            const parts = dateString.split('-');
+            if (parts.length === 3) {
+                const parsedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                if (!isNaN(parsedDate.getTime())) {
+                    return parsedDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            }
+            return dateString;
+        }
+        
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (error) {
+        console.warn('Date formatting error:', error);
+        return dateString;
+    }
+},
+
     formatCurrency(amount) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -1371,6 +1409,15 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
     }
 },
 
+    updateFeedInventoryDisplay() {
+    // This method is called but may not exist
+    console.log('Updating feed inventory display');
+    // The renderModule already handles this, so just re-render if needed
+    if (this.initialized) {
+        this.renderModule();
+    }
+},
+    
     unload() {
         console.log('📦 Unloading Feed module...');
         
