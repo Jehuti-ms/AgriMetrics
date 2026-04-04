@@ -124,7 +124,7 @@ initialize() {
     
     // Check DOM elements
     const farmNameCard = document.getElementById('profile-farm-name');
-    const farmNameInput = document.getElementById('farm-name');
+   // const farmNameInput = document.getElementById('farm-name');
     console.log('📄 DOM elements:', {
         'profile-farm-name': farmNameCard?.textContent,
         'farm-name input': farmNameInput?.value
@@ -437,12 +437,14 @@ async saveToFirebase() {
 },
 
     // ==================== SAVE PROFILE ====================
-   async handleSaveProfile() {
+   // In handleSaveProfile() - remove any const farmNameInput
+async handleSaveProfile() {
     console.log('💾 Starting profile save - SINGLE ENTRY POINT');
     
     try {
         await new Promise(resolve => setTimeout(resolve, 50));
         
+        // Direct DOM access - no stored variables
         const farmName = document.getElementById('farm-name')?.value.trim() || '';
         const farmerName = document.getElementById('farmer-name')?.value.trim() || '';
         const email = document.getElementById('farm-email')?.value.trim() || '';
@@ -464,11 +466,18 @@ async saveToFirebase() {
         profile.farmLocation = farmLocation || '';
         profile.lastUpdated = new Date().toISOString();
         
+        // Save to localStorage
         localStorage.setItem('farm-profile', JSON.stringify(profile));
         
-        if (profile.email) {
-            const userKey = `farm-profile-${profile.email}`;
-            localStorage.setItem(userKey, JSON.stringify(profile));
+        // Save to user-specific key
+        let currentEmail = email;
+        if (!currentEmail && typeof firebase !== 'undefined' && firebase.auth()?.currentUser) {
+            currentEmail = firebase.auth().currentUser.email;
+            profile.email = currentEmail;
+        }
+        
+        if (currentEmail) {
+            localStorage.setItem(`farm-profile-${currentEmail}`, JSON.stringify(profile));
         }
         
         localStorage.setItem('farm-last-known-profile', JSON.stringify(profile));
@@ -526,7 +535,7 @@ async saveToFirebase() {
 
      // 🔥 Check if elements exist
    // const farmNameCard = document.getElementById('profile-farm-name');
-    const farmNameInput = document.getElementById('farm-name');
+  //  const farmNameInput = document.getElementById('farm-name');
     
     console.log('🔍 Elements found:', {
         'profile-farm-name': !!farmNameCard,
@@ -581,7 +590,7 @@ async saveToFirebase() {
     if (memberSinceEl) memberSinceEl.textContent = `Member since: ${memberSince}`;
     
     // Update form inputs
-    const farmNameInput = document.getElementById('farm-name');
+   // const farmNameInput = document.getElementById('farm-name');
     const farmerNameInput = document.getElementById('farmer-name');
     const emailInput = document.getElementById('farm-email');
     const farmTypeInput = document.getElementById('farm-type');
