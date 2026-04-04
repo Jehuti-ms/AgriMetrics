@@ -526,7 +526,7 @@ async saveToFirebase() {
 
      // 🔥 Check if elements exist
    // const farmNameCard = document.getElementById('profile-farm-name');
-    //const farmNameInput = document.getElementById('farm-name');
+    const farmNameInput = document.getElementById('farm-name');
     
     console.log('🔍 Elements found:', {
         'profile-farm-name': !!farmNameCard,
