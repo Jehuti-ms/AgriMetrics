@@ -1401,6 +1401,9 @@ if (window.FarmModules) {
     console.log('✅ Feed Records module registered');
 }
 
+// Make globally accessible
+window.FeedRecordModule = FeedRecordModule;
+
 // ==================== UNIVERSAL REGISTRATION ====================
 
 (function() {
