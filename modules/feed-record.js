@@ -743,40 +743,51 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
     }
 },
 
-deleteFeedRecord(recordId) {
-    console.log('🗑️ Deleting feed record:', recordId);
+async deleteFeedRecord(recordId) {
+    console.log('🗑️ deleteFeedRecord called for ID:', recordId);
     
-    const record = this.feedRecords.find(r => r.id === recordId);
-    if (!record) {
+    // Find the record
+    const recordIndex = this.feedRecords.findIndex(r => r.id === recordId);
+    if (recordIndex === -1) {
+        console.log('❌ Record not found:', recordId);
         this.showNotification('Record not found', 'error');
         return;
     }
     
-    if (confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
-        // Add quantity back to inventory
-        const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
-        if (inventoryItem) {
-            inventoryItem.currentStock += record.quantity;
-        }
-        
-        // Remove record
-        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-        this.saveData();
-        
-        // Broadcast deletion
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('feed-deleted', {
-                id: recordId,
-                data: record,
-                timestamp: new Date().toISOString()
-            });
-        }
-        
-        // Update UI
-        this.updateFeedInventoryDisplay();
-        this.renderModule();
-        
-        this.showNotification('Feed record deleted!', 'success');
+    const record = this.feedRecords[recordIndex];
+    console.log('Found record to delete:', record);
+    
+    if (!confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
+        console.log('Delete cancelled');
+        return;
+    }
+    
+    // Remove from local array
+    this.feedRecords.splice(recordIndex, 1);
+    console.log('Removed from array. Remaining records:', this.feedRecords.length);
+    
+    // Save to localStorage
+    localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
+    
+    // 🔥 CRITICAL: Delete from Firebase/UnifiedDataService
+    if (this.dataService) {
+        // Delete the specific record from Firebase
+        await this.dataService.delete('feedRecords', recordId);
+        console.log('✅ Deleted from UnifiedDataService');
+    }
+    
+    // Re-render
+    this.renderModule();
+    
+    this.showNotification('Feed record deleted!', 'success');
+    
+    // Broadcast deletion
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('feed-deleted', {
+            id: recordId,
+            feedType: record.feedType,
+            quantity: record.quantity
+        });
     }
 },
 
