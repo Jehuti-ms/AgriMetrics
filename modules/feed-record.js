@@ -481,6 +481,7 @@ setupRealtimeSync() {
                         
                         <div style="display: flex; gap: 12px; justify-content: flex-end;">
                             <button type="submit" class="btn-primary" id="feed-submit-btn">Save Record</button>
+                            <button type="button" class="btn-outline" id="cancel-feed-edit" style="display: none;">Cancel Edit</button>
                             <button type="button" class="btn-outline" id="cancel-feed-form">Cancel</button>
                         </div>
                     </form>
@@ -903,6 +904,8 @@ calculateCost(feedType, quantity) {
 },
 
 formatFeedType(feedType) {
+    if (!feedType) return 'Unknown Feed';
+    
     const formats = {
         'starter': 'Starter Feed',
         'grower': 'Grower Feed',
@@ -930,6 +933,7 @@ formatFeedType(feedType) {
         'fish': 'Fish Feed',
         'other': 'Other Feed'
     };
+    
     return formats[feedType] || feedType.charAt(0).toUpperCase() + feedType.slice(1).replace('-', ' ');
 },
     
@@ -1113,28 +1117,60 @@ showFeedForm() {
 editFeedRecord(recordId) {
     console.log('✏️ Editing feed record:', recordId);
     
-    const record = this.feedRecords.find(r => r.id == recordId);
+    const record = this.feedRecords.find(r => r.id === recordId);
     if (!record) {
         this.showNotification('Record not found', 'error');
         return;
     }
     
+    // Get form elements
+    const feedTypeSelect = document.getElementById('feed-type');
+    const feedQuantityInput = document.getElementById('feed-quantity');
+    const feedNotesInput = document.getElementById('feed-notes');
+    const formTitle = document.getElementById('feed-form-title');
+    const submitBtn = document.getElementById('feed-submit-btn');
+    const cancelEditBtn = document.getElementById('cancel-feed-edit');
+    
+    if (!feedTypeSelect || !feedQuantityInput || !formTitle || !submitBtn) {
+        console.error('Form elements not found');
+        this.showNotification('Could not load edit form', 'error');
+        return;
+    }
+    
     // Populate form
-    document.getElementById('feed-record-id').value = record.id;
-    document.getElementById('feed-type').value = record.feedType;
-    document.getElementById('feed-quantity').value = record.quantity;
-    document.getElementById('feed-notes').value = record.notes || '';
+    feedTypeSelect.value = record.feedType;
+    feedQuantityInput.value = record.quantity;
+    if (feedNotesInput) feedNotesInput.value = record.notes || '';
     
     // Change form title and button
-    document.getElementById('feed-form-title').textContent = 'Edit Feed Record';
-    document.getElementById('feed-submit-btn').textContent = 'Update Record';
-    document.getElementById('cancel-feed-edit').style.display = 'inline-block';
+    formTitle.textContent = 'Edit Feed Record';
+    submitBtn.textContent = 'Update Record';
+    submitBtn.dataset.editingId = recordId;
     
-    this.showFeedForm();
+    // Safely handle cancel edit button (create if doesn't exist)
+    if (cancelEditBtn) {
+        cancelEditBtn.style.display = 'inline-block';
+    } else {
+        // Create the cancel edit button if it doesn't exist
+        const buttonContainer = submitBtn?.parentNode;
+        if (buttonContainer && !cancelEditBtn) {
+            const newCancelBtn = document.createElement('button');
+            newCancelBtn.type = 'button';
+            newCancelBtn.className = 'btn-outline';
+            newCancelBtn.id = 'cancel-feed-edit';
+            newCancelBtn.textContent = 'Cancel Edit';
+            newCancelBtn.style.display = 'inline-block';
+            newCancelBtn.addEventListener('click', () => this.cancelFeedEdit());
+            buttonContainer.insertBefore(newCancelBtn, submitBtn);
+        }
+    }
+    
+    // Scroll to form
+    const formContainer = document.querySelector('.glass-card');
+    if (formContainer) formContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    this.showNotification('Edit mode: Update the fields and click Update Record', 'info');
 },
-
-// Add a flag to prevent multiple deletes
-_isDeleting: false,
 
 deleteFeedRecord(recordId) {
     // Prevent multiple simultaneous deletes
