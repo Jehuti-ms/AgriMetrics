@@ -453,7 +453,7 @@ async saveToFirebase() {
             throw new Error('Farm name input not found');
         }
         
-        const farmName = farmNameInput.value.trim();
+        const farmName = document.getElementById('farm-name')?.value.trim() || '';
         const farmerName = farmerNameInput?.value.trim();
         const email = emailInput?.value.trim();
         const farmType = farmTypeInput?.value;
