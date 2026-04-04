@@ -405,43 +405,62 @@ getUnitForCategory(category) {
     };
     return units[category] || 'units';
 },
+
+    // Add this method to your InventoryCheckModule
+isValidInventoryItem(item) {
+    return item && 
+           typeof item === 'object' &&
+           item.name && 
+           typeof item.name === 'string' &&
+           item.name !== 'undefined' &&
+           item.name.trim() !== '' &&
+           typeof item.id !== 'undefined' &&
+           !item.hasOwnProperty('0') &&  // Excludes corrupted objects
+           !Array.isArray(item) &&
+           typeof item.currentStock === 'number';
+},
     
     // ✅ MODIFIED: Enhanced loadData with broadcasting
     async loadData() {
     console.log('Loading inventory from UnifiedDataService...');
     
     try {
-        // Try UnifiedDataService first
         if (this.dataService) {
             const data = this.dataService.get('inventory');
+            let rawInventory = [];
+            
             if (data && data.items && data.items.length > 0) {
-                this.inventory = data.items;
-                console.log('📁 Loaded from UnifiedDataService:', this.inventory.length);
+                rawInventory = data.items;
             } else {
-                // Try to migrate from old localStorage
                 const saved = localStorage.getItem('farm-inventory');
                 if (saved) {
-                    this.inventory = JSON.parse(saved);
-                    console.log(`📁 Migrated ${this.inventory.length} items from localStorage`);
-                    // Save to UnifiedDataService
-                    await this.saveToDataService();
+                    rawInventory = JSON.parse(saved);
                 } else {
-                    this.inventory = this.getDemoData();
-                    await this.saveToDataService();
+                    rawInventory = this.getDemoData();
                 }
             }
+            
+            // 🔥 FILTER OUT CORRUPTED ITEMS
+            this.inventory = rawInventory.filter(item => this.isValidInventoryItem(item));
+            
+            const filteredCount = rawInventory.length - this.inventory.length;
+            if (filteredCount > 0) {
+                console.log(`🧹 Filtered out ${filteredCount} corrupted inventory items`);
+                await this.saveToDataService();
+            }
+            
+            console.log(`📁 Loaded ${this.inventory.length} valid inventory items`);
         } else {
-            // Fallback to localStorage only
             const saved = localStorage.getItem('farm-inventory');
-            this.inventory = saved ? JSON.parse(saved) : this.getDemoData();
+            const rawInventory = saved ? JSON.parse(saved) : this.getDemoData();
+            this.inventory = rawInventory.filter(item => this.isValidInventoryItem(item));
         }
         
-        // Sort by name or last updated
         this.inventory.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         
     } catch (error) {
         console.error('❌ Error loading inventory:', error);
-        this.inventory = this.getDemoData();
+        this.inventory = this.getDemoData().filter(item => this.isValidInventoryItem(item));
     }
     
     if (this.broadcaster) {
