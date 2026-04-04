@@ -757,42 +757,23 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
-    // Filter out the record
-    const newRecords = this.feedRecords.filter(r => r.id !== recordId);
+    // Remove from local array
+    this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
     
-    // Update local
-    this.feedRecords = newRecords;
+    // 🔥 CRITICAL: Save empty array if this was the last record, or save filtered array
+    if (this.dataService) {
+        // Save the filtered array to Firebase (this overwrites)
+        await this.dataService.save('feedRecords', this.feedRecords);
+        console.log('✅ Saved to Firebase - remaining records:', this.feedRecords.length);
+    }
     
     // Save to localStorage
-    localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
-    
-    // 🔥 CRITICAL: Save filtered array to Firebase
-    if (this.dataService) {
-        await this.dataService.save('feedRecords', this.feedRecords);
-        console.log('✅ Saved updated array to UnifiedDataService');
-    }
-    
-    // Add quantity back to inventory
-    const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
-    if (inventoryItem) {
-        inventoryItem.currentStock += record.quantity;
-        if (this.dataService) {
-            await this.dataService.save('feedInventory', inventoryItem);
-        }
-    }
+    this.saveData();
     
     // Re-render
     this.renderModule();
     
     this.showNotification('Feed record deleted!', 'success');
-    
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('feed-deleted', {
-            id: recordId,
-            feedType: record.feedType,
-            quantity: record.quantity
-        });
-    }
 },
 
 editFeedRecord(recordId) {
