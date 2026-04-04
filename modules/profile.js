@@ -2067,9 +2067,7 @@ loadUserData() {
         console.error('❌ Error loading user data:', error);
     }
     
-    // Update the UI
-    this.updateProfileDisplay();
-},
+   },
     
 // 🔥 Add this helper method to find oldest user data
 findOldestUserData() {
