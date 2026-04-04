@@ -1204,20 +1204,16 @@ isValidInventoryItem(item) {
 },
 
     async deleteItem(id) {
-    const item = this.inventory.find(item => item.id === id);
+    const item = this.inventory.find(i => i.id === id);
     if (!item) return;
-
-    if (confirm(`Are you sure you want to delete "${item.name}"? This action cannot be undone.`)) {
-        this.broadcastItemDeleted(id, item.name);
+    
+    if (confirm(`Delete "${item.name}"?`)) {
+        // Use central method for nested array
+        await this.dataService.deleteArrayItem('inventory', id, 'items');
         
-        this.inventory = this.inventory.filter(item => item.id !== id);
-        await this.saveData();  // ← ADDED 'await'
+        this.inventory = this.inventory.filter(i => i.id !== id);
         this.renderModule();
-        this.syncStatsWithProfile();
-        
-        if (window.coreModule) {
-            window.coreModule.showNotification('Item deleted successfully!', 'success');
-        }
+        this.showNotification('Deleted!', 'success');
     }
 },
 
