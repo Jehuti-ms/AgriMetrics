@@ -769,11 +769,11 @@ async deleteFeedRecord(recordId) {
     // Save to localStorage
     localStorage.setItem('farm-feed-records', JSON.stringify(this.feedRecords));
     
-    // 🔥 CRITICAL: Delete from Firebase/UnifiedDataService
+    // 🔥 CRITICAL: Update Firebase/UnifiedDataService
     if (this.dataService) {
-        // Delete the specific record from Firebase
-        await this.dataService.delete('feedRecords', recordId);
-        console.log('✅ Deleted from UnifiedDataService');
+        // Save the updated array to Firebase (overwrite)
+        await this.dataService.save('feedRecords', this.feedRecords);
+        console.log('✅ Saved updated array to UnifiedDataService');
     }
     
     // Re-render
