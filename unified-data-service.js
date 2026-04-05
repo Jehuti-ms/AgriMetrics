@@ -415,81 +415,81 @@ class UnifiedDataService {
      * Delete ANY data with offline support
      */
     async delete(collectionName, id) {
-        if (!collectionName || !id) {
-            console.error('❌ delete() requires collectionName and id');
-            return { success: false };
-        }
-        
-        // If offline, queue the operation
-        if (!this.isOnline || !this.db || !this.userId) {
-            console.warn(`⚠️ Offline: Queuing delete for ${collectionName}`);
-            
-            this.queueOperation({
-                type: 'delete',
-                collection: collectionName,
-                id: id,
-                timestamp: new Date().toISOString()
-            });
-            
-            this.deleteFromLocalCache(collectionName, id);
-            
-            // Broadcast offline delete
-            this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-            this.broadcast('offline-operation-queued', { 
-                collection: collectionName, 
-                operation: 'delete', 
-                id: id,
-                queueLength: this.offlineQueue.length
-            });
-            
-            return { success: true, offline: true, queued: true };
-        }
-        
-        try {
-            await this.db
-                .collection('users')
-                .doc(this.userId)
-                .collection(collectionName)
-                .doc(id.toString())
-                .delete();
-            
-            // Update cache
-            this.deleteFromLocalCache(collectionName, id);
-            
-            console.log(`✅ Deleted ${collectionName} from Firebase:`, id);
-            
-            // Broadcast the update to all modules
-            this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-            this.broadcast('data-deleted', { 
-                collection: collectionName, 
-                id: id,
-                timestamp: new Date().toISOString()
-            });
-            
-            // Broadcast specific events
-            this.broadcastSpecificEvent(collectionName, { id }, 'deleted');
-            
-            return { success: true };
-            
-        } catch (error) {
-            console.error(`Error deleting ${collectionName}:`, error);
-            
-            // Queue for retry
-            this.queueOperation({
-                type: 'delete',
-                collection: collectionName,
-                id: id,
-                timestamp: new Date().toISOString(),
-                error: error.message
-            });
-            
-            // Still update local cache
-            this.deleteFromLocalCache(collectionName, id);
-            
-            return { success: false, offline: true, error: error.message };
-        }
+    if (!collectionName || !id) {
+        console.error('❌ delete() requires collectionName and id');
+        return { success: false };
     }
-
+    
+    // If offline, queue the operation
+    if (!this.isOnline || !this.db || !this.userId) {
+        console.warn(`⚠️ Offline: Queuing delete for ${collectionName}`);
+        
+        this.queueOperation({
+            type: 'delete',
+            collection: collectionName,
+            id: id,
+            timestamp: new Date().toISOString()
+        });
+        
+        this.deleteFromLocalCache(collectionName, id);
+        
+        this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+        this.broadcast('offline-operation-queued', { 
+            collection: collectionName, 
+            operation: 'delete', 
+            id: id,
+            queueLength: this.offlineQueue.length
+        });
+        
+        return { success: true, offline: true, queued: true };
+    }
+    
+    try {
+        // 🔥 CRITICAL: Delete the document from Firestore
+        await this.db
+            .collection('users')
+            .doc(this.userId)
+            .collection(collectionName)
+            .doc(id.toString())
+            .delete();
+        
+        // Update cache
+        this.deleteFromLocalCache(collectionName, id);
+        
+        console.log(`✅ Deleted ${collectionName} from Firebase:`, id);
+        
+        // Broadcast the update
+        this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+        this.broadcast('data-deleted', { 
+            collection: collectionName, 
+            id: id,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Broadcast specific events
+        this.broadcastSpecificEvent(collectionName, { id }, 'deleted');
+        
+        return { success: true };
+        
+    } catch (error) {
+        console.error(`Error deleting ${collectionName}:`, error);
+        
+        // Queue for retry
+        this.queueOperation({
+            type: 'delete',
+            collection: collectionName,
+            id: id,
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+        
+        // Still update local cache
+        this.deleteFromLocalCache(collectionName, id);
+        
+        return { success: false, offline: true, error: error.message };
+    }
+}
+    
     /**
      * Delete an item from an array collection (handles the entire array)
      * This is the CENTRAL fix for the sync loop issue
