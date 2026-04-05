@@ -234,6 +234,7 @@ class UnifiedDataService {
     
     /**
      * Save ANY data (universal method with offline support)
+     * Now handles both single items and arrays
      */
     async save(collectionName, data, customId = null) {
         if (!collectionName) {
@@ -241,6 +242,87 @@ class UnifiedDataService {
             return { success: false, error: 'No collection name provided' };
         }
         
+        // 🔥 NEW: Check if data is an array (for bulk operations like deleteArrayItem)
+        if (Array.isArray(data)) {
+            console.log(`📦 Saving entire array to ${collectionName} (${data.length} items)`);
+            
+            // If offline, queue the operation
+            if (!this.isOnline || !this.db || !this.userId) {
+                console.warn(`⚠️ Offline: Queuing array save for ${collectionName}`);
+                
+                this.queueOperation({
+                    type: 'saveArray',
+                    collection: collectionName,
+                    data: data,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Update local cache immediately
+                this.cache[collectionName] = data;
+                this.saveToLocalStorage(collectionName);
+                
+                this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+                this.broadcast('offline-operation-queued', { 
+                    collection: collectionName, 
+                    operation: 'saveArray',
+                    itemCount: data.length,
+                    queueLength: this.offlineQueue.length
+                });
+                
+                return { success: true, offline: true, queued: true };
+            }
+            
+            try {
+                // Get reference to the collection
+                const collectionRef = this.db
+                    .collection('users')
+                    .doc(this.userId)
+                    .collection(collectionName);
+                
+                // Get all existing documents to delete old ones
+                const existingDocs = await collectionRef.get();
+                
+                // Delete all existing documents
+                const deletePromises = existingDocs.docs.map(doc => doc.ref.delete());
+                await Promise.all(deletePromises);
+                
+                // Save each item in the array
+                const savePromises = data.map(item => {
+                    const docId = item.id || Date.now().toString();
+                    return collectionRef.doc(docId.toString()).set({
+                        ...item,
+                        id: docId,
+                        updatedAt: new Date().toISOString(),
+                        createdAt: item.createdAt || new Date().toISOString()
+                    });
+                });
+                
+                await Promise.all(savePromises);
+                
+                // Update cache
+                this.cache[collectionName] = data;
+                this.saveToLocalStorage(collectionName);
+                
+                console.log(`✅ Saved array to ${collectionName} (${data.length} items)`);
+                
+                // Broadcast the update
+                this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
+                this.broadcast('data-saved', { 
+                    collection: collectionName, 
+                    action: 'saveArray',
+                    itemCount: data.length,
+                    timestamp: new Date().toISOString()
+                });
+                
+                return { success: true, itemCount: data.length };
+                
+            } catch (error) {
+                console.error(`Error saving array to ${collectionName}:`, error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Original single-item save logic
         const docId = customId || data.id || Date.now().toString();
         const now = new Date().toISOString();
         
@@ -408,59 +490,64 @@ class UnifiedDataService {
         }
     }
 
-    // Add this method to UnifiedDataService class
-async deleteArrayItem(collection, itemId, arrayPath = null) {
-    console.log(`🗑️ Deleting ${itemId} from ${collection}`);
-    
-    try {
-        // Get current data
-        let currentData = this.get(collection);
+    /**
+     * Delete an item from an array collection (handles the entire array)
+     * This is the CENTRAL fix for the sync loop issue
+     */
+    async deleteArrayItem(collection, itemId, arrayPath = null) {
+        console.log(`🗑️ Deleting ${itemId} from ${collection}`);
         
-        // Handle different data structures
-        let updatedData;
-        if (arrayPath && currentData[arrayPath]) {
-            // For nested arrays like { items: [...] }
-            updatedData = { ...currentData };
-            updatedData[arrayPath] = updatedData[arrayPath].filter(item => item.id !== itemId);
-        } else if (Array.isArray(currentData)) {
-            // For simple arrays like [...]
-            updatedData = currentData.filter(item => item.id !== itemId);
-        } else {
-            console.error('Cannot delete: data structure not recognized');
+        try {
+            // Get current data
+            let currentData = this.get(collection);
+            
+            // Handle different data structures
+            let updatedData;
+            if (arrayPath && currentData[arrayPath]) {
+                // For nested arrays like { items: [...] }
+                updatedData = { ...currentData };
+                updatedData[arrayPath] = updatedData[arrayPath].filter(item => item.id !== itemId);
+            } else if (Array.isArray(currentData)) {
+                // For simple arrays like [...]
+                updatedData = currentData.filter(item => item.id !== itemId);
+            } else {
+                console.error('Cannot delete: data structure not recognized');
+                return false;
+            }
+            
+            // Save back to Firebase and localStorage (this overwrites the entire array)
+            await this.save(collection, updatedData);
+            console.log(`✅ Deleted ${itemId} from ${collection} - remaining: ${updatedData.length}`);
+            return true;
+            
+        } catch (error) {
+            console.error('Error in deleteArrayItem:', error);
             return false;
         }
-        
-        // Save back to Firebase and localStorage
-        await this.save(collection, updatedData);
-        console.log(`✅ Deleted ${itemId} from ${collection}`);
-        return true;
-        
-    } catch (error) {
-        console.error('Error in deleteArrayItem:', error);
-        return false;
     }
-}
 
-    // Add this method to force sync an entire array
-async syncArray(collection, data) {
-    console.log(`🔄 Syncing ${collection} with`, data.length, 'items');
-    
-    try {
-        // Save the entire array to Firebase (overwrites)
-        await this.save(collection, data);
+    /**
+     * Sync an entire array to Firebase (overwrites)
+     */
+    async syncArray(collection, data) {
+        console.log(`🔄 Syncing ${collection} with`, data.length, 'items');
         
-        // Update local cache
-        this.updateLocalCache(collection, data);
-        
-        // Broadcast update
-        this.broadcast(`${collection}-updated`, data);
-        
-        return true;
-    } catch (error) {
-        console.error('Error syncing array:', error);
-        return false;
+        try {
+            // Save the entire array to Firebase (overwrites)
+            await this.save(collection, data);
+            
+            // Update local cache
+            this.updateLocalCache(collection, data);
+            
+            // Broadcast update
+            this.broadcast(`${collection}-updated`, data);
+            
+            return true;
+        } catch (error) {
+            console.error('Error syncing array:', error);
+            return false;
+        }
     }
-}
     
     /**
      * Update ANY data with offline support
@@ -612,7 +699,7 @@ async syncArray(collection, data) {
         let failCount = 0;
         
         for (const op of operations) {
-            console.log(`  Processing: ${op.type} ${op.collection} (ID: ${op.id || 'N/A'})`);
+            console.log(`  Processing: ${op.type} ${op.collection}`);
             
             try {
                 let result;
@@ -620,20 +707,27 @@ async syncArray(collection, data) {
                     case 'save':
                         result = await this.save(op.collection, op.data, op.id);
                         break;
+                    case 'saveArray':
+                        result = await this.save(op.collection, op.data);
+                        break;
                     case 'delete':
                         result = await this.delete(op.collection, op.id);
                         break;
                     case 'update':
                         result = await this.update(op.collection, op.id, op.updates);
                         break;
+                    default:
+                        console.warn(`Unknown operation type: ${op.type}`);
+                        continue;
                 }
                 
-                if (result.success) {
+                if (result && result.success !== false) {
                     successCount++;
+                    console.log(`  ✅ ${op.type} succeeded`);
                 } else {
-                    // Re-queue failed operations
                     this.offlineQueue.push(op);
                     failCount++;
+                    console.log(`  ❌ ${op.type} failed, re-queued`);
                 }
             } catch (error) {
                 console.error(`  Failed to process ${op.type}:`, error);
@@ -645,7 +739,7 @@ async syncArray(collection, data) {
         this.saveOfflineQueue();
         this.isSyncing = false;
         
-        console.log(`✅ Sync complete: ${successCount} succeeded, ${failCount} failed`);
+        console.log(`✅ Sync complete: ${successCount} succeeded, ${failCount} failed, ${this.offlineQueue.length} remaining`);
         
         this.broadcast('sync-completed', {
             successCount: successCount,
