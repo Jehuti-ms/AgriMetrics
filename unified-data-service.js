@@ -760,73 +760,53 @@ class UnifiedDataService {
      * Start real-time listeners for all collections
      */
     startRealtimeListeners() {
-        if (!this.db || !this.userId) return;
+    if (!this.db || !this.userId) return;
+    
+    console.log('🔄 Starting real-time Firebase listeners...');
+    
+    const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
+    
+    collections.forEach(collection => {
+        if (this.realtimeUnsubscribers.has(collection)) {
+            this.realtimeUnsubscribers.get(collection)();
+        }
         
-        console.log('🔄 Starting real-time Firebase listeners...');
-        
-        const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
-        
-        collections.forEach(collection => {
-            // Stop existing listener if any
-            if (this.realtimeUnsubscribers.has(collection)) {
-                this.realtimeUnsubscribers.get(collection)();
-            }
-            
-            const unsubscribe = this.db
-                .collection('users')
-                .doc(this.userId)
-                .collection(collection)
-                .onSnapshot((snapshot) => {
-                    const items = [];
-                    snapshot.forEach(doc => {
-                        items.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    const oldCount = this.cache[collection]?.length || 0;
-                    
-                    // Merge with local data (keep local if newer)
-                    const localItems = this.cache[collection] || [];
-                    const mergedMap = new Map();
-                    
-                    items.forEach(item => {
-                        mergedMap.set(item.id.toString(), item);
-                    });
-                    
-                    localItems.forEach(item => {
-                        const existing = mergedMap.get(item.id.toString());
-                        if (!existing) {
-                            mergedMap.set(item.id.toString(), item);
-                        } else if (item.updatedAt && existing.updatedAt && new Date(item.updatedAt) > new Date(existing.updatedAt)) {
-                            mergedMap.set(item.id.toString(), item);
-                        }
-                    });
-                    
-                    this.cache[collection] = Array.from(mergedMap.values());
-                    this.saveToLocalStorage(collection);
-                    
-                    if (oldCount !== this.cache[collection].length) {
-                        console.log(`🔄 Real-time update: ${collection} (${this.cache[collection].length} items)`);
-                        
-                        // Broadcast real-time update
-                        this.broadcast(`${collection}-updated`, this.cache[collection]);
-                        this.broadcast('realtime-update', { 
-                            collection: collection, 
-                            count: this.cache[collection].length,
-                            timestamp: new Date().toISOString()
-                        });
-                    }
-                }, (error) => {
-                    console.error(`Error in real-time listener for ${collection}:`, error);
+        const unsubscribe = this.db
+            .collection('users')
+            .doc(this.userId)
+            .collection(collection)
+            .onSnapshot((snapshot) => {
+                // 🔥 REPLACE - NOT MERGE
+                const items = [];
+                snapshot.forEach(doc => {
+                    items.push({ id: doc.id, ...doc.data() });
                 });
-            
-            this.realtimeUnsubscribers.set(collection, unsubscribe);
-        });
+                
+                const oldCount = this.cache[collection]?.length || 0;
+                
+                // 🔥 DIRECT REPLACE - no merging, no local preference
+                this.cache[collection] = items;
+                this.saveToLocalStorage(collection);
+                
+                if (oldCount !== this.cache[collection].length) {
+                    console.log(`🔄 Real-time update: ${collection} (${this.cache[collection].length} items) - REPLACED`);
+                    
+                    this.broadcast(`${collection}-updated`, this.cache[collection]);
+                    this.broadcast('realtime-update', { 
+                        collection: collection, 
+                        count: this.cache[collection].length,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            }, (error) => {
+                console.error(`Error in real-time listener for ${collection}:`, error);
+            });
         
-        console.log('✅ Real-time listeners active');
-        
-        // Broadcast that real-time listeners are active
-        this.broadcast('realtime-listeners-active', { collections: collections });
-    }
+        this.realtimeUnsubscribers.set(collection, unsubscribe);
+    });
+    
+    console.log('✅ Real-time listeners active (REPLACE mode)');
+}
     
     /**
      * Stop all real-time listeners
