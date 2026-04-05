@@ -163,74 +163,37 @@ class UnifiedDataService {
      * Load a specific collection from Firebase and merge with localStorage
      */
     async loadCollection(collectionName) {
-        if (!this.db || !this.userId) return;
+    if (!this.db || !this.userId) return;
+    
+    try {
+        const snapshot = await this.db
+            .collection('users')
+            .doc(this.userId)
+            .collection(collectionName)
+            .get();
         
-        try {
-            // Get Firebase data
-            const snapshot = await this.db
-                .collection('users')
-                .doc(this.userId)
-                .collection(collectionName)
-                .get();
-            
-            const firebaseItems = [];
-            snapshot.forEach(doc => {
-                firebaseItems.push({ id: doc.id, ...doc.data() });
-            });
-            
-            // Get localStorage data
-            const localItems = this.cache[collectionName] || [];
-            
-            // Merge: Firebase takes precedence, but keep local if newer
-            const mergedMap = new Map();
-            
-            // Add Firebase items first
-            firebaseItems.forEach(item => {
-                mergedMap.set(item.id.toString(), {
-                    ...item,
-                    source: 'firebase',
-                    lastSynced: new Date().toISOString()
-                });
-            });
-            
-            // Add local items (only if not in Firebase or local is newer)
-            localItems.forEach(item => {
-                const existing = mergedMap.get(item.id.toString());
-                if (!existing) {
-                    mergedMap.set(item.id.toString(), {
-                        ...item,
-                        source: 'local'
-                    });
-                } else if (item.updatedAt && existing.updatedAt && new Date(item.updatedAt) > new Date(existing.updatedAt)) {
-                    // Local is newer, use it and queue for upload
-                    mergedMap.set(item.id.toString(), {
-                        ...item,
-                        source: 'local',
-                        needsUpload: true
-                    });
-                    this.queueForUpload(collectionName, item);
-                }
-            });
-            
-            // Update cache
-            this.cache[collectionName] = Array.from(mergedMap.values());
-            this.saveToLocalStorage(collectionName);
-            
-            console.log(`  📥 Loaded ${this.cache[collectionName].length} ${collectionName}`);
-            
-            // Broadcast collection loaded
-            this.broadcast(`${collectionName}-loaded`, this.cache[collectionName]);
-            
-        } catch (error) {
-            console.error(`Error loading ${collectionName}:`, error);
-            // Keep localStorage data as fallback
-            const cached = localStorage.getItem(`farm-${collectionName}`);
-            if (cached) {
-                this.cache[collectionName] = JSON.parse(cached);
-                console.log(`  📁 Using cached ${collectionName} from localStorage`);
-            }
+        const firebaseItems = [];
+        snapshot.forEach(doc => {
+            firebaseItems.push({ id: doc.id, ...doc.data() });
+        });
+        
+        // 🔥 REPLACE - NOT MERGE
+        this.cache[collectionName] = firebaseItems;
+        this.saveToLocalStorage(collectionName);
+        
+        console.log(`  📥 Loaded ${this.cache[collectionName].length} ${collectionName} (REPLACED)`);
+        
+        this.broadcast(`${collectionName}-loaded`, this.cache[collectionName]);
+        
+    } catch (error) {
+        console.error(`Error loading ${collectionName}:`, error);
+        const cached = localStorage.getItem(`farm-${collectionName}`);
+        if (cached) {
+            this.cache[collectionName] = JSON.parse(cached);
+            console.log(`  📁 Using cached ${collectionName} from localStorage`);
         }
     }
+}
     
     /**
      * Save ANY data (universal method with offline support)
