@@ -494,38 +494,38 @@ class UnifiedDataService {
      * Delete an item from an array collection (handles the entire array)
      * This is the CENTRAL fix for the sync loop issue
      */
-    async deleteArrayItem(collection, itemId, arrayPath = null) {
-        console.log(`🗑️ Deleting ${itemId} from ${collection}`);
+  async deleteArrayItem(collection, itemId, arrayPath = null) {
+    console.log(`🗑️ Deleting ${itemId} from ${collection}`);
+    
+    try {
+        // Get current data
+        let currentData = this.get(collection);
         
-        try {
-            // Get current data
-            let currentData = this.get(collection);
-            
-            // Handle different data structures
-            let updatedData;
-            if (arrayPath && currentData[arrayPath]) {
-                // For nested arrays like { items: [...] }
-                updatedData = { ...currentData };
-                updatedData[arrayPath] = updatedData[arrayPath].filter(item => item.id !== itemId);
-            } else if (Array.isArray(currentData)) {
-                // For simple arrays like [...]
-                updatedData = currentData.filter(item => item.id !== itemId);
-            } else {
-                console.error('Cannot delete: data structure not recognized');
-                return false;
-            }
-            
-            // Save back to Firebase and localStorage (this overwrites the entire array)
-            await this.save(collection, updatedData);
-            console.log(`✅ Deleted ${itemId} from ${collection} - remaining: ${updatedData.length}`);
-            return true;
-            
-        } catch (error) {
-            console.error('Error in deleteArrayItem:', error);
+        // Handle different data structures
+        let updatedData;
+        if (arrayPath && currentData[arrayPath]) {
+            // For nested arrays like { items: [...] }
+            updatedData = { ...currentData };
+            updatedData[arrayPath] = updatedData[arrayPath].filter(item => item.id != itemId);  // ← Changed !== to !=
+        } else if (Array.isArray(currentData)) {
+            // For simple arrays like [...]
+            updatedData = currentData.filter(item => item.id != itemId);  // ← Changed !== to !=
+        } else {
+            console.error('Cannot delete: data structure not recognized');
             return false;
         }
+        
+        // Save back to Firebase and localStorage (this overwrites the entire array)
+        await this.save(collection, updatedData);
+        console.log(`✅ Deleted ${itemId} from ${collection} - remaining: ${updatedData.length}`);
+        return true;
+        
+    } catch (error) {
+        console.error('Error in deleteArrayItem:', error);
+        return false;
     }
-
+}
+    
     /**
      * Sync an entire array to Firebase (overwrites)
      */
