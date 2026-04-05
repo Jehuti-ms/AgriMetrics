@@ -744,11 +744,13 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
     }
 },
 
-asyasync deleteFeedRecord(recordId) {
-    console.log('🗑️ Deleting feed record:', recordId);
+async deleteFeedRecord(recordId) {
+    console.log('🗑️ deleteFeedRecord called with ID:', recordId);
     
+    // Find the record
     const record = this.feedRecords.find(r => r.id == recordId);
     if (!record) {
+        console.log('Record not found');
         this.showNotification('Record not found', 'error');
         return;
     }
@@ -757,25 +759,41 @@ asyasync deleteFeedRecord(recordId) {
         return;
     }
     
-    // 🔥 CRITICAL: Delete from Firebase using the delete method
-    if (this.dataService) {
-        // This deletes the document from Firestore
-        await this.dataService.delete('feedRecords', recordId);
-        console.log('✅ Deleted from Firebase');
-    }
-    
-    // Update local array
-    this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
-    this.saveData();
-    this.renderModule();
-    this.showNotification('Feed record deleted!', 'success');
-    
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('feed-deleted', {
-            id: recordId,
-            feedType: record.feedType,
-            quantity: record.quantity
-        });
+    // 🔥 DIRECT FIREBASE DELETE
+    try {
+        const userId = firebase.auth().currentUser?.uid;
+        if (!userId) {
+            this.showNotification('User not authenticated', 'error');
+            return;
+        }
+        
+        // Delete from Firebase directly
+        await firebase.firestore()
+            .collection('users')
+            .doc(userId)
+            .collection('feedRecords')
+            .doc(recordId.toString())
+            .delete();
+        
+        console.log('✅ Deleted from Firebase directly');
+        
+        // Update local cache through UnifiedDataService
+        if (this.dataService) {
+            const currentRecords = this.dataService.get('feedRecords');
+            const newRecords = currentRecords.filter(r => r.id != recordId);
+            await this.dataService.save('feedRecords', newRecords);
+        }
+        
+        // Update local array
+        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
+        this.saveData();
+        this.renderModule();
+        
+        this.showNotification('Feed record deleted successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Delete failed:', error);
+        this.showNotification('Delete failed: ' + error.message, 'error');
     }
 },
 
