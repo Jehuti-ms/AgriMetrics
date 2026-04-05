@@ -744,18 +744,38 @@ async updateFeedRecord(recordId, feedType, quantity, notes) {
     }
 },
 
-async deleteFeedRecord(recordId) {
-    const record = this.feedRecords.find(r => r.id === recordId);
-    if (!record) return;
+asyasync deleteFeedRecord(recordId) {
+    console.log('🗑️ Deleting feed record:', recordId);
     
-    if (confirm(`Delete feed record?`)) {
-        // Use central method
-        await this.dataService.deleteArrayItem('feedRecords', recordId);
-        
-        // Update local array
-        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-        this.renderModule();
-        this.showNotification('Deleted!', 'success');
+    const record = this.feedRecords.find(r => r.id == recordId);
+    if (!record) {
+        this.showNotification('Record not found', 'error');
+        return;
+    }
+    
+    if (!confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
+        return;
+    }
+    
+    // 🔥 CRITICAL: Delete from Firebase using the delete method
+    if (this.dataService) {
+        // This deletes the document from Firestore
+        await this.dataService.delete('feedRecords', recordId);
+        console.log('✅ Deleted from Firebase');
+    }
+    
+    // Update local array
+    this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
+    this.saveData();
+    this.renderModule();
+    this.showNotification('Feed record deleted!', 'success');
+    
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('feed-deleted', {
+            id: recordId,
+            feedType: record.feedType,
+            quantity: record.quantity
+        });
     }
 },
 
