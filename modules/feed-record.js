@@ -757,16 +757,36 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
-    // 🔥 Use UnifiedDataService.delete
-    if (this.dataService) {
-        const result = await this.dataService.delete('feedRecords', recordId);
-        if (result.success) {
-            console.log('✅ Delete successful');
-            // The real-time listener will update the UI automatically
-            this.showNotification('Feed record deleted!', 'success');
-        } else {
-            this.showNotification('Delete failed: ' + (result.error || 'Unknown error'), 'error');
+    try {
+        // Get current user
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            this.showNotification('Not authenticated', 'error');
+            return;
         }
+        
+        // Delete from Firebase directly
+        await firebase.firestore()
+            .collection('users')
+            .doc(user.uid)
+            .collection('feedRecords')
+            .doc(recordId.toString())
+            .delete();
+        
+        console.log('✅ Deleted from Firebase');
+        
+        // Clear local cache for this collection
+        localStorage.removeItem('farm-feedRecords');
+        
+        // Force reload the page to refresh all data
+        this.showNotification('Feed record deleted! Refreshing...', 'success');
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Delete failed:', error);
+        this.showNotification('Delete failed: ' + error.message, 'error');
     }
 },
     
