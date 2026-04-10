@@ -764,7 +764,18 @@ async deleteFeedRecord(recordId) {
             return;
         }
         
-        // Delete from Firebase
+        // 🔥 STEP 1: Delete from local cache FIRST
+        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
+        this.saveData();
+        this.renderModule();
+        
+        // 🔥 STEP 2: Update UnifiedDataService cache immediately
+        if (this.dataService) {
+            this.dataService.cache.feedRecords = this.feedRecords;
+            localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
+        }
+        
+        // 🔥 STEP 3: Delete from Firebase (this will trigger real-time sync, but local already matches)
         await firebase.firestore()
             .collection('users')
             .doc(user.uid)
@@ -772,19 +783,22 @@ async deleteFeedRecord(recordId) {
             .doc(recordId.toString())
             .delete();
         
-        console.log('✅ Deleted from Firebase');
-        
-        // 🔥 CRITICAL: Force reload from Firebase (bypass cache)
-        await this.loadData();
-        
-        // Re-render
-        this.renderModule();
-        
+        console.log('✅ Deleted from both local and Firebase');
         this.showNotification('Feed record deleted!', 'success');
+        
+        // 🔥 STEP 4: Force one more sync to ensure consistency
+        setTimeout(async () => {
+            await this.loadData();
+            this.renderModule();
+        }, 500);
         
     } catch (error) {
         console.error('Delete failed:', error);
         this.showNotification('Delete failed: ' + error.message, 'error');
+        
+        // Restore local data if Firebase delete failed
+        await this.loadData();
+        this.renderModule();
     }
 },
     
