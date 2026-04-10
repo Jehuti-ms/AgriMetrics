@@ -766,33 +766,41 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
+    // 🔥 TEMPORARILY disable real-time listener to prevent interference
+    if (this.dataService && this.dataService.realtimeUnsubscribers) {
+        const unsubscribe = this.dataService.realtimeUnsubscribers.get('feedRecords');
+        if (unsubscribe) {
+            unsubscribe();
+            this.dataService.realtimeUnsubscribers.delete('feedRecords');
+            console.log('📡 Temporarily disabled feedRecords listener');
+        }
+    }
+    
     try {
-        // Remove from local array immediately
+        // 1. Remove from local array
         this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
         
-        // Update localStorage immediately
+        // 2. Update localStorage
         localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
         
-        // Update UnifiedDataService cache
+        // 3. Update UnifiedDataService cache
         if (this.dataService) {
             this.dataService.cache.feedRecords = this.feedRecords;
-            this.dataService.saveToLocalStorage('feedRecords');
         }
         
-        // Update UI immediately
+        // 4. Update UI immediately
         this.renderModule();
         
-        // Delete from Firebase (don't wait for it, let it happen in background)
+        // 5. Delete from Firebase
         const user = firebase.auth().currentUser;
         if (user) {
-            firebase.firestore()
+            await firebase.firestore()
                 .collection('users')
                 .doc(user.uid)
                 .collection('feedRecords')
                 .doc(recordId.toString())
-                .delete()
-                .then(() => console.log('✅ Firebase delete completed'))
-                .catch(err => console.error('Firebase delete error:', err));
+                .delete();
+            console.log('✅ Deleted from Firebase');
         }
         
         this.showNotification('Feed record deleted!', 'success');
@@ -801,9 +809,18 @@ async deleteFeedRecord(recordId) {
         console.error('Delete failed:', error);
         this.showNotification('Delete failed: ' + error.message, 'error');
         
-        // Restore if something went wrong
+        // Restore data
         await this.loadData();
         this.renderModule();
+        
+    } finally {
+        // 🔥 Re-enable real-time listener after a delay
+        setTimeout(() => {
+            if (this.dataService && this.dataService.startRealtimeListeners) {
+                this.dataService.startRealtimeListeners();
+                console.log('📡 Re-enabled feedRecords listener');
+            }
+        }, 2000);
     }
 },
     
