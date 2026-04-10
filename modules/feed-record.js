@@ -758,14 +758,13 @@ async deleteFeedRecord(recordId) {
     }
     
     try {
-        // Get current user
         const user = firebase.auth().currentUser;
         if (!user) {
             this.showNotification('Not authenticated', 'error');
             return;
         }
         
-        // Delete from Firebase directly
+        // Delete from Firebase
         await firebase.firestore()
             .collection('users')
             .doc(user.uid)
@@ -775,14 +774,13 @@ async deleteFeedRecord(recordId) {
         
         console.log('✅ Deleted from Firebase');
         
-        // Clear local cache for this collection
-        localStorage.removeItem('farm-feedRecords');
+        // 🔥 CRITICAL: Force reload from Firebase (bypass cache)
+        await this.loadData();
         
-        // Force reload the page to refresh all data
-        this.showNotification('Feed record deleted! Refreshing...', 'success');
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
+        // Re-render
+        this.renderModule();
+        
+        this.showNotification('Feed record deleted!', 'success');
         
     } catch (error) {
         console.error('Delete failed:', error);
