@@ -213,13 +213,34 @@ initializeLegacy() {
         console.log(`Feed Records updating for theme: ${theme}`);
     },
 
-   async loadData() {
+  async loadData() {
     console.log('Loading feed data...');
     
     // Try UnifiedDataService first
     if (this.dataService) {
-        this.feedRecords = this.dataService.get('feedRecords') || [];
+        let serverRecords = this.dataService.get('feedRecords') || [];
         this.feedInventory = this.dataService.get('feedInventory') || [];
+        
+        // 🔥 CRITICAL FIX: Get local records to check what should exist
+        const localRecords = JSON.parse(localStorage.getItem('farm-feedRecords') || '[]');
+        
+        // Create a map of local record IDs (these are the ones the user wants to keep)
+        const localIdMap = new Map();
+        localRecords.forEach(r => localIdMap.set(r.id.toString(), true));
+        
+        // Only keep server records that exist in local storage
+        // This prevents deleted records from being restored by the sync
+        if (localRecords.length > 0) {
+            this.feedRecords = serverRecords.filter(r => localIdMap.has(r.id.toString()));
+            console.log('📊 Filtered records:', {
+                server: serverRecords.length,
+                local: localRecords.length,
+                final: this.feedRecords.length,
+                filteredOut: serverRecords.length - this.feedRecords.length
+            });
+        } else {
+            this.feedRecords = serverRecords;
+        }
         
         // Get birds stock from inventory
         const inventory = this.dataService.get('inventory') || [];
@@ -241,10 +262,10 @@ initializeLegacy() {
         this.loadDataLegacy();
     }
     
-    // If still no inventory, add default demo data
-   // if (this.feedInventory.length === 0) {
-    //    this.addDefaultFeedInventory();
-   // }
+    // Save the filtered records back to ensure consistency
+    if (this.dataService && this.feedRecords.length > 0) {
+        localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
+    }
 },
 
 loadDataLegacy() {
@@ -758,45 +779,39 @@ async deleteFeedRecord(recordId) {
     }
     
     try {
-        const user = firebase.auth().currentUser;
-        if (!user) {
-            this.showNotification('Not authenticated', 'error');
-            return;
-        }
-        
-        // 🔥 STEP 1: Delete from local cache FIRST
+        // 🔥 STEP 1: Update local cache IMMEDIATELY
         this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
-        this.saveData();
-        this.renderModule();
         
-        // 🔥 STEP 2: Update UnifiedDataService cache immediately
+        // 🔥 STEP 2: Save to localStorage right away
+        localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
+        
+        // 🔥 STEP 3: Update UnifiedDataService cache
         if (this.dataService) {
             this.dataService.cache.feedRecords = this.feedRecords;
-            localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
         }
         
-        // 🔥 STEP 3: Delete from Firebase (this will trigger real-time sync, but local already matches)
-        await firebase.firestore()
-            .collection('users')
-            .doc(user.uid)
-            .collection('feedRecords')
-            .doc(recordId.toString())
-            .delete();
+        // 🔥 STEP 4: Update UI immediately
+        this.renderModule();
         
-        console.log('✅ Deleted from both local and Firebase');
+        // 🔥 STEP 5: Delete from Firebase (this will sync but local already matches)
+        const user = firebase.auth().currentUser;
+        if (user) {
+            await firebase.firestore()
+                .collection('users')
+                .doc(user.uid)
+                .collection('feedRecords')
+                .doc(recordId.toString())
+                .delete();
+            console.log('✅ Deleted from Firebase');
+        }
+        
         this.showNotification('Feed record deleted!', 'success');
-        
-        // 🔥 STEP 4: Force one more sync to ensure consistency
-        setTimeout(async () => {
-            await this.loadData();
-            this.renderModule();
-        }, 500);
         
     } catch (error) {
         console.error('Delete failed:', error);
         this.showNotification('Delete failed: ' + error.message, 'error');
         
-        // Restore local data if Firebase delete failed
+        // Restore if Firebase delete failed
         await this.loadData();
         this.renderModule();
     }
