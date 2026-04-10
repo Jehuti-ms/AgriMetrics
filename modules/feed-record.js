@@ -757,44 +757,16 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
-    // 🔥 Delete from Firebase directly (bypass UnifiedDataService to avoid sync issues)
-    try {
-        const userId = firebase.auth().currentUser?.uid;
-        if (!userId) {
-            this.showNotification('Not authenticated', 'error');
-            return;
+    // 🔥 Use UnifiedDataService.delete
+    if (this.dataService) {
+        const result = await this.dataService.delete('feedRecords', recordId);
+        if (result.success) {
+            console.log('✅ Delete successful');
+            // The real-time listener will update the UI automatically
+            this.showNotification('Feed record deleted!', 'success');
+        } else {
+            this.showNotification('Delete failed: ' + (result.error || 'Unknown error'), 'error');
         }
-        
-        // Delete from Firestore
-        await firebase.firestore()
-            .collection('users')
-            .doc(userId)
-            .collection('feedRecords')
-            .doc(recordId.toString())
-            .delete();
-        
-        console.log('✅ Deleted from Firebase');
-        
-        // Update local cache without waiting for real-time sync
-        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
-        
-        // Update UnifiedDataService cache directly
-        if (this.dataService) {
-            this.dataService.cache.feedRecords = this.feedRecords;
-            this.dataService.saveToLocalStorage('feedRecords');
-        }
-        
-        // Save to localStorage
-        this.saveData();
-        
-        // Re-render
-        this.renderModule();
-        
-        this.showNotification('Feed record deleted successfully!', 'success');
-        
-    } catch (error) {
-        console.error('Delete failed:', error);
-        this.showNotification('Delete failed: ' + error.message, 'error');
     }
 },
     
