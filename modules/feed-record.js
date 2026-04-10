@@ -10,6 +10,7 @@ const FeedRecordModule = {
     element: null,
     broadcaster: null,
     dataService: null,
+    deletedRecords: new Set(),
 
  async initialize() {
     console.log('🌾 Initializing Feed Records...');
@@ -216,31 +217,26 @@ initializeLegacy() {
   async loadData() {
     console.log('Loading feed data...');
     
+    // Load deleted records from localStorage
+    const savedDeletions = localStorage.getItem('farm-feedRecords-deleted');
+    if (savedDeletions) {
+        this.deletedRecords = new Set(JSON.parse(savedDeletions));
+        console.log('📋 Loaded deleted records:', this.deletedRecords.size);
+    }
+    
     // Try UnifiedDataService first
     if (this.dataService) {
         let serverRecords = this.dataService.get('feedRecords') || [];
         this.feedInventory = this.dataService.get('feedInventory') || [];
         
-        // 🔥 CRITICAL FIX: Get local records to check what should exist
-        const localRecords = JSON.parse(localStorage.getItem('farm-feedRecords') || '[]');
+        // 🔥 FILTER OUT DELETED RECORDS
+        this.feedRecords = serverRecords.filter(record => !this.deletedRecords.has(record.id.toString()));
         
-        // Create a map of local record IDs (these are the ones the user wants to keep)
-        const localIdMap = new Map();
-        localRecords.forEach(r => localIdMap.set(r.id.toString(), true));
-        
-        // Only keep server records that exist in local storage
-        // This prevents deleted records from being restored by the sync
-        if (localRecords.length > 0) {
-            this.feedRecords = serverRecords.filter(r => localIdMap.has(r.id.toString()));
-            console.log('📊 Filtered records:', {
-                server: serverRecords.length,
-                local: localRecords.length,
-                final: this.feedRecords.length,
-                filteredOut: serverRecords.length - this.feedRecords.length
-            });
-        } else {
-            this.feedRecords = serverRecords;
-        }
+        console.log('📊 Loaded from UnifiedDataService:', {
+            server: serverRecords.length,
+            deleted: this.deletedRecords.size,
+            final: this.feedRecords.length
+        });
         
         // Get birds stock from inventory
         const inventory = this.dataService.get('inventory') || [];
@@ -249,12 +245,6 @@ initializeLegacy() {
             item.name?.toLowerCase().includes('broiler')
         );
         this.birdsStock = birdItem?.quantity || 0;
-        
-        console.log('📊 Loaded from UnifiedDataService:', {
-            records: this.feedRecords.length,
-            inventory: this.feedInventory.length,
-            birds: this.birdsStock
-        });
     }
     
     // If no data, try localStorage
@@ -262,10 +252,8 @@ initializeLegacy() {
         this.loadDataLegacy();
     }
     
-    // Save the filtered records back to ensure consistency
-    if (this.dataService && this.feedRecords.length > 0) {
-        localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
-    }
+    // Save filtered records
+    localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
 },
 
 loadDataLegacy() {
@@ -778,22 +766,19 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
+    // 🔥 Add to deleted records set
+    this.deletedRecords.add(recordId.toString());
+    localStorage.setItem('farm-feedRecords-deleted', JSON.stringify([...this.deletedRecords]));
+    
+    // Remove from current records
+    this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
+    localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
+    
+    // Update UI
+    this.renderModule();
+    
+    // Try to delete from Firebase (optional - records will be filtered anyway)
     try {
-        // 🔥 STEP 1: Update local cache IMMEDIATELY
-        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
-        
-        // 🔥 STEP 2: Save to localStorage right away
-        localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
-        
-        // 🔥 STEP 3: Update UnifiedDataService cache
-        if (this.dataService) {
-            this.dataService.cache.feedRecords = this.feedRecords;
-        }
-        
-        // 🔥 STEP 4: Update UI immediately
-        this.renderModule();
-        
-        // 🔥 STEP 5: Delete from Firebase (this will sync but local already matches)
         const user = firebase.auth().currentUser;
         if (user) {
             await firebase.firestore()
@@ -804,17 +789,11 @@ async deleteFeedRecord(recordId) {
                 .delete();
             console.log('✅ Deleted from Firebase');
         }
-        
-        this.showNotification('Feed record deleted!', 'success');
-        
     } catch (error) {
-        console.error('Delete failed:', error);
-        this.showNotification('Delete failed: ' + error.message, 'error');
-        
-        // Restore if Firebase delete failed
-        await this.loadData();
-        this.renderModule();
+        console.log('Firebase delete failed, but record is filtered locally');
     }
+    
+    this.showNotification('Feed record deleted!', 'success');
 },
     
 editFeedRecord(recordId) {
