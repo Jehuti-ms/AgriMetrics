@@ -272,55 +272,6 @@ loadDataLegacy() {
     });
 },
 
-/*addDefaultFeedInventory() {
-    console.log('📦 Adding default feed inventory...');
-    
-    this.feedInventory = [
-        {
-            id: Date.now(),
-            feedType: 'starter',
-            currentStock: 100,
-            unit: 'kg',
-            costPerKg: 2.50,
-            minStock: 20
-        },
-        {
-            id: Date.now() + 1,
-            feedType: 'grower',
-            currentStock: 80,
-            unit: 'kg',
-            costPerKg: 2.30,
-            minStock: 20
-        },
-        {
-            id: Date.now() + 2,
-            feedType: 'finisher',
-            currentStock: 60,
-            unit: 'kg',
-            costPerKg: 2.20,
-            minStock: 15
-        },
-        {
-            id: Date.now() + 3,
-            feedType: 'layer',
-            currentStock: 50,
-            unit: 'kg',
-            costPerKg: 2.40,
-            minStock: 15
-        }
-    ];
-    
-    // Save to UnifiedDataService if available
-    if (this.dataService) {
-        for (const item of this.feedInventory) {
-            this.dataService.save('feedInventory', item);
-        }
-    }
-    
-    this.saveData();
-    console.log('✅ Added default feed inventory:', this.feedInventory.length, 'items');
-}, */
-
 setupRealtimeSync() {
     if (!this.dataService) return;
     
@@ -766,62 +717,38 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
-    // 🔥 TEMPORARILY disable real-time listener to prevent interference
-    if (this.dataService && this.dataService.realtimeUnsubscribers) {
-        const unsubscribe = this.dataService.realtimeUnsubscribers.get('feedRecords');
-        if (unsubscribe) {
-            unsubscribe();
-            this.dataService.realtimeUnsubscribers.delete('feedRecords');
-            console.log('📡 Temporarily disabled feedRecords listener');
-        }
+    // Add to deleted records set (for permanent filtering)
+    this.deletedRecords.add(recordId.toString());
+    localStorage.setItem('farm-feedRecords-deleted', JSON.stringify([...this.deletedRecords]));
+    
+    // Remove from local array
+    this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
+    
+    // Update localStorage
+    localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
+    
+    // Update UnifiedDataService cache
+    if (this.dataService) {
+        this.dataService.cache.feedRecords = this.feedRecords;
     }
     
-    try {
-        // 1. Remove from local array
-        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
-        
-        // 2. Update localStorage
-        localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
-        
-        // 3. Update UnifiedDataService cache
-        if (this.dataService) {
-            this.dataService.cache.feedRecords = this.feedRecords;
-        }
-        
-        // 4. Update UI immediately
-        this.renderModule();
-        
-        // 5. Delete from Firebase
-        const user = firebase.auth().currentUser;
-        if (user) {
-            await firebase.firestore()
-                .collection('users')
-                .doc(user.uid)
-                .collection('feedRecords')
-                .doc(recordId.toString())
-                .delete();
-            console.log('✅ Deleted from Firebase');
-        }
-        
-        this.showNotification('Feed record deleted!', 'success');
-        
-    } catch (error) {
-        console.error('Delete failed:', error);
-        this.showNotification('Delete failed: ' + error.message, 'error');
-        
-        // Restore data
-        await this.loadData();
-        this.renderModule();
-        
-    } finally {
-        // 🔥 Re-enable real-time listener after a delay
-        setTimeout(() => {
-            if (this.dataService && this.dataService.startRealtimeListeners) {
-                this.dataService.startRealtimeListeners();
-                console.log('📡 Re-enabled feedRecords listener');
-            }
-        }, 2000);
+    // Update UI immediately
+    this.renderModule();
+    
+    // Delete from Firebase (don't wait, let it happen in background)
+    const user = firebase.auth().currentUser;
+    if (user) {
+        firebase.firestore()
+            .collection('users')
+            .doc(user.uid)
+            .collection('feedRecords')
+            .doc(recordId.toString())
+            .delete()
+            .then(() => console.log('✅ Firebase delete completed'))
+            .catch(err => console.error('Firebase delete error:', err));
     }
+    
+    this.showNotification('Feed record deleted!', 'success');
 },
     
 editFeedRecord(recordId) {
@@ -1201,51 +1128,6 @@ editFeedRecord(recordId) {
     this.showNotification('Edit mode: Update the fields and click Update Record', 'info');
 },
 
-deleteFeedRecord(recordId) {
-    // Prevent multiple simultaneous deletes
-    if (this._isDeleting) {
-        console.log('Delete already in progress, ignoring');
-        return;
-    }
-    
-    console.log('🗑️ Deleting feed record:', recordId);
-    
-    const record = this.feedRecords.find(r => r.id === recordId);
-    if (!record) {
-        this.showNotification('Record not found', 'error');
-        return;
-    }
-    
-    if (!confirm(`Delete feed record for ${this.formatFeedType(record.feedType)} (${record.quantity}kg)?`)) {
-        return;
-    }
-    
-    this._isDeleting = true;
-    
-    try {
-        // Add quantity back to inventory
-        const inventoryItem = this.feedInventory.find(item => item.feedType === record.feedType);
-        if (inventoryItem) {
-            inventoryItem.currentStock += record.quantity;
-        }
-        
-        // Remove record
-        this.feedRecords = this.feedRecords.filter(r => r.id !== recordId);
-        this.saveData();
-        
-        // Update UI
-        this.renderModule();
-        
-        this.showNotification('Feed record deleted successfully!', 'success');
-    } catch (error) {
-        console.error('Error deleting record:', error);
-        this.showNotification('Error deleting record', 'error');
-    } finally {
-        setTimeout(() => {
-            this._isDeleting = false;
-        }, 500);
-    }
-},
     
 async updateFeedRecord(recordId, feedType, quantity, notes) {
     const originalRecord = this.feedRecords.find(r => r.id === recordId);
