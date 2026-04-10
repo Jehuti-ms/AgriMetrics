@@ -278,9 +278,10 @@ setupRealtimeSync() {
     console.log('📡 Setting up real-time sync for feed...');
     
     // Listen for feed record updates
-    this.dataService.on('feedRecords-updated', (records) => {
+       this.dataService.on('feedRecords-updated', (records) => {
         console.log('🔄 Feed records updated from unified service:', records?.length);
-        this.feedRecords = records || [];
+        // 🔥 Filter out deleted records
+        this.feedRecords = (records || []).filter(record => !this.deletedRecords.has(record.id.toString()));
         this.renderModule();
     });
     
