@@ -1,4 +1,4 @@
-// unified-data-service.js - Single Source of Truth
+// unified-data-service.js - Single Source of Truth (REPLACE MODE)
 console.log('🏢 Initializing Unified Data Service...');
 
 class UnifiedDataService {
@@ -32,9 +32,6 @@ class UnifiedDataService {
         console.log('🏢 Unified Data Service created');
     }
     
-    /**
-     * Setup network detection for offline support
-     */
     setupNetworkDetection() {
         window.addEventListener('online', () => {
             console.log('🌐 Device came online');
@@ -50,9 +47,6 @@ class UnifiedDataService {
         });
     }
     
-    /**
-     * Initialize the service
-     */
     async initialize() {
         if (this.isInitialized) {
             console.log('Unified Data Service already initialized');
@@ -61,18 +55,15 @@ class UnifiedDataService {
         
         console.log('🚀 Initializing Unified Data Service...');
         
-        // Get Firebase instances
         this.db = window.db || (window.firebase && window.firebase.firestore());
         
         if (!this.db) {
             console.error('❌ Firestore not available!');
-            // Still initialize with localStorage only
             this.loadFromLocalStorage();
             this.isInitialized = true;
             return;
         }
         
-        // Listen for auth changes
         if (window.firebase && window.firebase.auth) {
             window.firebase.auth().onAuthStateChanged(async (user) => {
                 const newUserId = user ? user.uid : null;
@@ -80,17 +71,9 @@ class UnifiedDataService {
                 if (newUserId && newUserId !== this.userId) {
                     console.log('👤 User changed:', newUserId);
                     this.userId = newUserId;
-                    
-                    // Load data from both sources and merge
                     await this.loadAllData();
-                    
-                    // Setup realtime listeners
                     this.startRealtimeListeners();
-                    
-                    // Process any pending offline operations
                     await this.processOfflineQueue();
-                    
-                    // Broadcast user authenticated
                     this.broadcast('user-authenticated', { userId: this.userId });
                     
                 } else if (!newUserId) {
@@ -98,13 +81,10 @@ class UnifiedDataService {
                     this.userId = null;
                     this.clearCache();
                     this.stopRealtimeListeners();
-                    
-                    // Broadcast user logged out
                     this.broadcast('user-logged-out', {});
                 }
             });
             
-            // Check if already logged in
             const currentUser = window.firebase.auth().currentUser;
             if (currentUser) {
                 this.userId = currentUser.uid;
@@ -113,16 +93,12 @@ class UnifiedDataService {
             }
         }
         
-        // Load cached data from localStorage
         this.loadFromLocalStorage();
-        
-        // Load offline queue
         this.loadOfflineQueue();
         
         this.isInitialized = true;
         console.log('✅ Unified Data Service initialized');
         
-        // Broadcast that service is ready
         this.broadcast('unified-data-ready', { 
             timestamp: new Date().toISOString(),
             online: this.isOnline,
@@ -130,9 +106,6 @@ class UnifiedDataService {
         });
     }
     
-    /**
-     * Load all data from Firebase and merge with localStorage
-     */
     async loadAllData() {
         if (!this.db || !this.userId) {
             console.warn('Cannot load data: No Firestore or user ID');
@@ -149,7 +122,6 @@ class UnifiedDataService {
         
         console.log('✅ All data loaded from Firebase');
         
-        // Broadcast that all data is loaded
         this.broadcast('all-data-loaded', { 
             collections: Object.keys(this.cache).reduce((acc, key) => {
                 acc[key] = this.cache[key].length;
@@ -159,57 +131,49 @@ class UnifiedDataService {
         });
     }
     
-    /**
-     * Load a specific collection from Firebase and merge with localStorage
-     */
     async loadCollection(collectionName) {
-    if (!this.db || !this.userId) return;
-    
-    try {
-        const snapshot = await this.db
-            .collection('users')
-            .doc(this.userId)
-            .collection(collectionName)
-            .get();
+        if (!this.db || !this.userId) return;
         
-        const firebaseItems = [];
-        snapshot.forEach(doc => {
-            firebaseItems.push({ id: doc.id, ...doc.data() });
-        });
-        
-        // 🔥 REPLACE - NOT MERGE
-        this.cache[collectionName] = firebaseItems;
-        this.saveToLocalStorage(collectionName);
-        
-        console.log(`  📥 Loaded ${this.cache[collectionName].length} ${collectionName} (REPLACED)`);
-        
-        this.broadcast(`${collectionName}-loaded`, this.cache[collectionName]);
-        
-    } catch (error) {
-        console.error(`Error loading ${collectionName}:`, error);
-        const cached = localStorage.getItem(`farm-${collectionName}`);
-        if (cached) {
-            this.cache[collectionName] = JSON.parse(cached);
-            console.log(`  📁 Using cached ${collectionName} from localStorage`);
+        try {
+            const snapshot = await this.db
+                .collection('users')
+                .doc(this.userId)
+                .collection(collectionName)
+                .get();
+            
+            const firebaseItems = [];
+            snapshot.forEach(doc => {
+                firebaseItems.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // 🔥 REPLACE - NOT MERGE
+            this.cache[collectionName] = firebaseItems;
+            this.saveToLocalStorage(collectionName);
+            
+            console.log(`  📥 Loaded ${this.cache[collectionName].length} ${collectionName} (REPLACED)`);
+            
+            this.broadcast(`${collectionName}-loaded`, this.cache[collectionName]);
+            
+        } catch (error) {
+            console.error(`Error loading ${collectionName}:`, error);
+            const cached = localStorage.getItem(`farm-${collectionName}`);
+            if (cached) {
+                this.cache[collectionName] = JSON.parse(cached);
+                console.log(`  📁 Using cached ${collectionName} from localStorage`);
+            }
         }
     }
-}
     
-    /**
-     * Save ANY data (universal method with offline support)
-     * Now handles both single items and arrays
-     */
     async save(collectionName, data, customId = null) {
         if (!collectionName) {
             console.error('❌ save() requires collectionName');
             return { success: false, error: 'No collection name provided' };
         }
         
-        // 🔥 NEW: Check if data is an array (for bulk operations like deleteArrayItem)
+        // Handle array saves (bulk operations)
         if (Array.isArray(data)) {
             console.log(`📦 Saving entire array to ${collectionName} (${data.length} items)`);
             
-            // If offline, queue the operation
             if (!this.isOnline || !this.db || !this.userId) {
                 console.warn(`⚠️ Offline: Queuing array save for ${collectionName}`);
                 
@@ -220,7 +184,6 @@ class UnifiedDataService {
                     timestamp: new Date().toISOString()
                 });
                 
-                // Update local cache immediately
                 this.cache[collectionName] = data;
                 this.saveToLocalStorage(collectionName);
                 
@@ -236,20 +199,15 @@ class UnifiedDataService {
             }
             
             try {
-                // Get reference to the collection
                 const collectionRef = this.db
                     .collection('users')
                     .doc(this.userId)
                     .collection(collectionName);
                 
-                // Get all existing documents to delete old ones
                 const existingDocs = await collectionRef.get();
-                
-                // Delete all existing documents
                 const deletePromises = existingDocs.docs.map(doc => doc.ref.delete());
                 await Promise.all(deletePromises);
                 
-                // Save each item in the array
                 const savePromises = data.map(item => {
                     const docId = item.id || Date.now().toString();
                     return collectionRef.doc(docId.toString()).set({
@@ -262,13 +220,11 @@ class UnifiedDataService {
                 
                 await Promise.all(savePromises);
                 
-                // Update cache
                 this.cache[collectionName] = data;
                 this.saveToLocalStorage(collectionName);
                 
                 console.log(`✅ Saved array to ${collectionName} (${data.length} items)`);
                 
-                // Broadcast the update
                 this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
                 this.broadcast('data-saved', { 
                     collection: collectionName, 
@@ -285,7 +241,7 @@ class UnifiedDataService {
             }
         }
         
-        // Original single-item save logic
+        // Single item save
         const docId = customId || data.id || Date.now().toString();
         const now = new Date().toISOString();
         
@@ -299,7 +255,6 @@ class UnifiedDataService {
             docData.createdAt = now;
         }
         
-        // If offline, queue the operation
         if (!this.isOnline || !this.db || !this.userId) {
             console.warn(`⚠️ Offline: Queuing save for ${collectionName}`);
             
@@ -311,10 +266,8 @@ class UnifiedDataService {
                 timestamp: now
             });
             
-            // Update local cache immediately
             this.updateLocalCache(collectionName, docData);
             
-            // Broadcast offline save
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
             this.broadcast('offline-operation-queued', { 
                 collection: collectionName, 
@@ -327,7 +280,6 @@ class UnifiedDataService {
         }
         
         try {
-            // Save to Firebase
             await this.db
                 .collection('users')
                 .doc(this.userId)
@@ -335,12 +287,10 @@ class UnifiedDataService {
                 .doc(docId.toString())
                 .set(docData);
             
-            // Update cache
             this.updateLocalCache(collectionName, docData);
             
             console.log(`✅ Saved ${collectionName} to Firebase:`, docId);
             
-            // Broadcast the update to all modules
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
             this.broadcast('data-saved', { 
                 collection: collectionName, 
@@ -349,7 +299,6 @@ class UnifiedDataService {
                 timestamp: now
             });
             
-            // Broadcast specific events for backward compatibility
             this.broadcastSpecificEvent(collectionName, docData, 'created');
             
             return { success: true, id: docId, data: docData };
@@ -357,7 +306,6 @@ class UnifiedDataService {
         } catch (error) {
             console.error(`Error saving ${collectionName}:`, error);
             
-            // Queue for retry
             this.queueOperation({
                 type: 'save',
                 collection: collectionName,
@@ -367,179 +315,34 @@ class UnifiedDataService {
                 error: error.message
             });
             
-            // Still update local cache
             this.updateLocalCache(collectionName, docData);
             
             return { success: false, offline: true, id: docId, error: error.message };
         }
     }
     
-    /**
-     * Delete ANY data with offline support
-     */
     async delete(collectionName, id) {
-    if (!collectionName || !id) {
-        console.error('❌ delete() requires collectionName and id');
-        return { success: false };
-    }
-    
-    // If offline, queue the operation
-    if (!this.isOnline || !this.db || !this.userId) {
-        console.warn(`⚠️ Offline: Queuing delete for ${collectionName}`);
-        
-        this.queueOperation({
-            type: 'delete',
-            collection: collectionName,
-            id: id,
-            timestamp: new Date().toISOString()
-        });
-        
-        this.deleteFromLocalCache(collectionName, id);
-        
-        this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-        this.broadcast('offline-operation-queued', { 
-            collection: collectionName, 
-            operation: 'delete', 
-            id: id,
-            queueLength: this.offlineQueue.length
-        });
-        
-        return { success: true, offline: true, queued: true };
-    }
-    
-    try {
-        // 🔥 CRITICAL: Delete the document from Firestore
-        await this.db
-            .collection('users')
-            .doc(this.userId)
-            .collection(collectionName)
-            .doc(id.toString())
-            .delete();
-        
-        // Update cache
-        this.deleteFromLocalCache(collectionName, id);
-        
-        console.log(`✅ Deleted ${collectionName} from Firebase:`, id);
-        
-        // Broadcast the update
-        this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-        this.broadcast('data-deleted', { 
-            collection: collectionName, 
-            id: id,
-            timestamp: new Date().toISOString()
-        });
-        
-        // Broadcast specific events
-        this.broadcastSpecificEvent(collectionName, { id }, 'deleted');
-        
-        return { success: true };
-        
-    } catch (error) {
-        console.error(`Error deleting ${collectionName}:`, error);
-        
-        // Queue for retry
-        this.queueOperation({
-            type: 'delete',
-            collection: collectionName,
-            id: id,
-            timestamp: new Date().toISOString(),
-            error: error.message
-        });
-        
-        // Still update local cache
-        this.deleteFromLocalCache(collectionName, id);
-        
-        return { success: false, offline: true, error: error.message };
-    }
-}
-    
-    /**
-     * Delete an item from an array collection (handles the entire array)
-     * This is the CENTRAL fix for the sync loop issue
-     */
-  async deleteArrayItem(collection, itemId, arrayPath = null) {
-    console.log(`🗑️ Deleting ${itemId} from ${collection}`);
-    
-    try {
-        // Get current data
-        let currentData = this.get(collection);
-        
-        // Handle different data structures
-        let updatedData;
-        if (arrayPath && currentData[arrayPath]) {
-            // For nested arrays like { items: [...] }
-            updatedData = { ...currentData };
-            updatedData[arrayPath] = updatedData[arrayPath].filter(item => item.id != itemId);  // ← Changed !== to !=
-        } else if (Array.isArray(currentData)) {
-            // For simple arrays like [...]
-            updatedData = currentData.filter(item => item.id != itemId);  // ← Changed !== to !=
-        } else {
-            console.error('Cannot delete: data structure not recognized');
-            return false;
-        }
-        
-        // Save back to Firebase and localStorage (this overwrites the entire array)
-        await this.save(collection, updatedData);
-        console.log(`✅ Deleted ${itemId} from ${collection} - remaining: ${updatedData.length}`);
-        return true;
-        
-    } catch (error) {
-        console.error('Error in deleteArrayItem:', error);
-        return false;
-    }
-}
-    
-    /**
-     * Sync an entire array to Firebase (overwrites)
-     */
-    async syncArray(collection, data) {
-        console.log(`🔄 Syncing ${collection} with`, data.length, 'items');
-        
-        try {
-            // Save the entire array to Firebase (overwrites)
-            await this.save(collection, data);
-            
-            // Update local cache
-            this.updateLocalCache(collection, data);
-            
-            // Broadcast update
-            this.broadcast(`${collection}-updated`, data);
-            
-            return true;
-        } catch (error) {
-            console.error('Error syncing array:', error);
-            return false;
-        }
-    }
-    
-    /**
-     * Update ANY data with offline support
-     */
-    async update(collectionName, id, updates) {
         if (!collectionName || !id) {
-            console.error('❌ update() requires collectionName and id');
+            console.error('❌ delete() requires collectionName and id');
             return { success: false };
         }
         
-        // If offline, queue the operation
         if (!this.isOnline || !this.db || !this.userId) {
-            console.warn(`⚠️ Offline: Queuing update for ${collectionName}`);
+            console.warn(`⚠️ Offline: Queuing delete for ${collectionName}`);
             
             this.queueOperation({
-                type: 'update',
+                type: 'delete',
                 collection: collectionName,
                 id: id,
-                updates: updates,
                 timestamp: new Date().toISOString()
             });
             
-            this.updateLocalCache(collectionName, { id, ...updates });
+            this.deleteFromLocalCache(collectionName, id);
             
-            // Broadcast offline update
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
             this.broadcast('offline-operation-queued', { 
                 collection: collectionName, 
-                operation: 'update', 
+                operation: 'delete', 
                 id: id,
                 queueLength: this.offlineQueue.length
             });
@@ -553,62 +356,175 @@ class UnifiedDataService {
                 .doc(this.userId)
                 .collection(collectionName)
                 .doc(id.toString())
-                .update({
-                    ...updates,
-                    updatedAt: new Date().toISOString()
-                });
+                .delete();
             
-            // Update cache
-            this.updateLocalCache(collectionName, { id, ...updates });
+            this.deleteFromLocalCache(collectionName, id);
             
-            console.log(`✅ Updated ${collectionName} in Firebase:`, id);
+            console.log(`✅ Deleted ${collectionName} from Firebase:`, id);
             
-            // Broadcast the update to all modules
             this.broadcast(`${collectionName}-updated`, this.cache[collectionName]);
-            this.broadcast('data-updated', { 
+            this.broadcast('data-deleted', { 
                 collection: collectionName, 
                 id: id,
-                updates: updates,
                 timestamp: new Date().toISOString()
             });
             
-            // Broadcast specific events
-            this.broadcastSpecificEvent(collectionName, { id, ...updates }, 'updated');
+            this.broadcastSpecificEvent(collectionName, { id }, 'deleted');
             
             return { success: true };
             
         } catch (error) {
-            console.error(`Error updating ${collectionName}:`, error);
+            console.error(`Error deleting ${collectionName}:`, error);
             
-            // Queue for retry
             this.queueOperation({
-                type: 'update',
+                type: 'delete',
                 collection: collectionName,
                 id: id,
-                updates: updates,
                 timestamp: new Date().toISOString(),
                 error: error.message
             });
             
-            // Still update local cache
-            this.updateLocalCache(collectionName, { id, ...updates });
+            this.deleteFromLocalCache(collectionName, id);
             
             return { success: false, offline: true, error: error.message };
         }
     }
     
-    /**
-     * Queue operation for offline sync
-     */
+    startRealtimeListeners() {
+        if (!this.db || !this.userId) return;
+        
+        console.log('🔄 Starting real-time Firebase listeners (REPLACE MODE)...');
+        
+        const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
+        
+        collections.forEach(collection => {
+            if (this.realtimeUnsubscribers.has(collection)) {
+                this.realtimeUnsubscribers.get(collection)();
+            }
+            
+            const unsubscribe = this.db
+                .collection('users')
+                .doc(this.userId)
+                .collection(collection)
+                .onSnapshot((snapshot) => {
+                    // 🔥 DIRECT REPLACE - NO MERGING
+                    const items = [];
+                    snapshot.forEach(doc => {
+                        items.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    const oldCount = this.cache[collection]?.length || 0;
+                    
+                    // REPLACE the entire cache
+                    this.cache[collection] = items;
+                    this.saveToLocalStorage(collection);
+                    
+                    if (oldCount !== this.cache[collection].length) {
+                        console.log(`🔄 Real-time update: ${collection} (${this.cache[collection].length} items) - REPLACED`);
+                        
+                        this.broadcast(`${collection}-updated`, this.cache[collection]);
+                        this.broadcast('realtime-update', { 
+                            collection: collection, 
+                            count: this.cache[collection].length,
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                }, (error) => {
+                    console.error(`Error in real-time listener for ${collection}:`, error);
+                });
+            
+            this.realtimeUnsubscribers.set(collection, unsubscribe);
+        });
+        
+        console.log('✅ Real-time listeners active (REPLACE MODE)');
+        this.broadcast('realtime-listeners-active', { collections: collections });
+    }
+    
+    stopRealtimeListeners() {
+        console.log('🛑 Stopping real-time listeners...');
+        
+        this.realtimeUnsubscribers.forEach((unsubscribe, collection) => {
+            try {
+                unsubscribe();
+                console.log(`  Stopped listener for ${collection}`);
+            } catch (error) {
+                console.warn(`Error stopping listener for ${collection}:`, error);
+            }
+        });
+        
+        this.realtimeUnsubscribers.clear();
+    }
+    
+    saveToLocalStorage(collectionName) {
+        if (this.cache[collectionName]) {
+            localStorage.setItem(`farm-${collectionName}`, JSON.stringify(this.cache[collectionName]));
+        }
+    }
+    
+    loadFromLocalStorage() {
+        const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
+        
+        collections.forEach(collection => {
+            const cached = localStorage.getItem(`farm-${collection}`);
+            if (cached) {
+                try {
+                    this.cache[collection] = JSON.parse(cached);
+                    console.log(`📁 Loaded ${this.cache[collection].length} ${collection} from localStorage cache`);
+                } catch (e) {
+                    console.warn(`Failed to parse ${collection} from localStorage:`, e);
+                    this.cache[collection] = [];
+                }
+            } else {
+                this.cache[collection] = [];
+            }
+        });
+    }
+    
+    updateLocalCache(collectionName, data) {
+        if (!this.cache[collectionName]) {
+            this.cache[collectionName] = [];
+        }
+        
+        const index = this.cache[collectionName].findIndex(item => item.id == data.id);
+        if (index !== -1) {
+            this.cache[collectionName][index] = { ...this.cache[collectionName][index], ...data };
+        } else {
+            this.cache[collectionName].push(data);
+        }
+        
+        this.saveToLocalStorage(collectionName);
+    }
+    
+    deleteFromLocalCache(collectionName, id) {
+        if (this.cache[collectionName]) {
+            this.cache[collectionName] = this.cache[collectionName].filter(item => item.id != id);
+            this.saveToLocalStorage(collectionName);
+        }
+    }
+    
+    clearCache() {
+        const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
+        collections.forEach(collection => {
+            this.cache[collection] = [];
+        });
+        console.log('🗑️ Cache cleared');
+    }
+    
+    get(collectionName) {
+        return this.cache[collectionName] || [];
+    }
+    
+    getById(collectionName, id) {
+        const collection = this.cache[collectionName] || [];
+        return collection.find(item => item.id == id);
+    }
+    
     queueOperation(operation) {
         this.offlineQueue.push(operation);
         this.saveOfflineQueue();
         this.updateSyncStatus();
     }
     
-    /**
-     * Save offline queue to localStorage
-     */
     saveOfflineQueue() {
         try {
             localStorage.setItem('unified-offline-queue', JSON.stringify(this.offlineQueue));
@@ -617,9 +533,6 @@ class UnifiedDataService {
         }
     }
     
-    /**
-     * Load offline queue from localStorage
-     */
     loadOfflineQueue() {
         try {
             const saved = localStorage.getItem('unified-offline-queue');
@@ -633,9 +546,6 @@ class UnifiedDataService {
         }
     }
     
-    /**
-     * Process all pending offline operations
-     */
     async processOfflineQueue() {
         if (!this.isOnline || !this.db || !this.userId || this.offlineQueue.length === 0) {
             return;
@@ -713,170 +623,11 @@ class UnifiedDataService {
         
         this.updateSyncStatus();
         
-        // If there are still pending operations, try again after a delay
         if (this.offlineQueue.length > 0) {
             setTimeout(() => this.processOfflineQueue(), 30000);
         }
     }
     
-    /**
-     * Start real-time listeners for all collections
-     */
-    startRealtimeListeners() {
-    if (!this.db || !this.userId) return;
-    
-    console.log('🔄 Starting real-time Firebase listeners...');
-    
-    const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
-    
-    collections.forEach(collection => {
-        if (this.realtimeUnsubscribers.has(collection)) {
-            this.realtimeUnsubscribers.get(collection)();
-        }
-        
-        const unsubscribe = this.db
-            .collection('users')
-            .doc(this.userId)
-            .collection(collection)
-            .onSnapshot((snapshot) => {
-                // 🔥 REPLACE - NOT MERGE
-                const items = [];
-                snapshot.forEach(doc => {
-                    items.push({ id: doc.id, ...doc.data() });
-                });
-                
-                const oldCount = this.cache[collection]?.length || 0;
-                
-                // 🔥 DIRECT REPLACE - no merging, no local preference
-                this.cache[collection] = items;
-                this.saveToLocalStorage(collection);
-                
-                if (oldCount !== this.cache[collection].length) {
-                    console.log(`🔄 Real-time update: ${collection} (${this.cache[collection].length} items) - REPLACED`);
-                    
-                    this.broadcast(`${collection}-updated`, this.cache[collection]);
-                    this.broadcast('realtime-update', { 
-                        collection: collection, 
-                        count: this.cache[collection].length,
-                        timestamp: new Date().toISOString()
-                    });
-                }
-            }, (error) => {
-                console.error(`Error in real-time listener for ${collection}:`, error);
-            });
-        
-        this.realtimeUnsubscribers.set(collection, unsubscribe);
-    });
-    
-    console.log('✅ Real-time listeners active (REPLACE mode)');
-}
-    
-    /**
-     * Stop all real-time listeners
-     */
-    stopRealtimeListeners() {
-        console.log('🛑 Stopping real-time listeners...');
-        
-        this.realtimeUnsubscribers.forEach((unsubscribe, collection) => {
-            try {
-                unsubscribe();
-                console.log(`  Stopped listener for ${collection}`);
-            } catch (error) {
-                console.warn(`Error stopping listener for ${collection}:`, error);
-            }
-        });
-        
-        this.realtimeUnsubscribers.clear();
-    }
-    
-    /**
-     * Save collection to localStorage
-     */
-    saveToLocalStorage(collectionName) {
-        if (this.cache[collectionName]) {
-            localStorage.setItem(`farm-${collectionName}`, JSON.stringify(this.cache[collectionName]));
-        }
-    }
-    
-    /**
-     * Load all collections from localStorage
-     */
-    loadFromLocalStorage() {
-        const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
-        
-        collections.forEach(collection => {
-            const cached = localStorage.getItem(`farm-${collection}`);
-            if (cached) {
-                try {
-                    this.cache[collection] = JSON.parse(cached);
-                    console.log(`📁 Loaded ${this.cache[collection].length} ${collection} from localStorage cache`);
-                } catch (e) {
-                    console.warn(`Failed to parse ${collection} from localStorage:`, e);
-                    this.cache[collection] = [];
-                }
-            } else {
-                this.cache[collection] = [];
-            }
-        });
-    }
-    
-    /**
-     * Update local cache
-     */
-    updateLocalCache(collectionName, data) {
-        if (!this.cache[collectionName]) {
-            this.cache[collectionName] = [];
-        }
-        
-        const index = this.cache[collectionName].findIndex(item => item.id == data.id);
-        if (index !== -1) {
-            this.cache[collectionName][index] = { ...this.cache[collectionName][index], ...data };
-        } else {
-            this.cache[collectionName].push(data);
-        }
-        
-        this.saveToLocalStorage(collectionName);
-    }
-    
-    /**
-     * Delete from local cache
-     */
-    deleteFromLocalCache(collectionName, id) {
-        if (this.cache[collectionName]) {
-            this.cache[collectionName] = this.cache[collectionName].filter(item => item.id != id);
-            this.saveToLocalStorage(collectionName);
-        }
-    }
-    
-    /**
-     * Clear all caches
-     */
-    clearCache() {
-        const collections = ['customers', 'orders', 'transactions', 'sales', 'inventory', 'production', 'feedRecords', 'mortality'];
-        collections.forEach(collection => {
-            this.cache[collection] = [];
-        });
-        console.log('🗑️ Cache cleared');
-    }
-    
-    /**
-     * Get data from cache (no network call)
-     */
-    get(collectionName) {
-        return this.cache[collectionName] || [];
-    }
-    
-    /**
-     * Get a single item by ID
-     */
-    getById(collectionName, id) {
-        const collection = this.cache[collectionName] || [];
-        return collection.find(item => item.id == id);
-    }
-    
-    /**
-     * Broadcast specific events for backward compatibility
-     */
     broadcastSpecificEvent(collectionName, data, action) {
         const eventMap = {
             customers: { created: 'customer-added', updated: 'customer-updated', deleted: 'customer-deleted' },
@@ -891,31 +642,18 @@ class UnifiedDataService {
         }
     }
     
-    /**
-     * Broadcast event using window events
-     */
     broadcast(eventName, data) {
-        // Use custom events
         window.dispatchEvent(new CustomEvent(eventName, { detail: data }));
-        
-        // Also use custom event on document for broader reach
         document.dispatchEvent(new CustomEvent(eventName, { detail: data }));
-        
         console.log(`📡 Broadcasted: ${eventName}`);
     }
     
-    /**
-     * Subscribe to events
-     */
     on(eventName, callback) {
         window.addEventListener(eventName, (event) => {
             callback(event.detail);
         });
     }
     
-    /**
-     * Update sync status in UI
-     */
     updateSyncStatus() {
         const statusElement = document.getElementById('unified-sync-status');
         if (!statusElement) return;
@@ -937,11 +675,7 @@ class UnifiedDataService {
         }
     }
     
-    /**
-     * Show notification
-     */
     showNotification(message, type = 'info') {
-        // Use core module if available
         if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
             window.coreModule.showNotification(message, type);
         } else {
@@ -949,9 +683,6 @@ class UnifiedDataService {
         }
     }
     
-    /**
-     * Get sync status
-     */
     getSyncStatus() {
         return {
             isOnline: this.isOnline,
@@ -964,9 +695,6 @@ class UnifiedDataService {
         };
     }
     
-    /**
-     * Force sync now
-     */
     async syncNow() {
         console.log('🔄 Force sync requested');
         this.broadcast('sync-requested', { timestamp: new Date().toISOString() });
@@ -975,10 +703,8 @@ class UnifiedDataService {
     }
 }
 
-// Create and expose global instance
 window.UnifiedDataService = new UnifiedDataService();
 
-// Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.UnifiedDataService.initialize();
