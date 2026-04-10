@@ -766,34 +766,45 @@ async deleteFeedRecord(recordId) {
         return;
     }
     
-    // 🔥 Add to deleted records set
-    this.deletedRecords.add(recordId.toString());
-    localStorage.setItem('farm-feedRecords-deleted', JSON.stringify([...this.deletedRecords]));
-    
-    // Remove from current records
-    this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
-    localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
-    
-    // Update UI
-    this.renderModule();
-    
-    // Try to delete from Firebase (optional - records will be filtered anyway)
     try {
+        // Remove from local array immediately
+        this.feedRecords = this.feedRecords.filter(r => r.id != recordId);
+        
+        // Update localStorage immediately
+        localStorage.setItem('farm-feedRecords', JSON.stringify(this.feedRecords));
+        
+        // Update UnifiedDataService cache
+        if (this.dataService) {
+            this.dataService.cache.feedRecords = this.feedRecords;
+            this.dataService.saveToLocalStorage('feedRecords');
+        }
+        
+        // Update UI immediately
+        this.renderModule();
+        
+        // Delete from Firebase (don't wait for it, let it happen in background)
         const user = firebase.auth().currentUser;
         if (user) {
-            await firebase.firestore()
+            firebase.firestore()
                 .collection('users')
                 .doc(user.uid)
                 .collection('feedRecords')
                 .doc(recordId.toString())
-                .delete();
-            console.log('✅ Deleted from Firebase');
+                .delete()
+                .then(() => console.log('✅ Firebase delete completed'))
+                .catch(err => console.error('Firebase delete error:', err));
         }
+        
+        this.showNotification('Feed record deleted!', 'success');
+        
     } catch (error) {
-        console.log('Firebase delete failed, but record is filtered locally');
+        console.error('Delete failed:', error);
+        this.showNotification('Delete failed: ' + error.message, 'error');
+        
+        // Restore if something went wrong
+        await this.loadData();
+        this.renderModule();
     }
-    
-    this.showNotification('Feed record deleted!', 'success');
 },
     
 editFeedRecord(recordId) {
