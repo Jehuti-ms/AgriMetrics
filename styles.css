@@ -5386,3 +5386,16 @@ body.dark-mode {
         grid-template-columns: 1fr !important;
     }
 }*/
+
+/* Ensure the app container doesn't block touch events */
+#app-container, 
+#content-area,
+.module-container {
+    touch-action: pan-y pinch-zoom; /* Allows vertical scroll but preserves horizontal swipe */
+}
+
+/* Make sure content area is touch-friendly */
+#content-area {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+}
