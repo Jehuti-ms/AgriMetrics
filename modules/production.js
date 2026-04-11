@@ -433,7 +433,7 @@ async function saveToDataService(records) {
             await unifiedDataService.save('production', record.id, record);
         }
     }
-}
+},
 
 async function splitAndSaveRecord(record) {
     const chunks = [];
