@@ -660,7 +660,7 @@ handleUserAuthenticated(user) {
 
         console.log(`📱 Navigated to ${section}, menu closed and state reset`);
     }
-}
+
 
     openSideMenu() {
         const sideMenu = document.getElementById('side-menu');
