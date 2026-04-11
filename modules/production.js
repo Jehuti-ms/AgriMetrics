@@ -151,7 +151,7 @@ const ProductionModule = {
                 record[`${key}_chunked`] = true;
                 record[`${key}_chunks`] = chunks_count;
             }
-        },
+        }
         
         // Save main record (smaller now)
         await this.dataService.save('production', record.id, record);
