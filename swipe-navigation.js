@@ -1,24 +1,24 @@
-// swipe-navigation.js - CORRECT ORDER
+// swipe-navigation.js - SIMPLIFIED WORKING VERSION
 (function() {
     'use strict';
     
     console.log('📱 Loading swipe navigation...');
     
-    // IMPORTANT: This must match the EXACT order you want for swiping
+    // Define the order (matches your navigation)
     const sections = [
-        'dashboard',           // Dashboard
-        'income-expenses',     // Income & Expenses
-        'inventory-check',     // Inventory
-        'orders',              // Orders
-        'sales-record',        // Sales
-        'profile',             // Profile
-        'production',          // Production
-        'feed-record',         // Feed Management
-        'broiler-mortality',   // Health & Mortality
-        'reports'              // Reports & Analytics
+        'dashboard',           // 1. Dashboard
+        'income-expenses',     // 2. Income & Expenses
+        'inventory-check',     // 3. Inventory
+        'orders',              // 4. Orders
+        'sales-record',        // 5. Sales
+        'profile',             // 6. Profile
+        'production',          // 7. Production
+        'feed-record',         // 8. Feed Management
+        'broiler-mortality',   // 9. Health & Mortality
+        'reports'              // 10. Reports & Analytics
     ];
     
-    // Display names for toast messages
+    // Display names
     const displayNames = {
         'dashboard': 'Dashboard',
         'income-expenses': 'Income & Expenses',
@@ -32,82 +32,77 @@
         'reports': 'Reports & Analytics'
     };
     
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let isSwiping = false;
+    // Track current section internally
+    let currentSectionIndex = 0;
     
-    function getCurrentSection() {
+    // Update current section based on visible content or active nav
+    function updateCurrentSection() {
         // Method 1: Check active nav item
         const activeNav = document.querySelector('.nav-item.active');
         if (activeNav) {
             const view = activeNav.getAttribute('data-view');
-            if (view && sections.includes(view)) {
-                console.log('📍 Current section from nav:', view);
-                return view;
+            const index = sections.indexOf(view);
+            if (index !== -1) {
+                currentSectionIndex = index;
+                console.log(`📍 Current section: ${sections[currentSectionIndex]} (${currentSectionIndex + 1}/${sections.length})`);
+                return;
             }
         }
         
-        // Method 2: Check visible section in content area
+        // Method 2: Check visible module title
         const contentArea = document.getElementById('content-area');
         if (contentArea) {
-            const modules = document.querySelectorAll('.module-container');
-            for (const module of modules) {
+            const visibleModules = contentArea.querySelectorAll('.module-container');
+            for (const module of visibleModules) {
                 if (module.offsetParent !== null) {
                     const title = module.querySelector('.module-title');
                     if (title) {
                         const titleText = title.textContent.toLowerCase();
-                        for (const section of sections) {
-                            const sectionName = displayNames[section]?.toLowerCase() || section.replace('-', ' ');
-                            if (titleText.includes(sectionName) || titleText.includes(section)) {
-                                console.log('📍 Current section from content:', section);
-                                return section;
+                        for (let i = 0; i < sections.length; i++) {
+                            const section = sections[i];
+                            const displayName = displayNames[section].toLowerCase();
+                            if (titleText.includes(displayName) || titleText.includes(section.replace('-', ' '))) {
+                                currentSectionIndex = i;
+                                console.log(`📍 Current section from content: ${sections[currentSectionIndex]}`);
+                                return;
                             }
                         }
                     }
                 }
             }
         }
-        
-        console.log('📍 Current section defaulting to: dashboard');
-        return 'dashboard';
     }
     
-    function navigateToSection(sectionId) {
-        console.log(`🔄 Swipe navigating to: ${sectionId}`);
+    function navigateToSection(newIndex) {
+        if (newIndex < 0 || newIndex >= sections.length) {
+            console.log('📱 Cannot navigate - at edge');
+            return;
+        }
         
-        const displayName = displayNames[sectionId] || sectionId.replace('-', ' ');
-        showToast(`→ ${displayName}`);
+        const sectionId = sections[newIndex];
+        const displayName = displayNames[sectionId];
+        const direction = newIndex > currentSectionIndex ? '→' : '←';
         
-        // Try multiple navigation methods
+        console.log(`🔄 Navigating: ${direction} ${displayName}`);
+        
+        // Show toast
+        showToast(`${direction} ${displayName}`);
+        
+        // Navigate
         if (window.app && typeof window.app.showSection === 'function') {
             window.app.showSection(sectionId);
-        } 
-        else if (window.FarmModules && typeof window.FarmModules.renderModule === 'function') {
-            const contentArea = document.getElementById('content-area');
-            if (contentArea) {
-                window.FarmModules.renderModule(sectionId, contentArea);
-            }
-        }
-        else {
+        } else {
             const navItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-            if (navItem) {
-                navItem.click();
-            } else {
-                console.error(`❌ Cannot navigate to ${sectionId}`);
-                showToast(`❌ ${displayName} not found`, '#ef4444');
-                return;
-            }
+            if (navItem) navItem.click();
         }
         
-        // Update active nav item
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        const newActiveNav = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
-        if (newActiveNav) {
-            newActiveNav.classList.add('active');
-        }
+        // Update internal index after navigation
+        setTimeout(() => {
+            currentSectionIndex = newIndex;
+            updateCurrentSection();
+        }, 100);
         
+        // Haptic feedback
         if (navigator.vibrate) navigator.vibrate(30);
     }
     
@@ -134,7 +129,6 @@
             animation: swipeToastFade 1s ease forwards;
             pointer-events: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            font-family: system-ui, -apple-system, sans-serif;
         `;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 1000);
@@ -155,15 +149,49 @@
         document.head.appendChild(style);
     }
     
-    // Touch event handlers
+    // Update current section when navigation happens
+    function watchForNavigation() {
+        // Listen for clicks on nav items
+        document.addEventListener('click', function(e) {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
+                const view = navItem.getAttribute('data-view');
+                const index = sections.indexOf(view);
+                if (index !== -1) {
+                    setTimeout(() => {
+                        currentSectionIndex = index;
+                        console.log(`📍 Navigation updated to: ${sections[currentSectionIndex]}`);
+                    }, 200);
+                }
+            }
+        });
+        
+        // Also watch for section changes via app
+        const originalShowSection = window.app?.showSection;
+        if (window.app && originalShowSection) {
+            window.app.showSection = function(sectionId) {
+                const index = sections.indexOf(sectionId);
+                if (index !== -1) {
+                    currentSectionIndex = index;
+                    console.log(`📍 Section changed to: ${sectionId}`);
+                }
+                return originalShowSection.call(window.app, sectionId);
+            };
+        }
+    }
+    
+    // Touch handlers
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+    
     document.addEventListener('touchstart', function(e) {
         const target = e.target;
         if (target.closest('input') || 
             target.closest('textarea') || 
             target.closest('select') ||
             target.closest('button') ||
-            target.closest('.popout-modal') ||
-            target.closest('.modal')) {
+            target.closest('.popout-modal')) {
             return;
         }
         
@@ -189,32 +217,24 @@
         const deltaX = e.changedTouches[0].clientX - touchStartX;
         const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY);
         
-        console.log(`Swipe detected: deltaX=${deltaX}, deltaY=${deltaY}`);
-        
         if (Math.abs(deltaX) > 50 && deltaY < 100) {
-            const currentSection = getCurrentSection();
-            const currentIndex = sections.indexOf(currentSection);
+            // Update current section before swiping
+            updateCurrentSection();
             
-            console.log(`Current: ${currentSection} (${currentIndex + 1}/${sections.length})`);
+            console.log(`Swipe: deltaX=${deltaX}, current index=${currentSectionIndex}`);
             
-            // Swipe left (negative) - go to next section
-            if (deltaX < 0 && currentIndex < sections.length - 1) {
-                const nextSection = sections[currentIndex + 1];
-                console.log(`👉 Swipe LEFT: ${currentSection} → ${nextSection}`);
-                navigateToSection(nextSection);
+            // Swipe left (negative) - next section
+            if (deltaX < 0 && currentSectionIndex < sections.length - 1) {
+                navigateToSection(currentSectionIndex + 1);
             }
-            // Swipe right (positive) - go to previous section
-            else if (deltaX > 0 && currentIndex > 0) {
-                const prevSection = sections[currentIndex - 1];
-                console.log(`👈 Swipe RIGHT: ${currentSection} ← ${prevSection}`);
-                navigateToSection(prevSection);
+            // Swipe right (positive) - previous section
+            else if (deltaX > 0 && currentSectionIndex > 0) {
+                navigateToSection(currentSectionIndex - 1);
             }
-            else if (deltaX < 0 && currentIndex >= sections.length - 1) {
-                console.log('📱 Already at last section');
+            else if (deltaX < 0 && currentSectionIndex >= sections.length - 1) {
                 showToast('📱 Already at last section', '#f59e0b');
             }
-            else if (deltaX > 0 && currentIndex <= 0) {
-                console.log('📱 Already at first section');
+            else if (deltaX > 0 && currentSectionIndex <= 0) {
                 showToast('📱 Already at first section', '#f59e0b');
             }
         }
@@ -222,13 +242,12 @@
         isSwiping = false;
     });
     
-    // Debug: Log all available nav items
+    // Initialize
     setTimeout(() => {
-        console.log('📋 Swipe navigation order:');
-        sections.forEach((section, index) => {
-            const displayName = displayNames[section] || section;
-            console.log(`  ${index + 1}. ${displayName} (${section})`);
-        });
+        updateCurrentSection();
+        watchForNavigation();
+        console.log('✅ Swipe navigation loaded!');
+        console.log('📋 Order:', sections.map(s => displayNames[s]).join(' → '));
     }, 2000);
     
     // Show hint once
@@ -252,7 +271,6 @@
                 pointer-events: none;
                 animation: swipeToastFade 3s ease forwards;
                 font-weight: 500;
-                font-family: system-ui, -apple-system, sans-serif;
             `;
             hint.innerHTML = '<span>👈 Swipe left for next</span><span style="opacity:0.5">|</span><span>Swipe right for previous 👉</span>';
             document.body.appendChild(hint);
@@ -260,7 +278,4 @@
             setTimeout(() => hint.remove(), 3000);
         }, 1500);
     }
-    
-    console.log('✅ Swipe navigation loaded!');
-    console.log('📋 Swipe order:', sections.map(s => displayNames[s]).join(' → '));
 })();
