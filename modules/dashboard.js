@@ -327,7 +327,7 @@ setupGlobalListeners() {
         
         this.updateDashboardUI(stats);
         console.log('✅ Dashboard stats updated:', stats);
-    }
+    },
     
     showDashboardLoading() {
         const statsContainer = document.getElementById('dashboard-stats');
