@@ -766,7 +766,7 @@ const ProductionModule = {
                                     <td style="padding: 12px 8px; color: var(--text-primary);">${this.formatDate(record.date)}</td>
                                     <td style="padding: 12px 8px; color: var(--text-primary);">
                                         <div style="display: flex; align-items: center; gap: 8px;">
-                                            <span style="font-size: 18px;">${this.getProductIcon(record.product)}</span>
+                                            <span style="font-size: 18px;">${this.getProductIcon(record?.product)}</span>
                                             <span style="font-weight: 500;">${this.getProductDisplayName(record)}</span>
                                         </div>
                                     </td>
