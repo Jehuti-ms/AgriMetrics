@@ -430,6 +430,13 @@ handleUserAuthenticated(user) {
         }
         
         // Continue with UI setup
+        // Make sure we only setup hamburger once
+        if (!window._hamburgerSetupDone) {
+            this.setupHamburgerMenu();
+            window._hamburgerSetupDone = true;
+        } else {
+            console.log('⚠️ Hamburger already set up, skipping duplicate');
+        }
         setTimeout(() => {
             this.setupHamburgerMenu();
             this.setupEventListeners(); 
@@ -839,14 +846,13 @@ handleUserAuthenticated(user) {
         return;
     }
 
-    if (hamburger.dataset.menuSetup === 'true') {
-        console.log('⚠️ Menu already setup, skipping...');
+    // Prevent multiple setups - check if already initialized
+    if (window._hamburgerInitialized) {
+        console.log('⚠️ Hamburger already initialized globally, skipping...');
         return;
     }
-    hamburger.dataset.menuSetup = 'true';
 
-    sideMenu.classList.add('closed');
-
+    // Create overlay if it doesn't exist
     let overlay = document.querySelector('.side-menu-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -854,51 +860,57 @@ handleUserAuthenticated(user) {
         document.body.appendChild(overlay);
     }
 
+    // Ensure menu starts closed
+    sideMenu.classList.remove('open');
+    sideMenu.classList.add('closed');
+    overlay.classList.remove('active');
+
+    // Remove any existing listeners by cloning and replacing
     const newHamburger = hamburger.cloneNode(true);
     hamburger.parentNode.replaceChild(newHamburger, hamburger);
 
-    // Store state on the DOM element instead of a local variable
-    newHamburger.dataset.menuOpen = 'false';
+    // Store state globally
+    window._menuOpen = false;
 
-    newHamburger.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    // Single click handler
+    const toggleMenu = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         
-        // Read state from DOM attribute
-        const isOpen = newHamburger.dataset.menuOpen === 'true';
-        
-        if (!isOpen) {
+        if (window._menuOpen) {
+            sideMenu.classList.remove('open');
+            sideMenu.classList.add('closed');
+            overlay.classList.remove('active');
+            window._menuOpen = false;
+            console.log('Menu closed');
+        } else {
             sideMenu.classList.remove('closed');
             sideMenu.classList.add('open');
             overlay.classList.add('active');
-            newHamburger.dataset.menuOpen = 'true';
-            console.log('✅ Menu opened');
-        } else {
-            sideMenu.classList.remove('open');
-            sideMenu.classList.add('closed');
-            overlay.classList.remove('active');
-            newHamburger.dataset.menuOpen = 'false';
-            console.log('✅ Menu closed');
+            window._menuOpen = true;
+            console.log('Menu opened');
         }
-    });
+    };
 
-    overlay.addEventListener('click', () => {
-        sideMenu.classList.remove('open');
-        sideMenu.classList.add('closed');
-        overlay.classList.remove('active');
-        newHamburger.dataset.menuOpen = 'false';
-        console.log('✅ Menu closed via overlay');
-    });
+    // Attach to hamburger
+    newHamburger.addEventListener('click', toggleMenu);
 
+    // Close when clicking overlay
+    overlay.addEventListener('click', toggleMenu);
+
+    // Close on ESC key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && newHamburger.dataset.menuOpen === 'true') {
-            sideMenu.classList.remove('open');
-            sideMenu.classList.add('closed');
-            overlay.classList.remove('active');
-            newHamburger.dataset.menuOpen = 'false';
-            console.log('✅ Menu closed with ESC key');
+        if (e.key === 'Escape' && window._menuOpen) {
+            toggleMenu();
         }
     });
+
+    // Mark as initialized globally
+    window._hamburgerInitialized = true;
+    
+    console.log('✅ Hamburger menu fully initialized');
 }
     
     showSection(sectionId) {
