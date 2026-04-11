@@ -100,7 +100,34 @@ const ProductionModule = {
     },
     
     // FIXED: This is now a proper method, not a standalone function
-   async saveToDataService() {
+      async saveToDataService() {
+        if (!this.dataService) return;
+        
+        const MAX_DOC_SIZE = 900000; // 900KB to be safe
+        
+        try {
+            // If no records, just return (nothing to save)
+            if (!this.productionData || this.productionData.length === 0) {
+                console.log('📁 No production records to save');
+                return;
+            }
+            
+            // Check if any record is too large
+            for (let record of this.productionData) {
+                const size = new Blob([JSON.stringify(record)]).size;
+                if (size > MAX_DOC_SIZE) {
+                    console.warn(`Record ${record.id} is too large (${size} bytes), splitting...`);
+                    await this.splitAndSaveRecord(record);
+                } else {
+                    await this.dataService.save('production', record.id, record);
+                }
+            }
+            console.log('✅ Saved production records to UnifiedDataService');
+        } catch (error) {
+            console.error('❌ Error saving to UnifiedDataService:', error);
+        }
+    },
+    
     // FIXED: This is now a proper method
     async splitAndSaveRecord(record) {
         const chunks = [];
