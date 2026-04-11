@@ -320,6 +320,85 @@ class UnifiedDataService {
             return { success: false, offline: true, id: docId, error: error.message };
         }
     }
+
+    // Add to unified-data-service.js
+    clearLocalStorageIfFull() {
+        try {
+            // Try to save first
+            return true;
+        } catch (e) {
+            if (e.name === 'QuotaExceededError') {
+                console.warn('LocalStorage full, clearing old data...');
+                
+                // Priority: Keep recent data, remove old
+                const priorities = ['production', 'inventory', 'feedRecords'];
+                const now = Date.now();
+                
+                for (let key of priorities) {
+                    const data = localStorage.getItem(`farm-${key}`);
+                    if (data) {
+                        try {
+                            const parsed = JSON.parse(data);
+                            if (Array.isArray(parsed)) {
+                                // Keep only last 30 days of data
+                                const filtered = parsed.filter(item => {
+                                    const itemDate = item.date || item.timestamp || item.createdAt;
+                                    return itemDate && (now - itemDate) < 30 * 24 * 60 * 60 * 1000;
+                                });
+                                localStorage.setItem(`farm-${key}`, JSON.stringify(filtered));
+                            }
+                        } catch (parseError) {
+                            localStorage.removeItem(`farm-${key}`);
+                        }
+                    }
+                }
+                
+                // If still full, clear oldest collection
+                if (this.isLocalStorageFull()) {
+                    localStorage.removeItem('farm-production');
+                }
+                
+                return this.isLocalStorageFull() === false;
+            }
+            return false;
+        }
+    }
+    
+    isLocalStorageFull() {
+        try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            return false;
+        } catch (e) {
+            return e.name === 'QuotaExceededError';
+        }
+    }
+    
+    // Modify saveToLocalStorage method
+    saveToLocalStorage(key, data) {
+        try {
+            const serialized = JSON.stringify(data);
+            localStorage.setItem(key, serialized);
+        } catch (e) {
+            if (e.name === 'QuotaExceededError') {
+                console.error(`LocalStorage quota exceeded for ${key}`);
+                this.clearLocalStorageIfFull();
+                // Retry once after clearing
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (retryError) {
+                    console.error(`Still cannot save ${key} after clearing`);
+                    // Store only essential data
+                    if (Array.isArray(data) && data.length > 50) {
+                        const essential = data.slice(0, 50);
+                        localStorage.setItem(key, JSON.stringify(essential));
+                    }
+                }
+            } else {
+                throw e;
+            }
+        }
+    }
     
     async delete(collectionName, id) {
         if (!collectionName || !id) {
