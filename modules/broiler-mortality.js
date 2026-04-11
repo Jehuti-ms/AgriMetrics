@@ -58,46 +58,46 @@ const BroilerMortalityModule = {
     },
 
 async loadData() {
-    console.log('Loading mortality records from UnifiedDataService...');
+    console.log('Loading mortality records...');
     
     try {
         if (this.dataService) {
-            const data = this.dataService.get('mortality');
-            if (data && data.records && data.records.length > 0) {
-                this.mortalityData = data.records;
-                console.log('📁 Loaded from UnifiedDataService:', this.mortalityData.length);
-            } else {
-                // Try to migrate from old localStorage
-                const saved = localStorage.getItem('farm-mortality');
-                if (saved) {
-                    this.mortalityData = JSON.parse(saved);
-                    console.log(`📁 Migrated ${this.mortalityData.length} records from localStorage`);
-                    await this.saveToDataService();
-                } else {
-                    this.mortalityData = this.getDemoData();
-                    await this.saveToDataService();
+            const data = await this.dataService.get('mortality');
+            if (data && Array.isArray(data) && data.length > 0) {
+                // Check if records are valid size
+                let validRecords = data;
+                for (let record of data) {
+                    const size = JSON.stringify(record).length;
+                    if (size > 500000) { // If record > 500KB, it's corrupted
+                        console.warn('Found corrupted large record, filtering out');
+                        validRecords = validRecords.filter(r => r.id !== record.id);
+                    }
                 }
+                this.mortalityData = validRecords;
+                console.log('📁 Loaded from Firebase:', this.mortalityData.length);
+                
+                // If we filtered out corrupted records, save clean data back
+                if (validRecords.length !== data.length) {
+                    await this.dataService.save('mortality', validRecords);
+                }
+            } else {
+                // NEVER create demo data - just empty array
+                this.mortalityData = [];
+                console.log('📁 No mortality records found, starting empty');
             }
         } else {
-            // Fallback to localStorage only
             const saved = localStorage.getItem('farm-mortality');
-            this.mortalityData = saved ? JSON.parse(saved) : this.getDemoData();
+            if (saved) {
+                this.mortalityData = JSON.parse(saved);
+                console.log(`📁 Loaded ${this.mortalityData.length} records from localStorage`);
+            } else {
+                this.mortalityData = [];
+                console.log('📁 No mortality records found');
+            }
         }
-        
-        // Sort by date (newest first)
-        this.mortalityData.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
     } catch (error) {
-        console.error('❌ Error loading mortality records:', error);
-        this.mortalityData = this.getDemoData();
-    }
-    
-    if (this.broadcaster) {
-        this.broadcaster.broadcast('mortality-data-loaded', {
-            module: 'broiler-mortality',
-            timestamp: new Date().toISOString(),
-            recordCount: this.mortalityData.length
-        });
+        console.error('Error loading mortality:', error);
+        this.mortalityData = [];
     }
 },
 
