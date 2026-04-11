@@ -288,6 +288,59 @@ setupGlobalListeners() {
 
     console.log(`✅ Dashboard listening to ${events.length + dataEvents.length} events`);
 },
+
+    // dashboard.js - Fix stats loading
+    async loadAndDisplayStats() {
+        console.log('📊 Loading and displaying stats...');
+        
+        // Wait for data service to be ready
+        if (!window.unifiedDataService) {
+            console.log('⏳ Waiting for UnifiedDataService...');
+            setTimeout(() => this.loadAndDisplayStats(), 500);
+            return;
+        }
+        
+        // Get data from service
+        const inventory = window.unifiedDataService.getData('inventory') || [];
+        const production = window.unifiedDataService.getData('production') || [];
+        const feedRecords = window.unifiedDataService.getData('feedRecords') || [];
+        const mortality = window.unifiedDataService.getData('mortality') || [];
+        const transactions = window.unifiedDataService.getData('transactions') || [];
+        
+        console.log(`📊 Data counts - Inventory: ${inventory.length}, Production: ${production.length}, Feed: ${feedRecords.length}`);
+        
+        if (inventory.length === 0 && production.length === 0 && feedRecords.length === 0) {
+            console.log('⚠️ Stats are empty, waiting for data...');
+            // Show loading message in dashboard
+            this.showDashboardLoading();
+            return;
+        }
+        
+        // Calculate stats
+        const stats = {
+            totalInventory: inventory.reduce((sum, item) => sum + (item.quantity || 0), 0),
+            totalProduction: production.reduce((sum, item) => sum + (item.quantity || 0), 0),
+            totalFeedCost: feedRecords.reduce((sum, item) => sum + (item.cost || 0), 0),
+            mortalityRate: this.calculateMortalityRate(mortality, production),
+            recentTransactions: transactions.slice(0, 5)
+        };
+        
+        this.updateDashboardUI(stats);
+        console.log('✅ Dashboard stats updated:', stats);
+    }
+    
+    showDashboardLoading() {
+        const statsContainer = document.getElementById('dashboard-stats');
+        if (statsContainer) {
+            statsContainer.innerHTML = `
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>Loading your farm data...</p>
+                    <small>This may take a moment</small>
+                </div>
+            `;
+        }
+    }, 
     
     onThemeChange(theme) {
         console.log(`🎨 Dashboard updating for theme: ${theme}`);
