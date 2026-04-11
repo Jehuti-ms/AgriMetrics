@@ -7,29 +7,50 @@ const SwipeNav = {
     minSwipeDistance: 50,
     enabled: true,
     
+    // Define sections in order (matches your nav items)
+    sections: [
+        { id: 'dashboard', name: 'Dashboard' },
+        { id: 'income-expenses', name: 'Income' },
+        { id: 'inventory-check', name: 'Inventory' },
+        { id: 'feed-record', name: 'Feed' },
+        { id: 'broiler-mortality', name: 'Mortality' },
+        { id: 'orders', name: 'Orders' },
+        { id: 'sales-record', name: 'Sales' },
+        { id: 'production', name: 'Production' },
+        { id: 'profile', name: 'Profile' }
+    ],
+    
     init: function() {
         console.log('👆 Initializing swipe navigation...');
         
-        // Listen on document body instead of creating overlay
-        document.body.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
-        document.body.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-        document.body.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+        // Listen on the content area for better touch detection
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            contentArea.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+            contentArea.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+            contentArea.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+        } else {
+            // Fallback to body
+            document.body.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+            document.body.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+            document.body.addEventListener('touchend', this.handleTouchEnd.bind(this), { passive: false });
+        }
         
-        console.log('✅ Swipe navigation ready - swipe left/right on the screen!');
+        console.log('✅ Swipe navigation ready - swipe left/right on the content area!');
         
-        // Add visual indicator on first swipe
+        // Add instruction
         this.addInstruction();
     },
     
     handleTouchStart: function(e) {
-        // Don't interfere with menu or form inputs
+        // Don't interfere with form inputs or interactive elements
         const target = e.target;
-        if (target.closest('.menu-overlay') || 
-            target.closest('.hamburger-menu') ||
-            target.closest('input') ||
+        if (target.closest('input') ||
             target.closest('textarea') ||
             target.closest('select') ||
-            target.closest('button')) {
+            target.closest('button') ||
+            target.closest('.popout-modal') ||
+            target.closest('.glass-card')) {
             this.enabled = false;
             return;
         }
@@ -65,26 +86,25 @@ const SwipeNav = {
             return;
         }
         
-        // Get available sections
-        const sections = [
-            'dashboard', 'income-expenses', 'inventory-check', 'feed-record',
-            'broiler-mortality', 'orders', 'sales-record', 'production',
-            'reports', 'profile'
-        ];
+        // Find current section index
+        let currentIndex = 0;
         
-        // Find current section
-        let currentSection = 'dashboard';
-        const activeMenuItem = document.querySelector('.nav-item.active');
-        if (activeMenuItem) {
-            currentSection = activeMenuItem.dataset.section || 'dashboard';
+        // Try to get current section from active nav item
+        const activeNavItem = document.querySelector('.nav-item.active');
+        if (activeNavItem) {
+            const currentView = activeNavItem.getAttribute('data-view');
+            currentIndex = this.sections.findIndex(s => s.id === currentView);
         }
         
-        const currentIndex = sections.indexOf(currentSection);
+        // If not found, try from URL or default to 0
+        if (currentIndex === -1) {
+            currentIndex = 0;
+        }
         
         // Swipe left (negative) - next section
         if (horizontalDistance < -this.minSwipeDistance) {
-            if (currentIndex < sections.length - 1) {
-                this.navigateTo(sections[currentIndex + 1], 'next');
+            if (currentIndex < this.sections.length - 1) {
+                this.navigateTo(this.sections[currentIndex + 1].id, 'next');
             } else {
                 this.showToast("Already at last section", "#ef4444");
             }
@@ -93,31 +113,32 @@ const SwipeNav = {
         // Swipe right (positive) - previous section
         else if (horizontalDistance > this.minSwipeDistance) {
             if (currentIndex > 0) {
-                this.navigateTo(sections[currentIndex - 1], 'prev');
+                this.navigateTo(this.sections[currentIndex - 1].id, 'prev');
             } else {
                 this.showToast("Already at first section", "#ef4444");
             }
         }
     },
     
-    navigateTo: function(section, direction) {
-        console.log(`🚀 Navigating to: ${section}`);
+    navigateTo: function(sectionId, direction) {
+        console.log(`🚀 Navigating to: ${sectionId}`);
         
-        const directionText = direction === 'next' ? '→' : '←';
-        this.showToast(`${directionText} ${section.replace('-', ' ')}`, "#22c55e");
+        const section = this.sections.find(s => s.id === sectionId);
+        const directionArrow = direction === 'next' ? '→' : '←';
+        this.showToast(`${directionArrow} ${section?.name || sectionId}`, "#22c55e");
         
-        // Navigate
+        // Navigate using app
         if (window.app && typeof window.app.showSection === 'function') {
-            window.app.showSection(section);
+            window.app.showSection(sectionId);
         } else {
-            // Fallback: click menu item
-            const menuItem = document.querySelector(`[data-section="${section}"]`);
-            if (menuItem) {
-                menuItem.click();
+            // Fallback: find and click nav item
+            const navItem = document.querySelector(`.nav-item[data-view="${sectionId}"]`);
+            if (navItem) {
+                navItem.click();
             }
         }
         
-        // Haptic feedback
+        // Haptic feedback for mobile
         if (navigator.vibrate) navigator.vibrate(30);
     },
     
@@ -143,6 +164,7 @@ const SwipeNav = {
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             animation: swipeFade 0.8s ease-out forwards;
             pointer-events: none;
+            white-space: nowrap;
         `;
         toast.textContent = message;
         document.body.appendChild(toast);
@@ -160,20 +182,23 @@ const SwipeNav = {
             bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
             color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
+            padding: 12px 24px;
+            border-radius: 40px;
             font-size: 14px;
             z-index: 10000;
             display: flex;
-            gap: 20px;
+            gap: 30px;
             pointer-events: none;
             animation: swipeFade 3s ease-out forwards;
+            font-weight: 500;
         `;
         instruction.innerHTML = `
-            <span>👈 Swipe left</span>
-            <span>👉 Swipe right</span>
+            <span>👈 Swipe left for next</span>
+            <span style="opacity: 0.5">|</span>
+            <span>Swipe right for previous 👉</span>
         `;
         document.body.appendChild(instruction);
         
@@ -193,17 +218,23 @@ if (!document.querySelector('#swipe-styles')) {
             70% { opacity: 1; transform: translateX(-50%) translateY(0); }
             100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
         }
+        
+        /* Prevent scroll while swiping */
+        .swiping {
+            overflow: hidden;
+            touch-action: pan-y pinch-zoom;
+        }
     `;
     document.head.appendChild(style);
 }
 
-// Initialize after page loads
+// Initialize after app is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => SwipeNav.init(), 1000);
+        setTimeout(() => SwipeNav.init(), 1500);
     });
 } else {
-    setTimeout(() => SwipeNav.init(), 1000);
+    setTimeout(() => SwipeNav.init(), 1500);
 }
 
 window.SwipeNav = SwipeNav;
