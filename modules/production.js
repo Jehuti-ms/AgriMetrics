@@ -419,6 +419,55 @@ const ProductionModule = {
     }
 },
 
+    // ==== chunk large records =====
+async function saveToDataService(records) {
+    const MAX_DOC_SIZE = 900000; // 900KB to be safe (Firebase limit is 1MB)
+    
+    // Check if any record is too large
+    for (let record of records) {
+        const size = new Blob([JSON.stringify(record)]).size;
+        if (size > MAX_DOC_SIZE) {
+            console.warn(`Record ${record.id} is too large (${size} bytes), splitting...`);
+            await splitAndSaveRecord(record);
+        } else {
+            await unifiedDataService.save('production', record.id, record);
+        }
+    }
+}
+
+async function splitAndSaveRecord(record) {
+    const chunks = [];
+    const chunkSize = 500000; // 500KB chunks
+    
+    // Split the record's large fields (like images or notes)
+    for (let key in record) {
+        if (typeof record[key] === 'string' && record[key].length > 10000) {
+            // Split long strings into chunks
+            const chunks_count = Math.ceil(record[key].length / chunkSize);
+            for (let i = 0; i < chunks_count; i++) {
+                chunks.push({
+                    id: `${record.id}_${key}_${i}`,
+                    parentId: record.id,
+                    field: key,
+                    chunk: i,
+                    data: record[key].substr(i * chunkSize, chunkSize)
+                });
+            }
+            delete record[key]; // Remove original
+            record[`${key}_chunked`] = true;
+            record[`${key}_chunks`] = chunks_count;
+        }
+    }
+    
+    // Save main record (smaller now)
+    await unifiedDataService.save('production', record.id, record);
+    
+    // Save chunks as sub-collection
+    for (let chunk of chunks) {
+        await unifiedDataService.save(`production_chunks`, chunk.id, chunk);
+    }
+},
+
     // ✅ MODIFIED: Enhanced saveProduction with broadcasting
    async updateProduction(productionId, productionData) {
     const index = this.productionData.findIndex(p => p.id == productionId);
