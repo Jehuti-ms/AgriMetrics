@@ -51,64 +51,88 @@ const ProductionModule = {
     },
 
     // ========== DATA LOADING - NO SAVING HERE ==========
-    async loadData() {
-        if (this._isLoading) {
-            console.log('Already loading, skipping...');
-            return;
-        }
-        this._isLoading = true;
+   async loadData() {
+    if (this._isLoading) {
+        console.log('Already loading, skipping...');
+        return;
+    }
+    this._isLoading = true;
+    
+    console.log('Loading production records...');
+    
+    try {
+        let loadedData = [];
         
-        console.log('Loading production records...');
-        
-        try {
-            let loadedData = [];
+        // Try Firebase first
+        if (this.dataService) {
+            const data = await this.dataService.get('production');
+            console.log('Raw data from service:', data);
             
-            // Try Firebase first
-            if (this.dataService) {
-                const data = await this.dataService.get('production');
-                if (data && data.records && Array.isArray(data.records)) {
-                    loadedData = data.records;
-                    console.log('📁 Loaded from Firebase:', loadedData.length);
+            // Handle different data structures
+            if (data && data.records && Array.isArray(data.records)) {
+                loadedData = data.records;
+                console.log('📁 Loaded from Firebase records array:', loadedData.length);
+            } else if (Array.isArray(data)) {
+                loadedData = data;
+                console.log('📁 Loaded from Firebase as array:', loadedData.length);
+            } else if (data && typeof data === 'object') {
+                // Try to extract records from object
+                const possibleRecords = Object.values(data).filter(v => v && typeof v === 'object' && v.id);
+                if (possibleRecords.length > 0) {
+                    loadedData = possibleRecords;
+                    console.log('📁 Extracted records from object:', loadedData.length);
+                } else {
+                    loadedData = [];
                 }
             }
-            
-            // If Firebase has no data, check localStorage as backup
-            if (loadedData.length === 0) {
-                const saved = localStorage.getItem('farm-production');
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        loadedData = Array.isArray(parsed) ? parsed : (parsed.records || []);
-                        console.log('📁 Loaded from localStorage backup:', loadedData.length);
-                        // DO NOT save to Firebase here
-                    } catch (e) {
+        }
+        
+        // If Firebase has no data, check localStorage as backup
+        if (loadedData.length === 0) {
+            const saved = localStorage.getItem('farm-production');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        loadedData = parsed;
+                    } else if (parsed.records && Array.isArray(parsed.records)) {
+                        loadedData = parsed.records;
+                    } else {
                         loadedData = [];
                     }
+                    console.log('📁 Loaded from localStorage backup:', loadedData.length);
+                    // DO NOT save to Firebase here - that causes the loop!
+                } catch (e) {
+                    loadedData = [];
                 }
             }
-            
-            this.productionData = loadedData;
-            
-            // Sort by date
-            if (this.productionData.length > 0) {
-                this.productionData.sort((a, b) => new Date(b.date) - new Date(a.date));
-            }
-            
-        } catch (error) {
-            console.error('❌ Error loading production records:', error);
-            this.productionData = [];
-        } finally {
-            this._isLoading = false;
         }
         
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('production-data-loaded', {
-                module: 'production',
-                timestamp: new Date().toISOString(),
-                recordCount: this.productionData.length
-            });
+        // IMPORTANT: Use productionData, not productionRecords
+        this.productionData = loadedData;
+        
+        // Sort by date
+        if (this.productionData.length > 0) {
+            this.productionData.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
-    },
+        
+        console.log('✅ Production data loaded:', this.productionData.length, 'records');
+        
+    } catch (error) {
+        console.error('❌ Error loading production records:', error);
+        this.productionData = [];
+    } finally {
+        this._isLoading = false;
+    }
+    
+    if (this.broadcaster) {
+        this.broadcaster.broadcast('production-data-loaded', {
+            module: 'production',
+            timestamp: new Date().toISOString(),
+            recordCount: this.productionData.length
+        });
+    }
+},
 
     // ========== SAVE METHODS - ONLY CALLED ON USER ACTION ==========
     async saveToFirebase() {
