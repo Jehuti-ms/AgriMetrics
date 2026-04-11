@@ -836,81 +836,87 @@ handleUserAuthenticated(user) {
     }  */
 
     setupHamburgerMenu() {
-    console.log('🎯 Setting up hamburger menu (class-based version)');
+    console.log('🎯 Setting up hamburger menu (ONE TIME ONLY)');
 
     const hamburger = document.getElementById('hamburger-menu');
     const sideMenu = document.getElementById('side-menu');
+    let overlay = document.querySelector('.side-menu-overlay');
 
     if (!hamburger || !sideMenu) {
         console.log('❌ Hamburger or side menu not found');
         return;
     }
 
-    // Prevent multiple setups - check if already initialized
-    if (window._hamburgerInitialized) {
-        console.log('⚠️ Hamburger already initialized globally, skipping...');
-        return;
-    }
-
     // Create overlay if it doesn't exist
-    let overlay = document.querySelector('.side-menu-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.className = 'side-menu-overlay';
         document.body.appendChild(overlay);
     }
 
-    // Ensure menu starts closed
-    sideMenu.classList.remove('open');
-    sideMenu.classList.add('closed');
-    overlay.classList.remove('active');
-
-    // Remove any existing listeners by cloning and replacing
+    // CRITICAL: Remove ALL existing listeners by replacing the element
     const newHamburger = hamburger.cloneNode(true);
     hamburger.parentNode.replaceChild(newHamburger, hamburger);
+    
+    // Also clone the side menu to remove its listeners
+    const newSideMenu = sideMenu.cloneNode(true);
+    sideMenu.parentNode.replaceChild(newSideMenu, sideMenu);
+    
+    // Get fresh references
+    const finalHamburger = document.getElementById('hamburger-menu');
+    const finalSideMenu = document.getElementById('side-menu');
+    const finalOverlay = document.querySelector('.side-menu-overlay');
 
-    // Store state globally
-    window._menuOpen = false;
+    // Ensure menu starts closed
+    finalSideMenu.classList.remove('open');
+    finalSideMenu.classList.add('closed');
+    if (finalOverlay) finalOverlay.classList.remove('active');
 
-    // Single click handler
+    // Single global state
+    window.menuIsOpen = false;
+
+    // Single toggle function
     const toggleMenu = (e) => {
         if (e) {
             e.preventDefault();
             e.stopPropagation();
         }
         
-        if (window._menuOpen) {
-            sideMenu.classList.remove('open');
-            sideMenu.classList.add('closed');
-            overlay.classList.remove('active');
-            window._menuOpen = false;
+        if (window.menuIsOpen) {
+            finalSideMenu.classList.remove('open');
+            finalSideMenu.classList.add('closed');
+            if (finalOverlay) finalOverlay.classList.remove('active');
+            window.menuIsOpen = false;
             console.log('Menu closed');
         } else {
-            sideMenu.classList.remove('closed');
-            sideMenu.classList.add('open');
-            overlay.classList.add('active');
-            window._menuOpen = true;
+            finalSideMenu.classList.remove('closed');
+            finalSideMenu.classList.add('open');
+            if (finalOverlay) finalOverlay.classList.add('active');
+            window.menuIsOpen = true;
             console.log('Menu opened');
         }
     };
 
-    // Attach to hamburger
-    newHamburger.addEventListener('click', toggleMenu);
-
+    // Attach ONE handler
+    finalHamburger.addEventListener('click', toggleMenu);
+    
     // Close when clicking overlay
-    overlay.addEventListener('click', toggleMenu);
+    if (finalOverlay) {
+        finalOverlay.addEventListener('click', toggleMenu);
+    }
 
-    // Close on ESC key
+    // Close on ESC
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && window._menuOpen) {
+        if (e.key === 'Escape' && window.menuIsOpen) {
             toggleMenu();
         }
     });
 
-    // Mark as initialized globally
-    window._hamburgerInitialized = true;
-    
-    console.log('✅ Hamburger menu fully initialized');
+    // Mark as initialized
+    if (!window._hamburgerFixed) {
+        window._hamburgerFixed = true;
+        console.log('✅ Hamburger menu fixed - single handler only');
+    }
 }
     
     showSection(sectionId) {
