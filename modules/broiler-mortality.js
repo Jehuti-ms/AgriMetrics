@@ -101,19 +101,15 @@ async loadData() {
     }
 },
 
-   async saveToDataService() {
+  async saveToDataService() {
     if (!this.dataService) return;
     
-    try {
-        await this.dataService.save('mortality', {
-            records: this.mortalityData,  // ← FIXED
-            lastUpdated: new Date().toISOString(),
-            totalRecords: this.mortalityData.length  // ← FIXED
-        });
-        console.log('✅ Saved mortality records to UnifiedDataService');
-    } catch (error) {
-        console.error('❌ Error saving to UnifiedDataService:', error);
-    }
+    // Make SURE this is 'mortality', NOT 'production'
+    await this.dataService.save('mortality', {  // ← MUST be 'mortality'
+        records: this.mortalityData,
+        lastUpdated: new Date().toISOString(),
+        totalRecords: this.mortalityData.length
+    });
 },
     
    async saveData() {
