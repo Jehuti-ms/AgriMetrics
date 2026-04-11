@@ -759,7 +759,7 @@ handleUserAuthenticated(user) {
         console.log('🔍 Navbar logout button created:', document.getElementById('navbar-logout-btn'));
     }
 
-    setupHamburgerMenu() {
+  /*  setupHamburgerMenu() {
         console.log('🎯 Setting up hamburger menu (class-based version)');
 
         const hamburger = document.getElementById('hamburger-menu');
@@ -826,7 +826,80 @@ handleUserAuthenticated(user) {
                 console.log('✅ Menu closed with ESC key');
             }
         });
+    }  */
+
+    setupHamburgerMenu() {
+    console.log('🎯 Setting up hamburger menu (class-based version)');
+
+    const hamburger = document.getElementById('hamburger-menu');
+    const sideMenu = document.getElementById('side-menu');
+
+    if (!hamburger || !sideMenu) {
+        console.log('❌ Hamburger or side menu not found');
+        return;
     }
+
+    if (hamburger.dataset.menuSetup === 'true') {
+        console.log('⚠️ Menu already setup, skipping...');
+        return;
+    }
+    hamburger.dataset.menuSetup = 'true';
+
+    sideMenu.classList.add('closed');
+
+    let overlay = document.querySelector('.side-menu-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'side-menu-overlay';
+        document.body.appendChild(overlay);
+    }
+
+    const newHamburger = hamburger.cloneNode(true);
+    hamburger.parentNode.replaceChild(newHamburger, hamburger);
+
+    // Store state on the DOM element instead of a local variable
+    newHamburger.dataset.menuOpen = 'false';
+
+    newHamburger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Read state from DOM attribute
+        const isOpen = newHamburger.dataset.menuOpen === 'true';
+        
+        if (!isOpen) {
+            sideMenu.classList.remove('closed');
+            sideMenu.classList.add('open');
+            overlay.classList.add('active');
+            newHamburger.dataset.menuOpen = 'true';
+            console.log('✅ Menu opened');
+        } else {
+            sideMenu.classList.remove('open');
+            sideMenu.classList.add('closed');
+            overlay.classList.remove('active');
+            newHamburger.dataset.menuOpen = 'false';
+            console.log('✅ Menu closed');
+        }
+    });
+
+    overlay.addEventListener('click', () => {
+        sideMenu.classList.remove('open');
+        sideMenu.classList.add('closed');
+        overlay.classList.remove('active');
+        newHamburger.dataset.menuOpen = 'false';
+        console.log('✅ Menu closed via overlay');
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && newHamburger.dataset.menuOpen === 'true') {
+            sideMenu.classList.remove('open');
+            sideMenu.classList.add('closed');
+            overlay.classList.remove('active');
+            newHamburger.dataset.menuOpen = 'false';
+            console.log('✅ Menu closed with ESC key');
+        }
+    });
+}
     
     showSection(sectionId) {
         console.log(`🔄 Switching to section: ${sectionId}`);
