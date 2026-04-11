@@ -1447,17 +1447,25 @@ const ProductionModule = {
 
     // UTILITY METHODS
     getProductDisplayName(record) {
-        if (record.productCategory === 'other' || !['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 
-            'tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 'peppers', 'cucumbers', 
-            'spinach', 'beans', 'corn', 'apples', 'oranges', 'bananas', 'berries', 'mangoes', 'honey', 
-            'goat', 'lamb'].includes(record.product)) {
-            // Custom product or unknown - format nicely
-            return record.product.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
-        }
-        return this.formatProductName(record.product);
-    },
+    // Handle invalid record
+    if (!record || !record.product) {
+        return 'Unknown Prod,uct';
+    }
+    
+    const product = record.product;
+    const knownProducts = ['eggs', 'broilers', 'layers', 'milk', 'pork', 'beef', 
+        'tomatoes', 'lettuce', 'carrots', 'potatoes', 'onions', 'cabbage', 
+        'peppers', 'cucumbers', 'spinach', 'beans', 'corn', 'apples', 'oranges', 
+        'bananas', 'berries', 'mangoes', 'honey', 'goat', 'lamb'];
+    
+    if (record.productCategory === 'other' || !knownProducts.includes(product)) {
+        // Custom product or unknown - format nicely
+        return product.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+    return this.formatProductName(product);
+},
 
     formatDate(dateString) {
         // Handle various date formats
@@ -1495,52 +1503,65 @@ const ProductionModule = {
     },
 
     getProductIcon(product) {
-        const icons = {
-            'eggs': '🥚',
-            'broilers': '🐔',
-            'layers': '🐓',
-            'milk': '🥛',
-            'pork': '🐖',
-            'beef': '🐄',
-            'goat': '🐐',
-            'lamb': '🐑',
-            'tomatoes': '🍅',
-            'lettuce': '🥬',
-            'carrots': '🥕',
-            'potatoes': '🥔',
-            'onions': '🧅',
-            'cabbage': '🥬',
-            'peppers': '🫑',
-            'cucumbers': '🥒',
-            'spinach': '🥬',
-            'beans': '🫘',
-            'corn': '🌽',
-            'apples': '🍎',
-            'oranges': '🍊',
-            'bananas': '🍌',
-            'berries': '🫐',
-            'mangoes': '🥭',
-            'honey': '🍯'
-        };
-        
-        // Default icons for product categories
-        if (product.includes('tomato')) return '🍅';
-        if (product.includes('lettuce') || product.includes('cabbage') || product.includes('spinach')) return '🥬';
-        if (product.includes('carrot')) return '🥕';
-        if (product.includes('potato')) return '🥔';
-        if (product.includes('onion')) return '🧅';
-        if (product.includes('pepper')) return '🫑';
-        if (product.includes('cucumber')) return '🥒';
-        if (product.includes('bean')) return '🫘';
-        if (product.includes('corn')) return '🌽';
-        if (product.includes('apple')) return '🍎';
-        if (product.includes('orange')) return '🍊';
-        if (product.includes('banana')) return '🍌';
-        if (product.includes('berry')) return '🫐';
-        if (product.includes('mango')) return '🥭';
-        
-        return icons[product] || '📦';
-    },
+    // Handle undefined, null, or non-string values
+    if (!product || typeof product !== 'string') {
+        console.warn('getProductIcon called with invalid product:', product);
+        return '📦'; // Default icon
+    }
+    
+    const icons = {
+        'eggs': '🥚',
+        'broilers': '🐔',
+        'layers': '🐓',
+        'milk': '🥛',
+        'pork': '🐖',
+        'beef': '🐄',
+        'goat': '🐐',
+        'lamb': '🐑',
+        'tomatoes': '🍅',
+        'lettuce': '🥬',
+        'carrots': '🥕',
+        'potatoes': '🥔',
+        'onions': '🧅',
+        'cabbage': '🥬',
+        'peppers': '🫑',
+        'cucumbers': '🥒',
+        'spinach': '🥬',
+        'beans': '🫘',
+        'corn': '🌽',
+        'apples': '🍎',
+        'oranges': '🍊',
+        'bananas': '🍌',
+        'berries': '🫐',
+        'mangoes': '🥭',
+        'honey': '🍯'
+    };
+    
+    // Check exact match first
+    if (icons[product]) {
+        return icons[product];
+    }
+    
+    // Default icons for product categories (safe includes check)
+    const productLower = product.toLowerCase();
+    
+    if (productLower.includes('tomato')) return '🍅';
+    if (productLower.includes('lettuce') || productLower.includes('cabbage') || productLower.includes('spinach')) return '🥬';
+    if (productLower.includes('carrot')) return '🥕';
+    if (productLower.includes('potato')) return '🥔';
+    if (productLower.includes('onion')) return '🧅';
+    if (productLower.includes('pepper')) return '🫑';
+    if (productLower.includes('cucumber')) return '🥒';
+    if (productLower.includes('bean')) return '🫘';
+    if (productLower.includes('corn')) return '🌽';
+    if (productLower.includes('apple')) return '🍎';
+    if (productLower.includes('orange')) return '🍊';
+    if (productLower.includes('banana')) return '🍌';
+    if (productLower.includes('berry')) return '🫐';
+    if (productLower.includes('mango')) return '🥭';
+    
+    return '📦';
+},
 
     formatProductName(product) {
         const names = {
