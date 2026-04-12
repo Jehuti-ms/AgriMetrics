@@ -5704,6 +5704,7 @@ showReceiptCropperModal: function(file) {
                                     <optgroup label="💰 INCOME - Poultry">
                                         <option value="broilers-income">🐔 Broilers (Live)</option>
                                         <option value="broilers-dressed-income">🍗 Broilers (Dressed/Meat)</option>
+                                        <option value="broilers-dressed">🍗 Broilers (Dressed/Birds)</option>
                                         <option value="layers-income">🐓 Layers (Live)</option>
                                         <option value="eggs-income">🥚 Eggs</option>
                                         <option value="chicks-income">🐤 Baby Chicks</option>
