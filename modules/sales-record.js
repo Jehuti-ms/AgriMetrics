@@ -2029,65 +2029,87 @@ updateProductionItemsDisplay: function() {
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Product *</label>
-                                    <select id="sale-product" class="form-input" required>
-                                        <option value="">Select Product</option>
-                                        <optgroup label="Livestock (Meat - Weight Required)">
-                                            <option value="broilers-dressed">Broilers (Dressed)</option>
-                                            <option value="pork">Pork</option>
-                                            <option value="beef">Beef</option>
-                                            <option value="chicken-parts">Chicken Parts</option>
-                                            <option value="goat">Goat</option>
-                                            <option value="lamb">Lamb</option>
-                                        </optgroup>
-                                        <optgroup label="Poultry (Count)">
-                                            <option value="broilers-live">Broilers (Live)</option>
-                                            <option value="layers">Layers (Egg-laying)</option>
-                                            <option value="chicks">Baby Chicks</option>
-                                        </optgroup>
-                                        <optgroup label="Eggs & Dairy">
-                                            <option value="eggs">Eggs</option>
-                                            <option value="milk">Milk</option>
-                                            <option value="cheese">Cheese</option>
-                                            <option value="yogurt">Yogurt</option>
-                                            <option value="butter">Butter</option>
-                                        </optgroup>
-                                        <optgroup label="Vegetables">
-                                            <option value="tomatoes">Tomatoes</option>
-                                            <option value="peppers">Peppers</option>
-                                            <option value="cucumbers">Cucumbers</option>
-                                            <option value="lettuce">Lettuce</option>
-                                            <option value="carrots">Carrots</option>
-                                            <option value="potatoes">Potatoes</option>
-                                        </optgroup>
-                                        <optgroup label="Other">
-                                            <option value="honey">Honey</option>
-                                            <option value="jam">Jam/Preserves</option>
-                                            <option value="bread">Bread</option>
-                                            <option value="other">Other</option>
-                                        </optgroup>
-                                    </select>
+                            <!-- Product Selection -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                    <div>
+                                        <label class="form-label">Product *</label>
+                                        <select id="sale-product" class="form-input" required>
+                                            <option value="">Select Product</option>
+                                            
+                                            <!-- Poultry - Dressed (by weight) -->
+                                            <optgroup label="🐔 Poultry - Dressed (by weight)">
+                                                <option value="broilers-dressed-weight">🍗 Broilers (Dressed) - by kg/lb</option>
+                                            </optgroup>
+                                            
+                                            <!-- Poultry - Dressed (per bird) -->
+                                            <optgroup label="🐔 Poultry - Dressed (per bird)">
+                                                <option value="broilers-dressed-bird">🍗 Broilers (Dressed/Bird) - per bird</option>
+                                            </optgroup>
+                                            
+                                            <!-- Poultry - Live (per bird) -->
+                                            <optgroup label="🐔 Poultry - Live (per bird)">
+                                                <option value="broilers-live">🐔 Broilers (Live) - per bird</option>
+                                                <option value="layers">🐓 Layers (Live) - per bird</option>
+                                                <option value="chicks">🐤 Baby Chicks - per chick</option>
+                                                <option value="ducks">🦆 Ducks - per bird</option>
+                                                <option value="turkeys">🦃 Turkeys - per bird</option>
+                                            </optgroup>
+                                            
+                                            <!-- Livestock Meat -->
+                                            <optgroup label="🐄 Livestock Meat (by weight)">
+                                                <option value="pork">🐖 Pork - by kg/lb</option>
+                                                <option value="beef">🐄 Beef - by kg/lb</option>
+                                                <option value="goat">🐐 Goat - by kg/lb</option>
+                                                <option value="lamb">🐑 Lamb - by kg/lb</option>
+                                            </optgroup>
+                                            
+                                            <!-- Eggs & Dairy -->
+                                            <optgroup label="🥚 Eggs & Dairy">
+                                                <option value="eggs-dozen">🥚 Eggs (per dozen)</option>
+                                                <option value="eggs-tray">🥚 Eggs (per tray)</option>
+                                                <option value="milk">🥛 Milk (liters)</option>
+                                                <option value="cheese">🧀 Cheese</option>
+                                                <option value="yogurt">🥛 Yogurt</option>
+                                                <option value="butter">🧈 Butter</option>
+                                            </optgroup>
+                                            
+                                            <!-- Vegetables -->
+                                            <optgroup label="🥬 Vegetables (by weight)">
+                                                <option value="tomatoes">🍅 Tomatoes</option>
+                                                <option value="peppers">🫑 Peppers</option>
+                                                <option value="cucumbers">🥒 Cucumbers</option>
+                                                <option value="lettuce">🥬 Lettuce</option>
+                                                <option value="carrots">🥕 Carrots</option>
+                                                <option value="potatoes">🥔 Potatoes</option>
+                                                <option value="onions">🧅 Onions</option>
+                                                <option value="corn">🌽 Corn</option>
+                                                <option value="beans">🫘 Beans</option>
+                                            </optgroup>
+                                            
+                                            <!-- Other -->
+                                            <optgroup label="🍯 Other Products">
+                                                <option value="honey">🍯 Honey</option>
+                                                <option value="jam">🍓 Jam/Preserves</option>
+                                                <option value="bread">🍞 Bread</option>
+                                                <option value="other">📦 Other</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Unit *</label>
+                                        <select id="sale-unit" class="form-input" required>
+                                            <option value="">Select Unit</option>
+                                            <option value="kg">Kilograms (kg)</option>
+                                            <option value="lbs">Pounds (lbs)</option>
+                                            <option value="bird">Bird</option>
+                                            <option value="dozen">Dozen</option>
+                                            <option value="tray">Tray (30 eggs)</option>
+                                            <option value="liter">Liter</option>
+                                            <option value="piece">Piece</option>
+                                            <option value="bunch">Bunch</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="form-label">Unit *</label>
-                                    <select id="sale-unit" class="form-input" required>
-                                        <option value="">Select Unit</option>
-                                        <option value="kg">Kilograms (kg)</option>
-                                        <option value="lbs">Pounds (lbs)</option>
-                                        <option value="birds">Birds</option>
-                                        <option value="animals">Animals</option>
-                                        <option value="pieces">Pieces</option>
-                                        <option value="dozen">Dozen</option>
-                                        <option value="case">Case</option>
-                                        <option value="crate">Crate</option>
-                                        <option value="bag">Bag</option>
-                                        <option value="bottle">Bottle</option>
-                                        <option value="jar">Jar</option>
-                                    </select>
-                                </div>
-                            </div>
 
                             <!-- MEAT SALES SECTION -->
                             <div id="meat-section" style="display: none; margin-bottom: 16px;">
