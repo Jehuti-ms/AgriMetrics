@@ -606,48 +606,7 @@ setupGlobalListeners() {
                     <p>Manage your farm operations efficiently</p>
                 </div>
 
-                <!-- Quick Actions Grid -->
-                <div class="quick-actions">
-                    <h2>Quick Actions</h2>
-                    <div class="actions-grid">
-                        <button class="quick-action-btn" data-action="add-income">
-                            <div class="action-icon">💰</div>
-                            <span class="action-title">Add Income</span>
-                            <span class="action-desc">Record new income</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-expense">
-                            <div class="action-icon">💸</div>
-                            <span class="action-title">Add Expense</span>
-                            <span class="action-desc">Record new expense</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="check-inventory">
-                            <div class="action-icon">📦</div>
-                            <span class="action-title">Check Inventory</span>
-                            <span class="action-desc">View stock levels</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="record-feed">
-                            <div class="action-icon">🌾</div>
-                            <span class="action-title">Record Feed</span>
-                            <span class="action-desc">Log feed usage</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="add-production">
-                            <div class="action-icon">🚜</div>
-                            <span class="action-title">Production</span>
-                            <span class="action-desc">Record production</span>
-                        </button>
-
-                        <button class="quick-action-btn" data-action="view-reports">
-                            <div class="action-icon">📈</div>
-                            <span class="action-title">View Reports</span>
-                            <span class="action-desc">Analytics & insights</span>
-                        </button>
-                    </div>
-                </div>
-                
+                               
                 <!-- Stats Overview -->
                 <div class="stats-overview">
                     <h2>Overview</h2>
@@ -692,6 +651,48 @@ setupGlobalListeners() {
                             <div class="stat-value" id="total-products">0</div>
                             <div class="stat-label">Products</div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Grid -->
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button class="quick-action-btn" data-action="add-income">
+                            <div class="action-icon">💰</div>
+                            <span class="action-title">Add Income</span>
+                            <span class="action-desc">Record new income</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-expense">
+                            <div class="action-icon">💸</div>
+                            <span class="action-title">Add Expense</span>
+                            <span class="action-desc">Record new expense</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="check-inventory">
+                            <div class="action-icon">📦</div>
+                            <span class="action-title">Check Inventory</span>
+                            <span class="action-desc">View stock levels</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="record-feed">
+                            <div class="action-icon">🌾</div>
+                            <span class="action-title">Record Feed</span>
+                            <span class="action-desc">Log feed usage</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="add-production">
+                            <div class="action-icon">🚜</div>
+                            <span class="action-title">Production</span>
+                            <span class="action-desc">Record production</span>
+                        </button>
+
+                        <button class="quick-action-btn" data-action="view-reports">
+                            <div class="action-icon">📈</div>
+                            <span class="action-title">View Reports</span>
+                            <span class="action-desc">Analytics & insights</span>
+                        </button>
                     </div>
                 </div>
 
