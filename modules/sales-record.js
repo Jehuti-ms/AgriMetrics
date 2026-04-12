@@ -3058,23 +3058,23 @@ calculateSaleTotal() {
         console.log('Meat calculation - Product:', product, 'Unit:', unit, 'Price:', price);
         
         if (unit === 'bird') {
-            // For bird unit: use animal count (number of birds)
+            // IMPORTANT: For bird unit, use the ANIMAL COUNT field, NOT the weight field
             const birdCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
             total = birdCount * price;
             console.log('Bird calculation:', birdCount, 'birds ×', price, '= $' + total);
             
-            // Also update the weight field to show the bird count for reference
+            // Update the weight field to show the bird count for reference (optional)
             if (weightInput && birdCount > 0) {
                 weightInput.value = birdCount;
             }
         } else {
-            // For kg/lbs: use weight
+            // For kg/lbs: use weight field
             const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
             total = weight * price;
             console.log('Weight calculation:', weight, unit, '×', price, '= $' + total);
         }
         
-        // Update the summary
+        // Update the summary display
         const meatSummary = document.getElementById('meat-summary-info');
         if (meatSummary) {
             if (unit === 'bird') {
@@ -3085,28 +3085,6 @@ calculateSaleTotal() {
                 meatSummary.textContent = `${weight.toFixed(2)} ${unit} • $${price.toFixed(2)} per ${unit} • $${total.toFixed(2)} total`;
             }
         }
-        
-        // Update average calculations
-        const animalCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
-        const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
-        
-        const avgWeightElement = document.getElementById('meat-avg-weight');
-        const avgValueElement = document.getElementById('meat-avg-value');
-        
-        if (avgWeightElement && avgValueElement) {
-            if (unit === 'bird') {
-                avgWeightElement.textContent = `${animalCount} bird${animalCount !== 1 ? 's' : ''}`;
-                avgValueElement.textContent = `$${price.toFixed(2)}/bird`;
-            } else if (animalCount > 0) {
-                const avgWeight = weight / animalCount;
-                const avgValue = total / animalCount;
-                avgWeightElement.textContent = `${avgWeight.toFixed(2)} ${unit}/animal`;
-                avgValueElement.textContent = `$${avgValue.toFixed(2)}/animal`;
-            } else {
-                avgWeightElement.textContent = `0.00 ${unit}/animal`;
-                avgValueElement.textContent = `$0.00/animal`;
-            }
-        }
     } else {
         // Standard products (non-meat)
         const quantityInput = document.getElementById('standard-quantity');
@@ -3115,16 +3093,17 @@ calculateSaleTotal() {
         
         const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
         const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
-        const unit = unitSelect ? unitSelect.value || 'unit' : 'unit';
         
         total = quantity * price;
         
         const standardSummary = document.getElementById('standard-summary-info');
         if (standardSummary) {
+            const unit = unitSelect ? unitSelect.value || 'unit' : 'unit';
             standardSummary.textContent = `${quantity} ${unit} at $${price.toFixed(2)}/${unit} = $${total.toFixed(2)}`;
         }
     }
     
+    // Update the total amount display
     const totalElement = document.getElementById('sale-total-amount');
     if (totalElement) {
         totalElement.textContent = this.formatCurrency(total);
