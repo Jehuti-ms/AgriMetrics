@@ -1479,6 +1479,16 @@ div.quick-action-grid {
     font-weight: 500;
     color: var(--text-primary);
 }
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-color);
+    display: inline-block;
+}
 }
         `;
         document.head.appendChild(style);
