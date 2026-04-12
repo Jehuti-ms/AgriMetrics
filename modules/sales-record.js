@@ -2951,10 +2951,7 @@ updateAnimalCountVisibility() {
     
     // Show animal count when:
     // 1. Unit is 'bird' (for dressed broilers)
-    // 2. Or for weight-based meat sales (kg/lbs)
-    const shouldShowAnimalCount = 
-        selectedUnit === 'bird' || 
-        (meatProducts.includes(selectedProduct) && (selectedUnit === 'kg' || selectedUnit === 'lbs'));
+    const shouldShowAnimalCount = selectedUnit === 'bird';
     
     if (shouldShowAnimalCount) {
         animalCountContainer.classList.remove('hidden');
@@ -2964,7 +2961,7 @@ updateAnimalCountVisibility() {
         const animalLabel = document.querySelector('label[for="meat-animal-count"]');
         if (animalLabel) {
             if (selectedProduct === 'broilers-dressed') {
-                animalLabel.textContent = selectedUnit === 'bird' ? 'Number of Birds *' : 'Number of Birds *';
+                animalLabel.textContent = 'Number of Birds *';
             } else if (selectedProduct === 'pork') {
                 animalLabel.textContent = 'Number of Pigs *';
             } else if (selectedProduct === 'beef') {
@@ -2996,22 +2993,24 @@ calculateSaleTotal() {
     let total = 0;
     
     if (isMeatProduct) {
-        const weightInput = document.getElementById('meat-weight');
         const weightUnitSelect = document.getElementById('meat-weight-unit');
         const priceInput = document.getElementById('meat-price');
+        const animalCountInput = document.getElementById('meat-animal-count');
+        const weightInput = document.getElementById('meat-weight');
         
-        const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
         const unit = weightUnitSelect ? weightUnitSelect.value : 'kg';
         const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
         
-        console.log('Meat calculation - Unit:', unit, 'Weight:', weight, 'Price:', price);
+        console.log('Meat calculation - Unit:', unit, 'Price:', price);
         
         if (unit === 'bird') {
-            // For bird unit: total = number of birds × price per bird
-            total = weight * price;
-            console.log('Bird calculation:', weight, 'birds ×', price, '= $' + total);
+            // For bird unit: use animal count, NOT weight
+            const birdCount = animalCountInput ? parseFloat(animalCountInput.value) || 0 : 0;
+            total = birdCount * price;
+            console.log('Bird calculation:', birdCount, 'birds ×', price, '= $' + total);
         } else {
-            // For kg/lbs: total = weight × price per kg/lb
+            // For kg/lbs: use weight
+            const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
             total = weight * price;
             console.log('Weight calculation:', weight, unit, '×', price, '= $' + total);
         }
@@ -3020,22 +3019,24 @@ calculateSaleTotal() {
         const meatSummary = document.getElementById('meat-summary-info');
         if (meatSummary) {
             if (unit === 'bird') {
-                meatSummary.textContent = `${weight} bird${weight !== 1 ? 's' : ''} • $${price.toFixed(2)} per bird • $${total.toFixed(2)} total`;
+                const birdCount = animalCountInput ? parseFloat(animalCountInput.value) || 0 : 0;
+                meatSummary.textContent = `${birdCount} bird${birdCount !== 1 ? 's' : ''} • $${price.toFixed(2)} per bird • $${total.toFixed(2)} total`;
             } else {
+                const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
                 meatSummary.textContent = `${weight.toFixed(2)} ${unit} • $${price.toFixed(2)} per ${unit} • $${total.toFixed(2)} total`;
             }
         }
         
         // Update average calculations
-        const animalCountInput = document.getElementById('meat-animal-count');
         const animalCount = animalCountInput ? parseFloat(animalCountInput.value) || 0 : 0;
+        const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
         
         const avgWeightElement = document.getElementById('meat-avg-weight');
         const avgValueElement = document.getElementById('meat-avg-value');
         
         if (avgWeightElement && avgValueElement) {
             if (unit === 'bird') {
-                avgWeightElement.textContent = `${weight} bird${weight !== 1 ? 's' : ''}`;
+                avgWeightElement.textContent = `${animalCount} bird${animalCount !== 1 ? 's' : ''}`;
                 avgValueElement.textContent = `$${price.toFixed(2)}/bird`;
             } else if (animalCount > 0) {
                 const avgWeight = weight / animalCount;
