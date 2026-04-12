@@ -340,6 +340,7 @@ setupSaleFormListeners() {
 // Save sale with validation
 async saveSale() {
     console.log('💾 SAVE SALE STARTING...');
+    console.log('💾💾💾 SAVE SALE METHOD CALLED 💾💾💾');
     
     try {
         // Check if modal is open and get form values
@@ -2510,6 +2511,25 @@ updateProductionItemsDisplay: function() {
     
   setupButtonListeners() {
     console.log('🔧 Setting up button listeners...');
+    
+    // DIRECT HANDLER FOR SAVE SALE BUTTON
+    const saveSaleBtn = document.getElementById('save-sale');
+    if (saveSaleBtn) {
+        // Remove all existing listeners by cloning
+        const newSaveBtn = saveSaleBtn.cloneNode(true);
+        saveSaleBtn.parentNode.replaceChild(newSaveBtn, saveSaleBtn);
+        
+        // Add fresh listener
+        newSaveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🖱️ SAVE SALE BUTTON CLICKED - DIRECT HANDLER');
+            this.saveSale();
+        });
+        console.log('✅ Save Sale button direct handler attached');
+    } else {
+        console.error('❌ Save Sale button not found!');
+    }
     
     // Helper function to safely attach listener
     const attachListener = (id, handler, logName) => {
