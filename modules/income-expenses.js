@@ -939,27 +939,75 @@ createSaleFromIncome: async function(transactionData) {
     const desc = transactionData.description?.toLowerCase() || '';
     const cat = transactionData.category?.toLowerCase() || '';
     
-    // Product mapping
-    if (desc.includes('egg') || cat.includes('egg')) product = 'eggs';
-    else if (desc.includes('broiler') || cat.includes('broiler')) product = 'broilers-dressed';
-    else if (desc.includes('layer') || cat.includes('layer')) product = 'layers';
-    else if (desc.includes('milk') || cat.includes('milk')) product = 'milk';
-    else if (desc.includes('pork') || cat.includes('pork')) product = 'pork';
-    else if (desc.includes('beef') || cat.includes('beef')) product = 'beef';
-    else if (desc.includes('goat') || cat.includes('goat')) product = 'goat';
-    else if (desc.includes('lamb') || cat.includes('lamb')) product = 'lamb';
-    else if (desc.includes('tomato') || cat.includes('tomato')) product = 'tomatoes';
-    else if (desc.includes('lettuce') || cat.includes('lettuce')) product = 'lettuce';
-    else if (desc.includes('carrot') || cat.includes('carrot')) product = 'carrots';
-    else if (desc.includes('potato') || cat.includes('potato')) product = 'potatoes';
-    else if (desc.includes('honey') || cat.includes('honey')) product = 'honey';
+    // ===== UPDATED PRODUCT MAPPING FOR MEAT/BIRDS =====
+    const productMap = {
+        // Poultry - Meat/Dressed
+        'broilers-dressed': ['broilers-dressed', 'dressed broiler', 'broiler meat', 'chicken meat'],
+        'broilers-live': ['broilers-live', 'live broiler', 'broiler bird'],
+        'layers': ['layers', 'layer bird', 'egg layer'],
+        'eggs': ['eggs', 'egg', 'dozen eggs'],
+        'chicks': ['chicks', 'baby chicks', 'day old chicks'],
+        'ducks': ['ducks', 'duck', 'duck meat'],
+        'turkeys': ['turkeys', 'turkey', 'turkey meat'],
+        
+        // Livestock - Meat
+        'pork': ['pork', 'pig', 'pork meat'],
+        'beef': ['beef', 'cow', 'cattle', 'beef meat'],
+        'goat': ['goat', 'goat meat'],
+        'lamb': ['lamb', 'mutton', 'sheep'],
+        
+        // Dairy
+        'milk': ['milk', 'dairy', 'fresh milk'],
+        
+        // Produce
+        'tomatoes': ['tomatoes', 'tomato'],
+        'peppers': ['peppers', 'pepper', 'bell pepper'],
+        'cucumbers': ['cucumbers', 'cucumber'],
+        'lettuce': ['lettuce'],
+        'carrots': ['carrots', 'carrot'],
+        'potatoes': ['potatoes', 'potato'],
+        'onions': ['onions', 'onion'],
+        'corn': ['corn', 'maize'],
+        'beans': ['beans', 'green beans'],
+        
+        // Other
+        'honey': ['honey'],
+        'other': []
+    };
+    
+    // Find matching product
+    for (const [productKey, keywords] of Object.entries(productMap)) {
+        for (const keyword of keywords) {
+            if (desc.includes(keyword) || cat.includes(keyword)) {
+                product = productKey;
+                break;
+            }
+        }
+        if (product !== 'other') break;
+    }
+    
+    // If still other, try to extract from category
+    if (product === 'other') {
+        if (cat.includes('broilers') || cat.includes('chicken')) product = 'broilers-dressed';
+        else if (cat.includes('layers')) product = 'layers';
+        else if (cat.includes('eggs')) product = 'eggs';
+        else if (cat.includes('pork') || cat.includes('pig')) product = 'pork';
+        else if (cat.includes('beef') || cat.includes('cow') || cat.includes('cattle')) product = 'beef';
+        else if (cat.includes('goat')) product = 'goat';
+        else if (cat.includes('lamb') || cat.includes('sheep')) product = 'lamb';
+        else if (cat.includes('milk') || cat.includes('dairy')) product = 'milk';
+        else if (cat.includes('tomato')) product = 'tomatoes';
+        else if (cat.includes('pepper')) product = 'peppers';
+    }
+    
+    const unit = this.getUnitForProduct(product);
     
     const saleData = {
         id: 'INC-' + transactionData.id,
         date: transactionData.date,
         customer: this.extractCustomerFromDescription(transactionData.description) || 'Walk-in',
         product: product,
-        unit: this.getUnitForProduct(product),
+        unit: unit,
         quantity: 1,
         unitPrice: transactionData.amount,
         totalAmount: transactionData.amount,
@@ -988,7 +1036,7 @@ createSaleFromIncome: async function(transactionData) {
     
     this.showNotification(`✅ Created sale record from income`, 'success');
 },
-
+    
 handleExpenseIntegration: async function(transactionData, isNew, oldTransaction) {
     console.log('📦 Handling expense integration:', transactionData);
     
@@ -5646,69 +5694,129 @@ showReceiptCropperModal: function(file) {
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                <div>
-                                    <label class="form-label">Category *</label>
-                                    <select id="transaction-category" class="form-input" required>
-                                        <option value="">Select Category</option>
-                                        
-                                        <!-- Income Categories -->
-                                        <optgroup label="💰 Income">
-                                            <option value="broilers-income">Broilers</option>
-                                            <option value="layers-income">Layers</option>
-                                            <option value="ducks-income">Ducks</option>
-                                            <option value="sheep-income">Sheep</option>
-                                            <option value="goats-income">Goats</option>
-                                            <option value="rabbits-income">Rabbits</option>
-                                            <option value="crops">Crops/Produce</option>
-                                            <option value="eggs">Eggs</option>
-                                            <option value="milk">Milk/Dairy</option>
-                                            <option value="wool">Wool/Fiber</option>
-                                            <option value="breeding">Breeding Stock</option>
-                                            <option value="services">Services</option>
-                                            <option value="grants">Grants/Subsidies</option>
-                                            <option value="other-income">Other Income</option>
-                                        </optgroup>
-                                        
-                                        <!-- Expense Categories -->
-                                        <optgroup label="💸 Expenses">
-                                            <!-- Animal-specific feed -->
-                                            <option value="feed-broilers">Feed - Broilers</option>
-                                            <option value="feed-layers">Feed - Layers</option>
-                                            <option value="feed-ducks">Feed - Ducks</option>
-                                            <option value="feed-sheep">Feed - Sheep</option>
-                                            <option value="feed-goats">Feed - Goats</option>
-                                            <option value="feed-rabbits">Feed - Rabbits</option>
-                                            
-                                            <!-- Medical/Vet by animal -->
-                                            <option value="medical-broilers">Medical - Broilers</option>
-                                            <option value="medical-layers">Medical - Layers</option>
-                                            <option value="medical-ducks">Medical - Ducks</option>
-                                            <option value="medical-sheep">Medical - Sheep</option>
-                                            <option value="medical-goats">Medical - Goats</option>
-                                            <option value="medical-rabbits">Medical - Rabbits</option>
-                                            
-                                            <!-- General farm expenses -->
-                                            <option value="bedding">Bedding/Litter</option>
-                                            <option value="equipment">Equipment</option>
-                                            <option value="labor">Labor</option>
-                                            <option value="utilities">Utilities</option>
-                                            <option value="maintenance">Maintenance</option>
-                                            <option value="transport">Transport</option>
-                                            <option value="marketing">Marketing</option>
-                                            <option value="fencing">Fencing</option>
-                                            <option value="buildings">Buildings/Shelter</option>
-                                            <option value="water">Water Systems</option>
-                                            <option value="electricity">Electricity</option>
-                                            <option value="other-expense">Other Expenses</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="form-label">Amount ($) *</label>
-                                    <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
-                                </div>
+                           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <label class="form-label">Category *</label>
+                                <select id="transaction-category" class="form-input" required>
+                                    <option value="">Select Category</option>
+                                    
+                                    <!-- ===== INCOME CATEGORIES ===== -->
+                                    <optgroup label="💰 INCOME - Poultry">
+                                        <option value="broilers-income">🐔 Broilers (Live)</option>
+                                        <option value="broilers-dressed-income">🍗 Broilers (Dressed/Meat)</option>
+                                        <option value="layers-income">🐓 Layers (Live)</option>
+                                        <option value="eggs-income">🥚 Eggs</option>
+                                        <option value="chicks-income">🐤 Baby Chicks</option>
+                                        <option value="ducks-income">🦆 Ducks</option>
+                                        <option value="turkeys-income">🦃 Turkeys</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💰 INCOME - Livestock">
+                                        <option value="pork-income">🐖 Pork</option>
+                                        <option value="beef-income">🐄 Beef</option>
+                                        <option value="goat-income">🐐 Goat</option>
+                                        <option value="lamb-income">🐑 Lamb</option>
+                                        <option value="milk-income">🥛 Milk/Dairy</option>
+                                        <option value="wool-income">🐑 Wool/Fiber</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💰 INCOME - Produce">
+                                        <option value="tomatoes-income">🍅 Tomatoes</option>
+                                        <option value="peppers-income">🫑 Peppers</option>
+                                        <option value="cucumbers-income">🥒 Cucumbers</option>
+                                        <option value="lettuce-income">🥬 Lettuce</option>
+                                        <option value="carrots-income">🥕 Carrots</option>
+                                        <option value="potatoes-income">🥔 Potatoes</option>
+                                        <option value="onions-income">🧅 Onions</option>
+                                        <option value="corn-income">🌽 Corn</option>
+                                        <option value="beans-income">🫘 Beans</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💰 INCOME - Other">
+                                        <option value="honey-income">🍯 Honey</option>
+                                        <option value="breeding-income">🐣 Breeding Stock</option>
+                                        <option value="services-income">🛠️ Services</option>
+                                        <option value="grants-income">📋 Grants/Subsidies</option>
+                                        <option value="other-income">📦 Other Income</option>
+                                    </optgroup>
+                                    
+                                    <!-- ===== EXPENSE CATEGORIES ===== -->
+                                    <optgroup label="💸 EXPENSES - Feed">
+                                        <option value="feed-broilers">🌾 Feed - Broilers</option>
+                                        <option value="feed-layers">🌾 Feed - Layers</option>
+                                        <option value="feed-ducks">🌾 Feed - Ducks</option>
+                                        <option value="feed-turkeys">🌾 Feed - Turkeys</option>
+                                        <option value="feed-pigs">🌾 Feed - Pigs</option>
+                                        <option value="feed-cattle">🌾 Feed - Cattle</option>
+                                        <option value="feed-goats">🌾 Feed - Goats</option>
+                                        <option value="feed-sheep">🌾 Feed - Sheep</option>
+                                        <option value="feed-rabbits">🌾 Feed - Rabbits</option>
+                                        <option value="feed-other">🌾 Feed - Other</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Medical/Veterinary">
+                                        <option value="medical-broilers">💊 Medical - Broilers</option>
+                                        <option value="medical-layers">💊 Medical - Layers</option>
+                                        <option value="medical-ducks">💊 Medical - Ducks</option>
+                                        <option value="medical-pigs">💊 Medical - Pigs</option>
+                                        <option value="medical-cattle">💊 Medical - Cattle</option>
+                                        <option value="medical-goats">💊 Medical - Goats</option>
+                                        <option value="medical-sheep">💊 Medical - Sheep</option>
+                                        <option value="medical-vaccines">💉 Vaccines</option>
+                                        <option value="medical-medicine">💊 Medicine</option>
+                                        <option value="medical-other">💊 Other Medical</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Equipment & Supplies">
+                                        <option value="equipment-feeders">🥣 Feeders</option>
+                                        <option value="equipment-waterers">💧 Waterers</option>
+                                        <option value="equipment-coop">🏠 Coop/Housing</option>
+                                        <option value="equipment-fencing">🚧 Fencing</option>
+                                        <option value="equipment-tools">🔧 Tools</option>
+                                        <option value="equipment-other">🔨 Other Equipment</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Bedding & Litter">
+                                        <option value="bedding-woodshavings">🪵 Wood Shavings</option>
+                                        <option value="bedding-straw">🌾 Straw</option>
+                                        <option value="bedding-sand">🏖️ Sand</option>
+                                        <option value="bedding-other">📦 Other Bedding</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Utilities">
+                                        <option value="electricity">⚡ Electricity</option>
+                                        <option value="water">💧 Water</option>
+                                        <option value="heating">🔥 Heating</option>
+                                        <option value="cooling">❄️ Cooling</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Labor">
+                                        <option value="labor-permanent">👨‍🌾 Permanent Staff</option>
+                                        <option value="labor-temporary">👷 Temporary Labor</option>
+                                        <option value="labor-contractor">📋 Contractor</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Transport">
+                                        <option value="transport-fuel">⛽ Fuel</option>
+                                        <option value="transport-maintenance">🔧 Vehicle Maintenance</option>
+                                        <option value="transport-delivery">🚚 Delivery</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="💸 EXPENSES - Other">
+                                        <option value="packaging">📦 Packaging</option>
+                                        <option value="cleaning">🧹 Cleaning Supplies</option>
+                                        <option value="marketing">📢 Marketing</option>
+                                        <option value="insurance">🛡️ Insurance</option>
+                                        <option value="taxes">📄 Taxes</option>
+                                        <option value="other-expense">📋 Other Expenses</option>
+                                    </optgroup>
+                                </select>
                             </div>
+                            <div>
+                                <label class="form-label">Amount ($) *</label>
+                                <input type="number" id="transaction-amount" class="form-input" step="0.01" min="0" required placeholder="0.00">
+                            </div>
+                        </div>
 
                             <div style="margin-bottom: 16px;">
                                 <label class="form-label">Description *</label>
