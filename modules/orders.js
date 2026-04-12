@@ -1006,6 +1006,9 @@ const OrdersModule = {
                     <h1 class="module-title">Orders Management</h1>
                     <p class="module-subtitle">Manage customer orders and deliveries</p>
                 </div>
+
+                <!-- ===== OVERVIEW HEADING ===== -->
+            <h2 class="section-title">📊 Overview</h2>
                
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -1030,6 +1033,9 @@ const OrdersModule = {
                     </div>
                 </div>
 
+                 <!-- ===== QUICK ACTION HEADING ===== -->
+            <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+            
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="create-order-btn">
                         <div style="font-size: 32px;">➕</div>
