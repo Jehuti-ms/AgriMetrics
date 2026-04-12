@@ -505,7 +505,10 @@ async loadData() {
                 <h1 class="module-title">Broiler Health & Mortality</h1>
                 <p class="module-subtitle">Monitor flock health and track losses</p>
             </div>
-
+            
+                <!-- ===== OVERVIEW HEADING ===== -->
+                <h2 class="section-title">📊 Overview</h2>
+            
             <!-- Mortality Overview Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -530,6 +533,9 @@ async loadData() {
                 </div>
             </div>
 
+             <!-- ===== QUICK ACTION HEADING ===== -->
+            <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+            
             <!-- Quick Actions -->
             <div class="quick-action-grid">
                 <button class="quick-action-btn" id="record-mortality-btn">
