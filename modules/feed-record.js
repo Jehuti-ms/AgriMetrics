@@ -317,6 +317,9 @@ setupRealtimeSync() {
                     <p class="module-subtitle">Track feed usage and inventory</p>
                 </div>
 
+                 <!-- ===== OVERVIEW HEADING ===== -->
+                <h2 class="section-title">📊 Overview</h2>
+                
                <!-- Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -336,6 +339,9 @@ setupRealtimeSync() {
                     </div>
                 </div>
 
+                 <!-- ===== QUICK ACTION HEADING ===== -->
+                <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+            
                  <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="record-feed-btn">
