@@ -5516,6 +5516,9 @@ showReceiptCropperModal: function(file) {
                     </div>
                 ` : ''}
 
+                 <!-- ===== OVERVIEW HEADING ===== -->
+            <h2 class="section-title">📊 Overview</h2>
+            
                 <!-- Financial Overview -->
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -5540,6 +5543,9 @@ showReceiptCropperModal: function(file) {
                     </div>
                 </div>
 
+                 <!-- ===== QUICK ACTION HEADING ===== -->
+                <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+                
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-income-btn">
