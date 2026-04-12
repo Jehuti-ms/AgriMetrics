@@ -425,6 +425,9 @@ cleanupBroadcasterListeners() {
                     <p class="module-subtitle">Comprehensive insights and analytics for your farm operations</p>
                 </div>
 
+                <!-- ===== OVERVIEW HEADING ===== -->
+            <h2 class="section-title">📊 Overview</h2>
+            
                 <!-- Quick Stats Overview -->
                 <div class="glass-card" style="padding: 24px; margin-bottom: 24px;">
                     <h3 style="color: var(--text-primary); margin-bottom: 20px; font-size: 20px;">Quick Stats Overview</h3>
