@@ -1480,14 +1480,15 @@ div.quick-action-grid {
     color: var(--text-primary);
 }
 
-.section-title {
+/* Section Headers - EXACTLY matching dashboard style */
+.section-title,
+.overview-heading,
+.quick-actions-heading {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--primary-color);
-    display: inline-block;
+    display: block;
 }
 }
         `;
