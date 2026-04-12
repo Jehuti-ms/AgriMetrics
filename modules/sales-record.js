@@ -339,110 +339,217 @@ setupSaleFormListeners() {
 
 // Save sale with validation
 async saveSale() {
-    const productType = document.getElementById('sale-product-type').value;
-    const unitType = document.getElementById('sale-unit-type').value;
-    const quantity = parseFloat(document.getElementById('sale-quantity').value);
-    const pricePerUnit = parseFloat(document.getElementById('sale-price-per-unit').value);
-    const weight = parseFloat(document.getElementById('sale-weight').value) || null;
-    const totalAmount = parseFloat(document.getElementById('sale-total-amount').value);
-    const customer = document.getElementById('sale-customer').value;
-    const paymentMethod = document.getElementById('sale-payment-method').value;
-    const date = document.getElementById('sale-date').value;
-    const notes = document.getElementById('sale-notes').value;
+    console.log('💾 SAVE SALE BUTTON CLICKED');
     
-    // Validate inputs
-    if (!productType) {
-        this.showNotification('Please select a product', 'error');
+    const saleIdInput = document.getElementById('sale-id');
+    const dateInput = document.getElementById('sale-date');
+    const customerInput = document.getElementById('sale-customer');
+    const productSelect = document.getElementById('sale-product');
+    const unitSelect = document.getElementById('sale-unit');
+    const paymentMethodSelect = document.getElementById('sale-payment');
+    const paymentStatusSelect = document.getElementById('sale-status');
+    const notesInput = document.getElementById('sale-notes');
+
+    const saleId = saleIdInput ? saleIdInput.value : '';
+    let date = dateInput ? dateInput.value : '';
+    const customer = customerInput ? customerInput.value : '';
+    const product = productSelect ? productSelect.value : '';
+    const unit = unitSelect ? unitSelect.value : '';
+    const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
+    const paymentStatus = paymentStatusSelect ? paymentStatusSelect.value : '';
+    const notes = notesInput ? notesInput.value : '';
+
+    console.log('Form values:', { date, product, unit, paymentMethod, customer });
+
+    if (!date || !product || !unit || !paymentMethod) {
+        this.showNotification('Please fill in all required fields', 'error');
         return;
     }
+
+    date = this.normalizeDateForStorage(date);
+
+    const meatProducts = ['broilers-dressed', 'broilers-dressed-weight', 'broilers-dressed-bird', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
+
+    let saleData;
     
-    if (!quantity || quantity <= 0) {
-        const isByWeight = this.isProductSoldByWeight(productType);
-        const message = isByWeight ? 'Please enter a valid weight' : 'Please enter a valid quantity';
-        this.showNotification(message, 'error');
+    if (isMeatProduct) {
+        const animalCountInput = document.getElementById('meat-animal-count');
+        const weightInput = document.getElementById('meat-weight');
+        const weightUnitSelect = document.getElementById('meat-weight-unit');
+        const priceInput = document.getElementById('meat-price');
+        
+        const animalCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
+        const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
+        const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
+        const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        
+        let totalAmount;
+        let priceUnit;
+        
+        console.log('Meat sale data:', { animalCount, weight, weightUnit, unitPrice });
+        
+        if (weightUnit === 'bird') {
+            totalAmount = animalCount * unitPrice;
+            priceUnit = 'per-bird';
+        } else if (weightUnit === 'lbs') {
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-lb';
+        } else {
+            totalAmount = weight * unitPrice;
+            priceUnit = 'per-kg';
+        }
+        
+        saleData = {
+            id: saleId || 'SALE-' + Date.now().toString().slice(-6),
+            date: date,
+            customer: customer || 'Walk-in',
+            product: product,
+            unit: unit,
+            quantity: weightUnit === 'bird' ? animalCount : weight,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus || 'paid',
+            notes: notes,
+            weight: weight,
+            weightUnit: weightUnit,
+            animalCount: animalCount,
+            priceUnit: priceUnit
+        };
+    } else {
+        const quantityInput = document.getElementById('standard-quantity');
+        const priceInput = document.getElementById('standard-price');
+        
+        const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
+        const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+        const totalAmount = quantity * unitPrice;
+        
+        saleData = {
+            id: saleId || 'SALE-' + Date.now().toString().slice(-6),
+            date: date,
+            customer: customer || 'Walk-in',
+            product: product,
+            unit: unit,
+            quantity: quantity,
+            unitPrice: unitPrice,
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            paymentStatus: paymentStatus || 'paid',
+            notes: notes
+        };
+    }
+
+    console.log('Saving sale data:', saleData);
+
+    // Validate
+    if (!saleData.totalAmount || saleData.totalAmount <= 0) {
+        this.showNotification('Please enter valid quantity and price', 'error');
         return;
     }
-    
-    if (!pricePerUnit || pricePerUnit <= 0) {
-        const isByWeight = this.isProductSoldByWeight(productType);
-        const unit = isByWeight ? unitType : this.getProductUnit(productType, unitType);
-        this.showNotification(`Please enter a valid price per ${unit}`, 'error');
-        return;
+
+    let isNewSale = false;
+    let oldSale = null;
+
+    if (saleId) {
+        // Update existing sale
+        oldSale = window.FarmModules.appData.sales?.find(s => s.id === saleId);
+        const index = window.FarmModules.appData.sales.findIndex(s => s.id === saleId);
+        if (index !== -1) {
+            window.FarmModules.appData.sales[index] = saleData;
+            if (this.broadcaster) {
+                this.broadcaster.broadcast('sale-updated', {
+                    module: 'sales-record',
+                    timestamp: new Date().toISOString(),
+                    oldSale: oldSale,
+                    newSale: saleData
+                });
+            }
+            this.showNotification('Sale updated successfully!', 'success');
+        }
+    } else {
+        // Add new sale
+        isNewSale = true;
+        if (!window.FarmModules.appData.sales) {
+            window.FarmModules.appData.sales = [];
+        }
+        window.FarmModules.appData.sales.push(saleData);
+        
+        if (this.broadcaster) {
+            this.broadcaster.broadcast('sale-recorded', {
+                module: 'sales-record',
+                timestamp: new Date().toISOString(),
+                sale: saleData
+            });
+        }
+        this.showNotification('Sale recorded successfully!', 'success');
     }
-    
-    // Special validation for per-bird sales - weight is optional
-    const isByWeight = this.isProductSoldByWeight(productType);
-    
-    const saleData = {
-        id: Date.now(),
-        date: date,
-        productType: productType,
-        unitType: isByWeight ? unitType : 'unit',
-        quantity: quantity,
-        pricePerUnit: pricePerUnit,
-        weightPerBird: weight, // Only for per-bird sales
-        totalAmount: totalAmount,
-        customer: customer || 'Walk-in',
-        paymentMethod: paymentMethod,
-        notes: notes,
-        createdAt: new Date().toISOString()
-    };
-    
-    // Add to sales array
-    if (!this.sales) this.sales = [];
-    this.sales.unshift(saleData);
-    
+
+    // Save to UnifiedDataService
+    if (this.dataService) {
+        await this.dataService.save('sales', saleData);
+    }
+
     // Save to localStorage
-    localStorage.setItem('farm-sales', JSON.stringify(this.sales));
-    
-    // Save to Firebase
-    if (this.isFirebaseAvailable) {
-        await this.saveSaleToFirebase(saleData);
+    localStorage.setItem('farm-sales-data', JSON.stringify(window.FarmModules.appData.sales));
+
+    // ===== UPDATE INCOME MODULE DIRECTLY =====
+    const incomeTransaction = {
+        id: Date.now(),
+        date: saleData.date,
+        type: 'income',
+        category: 'sales',
+        amount: saleData.totalAmount,
+        description: `Sale: ${this.formatProductName(saleData.product)} - ${saleData.customer || 'Walk-in'}`,
+        paymentMethod: saleData.paymentMethod,
+        reference: saleData.id,
+        notes: saleData.notes || '',
+        source: 'sales-module',
+        saleId: saleData.id
+    };
+
+    // Method 1: Save to UnifiedDataService
+    if (this.dataService) {
+        await this.dataService.save('transactions', incomeTransaction);
+        console.log('✅ Income transaction saved to UnifiedDataService');
     }
-    
-    // Broadcast to other modules (Income module)
-    if (window.DataBroadcaster) {
-        window.DataBroadcaster.emit('sale-completed', {
+
+    // Method 2: Direct update if income module is accessible
+    if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
+        console.log('💰 Directly updating IncomeExpensesModule');
+        window.IncomeExpensesModule.transactions.unshift(incomeTransaction);
+        window.IncomeExpensesModule.saveData();
+        
+        if (window.app?.currentSection === 'income-expenses') {
+            window.IncomeExpensesModule.renderModule();
+        }
+    }
+
+    // Method 3: Dispatch custom event
+    const saleCompletedEvent = new CustomEvent('sale-completed', {
+        detail: {
             orderId: saleData.id,
             amount: saleData.totalAmount,
-            description: `Sale: ${saleData.quantity} ${isByWeight ? saleData.unitType : this.getProductUnit(productType, unitType)} of ${productType}`,
             date: saleData.date,
+            description: `Sale: ${this.formatProductName(saleData.product)}`,
+            customerName: saleData.customer || 'Walk-in',
             paymentMethod: saleData.paymentMethod,
-            customerName: saleData.customer,
-            sourceDeviceId: this.getDeviceId()
-        });
-    }
+            product: saleData.product,
+            quantity: saleData.quantity,
+            unitPrice: saleData.unitPrice
+        }
+    });
+    window.dispatchEvent(saleCompletedEvent);
+    console.log('📢 Dispatched sale-completed event');
 
-     // ===== PRESERVE CURRENT FILTER =====
-    const periodFilter = document.getElementById('period-filter');
-    const currentFilter = periodFilter ? periodFilter.value : 'today';
-    
-    // Update UI with current filter
-    const salesTable = document.getElementById('sales-table');
-    if (salesTable) {
-        salesTable.innerHTML = this.renderSalesTable(currentFilter);
-    }
-    this.updateSalesStats();
-    
     // Update UI
-    //this.renderSalesList();
-    this.renderSalesTable();
-    this.updateSalesStats();
-
-    // ===== UPDATE INVENTORY FROM SALE =====
-    this.updateInventoryFromSale(saleData);
-
-    // ===== UPDATE PRODUCTION FROM SALE =====
-    this.updateProductionFromSale(saleData);
-    
-    // Close modal
+    this.renderModule();
     this.hideSaleModal();
+    this.updateSalesStats();
     
-    this.showNotification('Sale recorded successfully!', 'success');
-    
-    return saleData;
+    console.log('✅ Sale saved successfully');
 },
-
+    
     // ===== UPDATE INVENTORY FROM SALE =====
 updateInventoryFromSale(saleData) {
     console.log('📦 Updating inventory from sale:', saleData);
