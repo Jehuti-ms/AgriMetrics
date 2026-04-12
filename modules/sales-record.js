@@ -2963,8 +2963,8 @@ updateAnimalCountVisibility() {
     
     const weightUnit = document.getElementById('meat-weight-unit');
     const animalCountContainer = document.getElementById('meat-animal-count-container');
-    const weightInput = document.getElementById('meat-weight');
     const animalCountInput = document.getElementById('meat-animal-count');
+    const weightInput = document.getElementById('meat-weight');
     const productSelect = document.getElementById('sale-product');
     
     if (!weightUnit || !animalCountContainer || !productSelect) {
@@ -2972,17 +2972,16 @@ updateAnimalCountVisibility() {
         return;
     }
     
-    const selectedProduct = productSelect.value;
     const selectedUnit = weightUnit.value;
     
-    console.log('Product:', selectedProduct, 'Unit:', selectedUnit);
+    console.log('Unit selected:', selectedUnit);
     
     // Show animal count ONLY when unit is 'bird'
     const shouldShowAnimalCount = selectedUnit === 'bird';
     
     if (shouldShowAnimalCount) {
         animalCountContainer.classList.remove('hidden');
-        console.log('✅ Showing animal count');
+        console.log('✅ Showing animal count field');
         
         // Update the label
         const animalLabel = document.querySelector('label[for="meat-animal-count"]');
@@ -2990,21 +2989,44 @@ updateAnimalCountVisibility() {
             animalLabel.textContent = 'Number of Birds *';
         }
         
-        // Also update the weight field label to indicate it's for birds
+        // Make weight field optional and readonly for reference
         const weightLabel = document.getElementById('meat-weight-label');
         if (weightLabel) {
-            weightLabel.textContent = 'Number of Birds';
+            weightLabel.textContent = 'Total Weight (Optional)';
         }
         
         const weightHint = document.getElementById('meat-weight-hint');
         if (weightHint) {
-            weightHint.textContent = 'Enter the number of birds being sold';
+            weightHint.textContent = 'Optional - Enter average weight per bird (will auto-calculate)';
+        }
+        
+        // Clear weight field when switching to bird mode
+        if (weightInput) {
+            weightInput.value = '';
+            weightInput.placeholder = 'Auto-calculated from bird count';
+        }
+        
+        // Add listener to animal count field
+        if (animalCountInput && !animalCountInput._hasListener) {
+            animalCountInput.addEventListener('input', () => {
+                console.log('🔄 Animal count changed to:', animalCountInput.value);
+                this.calculateSaleTotal();
+                
+                // Auto-calculate weight if price per kg is set
+                const pricePerKg = document.getElementById('meat-price');
+                if (pricePerKg && weightInput && animalCountInput.value) {
+                    // This is optional - you can remove if not needed
+                    const avgWeightPerBird = 2.0; // Default average weight
+                    weightInput.value = (parseInt(animalCountInput.value) * avgWeightPerBird).toFixed(1);
+                }
+            });
+            animalCountInput._hasListener = true;
         }
     } else {
         animalCountContainer.classList.add('hidden');
-        console.log('❌ Hiding animal count');
+        console.log('❌ Hiding animal count field');
         
-        // Reset weight field label
+        // Reset weight field label for weight-based sales
         const weightLabel = document.getElementById('meat-weight-label');
         if (weightLabel) {
             weightLabel.textContent = 'Total Weight *';
@@ -3014,23 +3036,21 @@ updateAnimalCountVisibility() {
         if (weightHint) {
             weightHint.textContent = 'Total weight in ' + selectedUnit;
         }
+        
+        if (weightInput) {
+            weightInput.placeholder = 'Enter total weight';
+        }
     }
     
-    // Add input listeners for real-time calculation
-    if (animalCountInput && !animalCountInput.hasListener) {
-        animalCountInput.addEventListener('input', () => {
-            console.log('🔄 Animal count changed:', animalCountInput.value);
-            this.calculateSaleTotal();
-        });
-        animalCountInput.hasListener = true;
-    }
-    
-    if (weightInput && !weightInput.hasListener) {
+    // Always ensure weight field has listener
+    if (weightInput && !weightInput._hasListener) {
         weightInput.addEventListener('input', () => {
-            console.log('🔄 Weight changed:', weightInput.value);
-            this.calculateSaleTotal();
+            console.log('🔄 Weight changed to:', weightInput.value);
+            if (selectedUnit !== 'bird') {
+                this.calculateSaleTotal();
+            }
         });
-        weightInput.hasListener = true;
+        weightInput._hasListener = true;
     }
 },
 
@@ -3058,15 +3078,13 @@ calculateSaleTotal() {
         console.log('Meat calculation - Product:', product, 'Unit:', unit, 'Price:', price);
         
         if (unit === 'bird') {
-            // IMPORTANT: For bird unit, use the ANIMAL COUNT field, NOT the weight field
+            // For bird unit: use animal count ONLY
             const birdCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
             total = birdCount * price;
             console.log('Bird calculation:', birdCount, 'birds ×', price, '= $' + total);
             
-            // Update the weight field to show the bird count for reference (optional)
-            if (weightInput && birdCount > 0) {
-                weightInput.value = birdCount;
-            }
+            // DO NOT use weight field for calculation when unit is bird
+            // Weight field is optional for reference only
         } else {
             // For kg/lbs: use weight field
             const weight = weightInput ? parseFloat(weightInput.value) || 0 : 0;
@@ -3089,7 +3107,6 @@ calculateSaleTotal() {
         // Standard products (non-meat)
         const quantityInput = document.getElementById('standard-quantity');
         const priceInput = document.getElementById('standard-price');
-        const unitSelect = document.getElementById('sale-unit');
         
         const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
         const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
@@ -3098,6 +3115,7 @@ calculateSaleTotal() {
         
         const standardSummary = document.getElementById('standard-summary-info');
         if (standardSummary) {
+            const unitSelect = document.getElementById('sale-unit');
             const unit = unitSelect ? unitSelect.value || 'unit' : 'unit';
             standardSummary.textContent = `${quantity} ${unit} at $${price.toFixed(2)}/${unit} = $${total.toFixed(2)}`;
         }
