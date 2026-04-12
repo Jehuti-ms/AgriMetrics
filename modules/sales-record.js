@@ -342,60 +342,127 @@ async saveSale() {
     console.log('========== SAVE SALE STARTED ==========');
     
     try {
-        // Get form values
-        const productSelect = document.getElementById('sale-product');
-        const animalCountInput = document.getElementById('meat-animal-count');
-        const priceInput = document.getElementById('meat-price');
+        // Get all form elements with error checking
+        const saleIdInput = document.getElementById('sale-id');
         const dateInput = document.getElementById('sale-date');
+        const customerInput = document.getElementById('sale-customer');
+        const productSelect = document.getElementById('sale-product');
+        const unitSelect = document.getElementById('sale-unit');
+        const paymentMethodSelect = document.getElementById('sale-payment');
+        const paymentStatusSelect = document.getElementById('sale-status');
+        const notesInput = document.getElementById('sale-notes');
         
-        const product = productSelect ? productSelect.value : '';
-        const animalCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
-        const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
-        const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-        
-        console.log('Product:', product);
-        console.log('Animal Count:', animalCount);
-        console.log('Price:', price);
-        console.log('Date:', date);
-        
-        // Validate
-        if (!product) {
-            this.showNotification('Please select a product', 'error');
+        // Check if modal is open
+        if (!productSelect) {
+            console.error('Sale modal not open - form elements not found');
+            this.showNotification('Please open the sale form first', 'error');
             return;
         }
         
-        if (animalCount <= 0) {
-            this.showNotification('Please enter number of birds', 'error');
+        const saleId = saleIdInput ? saleIdInput.value : '';
+        let date = dateInput ? dateInput.value : '';
+        const customer = customerInput ? customerInput.value : '';
+        const product = productSelect.value;
+        const unit = unitSelect ? unitSelect.value : '';
+        const paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : '';
+        const paymentStatus = paymentStatusSelect ? paymentStatusSelect.value : '';
+        const notes = notesInput ? notesInput.value : '';
+        
+        console.log('Form values:', { date, product, unit, paymentMethod, customer });
+        
+        if (!date || !product || !unit || !paymentMethod) {
+            this.showNotification('Please fill in all required fields', 'error');
             return;
         }
         
-        if (price <= 0) {
-            this.showNotification('Please enter a price', 'error');
-            return;
+        date = this.normalizeDateForStorage(date);
+        
+        // Check for meat product (bird sale)
+        const meatProducts = ['broilers-dressed', 'broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+        const isMeatProduct = meatProducts.includes(product);
+        
+        let saleData;
+        
+        if (isMeatProduct) {
+            // Get meat sale fields
+            const animalCountInput = document.getElementById('meat-animal-count');
+            const weightUnitSelect = document.getElementById('meat-weight-unit');
+            const priceInput = document.getElementById('meat-price');
+            
+            const animalCount = animalCountInput ? parseInt(animalCountInput.value) || 0 : 0;
+            const weightUnit = weightUnitSelect ? weightUnitSelect.value : 'kg';
+            const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+            
+            console.log('Meat sale - Animal count:', animalCount, 'Unit:', weightUnit, 'Price:', unitPrice);
+            
+            if (animalCount <= 0) {
+                this.showNotification('Please enter the number of birds', 'error');
+                return;
+            }
+            
+            if (unitPrice <= 0) {
+                this.showNotification('Please enter a price', 'error');
+                return;
+            }
+            
+            const totalAmount = animalCount * unitPrice;
+            
+            saleData = {
+                id: saleId || 'SALE-' + Date.now(),
+                date: date,
+                customer: customer || 'Walk-in',
+                product: product,
+                unit: weightUnit === 'bird' ? 'bird' : 'kg',
+                quantity: animalCount,
+                unitPrice: unitPrice,
+                totalAmount: totalAmount,
+                paymentMethod: paymentMethod,
+                paymentStatus: paymentStatus || 'paid',
+                notes: notes,
+                animalCount: animalCount,
+                weightUnit: weightUnit,
+                createdAt: new Date().toISOString()
+            };
+            
+            console.log(`Sale: ${animalCount} ${weightUnit === 'bird' ? 'birds' : 'kg'} × ${unitPrice} = ${totalAmount}`);
+            
+        } else {
+            // Standard product sale
+            const quantityInput = document.getElementById('standard-quantity');
+            const priceInput = document.getElementById('standard-price');
+            
+            const quantity = quantityInput ? parseFloat(quantityInput.value) || 0 : 0;
+            const unitPrice = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+            
+            if (quantity <= 0) {
+                this.showNotification('Please enter quantity', 'error');
+                return;
+            }
+            
+            if (unitPrice <= 0) {
+                this.showNotification('Please enter price', 'error');
+                return;
+            }
+            
+            const totalAmount = quantity * unitPrice;
+            
+            saleData = {
+                id: saleId || 'SALE-' + Date.now(),
+                date: date,
+                customer: customer || 'Walk-in',
+                product: product,
+                unit: unit,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                totalAmount: totalAmount,
+                paymentMethod: paymentMethod,
+                paymentStatus: paymentStatus || 'paid',
+                notes: notes,
+                createdAt: new Date().toISOString()
+            };
         }
         
-        const totalAmount = animalCount * price;
-        console.log('Total Amount:', totalAmount);
-        
-        // Create sale data
-        const saleData = {
-            id: 'SALE-' + Date.now(),
-            date: date,
-            customer: 'Walk-in',
-            product: product,
-            unit: 'bird',
-            quantity: animalCount,
-            unitPrice: price,
-            totalAmount: totalAmount,
-            paymentMethod: 'cash',
-            paymentStatus: 'paid',
-            notes: '',
-            animalCount: animalCount,
-            weightUnit: 'bird',
-            createdAt: new Date().toISOString()
-        };
-        
-        console.log('Sale Data:', saleData);
+        console.log('Saving sale data:', saleData);
         
         // Initialize sales array
         if (!window.FarmModules) window.FarmModules = {};
@@ -404,16 +471,15 @@ async saveSale() {
         
         // Add to sales array
         window.FarmModules.appData.sales.push(saleData);
-        console.log('Sales array length:', window.FarmModules.appData.sales.length);
+        console.log('Sales count:', window.FarmModules.appData.sales.length);
         
         // Save to localStorage
         localStorage.setItem('farm-sales-data', JSON.stringify(window.FarmModules.appData.sales));
-        console.log('Saved to localStorage');
         
         // Save to UnifiedDataService
         if (this.dataService) {
             await this.dataService.save('sales', saleData);
-            console.log('Saved to UnifiedDataService');
+            console.log('✅ Saved to UnifiedDataService');
         }
         
         // Create income transaction
@@ -423,7 +489,7 @@ async saveSale() {
             type: 'income',
             category: 'sales',
             amount: saleData.totalAmount,
-            description: `Sale: ${saleData.product} - ${saleData.customer}`,
+            description: `Sale: ${this.formatProductName(saleData.product)} - ${saleData.customer}`,
             paymentMethod: saleData.paymentMethod,
             reference: saleData.id,
             notes: saleData.notes,
@@ -435,7 +501,7 @@ async saveSale() {
         // Save income transaction
         if (this.dataService) {
             await this.dataService.save('transactions', incomeTransaction);
-            console.log('Income transaction saved');
+            console.log('✅ Income transaction saved');
         }
         
         // Direct update to Income module
@@ -447,7 +513,7 @@ async saveSale() {
             if (typeof window.IncomeExpensesModule.saveData === 'function') {
                 window.IncomeExpensesModule.saveData();
             }
-            console.log('Income module updated directly');
+            console.log('💰 Income module updated');
         }
         
         // Dispatch event
@@ -456,7 +522,7 @@ async saveSale() {
                 orderId: saleData.id,
                 amount: saleData.totalAmount,
                 date: saleData.date,
-                description: `Sale: ${saleData.product}`,
+                description: `Sale: ${this.formatProductName(saleData.product)}`,
                 customerName: saleData.customer,
                 product: saleData.product,
                 quantity: saleData.quantity,
@@ -465,12 +531,14 @@ async saveSale() {
         }));
         
         // Update UI
-        this.updateSalesStats();
+        if (typeof this.updateSalesStats === 'function') {
+            this.updateSalesStats();
+        }
         this.renderModule();
         this.hideSaleModal();
         
-        this.showNotification(`✅ Sale saved: ${animalCount} birds for ${this.formatCurrency(totalAmount)}`, 'success');
-        console.log('========== SAVE SALE COMPLETED SUCCESSFULLY ==========');
+        this.showNotification(`✅ Sale saved: ${this.formatCurrency(saleData.totalAmount)}`, 'success');
+        console.log('========== SAVE SALE COMPLETED ==========');
         
     } catch (error) {
         console.error('========== ERROR IN SAVE SALE ==========');
