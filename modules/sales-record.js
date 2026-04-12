@@ -2815,14 +2815,14 @@ updateProductionItemsDisplay: function() {
         }
     },
 
-  handleProductChange() {
+ handleProductChange() {
     console.log('🔵 handleProductChange() executing...');
    
     const productSelect = document.getElementById('sale-product');
     if (!productSelect) return;
     
     const selectedValue = productSelect.value;
-    const meatProducts = ['broilers-dressed', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
+    const meatProducts = ['broilers-dressed-weight', 'broilers-dressed-bird', 'pork', 'beef', 'chicken-parts', 'goat', 'lamb'];
     const isMeatProduct = meatProducts.includes(selectedValue);
     
     const meatSection = document.getElementById('meat-section');
@@ -2837,21 +2837,38 @@ updateProductionItemsDisplay: function() {
         if (standardSummary) standardSummary.style.display = 'none';
         
         const weightUnit = document.getElementById('meat-weight-unit');
+        const animalCountContainer = document.getElementById('meat-animal-count-container');
+        
         if (weightUnit) {
             const currentValue = weightUnit.value;
             weightUnit.innerHTML = '';
             
-            if (selectedValue === 'broilers-dressed') {
+            if (selectedValue === 'broilers-dressed-bird') {
+                // Dressed birds sold per bird
                 weightUnit.innerHTML = `
-                    <option value="bird">bird</option>
+                    <option value="bird" selected>bird</option>
+                `;
+                if (animalCountContainer) {
+                    animalCountContainer.classList.remove('hidden');
+                }
+            } else if (selectedValue === 'broilers-dressed-weight') {
+                // Dressed birds sold by weight
+                weightUnit.innerHTML = `
                     <option value="kg" selected>kg</option>
                     <option value="lbs">lbs</option>
                 `;
+                if (animalCountContainer) {
+                    animalCountContainer.classList.add('hidden');
+                }
             } else {
+                // Other meat: kg, lbs only
                 weightUnit.innerHTML = `
                     <option value="kg" selected>kg</option>
                     <option value="lbs">lbs</option>
                 `;
+                if (animalCountContainer) {
+                    animalCountContainer.classList.add('hidden');
+                }
             }
             
             if (currentValue && (currentValue === 'bird' || currentValue === 'kg' || currentValue === 'lbs')) {
@@ -2859,11 +2876,23 @@ updateProductionItemsDisplay: function() {
                 if (optionExists) weightUnit.value = currentValue;
             }
             
-            // CRITICAL: Call updateMeatLabels after changing options
             setTimeout(() => {
                 this.updateMeatLabels();
                 this.updateAnimalCountVisibility();
             }, 50);
+        }
+        
+        // Set default price
+        if (selectedValue === 'broilers-dressed-bird') {
+            const priceInput = document.getElementById('meat-price');
+            if (priceInput && !priceInput.value) {
+                priceInput.value = 8.00; // Default price per bird
+            }
+        } else if (selectedValue === 'broilers-dressed-weight') {
+            const priceInput = document.getElementById('meat-price');
+            if (priceInput && !priceInput.value) {
+                priceInput.value = 5.50; // Default price per kg
+            }
         }
     } else {
         if (meatSection) meatSection.style.display = 'none';
@@ -2882,7 +2911,7 @@ updateProductionItemsDisplay: function() {
     }
     
     this.calculateSaleTotal();
-},   
+},
       
     // ==================== MEAT/BIRD SALE METHODS ====================
 updateMeatLabels() {
