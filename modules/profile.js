@@ -414,8 +414,8 @@ const ProfileModule = {
                     <p class="module-subtitle">Manage your farm information and settings</p>
                 </div>
 
-                 <!-- ===== QUICK ACTION HEADING ===== -->
-            <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+                <!-- ===== OVERVIEW HEADING ===== -->
+            <h2 class="section-title">📊 Overview</h2>
             
                 <!-- Stats Overview -->
                 <div class="stats-overview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
