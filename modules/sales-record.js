@@ -359,7 +359,7 @@ async saveSale() {
     const paymentStatus = paymentStatusSelect ? paymentStatusSelect.value : '';
     const notes = notesInput ? notesInput.value : '';
 
-    console.log('Form values:', { date, product, unit, paymentMethod, customer });
+    console.log('Form values:', { date, product, unit, paymentMethod });
 
     if (!date || !product || !unit || !paymentMethod) {
         this.showNotification('Please fill in all required fields', 'error');
@@ -386,18 +386,26 @@ async saveSale() {
         
         let totalAmount;
         let priceUnit;
+        let finalQuantity;
         
         console.log('Meat sale data:', { animalCount, weight, weightUnit, unitPrice });
         
+        // FIXED: When unit is 'bird', use animalCount (number of birds)
         if (weightUnit === 'bird') {
+            finalQuantity = animalCount;
             totalAmount = animalCount * unitPrice;
             priceUnit = 'per-bird';
+            console.log('Bird calculation:', animalCount, 'birds ×', unitPrice, '= $' + totalAmount);
         } else if (weightUnit === 'lbs') {
+            finalQuantity = weight;
             totalAmount = weight * unitPrice;
             priceUnit = 'per-lb';
+            console.log('Weight calculation (lbs):', weight, 'lbs ×', unitPrice, '= $' + totalAmount);
         } else {
+            finalQuantity = weight;
             totalAmount = weight * unitPrice;
             priceUnit = 'per-kg';
+            console.log('Weight calculation (kg):', weight, 'kg ×', unitPrice, '= $' + totalAmount);
         }
         
         saleData = {
@@ -406,7 +414,7 @@ async saveSale() {
             customer: customer || 'Walk-in',
             product: product,
             unit: unit,
-            quantity: weightUnit === 'bird' ? animalCount : weight,
+            quantity: finalQuantity,
             unitPrice: unitPrice,
             totalAmount: totalAmount,
             paymentMethod: paymentMethod,
@@ -440,31 +448,27 @@ async saveSale() {
         };
     }
 
-    console.log('Saving sale data:', saleData);
-
-    // Validate
+    // Validate total amount
     if (!saleData.totalAmount || saleData.totalAmount <= 0) {
-        this.showNotification('Please enter valid quantity and price', 'error');
+        this.showNotification('Please enter valid quantity and price (total must be greater than 0)', 'error');
         return;
     }
 
+    console.log('Saving sale data:', saleData);
+
+    if (this.pendingProductionSale) {
+        saleData.productionSource = true;
+        saleData.productionSourceId = this.pendingProductionSale.id;
+        this.updateProductionAfterSale(this.pendingProductionSale.id, saleData);
+    }
+
     let isNewSale = false;
-    let oldSale = null;
 
     if (saleId) {
         // Update existing sale
-        oldSale = window.FarmModules.appData.sales?.find(s => s.id === saleId);
         const index = window.FarmModules.appData.sales.findIndex(s => s.id === saleId);
         if (index !== -1) {
             window.FarmModules.appData.sales[index] = saleData;
-            if (this.broadcaster) {
-                this.broadcaster.broadcast('sale-updated', {
-                    module: 'sales-record',
-                    timestamp: new Date().toISOString(),
-                    oldSale: oldSale,
-                    newSale: saleData
-                });
-            }
             this.showNotification('Sale updated successfully!', 'success');
         }
     } else {
@@ -474,26 +478,23 @@ async saveSale() {
             window.FarmModules.appData.sales = [];
         }
         window.FarmModules.appData.sales.push(saleData);
-        
-        if (this.broadcaster) {
-            this.broadcaster.broadcast('sale-recorded', {
-                module: 'sales-record',
-                timestamp: new Date().toISOString(),
-                sale: saleData
-            });
-        }
         this.showNotification('Sale recorded successfully!', 'success');
-    }
-
-    // Save to UnifiedDataService
-    if (this.dataService) {
-        await this.dataService.save('sales', saleData);
     }
 
     // Save to localStorage
     localStorage.setItem('farm-sales-data', JSON.stringify(window.FarmModules.appData.sales));
 
-    // ===== UPDATE INCOME MODULE DIRECTLY =====
+    // Save to UnifiedDataService
+    if (this.dataService) {
+        await this.dataService.save('sales', saleData);
+        console.log('✅ Sale saved to UnifiedDataService');
+    }
+
+    // Update inventory and production
+    this.updateInventoryFromSale(saleData);
+    this.updateProductionFromSale(saleData);
+
+    // Create income transaction
     const incomeTransaction = {
         id: Date.now(),
         date: saleData.date,
@@ -508,24 +509,20 @@ async saveSale() {
         saleId: saleData.id
     };
 
-    // Method 1: Save to UnifiedDataService
+    // Save to UnifiedDataService
     if (this.dataService) {
         await this.dataService.save('transactions', incomeTransaction);
         console.log('✅ Income transaction saved to UnifiedDataService');
     }
 
-    // Method 2: Direct update if income module is accessible
+    // Direct update to Income module
     if (window.IncomeExpensesModule && window.IncomeExpensesModule.transactions) {
-        console.log('💰 Directly updating IncomeExpensesModule');
         window.IncomeExpensesModule.transactions.unshift(incomeTransaction);
         window.IncomeExpensesModule.saveData();
-        
-        if (window.app?.currentSection === 'income-expenses') {
-            window.IncomeExpensesModule.renderModule();
-        }
+        console.log('💰 Directly updated IncomeExpensesModule');
     }
 
-    // Method 3: Dispatch custom event
+    // Dispatch event
     const saleCompletedEvent = new CustomEvent('sale-completed', {
         detail: {
             orderId: saleData.id,
@@ -543,11 +540,13 @@ async saveSale() {
     console.log('📢 Dispatched sale-completed event');
 
     // Update UI
+    this.saveData();
     this.renderModule();
     this.hideSaleModal();
     this.updateSalesStats();
-    
-    console.log('✅ Sale saved successfully');
+    this.pendingProductionSale = null;
+
+    console.log('✅ Sale saved successfully:', saleData);
 },
     
     // ===== UPDATE INVENTORY FROM SALE =====
