@@ -1420,6 +1420,65 @@ div.quick-action-grid {
         display: grid !important;
     }
 }
+
+/* Section Headers */
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-color);
+    display: inline-block;
+}
+
+.overview-section,
+.quick-actions-section {
+    margin-bottom: 24px;
+}
+
+/* Overview section specific */
+.overview-section .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* Quick Actions section specific */
+.quick-actions-section .quick-action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.quick-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+    background: var(--primary-color)10;
+}
+
+.action-icon {
+    font-size: 28px;
+}
+
+.action-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
 }
         `;
         document.head.appendChild(style);
