@@ -892,10 +892,10 @@ setupGlobalListeners() {
     },
 
     // ==================== QUICK ACTIONS ====================
-    handleQuickAction(action) {
+   handleQuickAction(action) {
     console.log(`⚡ Quick action: ${action}`);
     
-    // FIXED: Map actions to correct navigation
+    // Direct navigation based on action
     switch(action) {
         case 'add-income':
             if (window.app && window.app.showSection) {
@@ -903,40 +903,58 @@ setupGlobalListeners() {
                 setTimeout(() => {
                     if (window.IncomeExpensesModule && window.IncomeExpensesModule.showAddIncome) {
                         window.IncomeExpensesModule.showAddIncome();
+                    } else if (window.IncomeExpensesModule && window.IncomeExpensesModule.showTransactionModal) {
+                        window.IncomeExpensesModule.showTransactionModal();
+                        setTimeout(() => {
+                            const typeSelect = document.getElementById('transaction-type');
+                            if (typeSelect) typeSelect.value = 'income';
+                        }, 100);
                     }
                 }, 500);
             }
             break;
+            
         case 'add-expense':
             if (window.app && window.app.showSection) {
                 window.app.showSection('income-expenses');
                 setTimeout(() => {
                     if (window.IncomeExpensesModule && window.IncomeExpensesModule.showAddExpense) {
                         window.IncomeExpensesModule.showAddExpense();
+                    } else if (window.IncomeExpensesModule && window.IncomeExpensesModule.showTransactionModal) {
+                        window.IncomeExpensesModule.showTransactionModal();
+                        setTimeout(() => {
+                            const typeSelect = document.getElementById('transaction-type');
+                            if (typeSelect) typeSelect.value = 'expense';
+                        }, 100);
                     }
                 }, 500);
             }
             break;
+            
         case 'check-inventory':
             if (window.app && window.app.showSection) {
                 window.app.showSection('inventory-check');
             }
             break;
+            
         case 'record-feed':
             if (window.app && window.app.showSection) {
                 window.app.showSection('feed-record');
             }
             break;
+            
         case 'add-production':
             if (window.app && window.app.showSection) {
                 window.app.showSection('production');
             }
             break;
+            
         case 'view-reports':
             if (window.app && window.app.showSection) {
                 window.app.showSection('reports');
             }
             break;
+            
         default:
             console.log(`Unknown action: ${action}`);
     }
@@ -944,17 +962,41 @@ setupGlobalListeners() {
     this.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
 },
 
-    getActionName(action) {
-        const names = {
-            'add-income': 'Income & Expenses',
-            'add-expense': 'Income & Expenses', 
-            'check-inventory': 'Inventory Check',
-            'record-feed': 'Feed Records',
-            'add-production': 'Production',
-            'view-reports': 'Reports'
-        };
-        return names[action] || action;
-    },
+    navigateToModule(moduleName) {
+    console.log(`🔍 Navigating to module: ${moduleName}`);
+    
+    // Try different navigation methods
+    if (window.app && typeof window.app.showSection === 'function') {
+        window.app.showSection(moduleName);
+    } else if (window.FarmManagementApp && typeof window.FarmManagementApp.showSection === 'function') {
+        window.FarmManagementApp.showSection(moduleName);
+    } else if (window.FarmModules && typeof window.FarmModules.renderModule === 'function') {
+        const contentArea = document.getElementById('content-area');
+        if (contentArea) {
+            window.FarmModules.renderModule(moduleName, contentArea);
+        }
+    } else {
+        // Fallback: try to find and click the nav item
+        const navItem = document.querySelector(`.nav-item[data-view="${moduleName}"]`);
+        if (navItem) {
+            navItem.click();
+        } else {
+            console.error(`Cannot navigate to ${moduleName}`);
+        }
+    }
+},
+
+getActionName(action) {
+    const names = {
+        'add-income': 'Income & Expenses',
+        'add-expense': 'Income & Expenses', 
+        'check-inventory': 'Inventory Check',
+        'record-feed': 'Feed Records',
+        'add-production': 'Production',
+        'view-reports': 'Reports'
+    };
+    return names[action] || action;
+},
 
     // ==================== ACTIVITY MANAGEMENT ====================
     handleActivityClick(activityId) {
