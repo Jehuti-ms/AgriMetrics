@@ -290,44 +290,57 @@ setupGlobalListeners() {
 },
 
     // dashboard.js - Fix stats loading
-    async loadAndDisplayStats() {
-        console.log('📊 Loading and displaying stats...');
+    loadAndDisplayStats() {
+    console.log('📊 Loading and displaying stats...');
+    
+    // Use the same logic as updateStats
+    let sales = [];
+    let transactions = [];
+    let inventory = [];
+    
+    if (window.UnifiedDataService) {
+        sales = window.UnifiedDataService.get('sales') || [];
+        transactions = window.UnifiedDataService.get('transactions') || [];
+        inventory = window.UnifiedDataService.get('inventory') || [];
         
-        // Wait for data service to be ready
-        if (!window.unifiedDataService) {
-            console.log('⏳ Waiting for UnifiedDataService...');
-            setTimeout(() => this.loadAndDisplayStats(), 500);
-            return;
+        console.log(`📊 Data counts - Sales: ${sales.length}, Transactions: ${transactions.length}, Inventory: ${inventory.length}`);
+    } else if (window.FarmData) {
+        sales = window.FarmData.sales || [];
+        transactions = window.FarmData.transactions || [];
+        inventory = window.FarmData.inventory || [];
+    }
+    
+    // Calculate totals
+    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+    const netProfit = totalRevenue - totalExpenses;
+    const inventoryCount = inventory.length;
+    
+    // Update DOM elements
+    const revenueEl = document.getElementById('total-revenue');
+    if (revenueEl) revenueEl.textContent = this.formatCurrency(totalRevenue);
+    
+    const expensesEl = document.getElementById('total-expenses');
+    if (expensesEl) expensesEl.textContent = this.formatCurrency(totalExpenses);
+    
+    const profitEl = document.getElementById('net-profit');
+    if (profitEl) profitEl.textContent = this.formatCurrency(netProfit);
+    
+    const inventoryEl = document.getElementById('inventory-items');
+    if (inventoryEl) inventoryEl.textContent = inventoryCount;
+    
+    // If we have data, don't show loading message
+    if (totalRevenue > 0 || totalExpenses > 0 || inventoryCount > 0) {
+        console.log(`✅ Dashboard updated - Revenue: ${this.formatCurrency(totalRevenue)}, Expenses: ${this.formatCurrency(totalExpenses)}`);
+    } else {
+        console.log('⚠️ Stats are empty, waiting for data...');
+        // Show loading message but don't overwrite
+        const statsContainer = document.querySelector('.stats-overview');
+        if (statsContainer && !statsContainer.querySelector('.stat-value')?.textContent !== '0') {
+            // Only show loading if truly empty
         }
-        
-        // Get data from service
-        const inventory = window.unifiedDataService.getData('inventory') || [];
-        const production = window.unifiedDataService.getData('production') || [];
-        const feedRecords = window.unifiedDataService.getData('feedRecords') || [];
-        const mortality = window.unifiedDataService.getData('mortality') || [];
-        const transactions = window.unifiedDataService.getData('transactions') || [];
-        
-        console.log(`📊 Data counts - Inventory: ${inventory.length}, Production: ${production.length}, Feed: ${feedRecords.length}`);
-        
-        if (inventory.length === 0 && production.length === 0 && feedRecords.length === 0) {
-            console.log('⚠️ Stats are empty, waiting for data...');
-            // Show loading message in dashboard
-            this.showDashboardLoading();
-            return;
-        }
-        
-        // Calculate stats
-        const stats = {
-            totalInventory: inventory.reduce((sum, item) => sum + (item.quantity || 0), 0),
-            totalProduction: production.reduce((sum, item) => sum + (item.quantity || 0), 0),
-            totalFeedCost: feedRecords.reduce((sum, item) => sum + (item.cost || 0), 0),
-            mortalityRate: this.calculateMortalityRate(mortality, production),
-            recentTransactions: transactions.slice(0, 5)
-        };
-        
-        this.updateDashboardUI(stats);
-        console.log('✅ Dashboard stats updated:', stats);
-    },
+    }
+},
     
     showDashboardLoading() {
         const statsContainer = document.getElementById('dashboard-stats');
