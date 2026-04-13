@@ -364,19 +364,123 @@ setupGlobalListeners() {
     },
 
     // ==================== EVENT HANDLERS ====================
-    setupEventListeners() {
-        // Clear existing listeners first
-        this.removeAllEventListeners();
+  setupEventListeners() {
+    console.log('📡 Setting up global listeners for dashboard...');
+    
+    // Clear existing listeners
+    this.removeAllEventListeners();
+    
+    if (!this.element) return;
+    
+    // ===== LISTEN TO UNIFIED DATA SERVICE =====
+    if (window.UnifiedDataService) {
+        // Listen for sales updates
+        window.UnifiedDataService.on('sales-updated', (sales) => {
+            console.log('📊 Dashboard received sales update:', sales?.length);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+            this.renderDashboard();  // ← Refresh the dashboard display
+        });
         
-        if (!this.element) return;
-
-        // Main event delegation
-        this.addEventListener(this.element, 'click', this.handleElementClick.bind(this));
-        this.addEventListener(this.element, 'change', this.handleElementChange.bind(this));
+        // Listen for transactions updates
+        window.UnifiedDataService.on('transactions-updated', (transactions) => {
+            console.log('📊 Dashboard received transactions update:', transactions?.length);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+        });
         
-        // Setup data change listeners
-        this.setupDataChangeListeners();
-    },
+        // Listen for inventory updates
+        window.UnifiedDataService.on('inventory-updated', (inventory) => {
+            console.log('📊 Dashboard received inventory update:', inventory?.length);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+        });
+        
+        // Listen for production updates
+        window.UnifiedDataService.on('production-updated', (production) => {
+            console.log('📊 Dashboard received production update:', production?.length);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+        });
+        
+        // Listen for feed records updates
+        window.UnifiedDataService.on('feedRecords-updated', (feedRecords) => {
+            console.log('📊 Dashboard received feed update:', feedRecords?.length);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+        });
+        
+        // Listen for any data saved
+        window.UnifiedDataService.on('data-saved', (data) => {
+            console.log('📊 Dashboard received data-saved event:', data?.collection);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+        });
+        
+        // Listen for real-time updates
+        window.UnifiedDataService.on('realtime-update', (update) => {
+            console.log('📊 Dashboard received realtime update:', update?.collection);
+            this.updateStats();  // ← Changed from loadAndDisplayStats
+        });
+    }
+    
+    // ===== ALSO LISTEN TO CUSTOM EVENTS (fallback) =====
+    window.addEventListener('sale-completed', () => {
+        console.log('📊 Dashboard received sale-completed event');
+        this.updateStats();  // ← Changed from loadAndDisplayStats
+    });
+    
+    window.addEventListener('farm-data-updated', () => {
+        console.log('📊 Dashboard received farm-data-updated event');
+        this.updateStats();  // ← Changed from loadAndDisplayStats
+    });
+    
+    window.addEventListener('dashboard-update', (event) => {
+        console.log('📊 Dashboard received dashboard-update event:', event?.detail);
+        this.updateStats();  // ← Changed from loadAndDisplayStats
+    });
+    
+    // Listen for clicks on quick action buttons
+    this.element.addEventListener('click', (e) => {
+        const action = e.target.closest('[data-action]');
+        if (action) {
+            const actionType = action.getAttribute('data-action');
+            console.log('🎯 Dashboard action:', actionType);
+            
+            switch(actionType) {
+                case 'add-sale':
+                    if (window.SalesRecordModule) {
+                        window.SalesRecordModule.showSaleModal();
+                    }
+                    break;
+                case 'add-expense':
+                    if (window.app && window.app.showSection) {
+                        window.app.showSection('income-expenses');
+                        setTimeout(() => {
+                            if (window.IncomeExpensesModule) {
+                                window.IncomeExpensesModule.showAddExpense();
+                            }
+                        }, 500);
+                    }
+                    break;
+                case 'add-inventory':
+                    if (window.app && window.app.showSection) {
+                        window.app.showSection('inventory-check');
+                        setTimeout(() => {
+                            const addBtn = document.getElementById('add-item-btn');
+                            if (addBtn) addBtn.click();
+                        }, 500);
+                    }
+                    break;
+                case 'record-mortality':
+                    if (window.app && window.app.showSection) {
+                        window.app.showSection('broiler-mortality');
+                        setTimeout(() => {
+                            const recordBtn = document.getElementById('record-mortality-btn');
+                            if (recordBtn) recordBtn.click();
+                        }, 500);
+                    }
+                    break;
+            }
+        }
+    });
+    
+    console.log('✅ Dashboard listening to events');
+},
 
     handleElementClick(event) {
         const target = event.target;
@@ -1141,6 +1245,98 @@ setupGlobalListeners() {
     window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: stats }));
 },
 
+    // Add this method to your DashboardModule (around line 300-400 area)
+
+updateStats() {
+    console.log('📊 Updating dashboard stats...');
+    
+    // Get fresh data from UnifiedDataService
+    let sales = [];
+    let transactions = [];
+    let inventory = [];
+    let production = [];
+    let feedRecords = [];
+    
+    if (window.UnifiedDataService) {
+        sales = window.UnifiedDataService.get('sales') || [];
+        transactions = window.UnifiedDataService.get('transactions') || [];
+        inventory = window.UnifiedDataService.get('inventory') || [];
+        production = window.UnifiedDataService.get('production') || [];
+        feedRecords = window.UnifiedDataService.get('feedRecords') || [];
+        
+        console.log(`📊 Data counts - Sales: ${sales.length}, Transactions: ${transactions.length}, Inventory: ${inventory.length}`);
+    } else {
+        // Fallback to FarmData
+        sales = window.FarmData?.sales || [];
+        transactions = window.FarmData?.transactions || [];
+        inventory = window.FarmData?.inventory || [];
+        production = window.FarmData?.production || [];
+    }
+    
+    // Calculate total revenue from sales
+    const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    
+    // Calculate today's revenue
+    const today = new Date().toISOString().split('T')[0];
+    const todayRevenue = sales.filter(sale => sale.date === today).reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    
+    // Calculate total expenses from transactions
+    const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    // Calculate net profit
+    const netProfit = totalRevenue - totalExpenses;
+    
+    // Count low stock items from inventory
+    const lowStockItems = inventory.filter(item => (item.currentStock || 0) <= (item.minStock || 5)).length;
+    
+    // Update DOM elements
+    const totalRevenueEl = document.getElementById('total-revenue');
+    if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
+    
+    const todayRevenueEl = document.getElementById('today-revenue');
+    if (todayRevenueEl) todayRevenueEl.textContent = this.formatCurrency(todayRevenue);
+    
+    const totalExpensesEl = document.getElementById('total-expenses');
+    if (totalExpensesEl) totalExpensesEl.textContent = this.formatCurrency(totalExpenses);
+    
+    const netProfitEl = document.getElementById('net-profit');
+    if (netProfitEl) netProfitEl.textContent = this.formatCurrency(netProfit);
+    
+    const lowStockEl = document.getElementById('low-stock-items');
+    if (lowStockEl) lowStockEl.textContent = lowStockItems;
+    
+    const totalSalesEl = document.getElementById('total-sales');
+    if (totalSalesEl) totalSalesEl.textContent = sales.length;
+    
+    // If stats are empty, show loading message
+    if (sales.length === 0 && transactions.length === 0 && inventory.length === 0) {
+        console.log('⚠️ Stats are empty, waiting for data...');
+    }
+    
+    // Also update the stats cards in the dashboard display
+    this.updateDashboardStats(totalRevenue, totalExpenses, netProfit, inventory.length, lowStockItems);
+},
+
+updateDashboardStats(totalRevenue, totalExpenses, netProfit, inventoryCount, lowStockItems) {
+    // Helper method to update the stat cards
+    const statMappings = [
+        { id: 'total-revenue', value: this.formatCurrency(totalRevenue) },
+        { id: 'total-expenses', value: this.formatCurrency(totalExpenses) },
+        { id: 'net-profit', value: this.formatCurrency(netProfit) },
+        { id: 'inventory-items', value: inventoryCount },
+        { id: 'low-stock-items', value: lowStockItems }
+    ];
+    
+    statMappings.forEach(stat => {
+        const element = document.getElementById(stat.id);
+        if (element) {
+            element.textContent = stat.value;
+            element.classList.add('stat-updated');
+            setTimeout(() => element.classList.remove('stat-updated'), 500);
+        }
+    });
+},
+    
 updateLastSyncTime() {
     const lastSync = localStorage.getItem('dashboard-last-sync');
     if (!lastSync) return;
