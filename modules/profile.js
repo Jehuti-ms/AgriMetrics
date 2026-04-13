@@ -253,65 +253,68 @@ getFirstActivityDate() {
     },
 
     updateDisplay() {
-        // Update view mode display
-        const farmNameDisplay = document.getElementById('display-farm-name');
-        if (farmNameDisplay) farmNameDisplay.textContent = this.profileData.farmName;
-        
-        const farmerNameDisplay = document.getElementById('display-farmer-name');
-        if (farmerNameDisplay) farmerNameDisplay.textContent = this.profileData.farmerName;
-        
-        const emailDisplay = document.getElementById('display-email');
-        if (emailDisplay) emailDisplay.textContent = this.profileData.email || this.getUserEmail();
-        
-        const locationDisplay = document.getElementById('display-location');
-        if (locationDisplay) locationDisplay.textContent = this.profileData.farmLocation || 'Not set';
-        
-        const phoneDisplay = document.getElementById('display-phone');
-        if (phoneDisplay) phoneDisplay.textContent = this.profileData.phone || 'Not set';
-        
-        const memberSinceDisplay = document.getElementById('display-member-since');
-        if (memberSinceDisplay) memberSinceDisplay.textContent = `Member since: ${this.profileData.memberSince}`;
-        
-        // Update edit mode inputs
-        const farmNameInput = document.getElementById('profile-farm-name');
-        if (farmNameInput) farmNameInput.value = this.profileData.farmName;
-        
-        const farmerNameInput = document.getElementById('profile-farmer-name');
-        if (farmerNameInput) farmerNameInput.value = this.profileData.farmerName;
-        
-        const farmTypeSelect = document.getElementById('profile-farm-type');
-        if (farmTypeSelect) farmTypeSelect.value = this.profileData.farmType;
-        
-        const farmLocationInput = document.getElementById('profile-farm-location');
-        if (farmLocationInput) farmLocationInput.value = this.profileData.farmLocation || '';
-        
-        const phoneInput = document.getElementById('profile-phone');
-        if (phoneInput) phoneInput.value = this.profileData.phone || '';
-        
-        const currencySelect = document.getElementById('profile-currency');
-        if (currencySelect) currencySelect.value = this.profileData.currency;
-        
-        const lowStockInput = document.getElementById('profile-low-stock');
-        if (lowStockInput) lowStockInput.value = this.profileData.lowStockThreshold;
-        
-        const autoSyncCheck = document.getElementById('auto-sync');
-        if (autoSyncCheck) autoSyncCheck.checked = this.profileData.autoSync !== false;
-        
-        const localStorageCheck = document.getElementById('local-storage');
-        if (localStorageCheck) localStorageCheck.checked = this.profileData.localStorageEnabled !== false;
-        
-        const themeSelect = document.getElementById('theme-selector');
-        if (themeSelect) themeSelect.value = this.profileData.theme || 'light';
-    },
-
-    toggleEditMode(showForm) {
-        const viewCard = document.getElementById('profile-view-card');
-        const editForm = document.getElementById('profile-edit-form');
-        
-        if (viewCard) viewCard.style.display = showForm ? 'none' : 'block';
-        if (editForm) editForm.style.display = showForm ? 'block' : 'none';
-    },
-
+    // Update view mode display
+    const farmNameDisplay = document.getElementById('display-farm-name');
+    if (farmNameDisplay) farmNameDisplay.textContent = this.profileData.farmName;
+    
+    const farmerNameDisplay = document.getElementById('display-farmer-name');
+    if (farmerNameDisplay) farmerNameDisplay.textContent = this.profileData.farmerName;
+    
+    const emailDisplay = document.getElementById('display-email');
+    if (emailDisplay) emailDisplay.textContent = this.profileData.email || this.getUserEmail();
+    
+    const locationDisplay = document.getElementById('display-location');
+    if (locationDisplay) locationDisplay.textContent = this.profileData.farmLocation || 'Not set';
+    
+    const phoneDisplay = document.getElementById('display-phone');
+    if (phoneDisplay) phoneDisplay.textContent = this.profileData.phone || 'Not set';
+    
+    // FIXED: Format member since date nicely
+    const memberSinceDisplay = document.getElementById('display-member-since');
+    if (memberSinceDisplay && this.profileData.memberSince) {
+        const memberSinceDate = new Date(this.profileData.memberSince);
+        const formattedDate = memberSinceDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        memberSinceDisplay.textContent = `Member since: ${formattedDate}`;
+    } else if (memberSinceDisplay) {
+        memberSinceDisplay.textContent = 'Member since: Today';
+    }
+    
+    // Update edit mode inputs
+    const farmNameInput = document.getElementById('profile-farm-name');
+    if (farmNameInput) farmNameInput.value = this.profileData.farmName;
+    
+    const farmerNameInput = document.getElementById('profile-farmer-name');
+    if (farmerNameInput) farmerNameInput.value = this.profileData.farmerName;
+    
+    const farmTypeSelect = document.getElementById('profile-farm-type');
+    if (farmTypeSelect) farmTypeSelect.value = this.profileData.farmType;
+    
+    const farmLocationInput = document.getElementById('profile-farm-location');
+    if (farmLocationInput) farmLocationInput.value = this.profileData.farmLocation || '';
+    
+    const phoneInput = document.getElementById('profile-phone');
+    if (phoneInput) phoneInput.value = this.profileData.phone || '';
+    
+    const currencySelect = document.getElementById('profile-currency');
+    if (currencySelect) currencySelect.value = this.profileData.currency;
+    
+    const lowStockInput = document.getElementById('profile-low-stock');
+    if (lowStockInput) lowStockInput.value = this.profileData.lowStockThreshold;
+    
+    const autoSyncCheck = document.getElementById('auto-sync');
+    if (autoSyncCheck) autoSyncCheck.checked = this.profileData.autoSync !== false;
+    
+    const localStorageCheck = document.getElementById('local-storage');
+    if (localStorageCheck) localStorageCheck.checked = this.profileData.localStorageEnabled !== false;
+    
+    const themeSelect = document.getElementById('theme-selector');
+    if (themeSelect) themeSelect.value = this.profileData.theme || 'light';
+},
+    
     updateStatsFromModules() {
     try {
         // Get data from UnifiedDataService for accurate counts
