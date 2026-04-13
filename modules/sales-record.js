@@ -4,6 +4,7 @@ console.log('💰 Loading Enhanced Sales Records module...');
 const SalesRecordModule = {
     name: 'sales-record',
     initialized: false,
+    _isSaving: false,
     element: null,
     currentEditingId: null,
     pendingProductionSale: null,
@@ -672,6 +673,17 @@ const SalesRecordModule = {
         });
     },
 
+    removeAllEventListeners() {
+    if (!this.element) return;
+    
+    // Clone and replace to remove all listeners
+    const newElement = this.element.cloneNode(true);
+    this.element.parentNode.replaceChild(newElement, this.element);
+    this.element = newElement;
+    document.getElementById('content-area');
+    console.log('🧹 Removed all event listeners');
+},
+
     showSaleModal() {
         this.hideAllModals();
         const modal = document.getElementById('sale-modal');
@@ -814,7 +826,14 @@ const SalesRecordModule = {
 },
 
     async saveSale() {
-        console.log('💾 SAVING SALE...');
+    // Prevent multiple simultaneous saves
+    if (this._isSaving) {
+        console.log('⚠️ Save already in progress, skipping...');
+        return;
+    }
+    
+    this._isSaving = true;
+    console.log('💾 SAVING SALE...');
         
         try {
             const productSelect = document.getElementById('sale-product');
@@ -940,12 +959,15 @@ const SalesRecordModule = {
             }
             
             this.hideSaleModal();
+            
+            // Show single notification
             this.showNotification(`✅ Sale saved: ${this.formatCurrency(saleData.totalAmount)}`, 'success');
-            console.log('✅ Sale saved successfully');
             
         } catch (error) {
             console.error('Error saving sale:', error);
             this.showNotification('Error saving sale: ' + error.message, 'error');
+        } finally {
+            this._isSaving = false;
         }
     },
 
