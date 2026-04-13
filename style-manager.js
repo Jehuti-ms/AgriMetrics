@@ -1395,7 +1395,15 @@ div.quick-action-grid {
     display: block;
 }
 
-
+/* Force correct styling for Overview and Quick Actions headings */
+    .section-title {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
+        margin-bottom: 16px !important;
+        display: block !important;
+    }
+    
         `;
         document.head.appendChild(style);
     },
