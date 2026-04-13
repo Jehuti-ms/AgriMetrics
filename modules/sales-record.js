@@ -316,45 +316,53 @@ const SalesRecordModule = {
                 </div>
 
                <h2 class="section-title">📊 Overview</h2>
-<div class="stats-grid">
-    <div class="stat-card">
-        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
-        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="today-sales">${this.formatCurrency(todayRevenue)}</div>
-        <div style="font-size: 14px; color: var(--text-secondary);">Today's Revenue</div>
-    </div>
-    <div class="stat-card">
-        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
-        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-revenue">${this.formatCurrency(totalRevenue)}</div>
-        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
-    </div>
-    <div class="stat-card">
-        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
-        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-animals">${totalAnimals}</div>
-        <div style="font-size: 14px; color: var(--text-secondary);">Animals Sold</div>
-    </div>
-    <div class="stat-card">
-        <div style="font-size: 24px; margin-bottom: 8px;">⚖️</div>
-        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
-        <div style="font-size: 14px; color: var(--text-secondary);">Meat Weight (kg)</div>
-    </div>
-</div>
-
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="today-sales">${this.formatCurrency(todayRevenue)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Today's Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-revenue">${this.formatCurrency(totalRevenue)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-animals">${totalAnimals}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Animals Sold</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⚖️</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Meat Weight (kg)</div>
+                    </div>
+                </div>
+                
+                                <!-- Quick Actions -->
                 <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-sale-btn">
-                        <span class="action-icon">➕</span>
-                        <span class="action-label">Record Sale</span>
+                        <div style="font-size: 32px;">➕</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Record Sale</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Add new sale record</span>
                     </button>
                     <button class="quick-action-btn" id="meat-sales-btn">
-                        <span class="action-icon">🍗</span>
-                        <span class="action-label">Meat Sales</span>
+                        <div style="font-size: 32px;">🍗</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Meat Sales</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">View meat sales report</span>
                     </button>
                     <button class="quick-action-btn" id="daily-report-btn">
-                        <span class="action-icon">📋</span>
-                        <span class="action-label">Daily Report</span>
+                        <div style="font-size: 32px;">📊</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Daily Report</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Today's sales summary</span>
+                    </button>
+                    <button class="quick-action-btn" id="export-sales-btn">
+                        <div style="font-size: 32px;">💾</div>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Export Data</span>
+                        <span style="font-size: 12px; color: var(--text-secondary); text-align: center;">Export sales records</span>
                     </button>
                 </div>
-
                 <div class="glass-card" style="margin-top: 24px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="color: var(--text-primary);">📋 Sales Records</h3>
