@@ -598,7 +598,7 @@ isValidInventoryItem(item) {
                 </div>
 
                  <!-- ===== OVERVIEW HEADING ===== -->
-            <h2 class="section-title">📊 Overview</h2>
+           <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">📊 Overview</h2>
             
                 <!-- Inventory Overview -->
                 <div class="stats-grid">
@@ -625,7 +625,7 @@ isValidInventoryItem(item) {
                 </div>
 
                  <!-- ===== QUICK ACTION HEADING ===== -->
-            <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+            <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 24px 0 16px 0;">⚡ Quick Actions</h2>
             
                 <!-- Quick Actions -->
                 <div class="quick-action-grid">
