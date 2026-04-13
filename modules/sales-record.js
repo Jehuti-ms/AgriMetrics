@@ -315,37 +315,29 @@ const SalesRecordModule = {
                     </div>
                 </div>
 
-                <h2 class="section-title">📊 Overview</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">💰</div>
-                        <div class="stat-content">
-                            <h3>Today's Revenue</h3>
-                            <div class="stat-value" id="today-sales">${this.formatCurrency(todayRevenue)}</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-content">
-                            <h3>Total Revenue</h3>
-                            <div class="stat-value" id="total-revenue">${this.formatCurrency(totalRevenue)}</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">🐔</div>
-                        <div class="stat-content">
-                            <h3>Animals Sold</h3>
-                            <div class="stat-value" id="total-animals">${totalAnimals}</div>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⚖️</div>
-                        <div class="stat-content">
-                            <h3>Meat Weight (kg)</h3>
-                            <div class="stat-value" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
+               <h2 class="section-title">📊 Overview</h2>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="today-sales">${this.formatCurrency(todayRevenue)}</div>
+        <div style="font-size: 14px; color: var(--text-secondary);">Today's Revenue</div>
+    </div>
+    <div class="stat-card">
+        <div style="font-size: 24px; margin-bottom: 8px;">📊</div>
+        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-revenue">${this.formatCurrency(totalRevenue)}</div>
+        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
+    </div>
+    <div class="stat-card">
+        <div style="font-size: 24px; margin-bottom: 8px;">🐔</div>
+        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-animals">${totalAnimals}</div>
+        <div style="font-size: 14px; color: var(--text-secondary);">Animals Sold</div>
+    </div>
+    <div class="stat-card">
+        <div style="font-size: 24px; margin-bottom: 8px;">⚖️</div>
+        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-meat-weight">${totalMeatWeight.toFixed(2)}</div>
+        <div style="font-size: 14px; color: var(--text-secondary);">Meat Weight (kg)</div>
+    </div>
+</div>
 
                 <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
                 <div class="quick-action-grid">
