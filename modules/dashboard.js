@@ -192,7 +192,7 @@ setupGlobalListeners() {
         const handler = () => {
             console.log(`📡 Dashboard received: ${event}`);
             if (this.initialized) {
-                setTimeout(() => tthis.updateStats(), 200);
+                setTimeout(() => this.updateStats(), 200);
             }
         };
         
