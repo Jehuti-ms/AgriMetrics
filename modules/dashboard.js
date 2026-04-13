@@ -4,6 +4,7 @@ console.log('📊 Loading dashboard module...');
 const DashboardModule = {
     name: 'dashboard',
     initialized: false,
+    _actionInProgress: false,
     element: null,
     activityFilter: '7d',
     realTimeInterval: null,
@@ -387,56 +388,27 @@ setupGlobalListeners() {
     
     // ===== LISTEN TO UNIFIED DATA SERVICE =====
     if (window.UnifiedDataService) {
-        // Listen for sales updates
-        window.UnifiedDataService.on('sales-updated', (sales) => {
-            console.log('📊 Dashboard received sales update:', sales?.length);
-            this.updateStats();
-        });
-        
-        // Listen for transactions updates
-        window.UnifiedDataService.on('transactions-updated', (transactions) => {
-            console.log('📊 Dashboard received transactions update:', transactions?.length);
-            this.updateStats();
-        });
-        
-        // Listen for inventory updates
-        window.UnifiedDataService.on('inventory-updated', (inventory) => {
-            console.log('📊 Dashboard received inventory update:', inventory?.length);
-            this.updateStats();
-        });
-        
-        // Listen for production updates
-        window.UnifiedDataService.on('production-updated', (production) => {
-            console.log('📊 Dashboard received production update:', production?.length);
-            this.updateStats();
-        });
-        
-        // Listen for any data saved
-        window.UnifiedDataService.on('data-saved', (data) => {
-            console.log('📊 Dashboard received data-saved event:', data?.collection);
-            this.updateStats();
-        });
-        
-        // Listen for real-time updates
-        window.UnifiedDataService.on('realtime-update', (update) => {
-            console.log('📊 Dashboard received realtime update:', update?.collection);
-            this.updateStats();
-        });
+        window.UnifiedDataService.on('sales-updated', () => this.updateStats());
+        window.UnifiedDataService.on('transactions-updated', () => this.updateStats());
+        window.UnifiedDataService.on('inventory-updated', () => this.updateStats());
+        window.UnifiedDataService.on('production-updated', () => this.updateStats());
+        window.UnifiedDataService.on('data-saved', () => this.updateStats());
+        window.UnifiedDataService.on('realtime-update', () => this.updateStats());
     }
     
-    // ===== ALSO LISTEN TO CUSTOM EVENTS =====
+    // ===== LISTEN TO CUSTOM EVENTS =====
     const events = ['sale-completed', 'farm-data-updated', 'dashboard-update'];
     events.forEach(event => {
-        window.addEventListener(event, () => {
-            console.log(`📊 Dashboard received ${event} event`);
-            this.updateStats();
-        });
+        window.addEventListener(event, () => this.updateStats());
     });
     
-    // ===== LISTEN FOR CLICKS ON ALL BUTTONS =====
+    // ===== SINGLE CLICK HANDLER FOR ALL BUTTONS =====
     this.element.addEventListener('click', (e) => {
         const actionBtn = e.target.closest('[data-action]');
         if (!actionBtn) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
         
         const actionType = actionBtn.getAttribute('data-action');
         console.log('🎯 Dashboard action:', actionType);
@@ -469,13 +441,10 @@ setupGlobalListeners() {
                     this.handleActivityClick(activityId);
                 }
                 break;
-                
-            default:
-                console.log(`Unknown action: ${actionType}`);
         }
     });
     
-    console.log('✅ Dashboard listening to UnifiedDataService events');
+    console.log('✅ Dashboard event listeners set up');
 },
     
     handleElementClick(event) {
@@ -886,66 +855,47 @@ setupGlobalListeners() {
     },
 
     // ==================== QUICK ACTIONS ====================
-   handleQuickAction(action) {
+  handleQuickAction(action) {
     console.log(`⚡ Quick action: ${action}`);
     
-    // Direct navigation based on action
+    // Prevent multiple clicks
+    if (this._actionInProgress) return;
+    this._actionInProgress = true;
+    
     switch(action) {
         case 'add-income':
-            if (window.app && window.app.showSection) {
-                window.app.showSection('income-expenses');
-                setTimeout(() => {
-                    if (window.IncomeExpensesModule && window.IncomeExpensesModule.showAddIncome) {
-                        window.IncomeExpensesModule.showAddIncome();
-                    } else if (window.IncomeExpensesModule && window.IncomeExpensesModule.showTransactionModal) {
-                        window.IncomeExpensesModule.showTransactionModal();
-                        setTimeout(() => {
-                            const typeSelect = document.getElementById('transaction-type');
-                            if (typeSelect) typeSelect.value = 'income';
-                        }, 100);
-                    }
-                }, 500);
-            }
-            break;
-            
         case 'add-expense':
             if (window.app && window.app.showSection) {
                 window.app.showSection('income-expenses');
-                setTimeout(() => {
-                    if (window.IncomeExpensesModule && window.IncomeExpensesModule.showAddExpense) {
-                        window.IncomeExpensesModule.showAddExpense();
-                    } else if (window.IncomeExpensesModule && window.IncomeExpensesModule.showTransactionModal) {
-                        window.IncomeExpensesModule.showTransactionModal();
-                        setTimeout(() => {
-                            const typeSelect = document.getElementById('transaction-type');
-                            if (typeSelect) typeSelect.value = 'expense';
-                        }, 100);
-                    }
-                }, 500);
+                this.showNotification('Opening Income & Expenses...', 'info');
             }
             break;
             
         case 'check-inventory':
             if (window.app && window.app.showSection) {
                 window.app.showSection('inventory-check');
+                this.showNotification('Opening Inventory...', 'info');
             }
             break;
             
         case 'record-feed':
             if (window.app && window.app.showSection) {
                 window.app.showSection('feed-record');
+                this.showNotification('Opening Feed Records...', 'info');
             }
             break;
             
         case 'add-production':
             if (window.app && window.app.showSection) {
                 window.app.showSection('production');
+                this.showNotification('Opening Production...', 'info');
             }
             break;
             
         case 'view-reports':
             if (window.app && window.app.showSection) {
                 window.app.showSection('reports');
+                this.showNotification('Opening Reports...', 'info');
             }
             break;
             
@@ -953,9 +903,12 @@ setupGlobalListeners() {
             console.log(`Unknown action: ${action}`);
     }
     
-    this.showNotification(`Opening ${this.getActionName(action)}...`, 'info');
+    // Reset after 500ms
+    setTimeout(() => {
+        this._actionInProgress = false;
+    }, 500);
 },
-
+    
     navigateToModule(moduleName) {
     console.log(`🔍 Navigating to module: ${moduleName}`);
     
@@ -1544,38 +1497,43 @@ updateLastSyncTime() {
 
     // ==================== NOTIFICATION SYSTEM ====================
     showNotification(message, type = 'info') {
-        // Use core module notification if available
-        if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
-            window.coreModule.showNotification(message, type);
-            return;
-        }
-        
-        // Fallback: create simple notification
-        console.log(`📢 ${type.toUpperCase()}: ${message}`);
-        
-        // Create and show a simple notification
-        const notification = document.createElement('div');
-        notification.className = `dashboard-notification notification-${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    },
+    // Remove any existing notification to prevent stacking
+    const existingNotification = document.querySelector('.dashboard-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Use core module notification if available
+    if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
+        window.coreModule.showNotification(message, type);
+        return;
+    }
+    
+    // Fallback: create simple notification
+    console.log(`📢 ${type.toUpperCase()}: ${message}`);
+    
+    const notification = document.createElement('div');
+    notification.className = `dashboard-notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+},
 
     // ==================== UTILITY METHODS ====================
     formatTimeAgo(timestamp) {
