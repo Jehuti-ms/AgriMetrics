@@ -84,6 +84,20 @@ const StyleManager = {
             }
         }
 
+        /* Only for Overview and Quick Actions headings - matches dashboard style */
+.module-heading {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: block;
+}
+
+/* For Quick Actions heading with top margin */
+.module-heading.mt-24 {
+    margin-top: 24px;
+}
+
        },
 
     // Complete Module Configurations
