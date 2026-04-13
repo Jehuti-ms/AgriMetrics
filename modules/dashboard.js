@@ -45,65 +45,65 @@ initialize() {
         this.startRealTimeUpdates();
     }, 100);
     
-    // ===== LISTEN FOR DATA SERVICE EVENTS =====
-    window.addEventListener('farm-data-loaded', () => {
-        console.log('📡 Dashboard received farm-data-loaded event');
-        this.loadAndDisplayStats();
-    });
+   // ===== LISTEN FOR DATA SERVICE EVENTS =====
+window.addEventListener('farm-data-loaded', () => {
+    console.log('📡 Dashboard received farm-data-loaded event');
+    this.updateStats();  // ← Changed
+});
+
+window.addEventListener('farm-data-updated', () => {
+    console.log('📡 Dashboard received farm-data-updated event');
+    this.updateStats();  // ← Changed
+});
+
+window.addEventListener('storage', (e) => {
+    if (e.key && (e.key.includes('farm-') || e.key.includes('FarmData'))) {
+        console.log('📡 Storage change detected:', e.key);
+        setTimeout(() => this.updateStats(), 300);  // ← Changed
+    }
+});
+
+// ===== INCREASED TIMEOUT TO 10 SECONDS =====
+let attempts = 0;
+const maxAttempts = 10;
+const checkInterval = setInterval(() => {
+    attempts++;
     
-    window.addEventListener('farm-data-updated', () => {
-        console.log('📡 Dashboard received farm-data-updated event');
-        this.loadAndDisplayStats();
-    });
+    // Check if FarmData has transactions
+    if (window.FarmData && window.FarmData.transactions?.length > 0) {
+        console.log(`📊 Data found after ${attempts}s, updating dashboard`);
+        this.updateStats();  // ← Changed
+        clearInterval(checkInterval);
+    }
+    // Check if any of the module data is available
+    else if (window.FarmData && (
+        window.FarmData.sales?.length > 0 || 
+        window.FarmData.expenses?.length > 0 ||
+        window.FarmData.transactions?.length > 0
+    )) {
+        console.log(`📊 Module data found after ${attempts}s, updating dashboard`);
+        this.updateStats();  // ← Changed
+        clearInterval(checkInterval);
+    }
+    // Also check localStorage directly as fallback
+    else {
+        try {
+            const transactions = localStorage.getItem('farm-transactions');
+            if (transactions && JSON.parse(transactions).length > 0) {
+                console.log(`📊 localStorage data found after ${attempts}s`);
+                this.updateStats();  // ← Changed
+                clearInterval(checkInterval);
+            }
+        } catch (e) {}
+    }
     
-    window.addEventListener('storage', (e) => {
-        if (e.key && (e.key.includes('farm-') || e.key.includes('FarmData'))) {
-            console.log('📡 Storage change detected:', e.key);
-            setTimeout(() => this.loadAndDisplayStats(), 300);
-        }
-    });
-    
-    // ===== INCREASED TIMEOUT TO 10 SECONDS =====
-    let attempts = 0;
-    const maxAttempts = 10; // Increased from 5 to 10
-    const checkInterval = setInterval(() => {
-        attempts++;
-        
-        // Check if FarmData has transactions
-        if (window.FarmData && window.FarmData.transactions?.length > 0) {
-            console.log(`📊 Data found after ${attempts}s, updating dashboard`);
-            this.loadAndDisplayStats();
-            clearInterval(checkInterval);
-        }
-        // Check if any of the module data is available
-        else if (window.FarmData && (
-            window.FarmData.sales?.length > 0 || 
-            window.FarmData.expenses?.length > 0 ||
-            window.FarmData.transactions?.length > 0
-        )) {
-            console.log(`📊 Module data found after ${attempts}s, updating dashboard`);
-            this.loadAndDisplayStats();
-            clearInterval(checkInterval);
-        }
-        // Also check localStorage directly as fallback
-        else {
-            try {
-                const transactions = localStorage.getItem('farm-transactions');
-                if (transactions && JSON.parse(transactions).length > 0) {
-                    console.log(`📊 localStorage data found after ${attempts}s`);
-                    this.loadAndDisplayStats();
-                    clearInterval(checkInterval);
-                }
-            } catch (e) {}
-        }
-        
-        // Stop after 10 seconds
-        if (attempts >= maxAttempts) {
-            console.log('⏱️ Data check timeout - showing whatever we have');
-            this.loadAndDisplayStats();
-            clearInterval(checkInterval);
-        }
-    }, 1000); // Check every second
+    // Stop after 10 seconds
+    if (attempts >= maxAttempts) {
+        console.log('⏱️ Data check timeout - showing whatever we have');
+        this.updateStats();  // ← Changed
+        clearInterval(checkInterval);
+    }
+}, 1000);
     
     // ===== IMMEDIATE REFRESH AFTER DATA SERVICE INIT =====
     // Check if Data Service is already initialized
@@ -175,7 +175,7 @@ setupGlobalListeners() {
         const handler = () => {
             console.log(`📡 Dashboard received: ${event}`);
             if (this.initialized) {
-                setTimeout(() => this.loadAndDisplayStats(), 200);
+                setTimeout(() => this.updateStats(), 200);
             }
         };
         
@@ -188,7 +188,7 @@ setupGlobalListeners() {
         const handler = () => {
             console.log(`📡 Dashboard received: ${event}`);
             if (this.initialized) {
-                setTimeout(() => this.loadAndDisplayStats(), 200);
+                setTimeout(() => tthis.updateStats(), 200);
             }
         };
         
@@ -201,7 +201,7 @@ setupGlobalListeners() {
         if (e.key && (e.key.includes('farm-') || e.key.includes('FarmModules'))) {
             console.log('📡 Storage change detected:', e.key);
             if (this.initialized) {
-                setTimeout(() => this.loadAndDisplayStats(), 300);
+                setTimeout(() => this.updateStats(), 300);
             }
         }
     };
@@ -226,7 +226,7 @@ setupGlobalListeners() {
                 window.DataBroadcaster.on(event, () => {
                     console.log(`📡 Dashboard received broadcaster: ${event}`);
                     if (this.initialized) {
-                        setTimeout(() => this.loadAndDisplayStats(), 150);
+                        setTimeout(() => this.updateStats(), 150);
                     }
                 });
             });
@@ -243,7 +243,7 @@ setupGlobalListeners() {
                 const handler = () => {
                     console.log(`📡 Dashboard received broadcaster: ${event}`);
                     if (this.initialized) {
-                        setTimeout(() => this.loadAndDisplayStats(), 150);
+                        setTimeout(() => this.updateStats(), 150);
                     }
                 };
                 
@@ -263,7 +263,7 @@ setupGlobalListeners() {
                 window.DataBroadcaster.subscribe(event, () => {
                     console.log(`📡 Dashboard received broadcaster: ${event}`);
                     if (this.initialized) {
-                        setTimeout(() => this.loadAndDisplayStats(), 150);
+                        setTimeout(() => this.updateStats(), 150);
                     }
                 });
             });
@@ -278,7 +278,7 @@ setupGlobalListeners() {
         if (e.detail && e.detail.module) {
             console.log(`📡 Module activated: ${e.detail.module}`);
             if (this.initialized) {
-                setTimeout(() => this.loadAndDisplayStats(), 200);
+                setTimeout(() => this.updateStats(), 200);
             }
         }
     };
@@ -1224,27 +1224,9 @@ setupGlobalListeners() {
 
     // ==================== STATS MANAGEMENT ====================
    loadAndDisplayStats() {
-    if (!this.initialized) return;
-    
-    console.log('📊 Loading and displaying stats...');
-    
-    const stats = this.getProfileStats();
-    
-    // Check if we actually have data
-    if (stats.totalRevenue > 0 || stats.totalExpenses > 0) {
-        console.log('✅ Stats have data:', stats);
-    } else {
-        console.log('⚠️ Stats are empty, waiting for data...');
-    }
-    
-    this.updateDashboardDisplay(stats);
-    this.updateRecentActivity();
-    
-    this.lastUpdateTime = new Date().toISOString();
-    this.updateLastUpdatedTime();
-    
-    // Dispatch event that dashboard updated
-    window.dispatchEvent(new CustomEvent('dashboard-updated', { detail: stats }));
+    // Redirect to updateStats - this prevents the "Stats are empty" message
+    console.log('📊 loadAndDisplayStats redirected to updateStats');
+    this.updateStats();
 },
 
     // Add this method to your DashboardModule (around line 300-400 area)
@@ -1552,7 +1534,7 @@ updateLastSyncTime() {
     },
 
     refreshStats() {
-        this.loadAndDisplayStats();
+        this.updateStats();
     },
 
     // ==================== NOTIFICATION SYSTEM ====================
