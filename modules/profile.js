@@ -44,40 +44,128 @@ const ProfileModule = {
     },
 
     async loadProfile() {
-        console.log('📂 Loading profile...');
-        
-        const userEmail = this.getUserEmail();
-        
-        try {
-            // Try to load from Firebase first
-            if (this.dataService) {
-                const savedProfile = await this.dataService.get('profile');
-                if (savedProfile && savedProfile.farmName) {
-                    this.profileData = { ...this.profileData, ...savedProfile };
-                    console.log('✅ Loaded from Firebase');
-                }
+    console.log('📂 Loading profile...');
+    
+    const userEmail = this.getUserEmail();
+    
+    try {
+        // Try to load from Firebase first
+        if (this.dataService) {
+            const savedProfile = await this.dataService.get('profile');
+            if (savedProfile && savedProfile.farmName) {
+                this.profileData = { ...this.profileData, ...savedProfile };
+                console.log('✅ Loaded from Firebase');
             }
-            
-            // Check localStorage for additional data
-            const localProfile = localStorage.getItem('farm-profile');
-            if (localProfile) {
-                const parsed = JSON.parse(localProfile);
-                this.profileData = { ...this.profileData, ...parsed };
-                console.log('📁 Merged from localStorage');
-            }
-            
-            // Set email if not set
-            if (!this.profileData.email && userEmail) {
-                this.profileData.email = userEmail;
-            }
-            
-        } catch (error) {
-            console.error('Error loading profile:', error);
         }
         
-        // Update stats from other modules
-        this.updateStatsFromModules();
-    },
+        // Check localStorage for additional data
+        const localProfile = localStorage.getItem('farm-profile');
+        if (localProfile) {
+            const parsed = JSON.parse(localProfile);
+            this.profileData = { ...this.profileData, ...parsed };
+            console.log('📁 Merged from localStorage');
+        }
+        
+        // Set email if not set
+        if (!this.profileData.email && userEmail) {
+            this.profileData.email = userEmail;
+        }
+        
+        // ===== FIXED: Preserve original sign-up date =====
+        // Check if there's an existing memberSince date
+        const existingMemberSince = this.profileData.memberSince;
+        
+        if (existingMemberSince) {
+            // Keep the original date - do NOT change it
+            console.log('📅 Existing member since date preserved:', existingMemberSince);
+        } else {
+            // Only set a new date if this is truly the first time (no existing date)
+            // Also check if there's any existing data that indicates an older account
+            const hasExistingData = localStorage.getItem('farm-transactions') || 
+                                    localStorage.getItem('farm-sales-data') ||
+                                    window.FarmModules?.appData?.sales?.length > 0;
+            
+            if (!hasExistingData) {
+                // This appears to be a new user - set today as member since
+                this.profileData.memberSince = new Date().toISOString();
+                console.log('🆕 New user - member since set to today');
+            } else {
+                // User has data but no memberSince - use the date of their first transaction/sale
+                const firstTransactionDate = this.getFirstActivityDate();
+                if (firstTransactionDate) {
+                    this.profileData.memberSince = firstTransactionDate;
+                    console.log('📅 Member since set from first activity:', firstTransactionDate);
+                } else {
+                    this.profileData.memberSince = new Date().toISOString();
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error loading profile:', error);
+    }
+    
+    // Update stats from other modules
+    this.updateStatsFromModules();
+},
+
+// Add this helper method to get the first activity date
+getFirstActivityDate() {
+    let oldestDate = null;
+    
+    // Check sales
+    if (window.UnifiedDataService) {
+        const sales = window.UnifiedDataService.get('sales') || [];
+        sales.forEach(sale => {
+            if (sale.date) {
+                const saleDate = new Date(sale.date);
+                if (!oldestDate || saleDate < oldestDate) {
+                    oldestDate = saleDate;
+                }
+            }
+        });
+        
+        // Check transactions
+        const transactions = window.UnifiedDataService.get('transactions') || [];
+        transactions.forEach(trans => {
+            if (trans.date) {
+                const transDate = new Date(trans.date);
+                if (!oldestDate || transDate < oldestDate) {
+                    oldestDate = transDate;
+                }
+            }
+        });
+        
+        // Check production
+        const production = window.UnifiedDataService.get('production') || [];
+        production.forEach(prod => {
+            if (prod.date) {
+                const prodDate = new Date(prod.date);
+                if (!oldestDate || prodDate < oldestDate) {
+                    oldestDate = prodDate;
+                }
+            }
+        });
+    }
+    
+    // Check localStorage as fallback
+    if (!oldestDate) {
+        const salesData = localStorage.getItem('farm-sales-data');
+        if (salesData) {
+            const sales = JSON.parse(salesData);
+            sales.forEach(sale => {
+                if (sale.date) {
+                    const saleDate = new Date(sale.date);
+                    if (!oldestDate || saleDate < oldestDate) {
+                        oldestDate = saleDate;
+                    }
+                }
+            });
+        }
+    }
+    
+    return oldestDate ? oldestDate.toISOString().split('T')[0] : null;
+},
 
     getUserEmail() {
         try {
@@ -93,60 +181,61 @@ const ProfileModule = {
         return this.profileData.email || '';
     },
 
-    async saveProfile() {
-        console.log('💾 Saving profile...');
-        
-        // Get values from form
-        const farmName = document.getElementById('profile-farm-name')?.value || this.profileData.farmName;
-        const farmerName = document.getElementById('profile-farmer-name')?.value || this.profileData.farmerName;
-        const farmType = document.getElementById('profile-farm-type')?.value || this.profileData.farmType;
-        const farmLocation = document.getElementById('profile-farm-location')?.value || this.profileData.farmLocation;
-        const phone = document.getElementById('profile-phone')?.value || this.profileData.phone;
-        const currency = document.getElementById('profile-currency')?.value || this.profileData.currency;
-        const lowStockThreshold = parseInt(document.getElementById('profile-low-stock')?.value) || this.profileData.lowStockThreshold;
-        
-        // Update profile data
-        this.profileData = {
-            ...this.profileData,
-            farmName,
-            farmerName,
-            farmType,
-            farmLocation,
-            phone,
-            currency,
-            lowStockThreshold,
-            lastUpdated: new Date().toISOString()
-        };
-        
-        try {
-            // Save to Firebase
-            if (this.dataService) {
-                await this.dataService.save('profile', this.profileData);
-                console.log('✅ Saved to Firebase');
-            }
-            
-            // Save to localStorage
-            localStorage.setItem('farm-profile', JSON.stringify(this.profileData));
-            if (this.profileData.email) {
-                localStorage.setItem(`farm-profile-${this.profileData.email}`, JSON.stringify(this.profileData));
-            }
-            
-            // Update display
-            this.updateDisplay();
-            this.updateStatsFromModules();
-            
-            this.showNotification('Profile saved successfully!', 'success');
-            
-            // Broadcast update
-            window.dispatchEvent(new CustomEvent('farm-data-updated', {
-                detail: { farmName: this.profileData.farmName }
-            }));
-            
-        } catch (error) {
-            console.error('Error saving profile:', error);
-            this.showNotification('Error saving profile', 'error');
+   async saveProfile() {
+    console.log('💾 Saving profile...');
+    
+    // Get values from form
+    const farmName = document.getElementById('profile-farm-name')?.value || this.profileData.farmName;
+    const farmerName = document.getElementById('profile-farmer-name')?.value || this.profileData.farmerName;
+    const farmType = document.getElementById('profile-farm-type')?.value || this.profileData.farmType;
+    const farmLocation = document.getElementById('profile-farm-location')?.value || this.profileData.farmLocation;
+    const phone = document.getElementById('profile-phone')?.value || this.profileData.phone;
+    const currency = document.getElementById('profile-currency')?.value || this.profileData.currency;
+    const lowStockThreshold = parseInt(document.getElementById('profile-low-stock')?.value) || this.profileData.lowStockThreshold;
+    
+    // Update profile data - PRESERVE memberSince
+    this.profileData = {
+        ...this.profileData,
+        farmName,
+        farmerName,
+        farmType,
+        farmLocation,
+        phone,
+        currency,
+        lowStockThreshold,
+        lastUpdated: new Date().toISOString()
+        // memberSince is NOT updated here - it stays as the original
+    };
+    
+    try {
+        // Save to Firebase
+        if (this.dataService) {
+            await this.dataService.save('profile', this.profileData);
+            console.log('✅ Saved to Firebase');
         }
-    },
+        
+        // Save to localStorage
+        localStorage.setItem('farm-profile', JSON.stringify(this.profileData));
+        if (this.profileData.email) {
+            localStorage.setItem(`farm-profile-${this.profileData.email}`, JSON.stringify(this.profileData));
+        }
+        
+        // Update display
+        this.updateDisplay();
+        this.updateStatsFromModules();
+        
+        this.showNotification('Profile saved successfully!', 'success');
+        
+        // Broadcast update
+        window.dispatchEvent(new CustomEvent('farm-data-updated', {
+            detail: { farmName: this.profileData.farmName }
+        }));
+        
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        this.showNotification('Error saving profile', 'error');
+    }
+},
 
     async saveSetting(setting, value) {
         console.log(`💾 Saving setting: ${setting} = ${value}`);
@@ -224,45 +313,95 @@ const ProfileModule = {
     },
 
     updateStatsFromModules() {
-        try {
-            const orders = window.FarmModules?.appData?.orders || [];
-            const inventory = window.FarmModules?.appData?.inventory || [];
-            const customers = window.FarmModules?.appData?.customers || [];
-            const products = window.FarmModules?.appData?.products || [];
-            
-            const totalOrders = document.getElementById('total-orders');
-            if (totalOrders) totalOrders.textContent = orders.length;
-            
-            const totalInventory = document.getElementById('total-inventory');
-            if (totalInventory) totalInventory.textContent = inventory.length;
-            
-            const totalCustomers = document.getElementById('total-customers');
-            if (totalCustomers) totalCustomers.textContent = customers.length;
-            
-            const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
-            const totalRevenueEl = document.getElementById('total-revenue');
-            if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
-            
-            const ordersCount = document.getElementById('orders-count');
-            if (ordersCount) ordersCount.textContent = `${orders.length} records`;
-            
-            const inventoryCount = document.getElementById('inventory-count');
-            if (inventoryCount) inventoryCount.textContent = `${inventory.length} items`;
-            
-            const customersCount = document.getElementById('customers-count');
-            if (customersCount) customersCount.textContent = `${customers.length} customers`;
-            
-            const productsCount = document.getElementById('products-count');
-            if (productsCount) productsCount.textContent = `${products.length} products`;
-            
-            const totalEntries = orders.length + inventory.length + customers.length + products.length;
-            const dataEntries = document.getElementById('data-entries');
-            if (dataEntries) dataEntries.textContent = `Data entries: ${totalEntries}`;
-            
-        } catch (error) {
-            console.error('Error updating stats:', error);
+    try {
+        // Get data from UnifiedDataService for accurate counts
+        let orders = [];
+        let inventory = [];
+        let customers = [];
+        let products = [];
+        let sales = [];
+        let transactions = [];
+        let production = [];
+        let feedRecords = [];
+        let mortality = [];
+        
+        if (window.UnifiedDataService) {
+            orders = window.UnifiedDataService.get('orders') || [];
+            inventory = window.UnifiedDataService.get('inventory') || [];
+            customers = window.UnifiedDataService.get('customers') || [];
+            sales = window.UnifiedDataService.get('sales') || [];
+            transactions = window.UnifiedDataService.get('transactions') || [];
+            production = window.UnifiedDataService.get('production') || [];
+            feedRecords = window.UnifiedDataService.get('feedRecords') || [];
+            mortality = window.UnifiedDataService.get('mortality') || [];
+        } else if (window.FarmModules?.appData) {
+            orders = window.FarmModules.appData.orders || [];
+            inventory = window.FarmModules.appData.inventory || [];
+            customers = window.FarmModules.appData.customers || [];
+            products = window.FarmModules.appData.products || [];
         }
-    },
+        
+        // Count unique products from sales
+        const uniqueProducts = new Set(sales.map(s => s.product));
+        const productCount = uniqueProducts.size;
+        
+        // Calculate total data entries across all modules
+        const totalEntries = 
+            orders.length + 
+            inventory.length + 
+            customers.length + 
+            productCount +
+            sales.length +
+            transactions.length +
+            production.length +
+            feedRecords.length +
+            mortality.length;
+        
+        // Update DOM elements
+        const totalOrders = document.getElementById('total-orders');
+        if (totalOrders) totalOrders.textContent = orders.length;
+        
+        const totalInventory = document.getElementById('total-inventory');
+        if (totalInventory) totalInventory.textContent = inventory.length;
+        
+        const totalCustomers = document.getElementById('total-customers');
+        if (totalCustomers) totalCustomers.textContent = customers.length;
+        
+        // Get revenue from sales
+        let totalRevenue = 0;
+        if (window.UnifiedDataService) {
+            const sales = window.UnifiedDataService.get('sales') || [];
+            totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+        }
+        
+        const totalRevenueEl = document.getElementById('total-revenue');
+        if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
+        
+        // Update data entries count
+        const dataEntriesEl = document.getElementById('data-entries');
+        if (dataEntriesEl) {
+            dataEntriesEl.textContent = `Data entries: ${totalEntries}`;
+        }
+        
+        // Also update orders count if exists
+        const ordersCountEl = document.getElementById('orders-count');
+        if (ordersCountEl) ordersCountEl.textContent = `${orders.length} records`;
+        
+        const inventoryCountEl = document.getElementById('inventory-count');
+        if (inventoryCountEl) inventoryCountEl.textContent = `${inventory.length} items`;
+        
+        const customersCountEl = document.getElementById('customers-count');
+        if (customersCountEl) customersCountEl.textContent = `${customers.length} customers`;
+        
+        const productsCountEl = document.getElementById('products-count');
+        if (productsCountEl) productsCountEl.textContent = `${productCount} products`;
+        
+        console.log(`📊 Data entries updated: ${totalEntries} total records`);
+        
+    } catch (error) {
+        console.error('Error updating stats:', error);
+    }
+},
 
     formatCurrency(amount) {
         const currency = this.profileData.currency || 'USD';
