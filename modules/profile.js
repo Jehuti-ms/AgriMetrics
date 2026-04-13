@@ -417,35 +417,26 @@ const ProfileModule = {
                 <!-- ===== OVERVIEW HEADING ===== -->
             <h2 class="section-title">📊 Overview</h2>
             
-                <!-- Stats Overview -->
-                <div class="stats-overview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                    <div class="stat-card glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
-                        <div style="font-size: 32px;">💰</div>
-                        <div>
-                            <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Total Revenue</h3>
-                            <div class="stat-value" id="total-revenue" style="font-size: 24px; font-weight: bold;">$0</div>
-                        </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-revenue">$0</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Revenue</div>
                     </div>
-                    <div class="stat-card glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
-                        <div style="font-size: 32px;">📦</div>
-                        <div>
-                            <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Inventory Items</h3>
-                            <div class="stat-value" id="total-inventory" style="font-size: 24px; font-weight: bold;">0</div>
-                        </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📦</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-inventory">0</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Inventory Items</div>
                     </div>
-                    <div class="stat-card glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
-                        <div style="font-size: 32px;">📋</div>
-                        <div>
-                            <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Total Orders</h3>
-                            <div class="stat-value" id="total-orders" style="font-size: 24px; font-weight: bold;">0</div>
-                        </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-orders">0</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Total Orders</div>
                     </div>
-                    <div class="stat-card glass-card" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
-                        <div style="font-size: 32px;">👥</div>
-                        <div>
-                            <h3 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Customers</h3>
-                            <div class="stat-value" id="total-customers" style="font-size: 24px; font-weight: bold;">0</div>
-                        </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">👥</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 4px;" id="total-customers">0</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Customers</div>
                     </div>
                 </div>
 
