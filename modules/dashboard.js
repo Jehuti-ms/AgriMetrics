@@ -2126,73 +2126,123 @@ const dashboardStyles = `
         }
     }
 
-    /* Toggle Switch Styles */
-.real-time-toggle {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.real-time-toggle span {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.3s;
-    border-radius: 34px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.3s;
-    border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-    background-color: var(--primary-color, #22c55e);
-}
-
-input:checked + .toggle-slider:before {
-    transform: translateX(26px);
-}
-
-/* Optional: Add hover effect */
-.toggle-switch:hover .toggle-slider {
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-
-/* Disabled state */
-.toggle-switch input:disabled + .toggle-slider {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
+ /* ===== TOGGLE SWITCH FIX ===== */
+    .filter-controls {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .real-time-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--glass-bg, rgba(255,255,255,0.8));
+        padding: 6px 12px;
+        border-radius: 30px;
+        border: 1px solid var(--glass-border, #e5e7eb);
+    }
+    
+    .real-time-toggle span {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-primary, #1f2937);
+    }
+    
+    /* The switch - the box around the slider */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 46px;
+        height: 22px;
+    }
+    
+    /* Hide default HTML checkbox */
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    /* The slider */
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: 0.3s;
+        border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    /* Checked state */
+    input:checked + .toggle-slider {
+        background-color: #22c55e;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+    }
+    
+    /* Focus/hover states */
+    .toggle-switch:hover .toggle-slider {
+        box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
+    }
+    
+    /* Disabled state */
+    .toggle-switch input:disabled + .toggle-slider {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Time filter buttons styling */
+    .time-filter-buttons {
+        display: flex;
+        gap: 8px;
+        background: var(--glass-bg, rgba(255,255,255,0.8));
+        padding: 4px;
+        border-radius: 40px;
+        border: 1px solid var(--glass-border, #e5e7eb);
+    }
+    
+    .time-filter-btn {
+        padding: 6px 16px;
+        border: none;
+        background: transparent;
+        border-radius: 30px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary, #6b7280);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .time-filter-btn.active {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        box-shadow: 0 2px 8px rgba(34,197,94,0.3);
+    }
+    
+    .time-filter-btn:hover:not(.active) {
+        background: rgba(34,197,94,0.1);
+        color: #16a34a;
+    }
 `;
 
 // ==================== REGISTRATION ====================
