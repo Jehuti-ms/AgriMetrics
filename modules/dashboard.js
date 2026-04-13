@@ -390,61 +390,47 @@ setupGlobalListeners() {
         // Listen for sales updates
         window.UnifiedDataService.on('sales-updated', (sales) => {
             console.log('📊 Dashboard received sales update:', sales?.length);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
-            this.renderDashboard();  // ← Refresh the dashboard display
+            this.updateStats();  // Use updateStats, not loadAndDisplayStats
         });
         
         // Listen for transactions updates
         window.UnifiedDataService.on('transactions-updated', (transactions) => {
             console.log('📊 Dashboard received transactions update:', transactions?.length);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
+            this.updateStats();
         });
         
         // Listen for inventory updates
         window.UnifiedDataService.on('inventory-updated', (inventory) => {
             console.log('📊 Dashboard received inventory update:', inventory?.length);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
+            this.updateStats();
         });
         
         // Listen for production updates
         window.UnifiedDataService.on('production-updated', (production) => {
             console.log('📊 Dashboard received production update:', production?.length);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
-        });
-        
-        // Listen for feed records updates
-        window.UnifiedDataService.on('feedRecords-updated', (feedRecords) => {
-            console.log('📊 Dashboard received feed update:', feedRecords?.length);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
+            this.updateStats();
         });
         
         // Listen for any data saved
         window.UnifiedDataService.on('data-saved', (data) => {
             console.log('📊 Dashboard received data-saved event:', data?.collection);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
+            this.updateStats();
         });
         
         // Listen for real-time updates
         window.UnifiedDataService.on('realtime-update', (update) => {
             console.log('📊 Dashboard received realtime update:', update?.collection);
-            this.updateStats();  // ← Changed from loadAndDisplayStats
+            this.updateStats();
         });
     }
     
-    // ===== ALSO LISTEN TO CUSTOM EVENTS (fallback) =====
-    window.addEventListener('sale-completed', () => {
-        console.log('📊 Dashboard received sale-completed event');
-        this.updateStats();  // ← Changed from loadAndDisplayStats
-    });
-    
-    window.addEventListener('farm-data-updated', () => {
-        console.log('📊 Dashboard received farm-data-updated event');
-        this.updateStats();  // ← Changed from loadAndDisplayStats
-    });
-    
-    window.addEventListener('dashboard-update', (event) => {
-        console.log('📊 Dashboard received dashboard-update event:', event?.detail);
-        this.updateStats();  // ← Changed from loadAndDisplayStats
+    // ===== ALSO LISTEN TO CUSTOM EVENTS =====
+    const events = ['sale-completed', 'farm-data-updated', 'dashboard-update'];
+    events.forEach(event => {
+        window.addEventListener(event, () => {
+            console.log(`📊 Dashboard received ${event} event`);
+            this.updateStats();
+        });
     });
     
     // Listen for clicks on quick action buttons
@@ -488,13 +474,16 @@ setupGlobalListeners() {
                         }, 500);
                     }
                     break;
+                case 'refresh-stats':
+                    this.updateStats();
+                    break;
             }
         }
     });
     
-    console.log('✅ Dashboard listening to events');
+    console.log('✅ Dashboard listening to UnifiedDataService events');
 },
-
+    
     handleElementClick(event) {
         const target = event.target;
         const button = target.closest('[data-action]');
@@ -1274,10 +1263,6 @@ updateStats() {
         inventory = window.UnifiedDataService.get('inventory') || [];
         
         console.log(`📊 Data counts - Sales: ${sales.length}, Transactions: ${transactions.length}, Inventory: ${inventory.length}`);
-    } else if (window.FarmData) {
-        sales = window.FarmData.sales || [];
-        transactions = window.FarmData.transactions || [];
-        inventory = window.FarmData.inventory || [];
     }
     
     // Calculate totals
@@ -1286,16 +1271,15 @@ updateStats() {
     const netProfit = totalRevenue - totalExpenses;
     const inventoryCount = inventory.length;
     
-    // Get bird count from inventory
+    // Get bird count
     let birdCount = 0;
     const birdItem = inventory.find(item => 
         item.name?.toLowerCase().includes('bird') || 
-        item.name?.toLowerCase().includes('broiler') ||
-        item.category?.toLowerCase().includes('poultry')
+        item.name?.toLowerCase().includes('broiler')
     );
     if (birdItem) birdCount = birdItem.currentStock || birdItem.quantity || 0;
     
-    // Update DOM elements (match your HTML IDs)
+    // Update DOM elements
     const revenueEl = document.getElementById('total-revenue');
     if (revenueEl) revenueEl.textContent = this.formatCurrency(totalRevenue);
     
@@ -1311,26 +1295,7 @@ updateStats() {
     const birdsEl = document.getElementById('active-birds');
     if (birdsEl) birdsEl.textContent = birdCount;
     
-    const ordersEl = document.getElementById('total-orders');
-    if (ordersEl) {
-        const orders = window.UnifiedDataService?.get('orders') || window.FarmData?.orders || [];
-        ordersEl.textContent = orders.length;
-    }
-    
-    const customersEl = document.getElementById('total-customers');
-    if (customersEl) {
-        const customers = window.UnifiedDataService?.get('customers') || window.FarmData?.customers || [];
-        customersEl.textContent = customers.length;
-    }
-    
-    const productsEl = document.getElementById('total-products');
-    if (productsEl) {
-        // Count unique products from sales
-        const uniqueProducts = new Set(sales.map(s => s.product));
-        productsEl.textContent = uniqueProducts.size;
-    }
-    
-    console.log(`✅ Dashboard updated - Revenue: ${this.formatCurrency(totalRevenue)}, Expenses: ${this.formatCurrency(totalExpenses)}, Profit: ${this.formatCurrency(netProfit)}`);
+    console.log(`✅ Dashboard updated - Revenue: ${this.formatCurrency(totalRevenue)}, Expenses: ${this.formatCurrency(totalExpenses)}`);
 },
     
 updateDashboardStats(totalRevenue, totalExpenses, netProfit, inventoryCount, lowStockItems) {
