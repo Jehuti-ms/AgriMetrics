@@ -1254,69 +1254,72 @@ updateStats() {
     let sales = [];
     let transactions = [];
     let inventory = [];
-    let production = [];
-    let feedRecords = [];
     
     if (window.UnifiedDataService) {
         sales = window.UnifiedDataService.get('sales') || [];
         transactions = window.UnifiedDataService.get('transactions') || [];
         inventory = window.UnifiedDataService.get('inventory') || [];
-        production = window.UnifiedDataService.get('production') || [];
-        feedRecords = window.UnifiedDataService.get('feedRecords') || [];
         
         console.log(`📊 Data counts - Sales: ${sales.length}, Transactions: ${transactions.length}, Inventory: ${inventory.length}`);
-    } else {
-        // Fallback to FarmData
-        sales = window.FarmData?.sales || [];
-        transactions = window.FarmData?.transactions || [];
-        inventory = window.FarmData?.inventory || [];
-        production = window.FarmData?.production || [];
+    } else if (window.FarmData) {
+        sales = window.FarmData.sales || [];
+        transactions = window.FarmData.transactions || [];
+        inventory = window.FarmData.inventory || [];
     }
     
-    // Calculate total revenue from sales
+    // Calculate totals
     const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-    
-    // Calculate today's revenue
-    const today = new Date().toISOString().split('T')[0];
-    const todayRevenue = sales.filter(sale => sale.date === today).reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-    
-    // Calculate total expenses from transactions
     const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
-    
-    // Calculate net profit
     const netProfit = totalRevenue - totalExpenses;
+    const inventoryCount = inventory.length;
     
-    // Count low stock items from inventory
-    const lowStockItems = inventory.filter(item => (item.currentStock || 0) <= (item.minStock || 5)).length;
+    // Get bird count from inventory
+    let birdCount = 0;
+    const birdItem = inventory.find(item => 
+        item.name?.toLowerCase().includes('bird') || 
+        item.name?.toLowerCase().includes('broiler') ||
+        item.category?.toLowerCase().includes('poultry')
+    );
+    if (birdItem) birdCount = birdItem.currentStock || birdItem.quantity || 0;
     
-    // Update DOM elements
-    const totalRevenueEl = document.getElementById('total-revenue');
-    if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
+    // Update DOM elements (match your HTML IDs)
+    const revenueEl = document.getElementById('total-revenue');
+    if (revenueEl) revenueEl.textContent = this.formatCurrency(totalRevenue);
     
-    const todayRevenueEl = document.getElementById('today-revenue');
-    if (todayRevenueEl) todayRevenueEl.textContent = this.formatCurrency(todayRevenue);
+    const expensesEl = document.getElementById('total-expenses');
+    if (expensesEl) expensesEl.textContent = this.formatCurrency(totalExpenses);
     
-    const totalExpensesEl = document.getElementById('total-expenses');
-    if (totalExpensesEl) totalExpensesEl.textContent = this.formatCurrency(totalExpenses);
+    const profitEl = document.getElementById('net-profit');
+    if (profitEl) profitEl.textContent = this.formatCurrency(netProfit);
     
-    const netProfitEl = document.getElementById('net-profit');
-    if (netProfitEl) netProfitEl.textContent = this.formatCurrency(netProfit);
+    const inventoryEl = document.getElementById('inventory-items');
+    if (inventoryEl) inventoryEl.textContent = inventoryCount;
     
-    const lowStockEl = document.getElementById('low-stock-items');
-    if (lowStockEl) lowStockEl.textContent = lowStockItems;
+    const birdsEl = document.getElementById('active-birds');
+    if (birdsEl) birdsEl.textContent = birdCount;
     
-    const totalSalesEl = document.getElementById('total-sales');
-    if (totalSalesEl) totalSalesEl.textContent = sales.length;
-    
-    // If stats are empty, show loading message
-    if (sales.length === 0 && transactions.length === 0 && inventory.length === 0) {
-        console.log('⚠️ Stats are empty, waiting for data...');
+    const ordersEl = document.getElementById('total-orders');
+    if (ordersEl) {
+        const orders = window.UnifiedDataService?.get('orders') || window.FarmData?.orders || [];
+        ordersEl.textContent = orders.length;
     }
     
-    // Also update the stats cards in the dashboard display
-    this.updateDashboardStats(totalRevenue, totalExpenses, netProfit, inventory.length, lowStockItems);
+    const customersEl = document.getElementById('total-customers');
+    if (customersEl) {
+        const customers = window.UnifiedDataService?.get('customers') || window.FarmData?.customers || [];
+        customersEl.textContent = customers.length;
+    }
+    
+    const productsEl = document.getElementById('total-products');
+    if (productsEl) {
+        // Count unique products from sales
+        const uniqueProducts = new Set(sales.map(s => s.product));
+        productsEl.textContent = uniqueProducts.size;
+    }
+    
+    console.log(`✅ Dashboard updated - Revenue: ${this.formatCurrency(totalRevenue)}, Expenses: ${this.formatCurrency(totalExpenses)}, Profit: ${this.formatCurrency(netProfit)}`);
 },
-
+    
 updateDashboardStats(totalRevenue, totalExpenses, netProfit, inventoryCount, lowStockItems) {
     // Helper method to update the stat cards
     const statMappings = [
