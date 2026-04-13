@@ -315,8 +315,9 @@ const SalesRecordModule = {
                         <button class="btn-primary" id="add-sale-btn">➕ Record Sale</button>
                     </div>
                 </div>
-
-               <h2 class="section-title">📊 Overview</h2>
+                    <!-- ===== OVERVIEW HEADING ===== -->
+               <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">📊 Overview</h2>
+               
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div style="font-size: 24px; margin-bottom: 8px;">💰</div>
@@ -340,8 +341,11 @@ const SalesRecordModule = {
                     </div>
                 </div>
                 
-                                <!-- Quick Actions -->
-                <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+                  <!-- Quick Actions -->
+                  
+                  <!-- ===== QUICK ACTION HEADING ===== -->
+                <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 24px 0 16px 0;">⚡ Quick Actions</h2>
+                
                 <div class="quick-action-grid">
                     <button class="quick-action-btn" id="add-sale-btn">
                         <div style="font-size: 32px;">➕</div>
