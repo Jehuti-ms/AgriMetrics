@@ -722,33 +722,38 @@ const SalesRecordModule = {
     },
 
     handleProductChange() {
-        const productSelect = document.getElementById('sale-product');
-        const product = productSelect ? productSelect.value : '';
+    const productSelect = document.getElementById('sale-product');
+    const product = productSelect ? productSelect.value : '';
+    
+    const meatSection = document.getElementById('meat-section');
+    const standardSection = document.getElementById('standard-section');
+    
+    // Check if it's a meat product (both weight and bird types)
+    const meatProducts = ['broilers-dressed-weight', 'broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
+    
+    if (isMeatProduct) {
+        if (meatSection) meatSection.style.display = 'block';
+        if (standardSection) standardSection.style.display = 'none';
         
-        const meatSection = document.getElementById('meat-section');
-        const standardSection = document.getElementById('standard-section');
-        
-        const meatProducts = ['broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
-        const isMeatProduct = meatProducts.includes(product);
-        
-        if (isMeatProduct) {
-            if (meatSection) meatSection.style.display = 'block';
-            if (standardSection) standardSection.style.display = 'none';
-            
-            // Set default unit for bird products
-            const weightUnit = document.getElementById('meat-weight-unit');
-            if (weightUnit && product === 'broilers-dressed-bird') {
+        // Set default unit based on product type
+        const weightUnit = document.getElementById('meat-weight-unit');
+        if (weightUnit) {
+            if (product === 'broilers-dressed-bird') {
                 weightUnit.value = 'bird';
-                this.handleWeightUnitChange();
+            } else if (product === 'broilers-dressed-weight') {
+                weightUnit.value = 'kg';
             }
-        } else {
-            if (meatSection) meatSection.style.display = 'none';
-            if (standardSection) standardSection.style.display = 'block';
+            this.handleWeightUnitChange();
         }
-        
-        this.calculateTotal();
-    },
-
+    } else {
+        if (meatSection) meatSection.style.display = 'none';
+        if (standardSection) standardSection.style.display = 'block';
+    }
+    
+    this.calculateTotal();
+},
+    
     handleWeightUnitChange() {
         const weightUnit = document.getElementById('meat-weight-unit');
         const unit = weightUnit ? weightUnit.value : 'kg';
@@ -770,43 +775,43 @@ const SalesRecordModule = {
         this.calculateTotal();
     },
 
-    calculateTotal() {
-        const productSelect = document.getElementById('sale-product');
-        const product = productSelect ? productSelect.value : '';
+   calculateTotal() {
+    const productSelect = document.getElementById('sale-product');
+    const product = productSelect ? productSelect.value : '';
+    
+    const meatProducts = ['broilers-dressed-weight', 'broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
+    const isMeatProduct = meatProducts.includes(product);
+    
+    let total = 0;
+    
+    if (isMeatProduct) {
+        const weightUnit = document.getElementById('meat-weight-unit');
+        const unit = weightUnit ? weightUnit.value : 'kg';
+        const price = parseFloat(document.getElementById('meat-price')?.value) || 0;
         
-        const meatProducts = ['broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
-        const isMeatProduct = meatProducts.includes(product);
-        
-        let total = 0;
-        
-        if (isMeatProduct) {
-            const weightUnit = document.getElementById('meat-weight-unit');
-            const unit = weightUnit ? weightUnit.value : 'kg';
-            const price = parseFloat(document.getElementById('meat-price')?.value) || 0;
-            
-            if (unit === 'bird') {
-                const birdCount = parseInt(document.getElementById('meat-animal-count')?.value) || 0;
-                total = birdCount * price;
-                console.log(`Bird calculation: ${birdCount} birds × ${price} = $${total}`);
-            } else {
-                const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
-                total = weight * price;
-                console.log(`Weight calculation: ${weight} ${unit} × ${price} = $${total}`);
-            }
-            
-            const totalSpan = document.getElementById('meat-total-amount');
-            if (totalSpan) totalSpan.textContent = total.toFixed(2);
+        if (unit === 'bird') {
+            const birdCount = parseInt(document.getElementById('meat-animal-count')?.value) || 0;
+            total = birdCount * price;
+            console.log(`Bird calculation: ${birdCount} birds × ${price} = $${total}`);
         } else {
-            const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
-            const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
-            total = quantity * price;
-            
-            const totalSpan = document.getElementById('standard-total-amount');
-            if (totalSpan) totalSpan.textContent = total.toFixed(2);
+            const weight = parseFloat(document.getElementById('meat-weight')?.value) || 0;
+            total = weight * price;
+            console.log(`Weight calculation: ${weight} ${unit} × ${price} = $${total}`);
         }
         
-        return total;
-    },
+        const totalSpan = document.getElementById('meat-total-amount');
+        if (totalSpan) totalSpan.textContent = total.toFixed(2);
+    } else {
+        const quantity = parseFloat(document.getElementById('standard-quantity')?.value) || 0;
+        const price = parseFloat(document.getElementById('standard-price')?.value) || 0;
+        total = quantity * price;
+        
+        const totalSpan = document.getElementById('standard-total-amount');
+        if (totalSpan) totalSpan.textContent = total.toFixed(2);
+    }
+    
+    return total;
+},
 
     async saveSale() {
         console.log('💾 SAVING SALE...');
