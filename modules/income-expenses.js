@@ -3820,23 +3820,7 @@ showReceiptCropperModal: function(file) {
     },
 
     // ==================== VIEW MANAGEMENT ====================
-  /*  showQuickActionsView() {
-        console.log('🏠 Showing quick actions view...');
-        
-        this.stopCamera();
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        if (cameraSection) cameraSection.style.display = 'none';
-        if (uploadSection) uploadSection.style.display = 'none';
-        if (quickActionsSection) quickActionsSection.style.display = 'block';
-        if (recentSection) recentSection.style.display = 'block';
-    }, */
-
-    showQuickActionsView: function() {
+   showQuickActionsView: function() {
     console.log('🏠 Showing quick actions view...');
     
     // Stop camera
@@ -3861,29 +3845,36 @@ showReceiptCropperModal: function(file) {
     console.log('✅ Quick actions view shown');
 },
 
-    /*showUploadInterface() {
-        console.log('📁 Showing upload interface...');
-        
-        this.stopCamera();
-        
-        const cameraSection = document.getElementById('camera-section');
-        const uploadSection = document.getElementById('upload-section');
-        const recentSection = document.getElementById('recent-section');
-        const quickActionsSection = document.querySelector('.quick-actions-section');
-        
-        if (cameraSection) cameraSection.style.display = 'none';
-        if (quickActionsSection) quickActionsSection.style.display = 'none';
-        if (uploadSection) uploadSection.style.display = 'block';
-        if (recentSection) recentSection.style.display = 'block';
-        
-        console.log('✅ Upload interface shown');
-        
-        setTimeout(() => {
-            this.setupDragAndDrop();
-        }, 100);
-    },
+    showUploadInterface: function() {
+    console.log('📁 Showing upload interface...');
+    
+    // Stop camera first
+    this.stopCamera();
+    
+    // Hide camera section
+    const cameraSection = document.getElementById('camera-section');
+    if (cameraSection) cameraSection.style.display = 'none';
+    
+    // Show upload section
+    const uploadSection = document.getElementById('upload-section');
+    if (uploadSection) uploadSection.style.display = 'block';
+    
+    // Show recent section
+    const recentSection = document.getElementById('recent-section');
+    if (recentSection) recentSection.style.display = 'block';
+    
+    // Hide quick actions
+    const quickActionsSection = document.querySelector('.quick-actions-section');
+    if (quickActionsSection) quickActionsSection.style.display = 'none';
+    
+    // IMPORTANT: Re-setup drag and drop listeners
+    setTimeout(() => {
+        this.setupDragAndDrop();
+        console.log('✅ Drag and drop re-initialized for upload section');
+    }, 100);
+},
 
-   showCameraInterface: function() {
+    showCameraInterface: function() {
     console.log('📷 Showing camera interface...');
     
     const cameraSection = document.getElementById('camera-section');
@@ -3916,36 +3907,7 @@ showReceiptCropperModal: function(file) {
     if (recentSection) recentSection.style.display = 'block';
     
     console.log('✅ Camera interface shown');
-}, */
-
-    showUploadInterface: function() {
-    console.log('📁 Showing upload interface...');
-    
-    // Stop camera first
-    this.stopCamera();
-    
-    // Hide camera section
-    const cameraSection = document.getElementById('camera-section');
-    if (cameraSection) cameraSection.style.display = 'none';
-    
-    // Show upload section
-    const uploadSection = document.getElementById('upload-section');
-    if (uploadSection) uploadSection.style.display = 'block';
-    
-    // Show recent section
-    const recentSection = document.getElementById('recent-section');
-    if (recentSection) recentSection.style.display = 'block';
-    
-    // Hide quick actions
-    const quickActionsSection = document.querySelector('.quick-actions-section');
-    if (quickActionsSection) quickActionsSection.style.display = 'none';
-    
-    // IMPORTANT: Re-setup drag and drop listeners
-    setTimeout(() => {
-        this.setupDragAndDrop();
-        console.log('✅ Drag and drop re-initialized for upload section');
-    }, 100);
-},
+}, 
 
     checkCameraAvailability() {
         return new Promise((resolve) => {
