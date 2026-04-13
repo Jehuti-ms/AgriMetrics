@@ -415,7 +415,7 @@ const ProfileModule = {
                 </div>
 
                 <!-- ===== OVERVIEW HEADING ===== -->
-            <h2 class="section-title">📊 Overview</h2>
+            <h2 style="font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px;">📊 Overview</h2>
             
                 <div class="stats-grid">
                     <div class="stat-card">
