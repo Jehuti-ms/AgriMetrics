@@ -2141,7 +2141,7 @@ const dashboardStyles = `
     height: 0;
 }
 
-/* The slider pill - this is the background that shows through */
+/* The slider pill - entire background */
 .toggle-slider {
     position: absolute;
     cursor: pointer;
@@ -2149,7 +2149,7 @@ const dashboardStyles = `
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #cbd5e1;  /* Gray when OFF (right side visible) */
+    background-color: #cbd5e1;  /* Gray when OFF */
     transition: 0.3s;
     border-radius: 22px;
 }
@@ -2166,17 +2166,16 @@ const dashboardStyles = `
     transition: 0.3s;
     border-radius: 50%;
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    z-index: 2;
 }
 
-/* When checked - green fills the LEFT side */
+/* When checked - ENTIRE pill turns green */
 input:checked + .toggle-slider {
-    background-color: #22c55e;  /* Green background becomes visible on the left */
+    background-color: #22c55e;  /* Full green background */
 }
 
-/* Move the dot to the right when checked - reveals green on left, gray on right */
+/* Move the dot to the right when checked */
 input:checked + .toggle-slider:before {
-    transform: translateX(22px);  /* Dot moves to right, showing green on left side of the pill */
+    transform: translateX(22px);
 }
 
 `;
