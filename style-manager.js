@@ -83,17 +83,7 @@ const StyleManager = {
                 '--card-border': 'rgba(255, 255, 255, 0.1)'
             }
         }
-        /* ===== UNIFORM SECTION HEADINGS ACROSS ALL MODULES ===== */
-            .section-title,
-            .overview-heading,
-            .quick-actions-heading {
-                font-size: 18px !important;
-                font-weight: 600 !important;
-                color: var(--text-primary) !important;
-                margin-bottom: 16px !important;
-                display: block !important;
-        }
-
+       
      },
 
     // Complete Module Configurations
