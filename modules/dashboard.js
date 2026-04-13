@@ -695,7 +695,10 @@ handleRefreshStats() {
                                
                 <!-- Stats Overview -->
                 <div class="stats-overview">
-                    <h2>Overview</h2>
+                
+                    <!-- Overview Heading -->
+                <h2 class="section-title">📊 Overview</h2>
+
                     <div class="stats-grid">
                         <div class="stat-card" id="total-revenue-card">
                             <div class="stat-icon">💰</div>
@@ -742,7 +745,10 @@ handleRefreshStats() {
 
                 <!-- Quick Actions Grid -->
                 <div class="quick-actions">
-                    <h2>Quick Actions</h2>
+                
+                   <!-- Quick Actions Heading -->
+                    <h2 class="section-title" style="margin-top: 24px;">⚡ Quick Actions</h2>
+
                     <div class="actions-grid">
                         <button class="quick-action-btn" data-action="add-income">
                             <div class="action-icon">💰</div>
