@@ -448,8 +448,8 @@ const SalesRecordModule = {
                                                 <option value="lbs">lbs</option>
                                             </select>
                                         </div>
-                                        <div id="meat-animal-count-container">
-                                            <label class="form-label">Number of Birds *</label>
+                                        <div>
+                                            <label class="form-label" id="animal-count-label">Number of Birds *</label>
                                             <input type="number" id="meat-animal-count" class="form-input" min="1" placeholder="0">
                                         </div>
                                         <div>
@@ -766,20 +766,38 @@ const SalesRecordModule = {
     this.calculateTotal();
 },
     
-    handleWeightUnitChange() {
+   handleWeightUnitChange() {
     const weightUnit = document.getElementById('meat-weight-unit');
     const unit = weightUnit ? weightUnit.value : 'kg';
     
-    const animalCountContainer = document.getElementById('meat-animal-count-container');
+    const animalCountField = document.getElementById('meat-animal-count');
+    const animalCountLabel = document.getElementById('animal-count-label');
+    const weightField = document.getElementById('meat-weight');
     const weightLabel = document.getElementById('meat-weight-label');
     const priceLabel = document.getElementById('meat-price-label');
     
     if (unit === 'bird') {
-        if (animalCountContainer) animalCountContainer.style.display = 'block';
-        if (weightLabel) weightLabel.textContent = 'Number of Birds *';
+        // Show animal count, hide weight
+        if (animalCountField) {
+            animalCountField.style.display = 'block';
+            animalCountField.parentElement.style.display = 'block';
+        }
+        if (animalCountLabel) animalCountLabel.textContent = 'Number of Birds *';
+        if (weightField) {
+            weightField.style.display = 'none';
+            weightField.parentElement.style.display = 'none';
+        }
         if (priceLabel) priceLabel.textContent = 'Price per Bird *';
     } else {
-        if (animalCountContainer) animalCountContainer.style.display = 'none';
+        // Show weight, hide animal count
+        if (animalCountField) {
+            animalCountField.style.display = 'none';
+            animalCountField.parentElement.style.display = 'none';
+        }
+        if (weightField) {
+            weightField.style.display = 'block';
+            weightField.parentElement.style.display = 'block';
+        }
         if (weightLabel) weightLabel.textContent = 'Total Weight *';
         if (priceLabel) priceLabel.textContent = `Price per ${unit} *`;
     }
@@ -824,7 +842,7 @@ const SalesRecordModule = {
     
     return total;
 },
-
+    
     async saveSale() {
     // Prevent multiple simultaneous saves
     if (this._isSaving) {
