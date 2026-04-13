@@ -2130,8 +2130,8 @@ const dashboardStyles = `
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 44px;
-    height: 22px;
+    width: 46px;
+    height: 24px;
 }
 
 /* Hide the default checkbox */
@@ -2139,9 +2139,10 @@ const dashboardStyles = `
     opacity: 0;
     width: 0;
     height: 0;
+    position: absolute;
 }
 
-/* The slider pill - entire background */
+/* The slider pill - force it to fill completely */
 .toggle-slider {
     position: absolute;
     cursor: pointer;
@@ -2149,33 +2150,47 @@ const dashboardStyles = `
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #cbd5e1;  /* Gray when OFF */
+    background-color: #cbd5e1 !important;
     transition: 0.3s;
-    border-radius: 22px;
+    border-radius: 24px !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
 }
 
 /* The slider dot/knob */
 .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 18px;
-    width: 18px;
+    height: 20px;
+    width: 20px;
     left: 2px;
     top: 2px;
-    background-color: white;
+    background-color: white !important;
     transition: 0.3s;
-    border-radius: 50%;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    border-radius: 50% !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    z-index: 2;
 }
 
 /* When checked - ENTIRE pill turns green */
 input:checked + .toggle-slider {
-    background-color: #22c55e;  /* Full green background */
+    background-color: #22c55e !important;
 }
 
 /* Move the dot to the right when checked */
 input:checked + .toggle-slider:before {
     transform: translateX(22px);
+}
+
+/* Make sure the pill background is solid */
+.toggle-switch {
+    background: transparent !important;
+}
+
+.toggle-slider {
+    background-clip: border-box !important;
 }
 
 `;
