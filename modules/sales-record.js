@@ -435,7 +435,7 @@ const SalesRecordModule = {
                                 </select>
                             </div>
 
-                            <!-- Meat Sale Fields -->
+                           <!-- Meat Sale Fields -->
                             <div id="meat-section" style="display: none;">
                                 <div style="background: #f0fdf4; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
                                     <h4 style="color: #22c55e; margin-bottom: 12px;">🐔 Bird/Meat Sale Details</h4>
@@ -457,7 +457,7 @@ const SalesRecordModule = {
                                             <input type="number" id="meat-weight" class="form-input" step="0.1" placeholder="0">
                                         </div>
                                         <div>
-                                            <label class="form-label" id="meat-price-label">Price per kg *</label>
+                                            <label class="form-label" id="meat-price-label">Price per Bird *</label>
                                             <input type="number" id="meat-price" class="form-input" step="0.01" placeholder="0.00">
                                         </div>
                                     </div>
