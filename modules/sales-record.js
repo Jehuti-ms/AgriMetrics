@@ -1,4 +1,4 @@
-// modules/sales-record.js - COMPLETE WORKING VERSION
+// modules/sales-record.js - COMPLETE FIXED WITH ALL INTEGRATIONS
 console.log('💰 Loading Enhanced Sales Records module...');
 
 const SalesRecordModule = {
@@ -22,6 +22,7 @@ const SalesRecordModule = {
         
         // Get UnifiedDataService
         this.dataService = window.UnifiedDataService;
+        this.broadcaster = window.DataBroadcaster || window.Broadcaster || null;
         
         // Initialize sales array
         if (!window.FarmModules) window.FarmModules = {};
@@ -40,7 +41,7 @@ const SalesRecordModule = {
         this.setupEventListeners();
         
         this.initialized = true;
-        console.log('✅ Enhanced Sales Records initialized');
+        console.log('✅ Enhanced Sales Records initialized with', this.sales.length, 'sales');
         return true;
     },
 
@@ -56,18 +57,139 @@ const SalesRecordModule = {
                 this.sales = [];
             }
         }
+        
+        // Also try to load from UnifiedDataService
+        if (this.dataService) {
+            const unifiedSales = this.dataService.get('sales');
+            if (unifiedSales && unifiedSales.length > 0 && unifiedSales.length !== this.sales.length) {
+                this.sales = unifiedSales;
+                this.saveSalesData();
+                console.log('📊 Synced sales from UnifiedDataService:', this.sales.length);
+            }
+        }
     },
 
     saveSalesData() {
         localStorage.setItem('farm-sales-data', JSON.stringify(this.sales));
         window.FarmModules.appData.sales = this.sales;
         
-        // Also save to UnifiedDataService
+        // Save to UnifiedDataService
         if (this.dataService) {
             for (const sale of this.sales) {
                 this.dataService.save('sales', sale);
             }
         }
+        
+        // Update all dependent modules
+        this.updateIncomeModule();
+        this.updateDashboard();
+    },
+
+    updateIncomeModule() {
+        console.log('💰 Updating Income module with sales data...');
+        
+        // Create income transactions from all sales
+        const incomeTransactions = this.sales.map(sale => ({
+            id: sale.id,
+            date: sale.date,
+            type: 'income',
+            category: 'sales',
+            amount: sale.totalAmount,
+            description: `Sale: ${this.formatProductName(sale.product)} - ${sale.customer || 'Walk-in'}`,
+            paymentMethod: sale.paymentMethod || 'cash',
+            reference: sale.id,
+            notes: sale.notes || '',
+            source: 'sales-module',
+            saleId: sale.id,
+            createdAt: sale.createdAt || new Date().toISOString()
+        }));
+        
+        // Method 1: Direct update to IncomeExpensesModule
+        if (window.IncomeExpensesModule) {
+            if (!window.IncomeExpensesModule.transactions) {
+                window.IncomeExpensesModule.transactions = [];
+            }
+            
+            // Merge transactions (avoid duplicates)
+            const existingIds = new Set(window.IncomeExpensesModule.transactions.map(t => t.saleId).filter(id => id));
+            const newTransactions = incomeTransactions.filter(t => !existingIds.has(t.saleId));
+            
+            if (newTransactions.length > 0) {
+                window.IncomeExpensesModule.transactions.unshift(...newTransactions);
+                // Sort by date
+                window.IncomeExpensesModule.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                if (typeof window.IncomeExpensesModule.saveData === 'function') {
+                    window.IncomeExpensesModule.saveData();
+                }
+                if (typeof window.IncomeExpensesModule.updateStats === 'function') {
+                    window.IncomeExpensesModule.updateStats();
+                }
+                if (typeof window.IncomeExpensesModule.updateTransactionsList === 'function') {
+                    window.IncomeExpensesModule.updateTransactionsList();
+                }
+                console.log('✅ Income module updated with', newTransactions.length, 'new transactions');
+            }
+        }
+        
+        // Method 2: Save to UnifiedDataService
+        if (this.dataService) {
+            for (const transaction of incomeTransactions) {
+                this.dataService.save('transactions', transaction);
+            }
+        }
+        
+        // Method 3: Dispatch event for any listeners
+        window.dispatchEvent(new CustomEvent('sales-updated', {
+            detail: { sales: this.sales, transactions: incomeTransactions }
+        }));
+        
+        if (this.broadcaster && typeof this.broadcaster.emit === 'function') {
+            this.broadcaster.emit('sales:updated', { sales: this.sales });
+            this.broadcaster.emit('income-updated', { amount: this.getTotalRevenue(), source: 'sales' });
+        }
+    },
+
+    updateDashboard() {
+        console.log('📊 Updating dashboard...');
+        
+        const totalRevenue = this.getTotalRevenue();
+        const todayRevenue = this.getTodayRevenue();
+        
+        // Dispatch event for dashboard
+        window.dispatchEvent(new CustomEvent('dashboard-update', {
+            detail: {
+                type: 'sales',
+                amount: totalRevenue,
+                todayAmount: todayRevenue,
+                timestamp: new Date().toISOString()
+            }
+        }));
+        
+        // Also update FarmData for dashboard
+        if (window.FarmData) {
+            window.FarmData.sales = this.sales;
+            window.dispatchEvent(new CustomEvent('farm-data-updated', {
+                detail: { module: 'sales-record', data: this.sales }
+            }));
+        }
+        
+        if (this.broadcaster && typeof this.broadcaster.broadcast === 'function') {
+            this.broadcaster.broadcast('sales-stats', {
+                totalRevenue: totalRevenue,
+                todayRevenue: todayRevenue,
+                totalSales: this.sales.length
+            });
+        }
+    },
+
+    getTotalRevenue() {
+        return this.sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
+    },
+
+    getTodayRevenue() {
+        const today = new Date().toISOString().split('T')[0];
+        return this.sales.filter(sale => sale.date === today).reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
     },
 
     updateSalesStats() {
@@ -88,7 +210,7 @@ const SalesRecordModule = {
         if (totalRevenueEl) totalRevenueEl.textContent = this.formatCurrency(totalRevenue);
         
         // Calculate meat sales
-        const meatProducts = ['broilers-dressed', 'broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
+        const meatProducts = ['broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
         const meatSales = sales.filter(sale => meatProducts.includes(sale.product));
         const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
         
@@ -100,14 +222,17 @@ const SalesRecordModule = {
             const totalWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
             totalMeatWeightEl.textContent = totalWeight.toFixed(2);
         }
+        
+        console.log('📊 Stats updated - Today:', this.formatCurrency(todayRevenue), 'Total:', this.formatCurrency(totalRevenue));
     },
 
     renderSalesTable(period = 'all') {
         const sales = this.sales;
         
         let filteredSales = sales;
+        const today = new Date().toISOString().split('T')[0];
+        
         if (period === 'today') {
-            const today = new Date().toISOString().split('T')[0];
             filteredSales = sales.filter(sale => sale.date === today);
         } else if (period === 'week') {
             const weekAgo = new Date();
@@ -118,7 +243,7 @@ const SalesRecordModule = {
             monthAgo.setDate(monthAgo.getDate() - 30);
             filteredSales = sales.filter(sale => new Date(sale.date) >= monthAgo);
         } else if (period === 'meat') {
-            const meatProducts = ['broilers-dressed', 'broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
+            const meatProducts = ['broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
             filteredSales = sales.filter(sale => meatProducts.includes(sale.product));
         }
 
@@ -172,12 +297,10 @@ const SalesRecordModule = {
     renderModule() {
         if (!this.element) return;
 
-        const today = new Date().toISOString().split('T')[0];
-        const todaySales = this.sales.filter(sale => sale.date === today);
-        const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-        const totalRevenue = this.sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+        const todayRevenue = this.getTodayRevenue();
+        const totalRevenue = this.getTotalRevenue();
         
-        const meatProducts = ['broilers-dressed', 'broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
+        const meatProducts = ['broilers-dressed-bird', 'broilers-live', 'pork', 'beef', 'goat', 'lamb'];
         const meatSales = this.sales.filter(sale => meatProducts.includes(sale.product));
         const totalAnimals = meatSales.reduce((sum, sale) => sum + (sale.animalCount || sale.quantity || 0), 0);
         const totalMeatWeight = meatSales.reduce((sum, sale) => sum + (sale.weight || 0), 0);
@@ -788,51 +911,11 @@ const SalesRecordModule = {
             this.sales.unshift(saleData);
             this.saveSalesData();
             
-            // Create income transaction
-            const incomeTransaction = {
-                id: Date.now(),
-                date: saleData.date,
-                type: 'income',
-                category: 'sales',
-                amount: saleData.totalAmount,
-                description: `Sale: ${this.formatProductName(saleData.product)} - ${saleData.customer}`,
-                paymentMethod: saleData.paymentMethod,
-                reference: saleData.id,
-                source: 'sales-module',
-                saleId: saleData.id
-            };
-            
             // Update income module
-            if (window.IncomeExpensesModule) {
-                if (!window.IncomeExpensesModule.transactions) {
-                    window.IncomeExpensesModule.transactions = [];
-                }
-                window.IncomeExpensesModule.transactions.unshift(incomeTransaction);
-                if (typeof window.IncomeExpensesModule.saveData === 'function') {
-                    window.IncomeExpensesModule.saveData();
-                }
-                console.log('✅ Income module updated');
-            }
+            this.updateIncomeModule();
             
-            // Save to UnifiedDataService
-            if (this.dataService) {
-                await this.dataService.save('sales', saleData);
-                await this.dataService.save('transactions', incomeTransaction);
-            }
-            
-            // Dispatch event
-            window.dispatchEvent(new CustomEvent('sale-completed', {
-                detail: {
-                    orderId: saleData.id,
-                    amount: saleData.totalAmount,
-                    date: saleData.date,
-                    description: `Sale: ${this.formatProductName(saleData.product)}`,
-                    customerName: saleData.customer,
-                    product: saleData.product,
-                    quantity: saleData.quantity,
-                    unitPrice: saleData.unitPrice
-                }
-            }));
+            // Update dashboard
+            this.updateDashboard();
             
             // Update UI
             this.updateSalesStats();
@@ -861,6 +944,8 @@ const SalesRecordModule = {
             this.sales.splice(index, 1);
             this.saveSalesData();
             this.updateSalesStats();
+            this.updateIncomeModule();
+            this.updateDashboard();
             
             const periodFilter = document.getElementById('period-filter');
             const filterValue = periodFilter ? periodFilter.value : 'today';
@@ -953,7 +1038,7 @@ const SalesRecordModule = {
                             <th style="padding: 8px;">Product</th>
                             <th style="padding: 8px;">Quantity</th>
                             <th style="padding: 8px;">Amount</th>
-                        </tr>
+                         </tr>
                     </thead>
                     <tbody>
                         ${todaySales.map(sale => `
@@ -1084,7 +1169,7 @@ const SalesRecordModule = {
 (function() {
     const MODULE_NAME = 'sales-record';
     if (window.FarmModules) {
-        window.FarmModules.registerModule(MODULE_NAME, SalesRecordModule);
+        FarmModules.registerModule(MODULE_NAME, SalesRecordModule);
         console.log(`✅ ${MODULE_NAME} module registered successfully!`);
     }
     window.SalesRecordModule = SalesRecordModule;
