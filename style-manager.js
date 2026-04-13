@@ -1327,13 +1327,11 @@ div.quick-action-grid {
 
 /* Section Headers */
 .section-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--primary-color);
-    display: inline-block;
+    display: block;
 }
 
 .overview-section,
@@ -1384,25 +1382,7 @@ div.quick-action-grid {
     color: var(--text-primary);
 }
 
-/* Section Headers - EXACTLY matching dashboard style */
-.section-title,
-.overview-heading,
-.quick-actions-heading {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-    display: block;
-}
 
-/* Force correct styling for Overview and Quick Actions headings */
-    .section-title {
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        color: var(--text-primary) !important;
-        margin-bottom: 16px !important;
-        display: block !important;
-    }
     
         `;
         document.head.appendChild(style);
