@@ -767,26 +767,26 @@ const SalesRecordModule = {
 },
     
     handleWeightUnitChange() {
-        const weightUnit = document.getElementById('meat-weight-unit');
-        const unit = weightUnit ? weightUnit.value : 'kg';
-        
-        const animalCountContainer = document.getElementById('meat-animal-count-container');
-        const weightLabel = document.getElementById('meat-weight-label');
-        const priceLabel = document.getElementById('meat-price-label');
-        
-        if (unit === 'bird') {
-            if (animalCountContainer) animalCountContainer.style.display = 'block';
-            if (weightLabel) weightLabel.textContent = 'Number of Birds *';
-            if (priceLabel) priceLabel.textContent = 'Price per Bird *';
-        } else {
-            if (animalCountContainer) animalCountContainer.style.display = 'none';
-            if (weightLabel) weightLabel.textContent = 'Total Weight *';
-            if (priceLabel) priceLabel.textContent = `Price per ${unit} *`;
-        }
-        
-        this.calculateTotal();
-    },
-
+    const weightUnit = document.getElementById('meat-weight-unit');
+    const unit = weightUnit ? weightUnit.value : 'kg';
+    
+    const animalCountContainer = document.getElementById('meat-animal-count-container');
+    const weightLabel = document.getElementById('meat-weight-label');
+    const priceLabel = document.getElementById('meat-price-label');
+    
+    if (unit === 'bird') {
+        if (animalCountContainer) animalCountContainer.style.display = 'block';
+        if (weightLabel) weightLabel.textContent = 'Number of Birds *';
+        if (priceLabel) priceLabel.textContent = 'Price per Bird *';
+    } else {
+        if (animalCountContainer) animalCountContainer.style.display = 'none';
+        if (weightLabel) weightLabel.textContent = 'Total Weight *';
+        if (priceLabel) priceLabel.textContent = `Price per ${unit} *`;
+    }
+    
+    this.calculateTotal();
+},
+    
    calculateTotal() {
     const productSelect = document.getElementById('sale-product');
     const product = productSelect ? productSelect.value : '';
