@@ -409,12 +409,18 @@ const SalesRecordModule = {
                                 <label class="form-label">Product *</label>
                                 <select id="sale-product" class="form-input" required>
                                     <option value="">Select Product</option>
+                                    
+                                    <optgroup label="🐔 Poultry - Dressed (by weight)">
+                                        <option value="broilers-dressed-weight">🍗 Broilers (Dressed) - by kg/lb</option>
+                                    </optgroup>
+                                
                                     <optgroup label="🐔 Poultry - Dressed (per bird)">
                                         <option value="broilers-dressed-bird">🍗 Broilers (Dressed/Bird) - per bird</option>
                                     </optgroup>
+                                
                                     <optgroup label="🐔 Poultry - Live (per bird)">
                                         <option value="broilers-live">🐔 Broilers (Live) - per bird</option>
-                                        <option value="layers">🐓 Layers - per bird</option>
+                                    <option value="layers">🐓 Layers - per bird</option>
                                     </optgroup>
                                     <optgroup label="🥚 Eggs">
                                         <option value="eggs">🥚 Eggs</option>
