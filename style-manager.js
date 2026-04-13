@@ -1394,6 +1394,16 @@ div.quick-action-grid {
     margin-bottom: 16px;
     display: block;
 }
+
+/* ===== UNIFORM SECTION HEADINGS ACROSS ALL MODULES ===== */
+.section-title,
+.overview-heading,
+.quick-actions-heading {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    margin-bottom: 16px !important;
+    display: block !important;
 }
         `;
         document.head.appendChild(style);
