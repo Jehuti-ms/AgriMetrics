@@ -5,6 +5,9 @@ const DashboardModule = {
     name: 'dashboard',
     initialized: false,
     _actionInProgress: false,
+    _filterInProgress: false,   
+    _toggleInProgress: false,   
+    _refreshInProgress: false,
     element: null,
     activityFilter: '7d',
     realTimeInterval: null,
@@ -539,54 +542,70 @@ setupGlobalListeners() {
         }
     },
 
-     handleRealTimeToggle(enabled) {
-        this.autoRefresh = enabled;
-        localStorage.setItem('dashboard-auto-refresh', enabled.toString());
-        this.startRealTimeUpdates();
-        
-        // Update UI
-        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
-        if (refreshBtn) {
-            if (enabled) {
-                refreshBtn.classList.add('refreshing');
-                refreshBtn.setAttribute('data-refreshing', 'true');
-            } else {
-                refreshBtn.classList.remove('refreshing');
-                refreshBtn.removeAttribute('data-refreshing');
-            }
+handleRealTimeToggle(enabled) {
+    // Prevent multiple calls
+    if (this._toggleInProgress) return;
+    this._toggleInProgress = true;
+    
+    this.autoRefresh = enabled;
+    localStorage.setItem('dashboard-auto-refresh', enabled.toString());
+    this.startRealTimeUpdates();
+    
+    // Update UI
+    const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+    if (refreshBtn) {
+        if (enabled) {
+            refreshBtn.classList.add('refreshing');
+            refreshBtn.setAttribute('data-refreshing', 'true');
+        } else {
+            refreshBtn.classList.remove('refreshing');
+            refreshBtn.removeAttribute('data-refreshing');
         }
-        
-        this.showNotification(`Auto-refresh ${enabled ? 'enabled' : 'disabled'}`, enabled ? 'success' : 'info');
-    },
+    }
+    
+    // Single notification
+    this.showNotification(`Auto-refresh ${enabled ? 'enabled' : 'disabled'}`, enabled ? 'success' : 'info');
+    
+    setTimeout(() => {
+        this._toggleInProgress = false;
+    }, 500);
+},
 
-    handleRefreshStats() {
-        if (!this.initialized) return;
-        
-        // Show syncing state
-        const refreshBtn = this.element.querySelector('#refresh-stats-btn');
-        const originalHTML = refreshBtn ? refreshBtn.innerHTML : '';
+handleRefreshStats() {
+    if (!this.initialized) return;
+    
+    // Prevent multiple refreshes
+    if (this._refreshInProgress) return;
+    this._refreshInProgress = true;
+    
+    // Show syncing state
+    const refreshBtn = this.element.querySelector('#refresh-stats-btn');
+    const originalHTML = refreshBtn ? refreshBtn.innerHTML : '';
+    if (refreshBtn) {
+        refreshBtn.innerHTML = '🔄 Syncing...';
+        refreshBtn.disabled = true;
+    }
+    
+    // Refresh stats
+    this.updateStats();
+    
+    // Reset button after delay
+    setTimeout(() => {
         if (refreshBtn) {
-            refreshBtn.innerHTML = '🔄 Syncing...';
-            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = originalHTML;
+            refreshBtn.disabled = false;
+            refreshBtn.classList.add('refreshing-animation');
+            setTimeout(() => {
+                refreshBtn.classList.remove('refreshing-animation');
+            }, 1000);
         }
+        // Single notification
+        this.showNotification('Dashboard refreshed!', 'success');
         
-        // Refresh stats
-        this.loadAndDisplayStats();
-        
-        // Reset button after delay
-        setTimeout(() => {
-            if (refreshBtn) {
-                refreshBtn.innerHTML = originalHTML;
-                refreshBtn.disabled = false;
-                refreshBtn.classList.add('refreshing-animation');
-                setTimeout(() => {
-                    refreshBtn.classList.remove('refreshing-animation');
-                }, 1000);
-            }
-            this.showNotification('Dashboard refreshed!', 'success');
-        }, 1000);
-    },
-
+        this._refreshInProgress = false;
+    }, 1000);
+},
+    
     async syncAllModulesWithFirebase() {
     console.log('☁️ Syncing all modules with Firebase...');
     
@@ -832,28 +851,46 @@ setupGlobalListeners() {
 
     // ==================== ACTIVITY FILTER ====================
    setActivityFilter(filter) {
-        this.activityFilter = filter;
+    // Prevent multiple calls
+    if (this._filterInProgress) return;
+    this._filterInProgress = true;
+    
+    this.activityFilter = filter;
+    
+    // Update active button states
+    const buttons = this.element.querySelectorAll('.time-filter-btn');
+    buttons.forEach(btn => {
+        const btnFilter = btn.getAttribute('data-filter');
+        const isActive = btnFilter === filter;
         
-        // Update active button states
-        const buttons = this.element.querySelectorAll('.time-filter-btn');
-        buttons.forEach(btn => {
-            const btnFilter = btn.getAttribute('data-filter');
-            if (btnFilter === filter) {
-                btn.classList.add('active');
-                btn.setAttribute('data-active', 'true');
-            } else {
-                btn.classList.remove('active');
-                btn.removeAttribute('data-active');
-            }
-        });
-        
-        // Reload activities with new filter
-        this.updateRecentActivity();
-        
-        console.log(`🔍 Activity filter set to: ${filter}`);
-        this.showNotification(`Showing activities from ${filter === '24h' ? 'last 24 hours' : filter === '7d' ? 'last 7 days' : filter === '30d' ? 'last 30 days' : 'all time'}`, 'info');
-    },
-
+        if (isActive) {
+            btn.classList.add('active');
+            btn.setAttribute('data-active', 'true');
+        } else {
+            btn.classList.remove('active');
+            btn.removeAttribute('data-active');
+        }
+    });
+    
+    // Reload activities with new filter
+    this.updateRecentActivity();
+    
+    // Single notification
+    const filterNames = {
+        '24h': 'last 24 hours',
+        '7d': 'last 7 days',
+        '30d': 'last 30 days',
+        'all': 'all time'
+    };
+    this.showNotification(`Showing activities from ${filterNames[filter] || filter}`, 'info');
+    
+    setTimeout(() => {
+        this._filterInProgress = false;
+    }, 500);
+    
+    console.log(`🔍 Activity filter set to: ${filter}`);
+},
+    
     // ==================== QUICK ACTIONS ====================
   handleQuickAction(action) {
     console.log(`⚡ Quick action: ${action}`);
@@ -1496,12 +1533,10 @@ updateLastSyncTime() {
     },
 
     // ==================== NOTIFICATION SYSTEM ====================
-    showNotification(message, type = 'info') {
+   showNotification(message, type = 'info') {
     // Remove any existing notification to prevent stacking
-    const existingNotification = document.querySelector('.dashboard-notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
+    const existingNotifications = document.querySelectorAll('.dashboard-notification');
+    existingNotifications.forEach(notification => notification.remove());
     
     // Use core module notification if available
     if (window.coreModule && typeof window.coreModule.showNotification === 'function') {
@@ -1534,7 +1569,7 @@ updateLastSyncTime() {
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 },
-
+    
     // ==================== UTILITY METHODS ====================
     formatTimeAgo(timestamp) {
         if (!timestamp) return 'Recently';
