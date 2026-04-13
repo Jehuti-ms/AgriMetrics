@@ -390,7 +390,7 @@ setupGlobalListeners() {
         // Listen for sales updates
         window.UnifiedDataService.on('sales-updated', (sales) => {
             console.log('📊 Dashboard received sales update:', sales?.length);
-            this.updateStats();  // Use updateStats, not loadAndDisplayStats
+            this.updateStats();
         });
         
         // Listen for transactions updates
@@ -433,51 +433,45 @@ setupGlobalListeners() {
         });
     });
     
-    // Listen for clicks on quick action buttons
+    // ===== LISTEN FOR CLICKS ON ALL BUTTONS =====
     this.element.addEventListener('click', (e) => {
-        const action = e.target.closest('[data-action]');
-        if (action) {
-            const actionType = action.getAttribute('data-action');
-            console.log('🎯 Dashboard action:', actionType);
-            
-            switch(actionType) {
-                case 'add-sale':
-                    if (window.SalesRecordModule) {
-                        window.SalesRecordModule.showSaleModal();
-                    }
-                    break;
-                case 'add-expense':
-                    if (window.app && window.app.showSection) {
-                        window.app.showSection('income-expenses');
-                        setTimeout(() => {
-                            if (window.IncomeExpensesModule) {
-                                window.IncomeExpensesModule.showAddExpense();
-                            }
-                        }, 500);
-                    }
-                    break;
-                case 'add-inventory':
-                    if (window.app && window.app.showSection) {
-                        window.app.showSection('inventory-check');
-                        setTimeout(() => {
-                            const addBtn = document.getElementById('add-item-btn');
-                            if (addBtn) addBtn.click();
-                        }, 500);
-                    }
-                    break;
-                case 'record-mortality':
-                    if (window.app && window.app.showSection) {
-                        window.app.showSection('broiler-mortality');
-                        setTimeout(() => {
-                            const recordBtn = document.getElementById('record-mortality-btn');
-                            if (recordBtn) recordBtn.click();
-                        }, 500);
-                    }
-                    break;
-                case 'refresh-stats':
-                    this.updateStats();
-                    break;
-            }
+        const actionBtn = e.target.closest('[data-action]');
+        if (!actionBtn) return;
+        
+        const actionType = actionBtn.getAttribute('data-action');
+        console.log('🎯 Dashboard action:', actionType);
+        
+        // Handle different action types
+        switch(actionType) {
+            case 'add-income':
+            case 'add-expense':
+            case 'check-inventory':
+            case 'record-feed':
+            case 'add-production':
+            case 'view-reports':
+                this.handleQuickAction(actionType);
+                break;
+                
+            case 'filter-activity':
+                const filter = actionBtn.getAttribute('data-filter');
+                if (filter) {
+                    this.setActivityFilter(filter);
+                }
+                break;
+                
+            case 'refresh-stats':
+                this.handleRefreshStats();
+                break;
+                
+            case 'view-activity':
+                const activityId = actionBtn.getAttribute('data-activity-id');
+                if (activityId) {
+                    this.handleActivityClick(activityId);
+                }
+                break;
+                
+            default:
+                console.log(`Unknown action: ${actionType}`);
         }
     });
     
