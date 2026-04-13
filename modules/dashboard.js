@@ -41,7 +41,7 @@ initialize() {
     
     // Load data asynchronously
     setTimeout(() => {
-        this.loadAndDisplayStats();
+        this.updateStats();
         this.startRealTimeUpdates();
     }, 100);
     
@@ -122,7 +122,7 @@ initialize() {
         const data = window.DataService.data;
         if (data.transactions?.length > 0 || data.sales?.length > 0) {
             console.log('✅ Data Service already has data');
-            this.loadAndDisplayStats();
+            this.updateStats(); 
             return true;
         }
     }
@@ -535,28 +535,28 @@ setupGlobalListeners() {
 
     // ==================== DATA CHANGE LISTENERS ====================
     setupDataChangeListeners() {
-        // Listen for custom events when data changes
-        const dataChangedHandler = (e) => {
-            console.log('📡 Data changed detected:', e.detail?.module);
+    // Listen for custom events when data changes
+    const dataChangedHandler = (e) => {
+        console.log('📡 Data changed detected:', e.detail?.module);
+        if (this.autoRefresh && this.initialized) {
+            setTimeout(() => this.updateStats(), 300);  // Changed from loadAndDisplayStats
+        }
+    };
+
+    // Listen for storage changes (for cross-tab updates)
+    const storageChangedHandler = (e) => {
+        if (e.key && e.key.includes('farm-')) {
+            console.log('💾 Storage change detected:', e.key);
             if (this.autoRefresh && this.initialized) {
-                setTimeout(() => this.loadAndDisplayStats(), 300);
+                setTimeout(() => this.updateStats(), 500);  // Changed from loadAndDisplayStats
             }
-        };
+        }
+    };
 
-        // Listen for storage changes (for cross-tab updates)
-        const storageChangedHandler = (e) => {
-            if (e.key && e.key.includes('farm-')) {
-                console.log('💾 Storage change detected:', e.key);
-                if (this.autoRefresh && this.initialized) {
-                    setTimeout(() => this.loadAndDisplayStats(), 500);
-                }
-            }
-        };
-
-        this.addEventListener(document, 'farmDataChanged', dataChangedHandler);
-        this.addEventListener(window, 'storage', storageChangedHandler);
-    },
-
+    this.addEventListener(document, 'farmDataChanged', dataChangedHandler);
+    this.addEventListener(window, 'storage', storageChangedHandler);
+},
+    
     // ==================== REAL-TIME UPDATES ====================
     startRealTimeUpdates() {
         // Clear any existing interval
@@ -569,7 +569,7 @@ setupGlobalListeners() {
             // Update every 30 seconds
             this.realTimeInterval = setInterval(() => {
                 if (document.visibilityState === 'visible' && this.initialized) {
-                    this.loadAndDisplayStats();
+                     this.updateStats();
                     console.log('🔄 Auto-refreshed dashboard stats');
                 }
             }, 30000);
