@@ -2126,12 +2126,12 @@ const dashboardStyles = `
         }
     }
 
-/* The switch container - match the pill height */
+/* The switch container */
 .toggle-switch {
     position: relative;
     display: inline-block;
     width: 44px;
-    height: 22px;  /* Match the pill height */
+    height: 22px;
 }
 
 /* Hide the default checkbox */
@@ -2141,7 +2141,7 @@ const dashboardStyles = `
     height: 0;
 }
 
-/* The slider pill */
+/* The slider pill - this is the background that shows through */
 .toggle-slider {
     position: absolute;
     cursor: pointer;
@@ -2149,9 +2149,9 @@ const dashboardStyles = `
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #cbd5e1;
+    background-color: #cbd5e1;  /* Gray when OFF (right side visible) */
     transition: 0.3s;
-    border-radius: 22px;  /* Half of height for pill shape */
+    border-radius: 22px;
 }
 
 /* The slider dot/knob */
@@ -2161,22 +2161,24 @@ const dashboardStyles = `
     height: 18px;
     width: 18px;
     left: 2px;
-    top: 2px;  /* Center vertically: (22 - 18) / 2 = 2px */
+    top: 2px;
     background-color: white;
     transition: 0.3s;
     border-radius: 50%;
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    z-index: 2;
 }
 
-/* Checked state */
+/* When checked - green fills the LEFT side */
 input:checked + .toggle-slider {
-    background-color: #22c55e;  /* Green when on */
+    background-color: #22c55e;  /* Green background becomes visible on the left */
 }
 
-/* Move the dot to the right when checked */
+/* Move the dot to the right when checked - reveals green on left, gray on right */
 input:checked + .toggle-slider:before {
-    transform: translateX(22px);  /* Move to right side: 44 - 18 - 2 - 2 = 22px */
+    transform: translateX(22px);  /* Dot moves to right, showing green on left side of the pill */
 }
+
 `;
 
 // ==================== REGISTRATION ====================
