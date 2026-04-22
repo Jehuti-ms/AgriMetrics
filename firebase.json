@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/__pycache__/**",
+      "**/*.log",
+      "**/.*"
+    ]
+  }
+}
