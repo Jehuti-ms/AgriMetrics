@@ -422,6 +422,7 @@ handleUserAuthenticated(user) {
         
         // Setup UI - CREATE NAVIGATION FIRST
         this.createTopNavigation();
+        this.initModernMobileUI();
         
         // Setup logout handlers AFTER creating navigation
         this.setupLogoutHandlers();
@@ -1031,6 +1032,12 @@ handleUserAuthenticated(user) {
         
         const activeSideMenuItem = document.querySelector(`.side-menu-item[data-section="${sectionId}"]`);
         if (activeSideMenuItem) activeSideMenuItem.classList.add('active');
+
+         // ===== AGRI-METRICS-MOBILE-UI :: sync bottom nav =====
+        if (typeof window.__updateMobileUI === 'function') {
+            window.__updateMobileUI(sectionId);
+        }
+        // ===== END =====
     }
     
     showAuth() {
