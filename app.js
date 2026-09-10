@@ -347,6 +347,8 @@ handleUserAuthenticated(user) {
         
         // Setup UI - CREATE NAVIGATION FIRST
         this.createTopNavigation();
+        if (typeof this.initModernMobileUI === 'function') this.initModernMobileUI();
+        
         this.initModernMobileUI();
         
         // Setup logout handlers AFTER creating navigation
