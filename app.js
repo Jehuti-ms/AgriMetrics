@@ -10,7 +10,8 @@ class FarmManagementApp {
         this.isLoggingOut = false;
         this.setupInit();
         this.initializeMenu();
-        // ============================================================
+    }
+// ============================================================
 // AGRI-METRICS-MOBILE-UI :: PATCH 2 of 3
 // Bottom nav + header + FAB controller (mobile-first)
 // ============================================================
