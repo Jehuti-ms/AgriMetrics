@@ -174,6 +174,7 @@ const StyleManager = {
         console.log('🎨 Initializing StyleManager for all modules...');
         
         this.injectBaseStyles();
+        this.injectModernMobileStyles(); 
         this.applyTheme(this.currentTheme);
         // this.setupThemeSwitcher(); // Commented out to remove floating theme switcher
         //this.applyAuthCentering();
