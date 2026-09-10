@@ -1565,6 +1565,174 @@ div.quick-action-grid {
         this.moduleConfigs[moduleId] = config;
         console.log(`✅ Added module config: ${config.name}`);
     }
+
+    // ============================================================
+// AGRI-METRICS-MOBILE-UI :: PATCH 3 of 3
+// Bottom nav + top header + FAB styling (mobile-first)
+// ============================================================
+injectModernMobileStyles() {
+    if (document.getElementById('style-manager-mobile-ui')) return;
+
+    const style = document.createElement('style');
+    style.id = 'style-manager-mobile-ui';
+    style.textContent = `
+        /* ====== TOP APP HEADER ====== */
+        .app-header {
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: #fff;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+            margin: -8px -8px 16px -8px;
+        }
+        .app-header-left { min-width: 0; flex: 1; }
+        .app-header-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            color: #fff;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        .app-header-subtitle {
+            font-size: 13px;
+            margin: 2px 0 0;
+            color: rgba(255,255,255,0.9);
+            font-weight: 500;
+        }
+        .app-header-actions { display: flex; gap: 8px; }
+        .app-header-action {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-header-action:hover { background: rgba(255,255,255,0.25); }
+        .app-header-action:active { transform: scale(0.94); }
+
+        /* ====== BOTTOM NAVIGATION ====== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 950;
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+            padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+        }
+        body.dark-mode .bottom-nav {
+            background: #1e293b;
+            border-top-color: #334155;
+        }
+        .bottom-nav-item {
+            flex: 1;
+            max-width: 96px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 6px 4px;
+            border: none;
+            background: transparent;
+            color: #6a8f73;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: color 0.2s ease, background 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bottom-nav-item .material-icons-round {
+            font-size: 24px;
+            font-variation-settings: 'FILL' 0, 'wght' 400;
+        }
+        .bottom-nav-item.active {
+            color: #16a34a;
+        }
+        .bottom-nav-item.active .material-icons-round {
+            font-variation-settings: 'FILL' 1, 'wght' 500;
+        }
+        body.dark-mode .bottom-nav-item { color: #94a3b8; }
+        body.dark-mode .bottom-nav-item.active { color: #4ade80; }
+        .bottom-nav-label {
+            display: block;
+            line-height: 1;
+        }
+
+        /* ====== FLOATING ACTION BUTTON ====== */
+        .app-fab {
+            position: fixed;
+            right: 18px;
+            bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+            z-index: 940;
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            border: none;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 24px rgba(34, 197, 94, 0.35);
+            transition: transform 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .app-fab .material-icons-round { font-size: 28px; }
+        .app-fab:active { transform: scale(0.92); }
+
+        /* ====== SPACING: push content above bottom nav ====== */
+        #app-container main,
+        #content-area {
+            padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+
+        /* ====== HIDE OLD TOP NAV ON MOBILE ONLY ====== */
+        @media (max-width: 768px) {
+            header > .top-nav { display: none !important; }
+            #app-container > header { display: none !important; }
+        }
+
+        /* ====== HIDE NEW UI ON DESKTOP (keep old top nav) ====== */
+        @media (min-width: 769px) {
+            .app-header,
+            .bottom-nav,
+            .app-fab { display: none !important; }
+            #app-container main,
+            #content-area { padding-bottom: 20px !important; }
+        }
+
+        /* ====== DARK MODE ====== */
+        body.dark-mode .app-header {
+            background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('✅ Modern mobile UI styles injected');
+}
 };
 
 // Make it globally available
