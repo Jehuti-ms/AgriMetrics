@@ -10,6 +10,81 @@ class FarmManagementApp {
         this.isLoggingOut = false;
         this.setupInit();
         this.initializeMenu();
+        // ============================================================
+// AGRI-METRICS-MOBILE-UI :: PATCH 2 of 3
+// Bottom nav + header + FAB controller (mobile-first)
+// ============================================================
+initModernMobileUI() {
+    const BOTTOM_NAV = document.getElementById('bottom-nav');
+    const HEADER     = document.getElementById('app-header');
+    const FAB        = document.getElementById('app-fab');
+
+    if (!BOTTOM_NAV || !HEADER || !FAB) {
+        console.log('⚠️ Modern mobile UI elements not in DOM — skipping');
+        return;
+    }
+
+    // ---- Config: title + contextual action per section ----
+    const SECTION_META = {
+        'dashboard':        { title: 'Dashboard',         subtitle: 'Farm overview',           fab: 'add' },
+        'income-expenses':  { title: 'Finance',           subtitle: 'Income & expenses',       fab: 'add' },
+        'inventory-check':  { title: 'Inventory',         subtitle: 'Stock & supplies',        fab: 'add' },
+        'orders':           { title: 'Orders',            subtitle: 'Customer orders',         fab: 'add' },
+        'sales-record':     { title: 'Sales',             subtitle: 'Sales history',           fab: 'add' },
+        'production':       { title: 'Operations',        subtitle: 'Production records',      fab: 'add' },
+        'feed-record':      { title: 'Feed Management',   subtitle: 'Feed records',            fab: 'add' },
+        'broiler-mortality':{ title: 'Health & Mortality', subtitle: 'Flock health',           fab: 'add' },
+        'reports':          { title: 'Insights',          subtitle: 'Reports & analytics',     fab: 'insights' },
+        'profile':          { title: 'Profile',           subtitle: 'Account & settings',      fab: 'settings' }
+    };
+
+    // ---- Bottom nav click → same router as top nav ----
+    BOTTOM_NAV.addEventListener('click', (e) => {
+        const btn = e.target.closest('.bottom-nav-item');
+        if (!btn) return;
+        const section = btn.getAttribute('data-nav');
+        if (!section) return;
+
+        // Update active state
+        BOTTOM_NAV.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Use the EXISTING router — zero new logic
+        if (typeof this.showSection === 'function') {
+            this.showSection(section);
+        }
+    });
+
+    // ---- FAB click → light up the header action (or custom) ----
+    FAB.addEventListener('click', () => {
+        // For now: dispatch a custom event modules can listen to
+        window.dispatchEvent(new CustomEvent('app-fab-clicked', {
+            detail: { section: this.currentSection }
+        }));
+        // Fallback: focus the first form input if one exists
+        const firstInput = document.querySelector('#content-area input, #content-area select, #content-area textarea');
+        if (firstInput) firstInput.focus();
+    });
+
+    // ---- Expose a helper to update header/fab per section ----
+    window.__updateMobileUI = (sectionId) => {
+        const meta = SECTION_META[sectionId] || { title: sectionId, subtitle: '', fab: 'add' };
+        const titleEl = document.getElementById('page-title');
+        const subtitleEl = document.getElementById('page-subtitle');
+        if (titleEl) titleEl.textContent = meta.title;
+        if (subtitleEl) subtitleEl.textContent = meta.subtitle;
+
+        // Sync bottom-nav active state
+        BOTTOM_NAV.querySelectorAll('.bottom-nav-item').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-nav') === sectionId);
+        });
+    };
+
+    // Initialize with current section
+    window.__updateMobileUI(this.currentSection || 'dashboard');
+
+    console.log('✅ Modern mobile UI (bottom nav + header + FAB) initialized');
+}
     }
    
     setupInit() {
