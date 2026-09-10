@@ -276,9 +276,63 @@
         </div>
         
         <!-- Main Content -->
-        <main id="content-area">
+       <!--  <main id="content-area">
             <!-- Content will be loaded here by modules -->
-        </main>
+        <!-- </main>-->
+        <!-- ============================================================ -->
+<!-- AGRI-METRICS-MOBILE-UI :: PATCH 1 of 3                      -->
+<!-- Modern top header + bottom nav + FAB                         -->
+<!-- ============================================================ -->
+
+<!-- Top App Header (page title + contextual action) -->
+<header id="app-header" class="app-header" aria-label="App header">
+    <div class="app-header-left">
+        <h1 id="page-title" class="app-header-title">Dashboard</h1>
+        <p id="page-subtitle" class="app-header-subtitle">Farm overview</p>
+    </div>
+    <div class="app-header-actions">
+        <button type="button" id="header-action-btn" class="app-header-action" title="Quick action">
+            <span class="material-icons-round" aria-hidden="true">add</span>
+        </button>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main id="content-area">
+    <!-- Content will be loaded here by modules -->
+</main>
+
+<!-- Floating Action Button (primary action) -->
+<button type="button" id="app-fab" class="app-fab" aria-label="Quick add">
+    <span class="material-icons-round" aria-hidden="true">add</span>
+</button>
+
+<!-- Bottom Navigation (5 tabs) -->
+<nav id="bottom-nav" class="bottom-nav" aria-label="Main navigation">
+    <button type="button" class="bottom-nav-item active" data-nav="dashboard">
+        <span class="material-icons-round">home</span>
+        <span class="bottom-nav-label">Dashboard</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-nav="production">
+        <span class="material-icons-round">agriculture</span>
+        <span class="bottom-nav-label">Operations</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-nav="reports">
+        <span class="material-icons-round">bar_chart</span>
+        <span class="bottom-nav-label">Insights</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-nav="income-expenses">
+        <span class="material-icons-round">account_balance_wallet</span>
+        <span class="bottom-nav-label">Finance</span>
+    </button>
+    <button type="button" class="bottom-nav-item" data-nav="profile">
+        <span class="material-icons-round">person</span>
+        <span class="bottom-nav-label">Profile</span>
+    </button>
+</nav>
+<!-- ============================================================ -->
+<!-- END AGRI-METRICS-MOBILE-UI :: PATCH 1 of 3                   -->
+<!-- ============================================================ -->
     </div>
 
    <!-- Notifications Container -->
