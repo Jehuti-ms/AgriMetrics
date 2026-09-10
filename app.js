@@ -86,7 +86,7 @@ initModernMobileUI() {
 
     console.log('✅ Modern mobile UI (bottom nav + header + FAB) initialized');
 }
-    }
+    
    
     setupInit() {
         if (document.readyState === 'loading') {
