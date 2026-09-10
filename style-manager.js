@@ -1565,7 +1565,7 @@ div.quick-action-grid {
     addModuleConfig(moduleId, config) {
         this.moduleConfigs[moduleId] = config;
         console.log(`✅ Added module config: ${config.name}`);
-    }
+    },
 
     // ============================================================
 // AGRI-METRICS-MOBILE-UI :: PATCH 3 of 3
