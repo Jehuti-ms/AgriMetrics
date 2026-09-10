@@ -1511,3 +1511,73 @@ window.app = new FarmManagementApp();
 setTimeout(() => {
     initAgrimetricsSync();
 }, 1000);
+
+// ============================================================
+// AGRI-METRICS-MOBILE-UI :: PATCH 2 of 3 (standalone)
+// ============================================================
+function initModernMobileUI() {
+    const BOTTOM_NAV = document.getElementById('bottom-nav');
+    const HEADER     = document.getElementById('app-header');
+    const FAB        = document.getElementById('app-fab');
+
+    if (!BOTTOM_NAV || !HEADER || !FAB) {
+        console.log('⚠️ Modern mobile UI elements not in DOM — skipping');
+        return;
+    }
+
+    const SECTION_META = {
+        'dashboard':         { title: 'Dashboard',          subtitle: 'Farm overview',       fab: 'add' },
+        'income-expenses':   { title: 'Finance',            subtitle: 'Income & expenses',   fab: 'add' },
+        'inventory-check':   { title: 'Inventory',          subtitle: 'Stock & supplies',    fab: 'add' },
+        'orders':            { title: 'Orders',             subtitle: 'Customer orders',     fab: 'add' },
+        'sales-record':      { title: 'Sales',              subtitle: 'Sales history',       fab: 'add' },
+        'production':        { title: 'Operations',         subtitle: 'Production records',  fab: 'add' },
+        'feed-record':       { title: 'Feed Management',    subtitle: 'Feed records',        fab: 'add' },
+        'broiler-mortality': { title: 'Health & Mortality', subtitle: 'Flock health',        fab: 'add' },
+        'reports':           { title: 'Insights',           subtitle: 'Reports & analytics', fab: 'insights' },
+        'profile':           { title: 'Profile',            subtitle: 'Account & settings',  fab: 'settings' }
+    };
+
+    BOTTOM_NAV.addEventListener('click', (e) => {
+        const btn = e.target.closest('.bottom-nav-item');
+        if (!btn) return;
+        const section = btn.getAttribute('data-nav');
+        if (!section) return;
+
+        BOTTOM_NAV.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        if (window.app && typeof window.app.showSection === 'function') {
+            window.app.showSection(section);
+        }
+    });
+
+    FAB.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('app-fab-clicked', {
+            detail: { section: window.app ? window.app.currentSection : null }
+        }));
+        const firstInput = document.querySelector('#content-area input, #content-area select, #content-area textarea');
+        if (firstInput) firstInput.focus();
+    });
+
+    window.__updateMobileUI = function(sectionId) {
+        const meta = SECTION_META[sectionId] || { title: sectionId, subtitle: '', fab: 'add' };
+        const titleEl = document.getElementById('page-title');
+        const subtitleEl = document.getElementById('page-subtitle');
+        if (titleEl) titleEl.textContent = meta.title;
+        if (subtitleEl) subtitleEl.textContent = meta.subtitle;
+
+        BOTTOM_NAV.querySelectorAll('.bottom-nav-item').forEach(function(b) {
+            b.classList.toggle('active', b.getAttribute('data-nav') === sectionId);
+        });
+    };
+
+    window.__updateMobileUI((window.app && window.app.currentSection) || 'dashboard');
+
+    console.log('✅ Modern mobile UI (bottom nav + header + FAB) initialized');
+}
+
+// Attach as a method so `this.initModernMobileUI()` works everywhere
+if (window.app) {
+    window.app.initModernMobileUI = initModernMobileUI;
+}
